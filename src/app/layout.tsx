@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Source_Sans_3 } from "next/font/google";
-import { SiteShell } from "@/components/layout/site-shell";
+
+import { clerkAppearance } from "@/lib/auth/clerk-appearance";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -15,10 +17,24 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
   return (
     <html lang="en" className={`${sourceSans.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">
-        <SiteShell>{children}</SiteShell>
+        {publishableKey ? (
+          <ClerkProvider
+            publishableKey={publishableKey}
+            appearance={clerkAppearance}
+            afterSignOutUrl="/"
+            signInUrl="/sign-in"
+            signUpUrl="/sign-up"
+          >
+            {children}
+          </ClerkProvider>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );

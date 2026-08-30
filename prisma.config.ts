@@ -3,8 +3,12 @@ import { defineConfig } from "prisma/config";
 
 import { resolvePrismaCliDatasourceUrl } from "./src/lib/env/prisma-cli";
 
-config();
-config({ path: ".env.local", override: true });
+if (process.env.MAGICCRM_DATABASE_ROLE === "test") {
+  config({ path: ".env.test", override: true });
+} else {
+  config();
+  config({ path: ".env.local", override: true });
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

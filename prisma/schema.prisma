@@ -50,11 +50,11 @@ model Location {
   @@map("locations")
 }
 
-/// Tenant employee profile. Clerk mapping is nullable until authentication is introduced.
+/// Tenant employee membership. One Clerk user may have one profile per organization.
 /// Employee authorization will use Security Groups later — this model has no role field.
 model UserProfile {
   id                String   @id @default(cuid(2))
-  clerkUserId       String?  @unique
+  clerkUserId       String
   organizationId    String
   defaultLocationId String?
   createdAt         DateTime @default(now())
@@ -65,7 +65,9 @@ model UserProfile {
   /// A future location-delete service must clear defaultLocationId in the same transaction.
   defaultLocation Location?    @relation(fields: [organizationId, defaultLocationId], references: [organizationId, id], onDelete: Restrict)
 
+  @@unique([organizationId, clerkUserId])
   @@index([organizationId])
   @@index([organizationId, defaultLocationId])
+  @@index([clerkUserId])
   @@map("user_profiles")
 }

@@ -1,3 +1,5 @@
+import type { RequestContext } from "@/server/request-context";
+
 export type LocationRecord = {
   id: string;
   organizationId: string;
@@ -24,14 +26,13 @@ export function createLocationRepository(db: LocationReader) {
   return {
     /**
      * Tenant-facing location lookup. The query always constrains both
-     * location id and organization id. A known foreign-tenant id is
-     * indistinguishable from a missing row.
+     * location id and organization id from trusted RequestContext.
      */
-    findById(input: { organizationId: string; locationId: string }): Promise<LocationRecord | null> {
+    findById(ctx: Pick<RequestContext, "organizationId">, locationId: string): Promise<LocationRecord | null> {
       return db.location.findFirst({
         where: {
-          id: input.locationId,
-          organizationId: input.organizationId,
+          id: locationId,
+          organizationId: ctx.organizationId,
         },
       });
     },

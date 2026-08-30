@@ -1,20 +1,14 @@
 import "server-only";
 
-import { PrismaNeon } from "@prisma/adapter-neon";
-
 import { PrismaClient } from "@/generated/prisma/client";
+import { createPrismaClient } from "@/lib/db/create-client";
 import { env } from "@/lib/env";
 
 const globalForPrisma = globalThis as typeof globalThis & {
   prisma?: PrismaClient;
 };
 
-function createPrismaClient(): PrismaClient {
-  const adapter = new PrismaNeon({ connectionString: env.DATABASE_URL });
-  return new PrismaClient({ adapter });
-}
-
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+export const db = globalForPrisma.prisma ?? createPrismaClient(env.DATABASE_URL);
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = db;

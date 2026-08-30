@@ -24,10 +24,7 @@ describe("createLocationRepository.findById", () => {
       location: { findFirst },
     });
 
-    await repository.findById({
-      organizationId: "org_a",
-      locationId: "loc_b",
-    });
+    await repository.findById({ organizationId: "org_a" }, "loc_b");
 
     expect(findFirst).toHaveBeenCalledTimes(1);
     expect(findFirst).toHaveBeenCalledWith({
@@ -59,10 +56,7 @@ describe("createLocationRepository.findById", () => {
       },
     });
 
-    const result = await repository.findById({
-      organizationId: orgA,
-      locationId: locationB.id,
-    });
+    const result = await repository.findById({ organizationId: orgA }, locationB.id);
 
     expect(result).toBeNull();
   });
@@ -86,11 +80,8 @@ describe("createLocationRepository.findById", () => {
       },
     });
 
-    await expect(
-      repository.findById({
-        organizationId: orgA,
-        locationId: locationA.id,
-      }),
-    ).resolves.toEqual(locationA);
+    await expect(repository.findById({ organizationId: orgA }, locationA.id)).resolves.toEqual(
+      locationA,
+    );
   });
 });

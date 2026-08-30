@@ -27,38 +27,42 @@ Generations Adventureplex is tenant #1. It is never a code-level special case. N
 ```ts
 type RequestContext = {
   userId: string;
+  clerkUserId: string;
   organizationId: string;
+  clerkOrganizationId: string;
   locationId?: string;
 };
 ```
 
-RequestContext values must eventually be derived from trusted authenticated server state:
+Resolution:
 
 ```text
-Authenticated user
+Clerk session
         ↓
-Trusted server authentication (Clerk — not implemented yet)
+readTrustedClerkAuth()
         ↓
-Active Clerk organization
+Active Clerk Organization
         ↓
-MagicCRM Organization mapping
+Organization.clerkOrganizationId
+        ↓
+UserProfile (organizationId + clerkUserId)
         ↓
 Trusted RequestContext
         ↓
 Services / repositories
 ```
 
-There is no `getRequestContext()` in this phase. Cookies, query parameters, headers, and form fields must not be used to invent tenant identity.
+`getRequestContext()` fails closed when the user is signed out, has no active organization, or the MagicCRM mappings are missing. Cookies, query parameters, headers, and form fields must not be used to invent tenant identity.
+
+Switching Clerk organizations changes the active `clerkOrganizationId`. The next server render resolves a different MagicCRM Organization and UserProfile. Tenant-specific state is not cached across organizations.
 
 ## Repository rule
 
 Tenant-facing lookups include organization scope in the database query itself.
 
 ```ts
-locationRepository.findById({
-  organizationId: ctx.organizationId,
-  locationId,
-});
+const ctx = await getRequestContext();
+await locationRepository.findById(ctx, locationId);
 ```
 
 The query is `WHERE id = $locationId AND organizationId = $organizationId`.
@@ -81,12 +85,14 @@ Stable feature keys live in `src/types/feature-keys.ts`. They are module identif
 
 `src/server/policies/entitlements.ts` is a typed boundary for a future `requireEntitlement(...)`. This phase does not store entitlements, evaluate them, or map Starter/Pro/Premium/Enterprise plans.
 
-## Clerk mapping placeholders
+## Clerk mapping
 
-- `Organization.clerkOrganizationId` — nullable, unique
-- `UserProfile.clerkUserId` — nullable, unique
+- `Organization.clerkOrganizationId` — unique mapping from Clerk Organization to MagicCRM Organization
+- `UserProfile` is one membership per `(organizationId, clerkUserId)`. A single Clerk user may belong to multiple tenants.
 
-These exist so Phase 2 can map Clerk Organizations and users. They are not populated in this phase.
+`provisionOrganization()` creates the Organization, a `Main Location`, and the initiating UserProfile. It is idempotent and uses unique constraints plus conflict recovery.
+
+Generic defaults for a new tenant: timezone `UTC`, currency `USD`, location name `Main Location`. These are not Generations-specific.
 
 ## Storage topology
 

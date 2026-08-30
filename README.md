@@ -6,9 +6,7 @@ Generations Adventureplex is the first MagicCRM tenant. The system is being desi
 
 ## Current status
 
-Repository foundation plus Phase 1 tenant-aware persistence.
-
-The app still renders a minimal landing page. Prisma, Neon connection configuration, Organization / Location / UserProfile, and tenant-scoped repositories are in place. Authentication, CRM, booking, payments, and AI are not implemented yet.
+Phase 2 tenant authentication is in place: Clerk Organizations, MagicCRM provisioning, and a trusted `RequestContext`. CRM, booking, payments, and AI are not implemented yet.
 
 ## Prerequisites
 
@@ -34,7 +32,31 @@ Copy the environment example:
 cp .env.example .env.local
 ```
 
-Never commit `.env` or `.env.local`. Clerk, Stripe, OpenAI, and QStash remain unconfigured placeholders.
+Never commit `.env`, `.env.local`, or `.env.test`.
+
+## Clerk
+
+Create a Clerk application and enable Organizations. Copy:
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (browser-safe)
+- `CLERK_SECRET_KEY` (server-only)
+
+into `.env` / `.env.local`. Do not commit real keys.
+
+Then:
+
+```bash
+pnpm dev
+```
+
+1. Open `/` and choose **Employee sign in**.
+2. Sign up or sign in.
+3. Create or select a Clerk Organization. Personal accounts cannot enter `/app`.
+4. MagicCRM provisions an Organization, `Main Location`, and your UserProfile.
+5. `/app` shows the active organization, default location, and user.
+6. Switching organizations in the header resolves a different MagicCRM tenant. Refreshing does not create duplicate records.
+
+Integration tests do not call Clerk. They inject trusted auth input.
 
 ## Database (Neon + Prisma)
 
@@ -49,7 +71,16 @@ Production, development, and test databases must be separate. Do not run migrati
 pnpm db:generate
 pnpm db:validate
 pnpm db:migrate    # development only; requires DIRECT_URL
-pnpm test
+pnpm test:unit
+```
+
+Dedicated test database (never the development database):
+
+```bash
+cp .env.test.example .env.test
+# set MAGICCRM_DATABASE_ROLE=test and TEST Neon URLs only
+pnpm test:db:prepare
+pnpm test:integration
 ```
 
 `DATABASE_URL` is the runtime application connection (Neon pooler).  
@@ -71,8 +102,11 @@ pnpm build        # prisma generate + production build
 pnpm start        # run the production build
 pnpm lint         # ESLint
 pnpm typecheck    # TypeScript (`tsc --noEmit`)
-pnpm test         # Vitest
-pnpm test:watch   # Vitest watch
+pnpm test              # unit tests
+pnpm test:unit         # unit tests
+pnpm test:integration  # Neon TEST database only
+pnpm test:db:prepare   # apply migrations to TEST database
+pnpm test:watch        # unit test watch
 pnpm db:generate  # generate Prisma Client
 pnpm db:validate  # validate Prisma schema
 pnpm db:migrate   # create/apply development migrations

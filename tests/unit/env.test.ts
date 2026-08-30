@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { EnvValidationError, parsePrismaCliEnv, parseRuntimeEnv } from "@/lib/env/validation";
+import {
+  assertTestDatabaseIsIsolated,
+  EnvValidationError,
+  parsePrismaCliEnv,
+  parseRuntimeEnv,
+  parseTestDatabaseEnv,
+} from "@/lib/env/validation";
 
 const validPostgresUrl = "postgresql://magiccrm:secret@127.0.0.1:5432/magiccrm_dev";
 
@@ -26,6 +32,12 @@ describe("parseRuntimeEnv", () => {
     expect(() => parseRuntimeEnv({ DATABASE_URL: "   " })).toThrow(/DATABASE_URL is required/);
   });
 
+  it("treats Clerk keys as optional and does not require live Clerk credentials", () => {
+    const env = parseRuntimeEnv({ DATABASE_URL: validPostgresUrl });
+    expect(env.CLERK_SECRET_KEY).toBeUndefined();
+    expect(env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY).toBeUndefined();
+  });
+
   it("rejects a malformed value without echoing the secret", () => {
     try {
       parseRuntimeEnv({ DATABASE_URL: "not-a-url" });
@@ -44,6 +56,29 @@ describe("parseRuntimeEnv", () => {
       expect(String(error)).not.toContain("example.test");
       expect(String(error)).not.toContain("super-secret-password");
     }
+  });
+});
+
+describe("parseTestDatabaseEnv", () => {
+  it("requires an explicit test database role", () => {
+    expect(() =>
+      parseTestDatabaseEnv({
+        DATABASE_URL: validPostgresUrl,
+        DIRECT_URL: validPostgresUrl,
+      }),
+    ).toThrow(/MAGICCRM_DATABASE_ROLE/);
+  });
+
+  it("rejects a test URL that matches development", () => {
+    const testEnv = parseTestDatabaseEnv({
+      MAGICCRM_DATABASE_ROLE: "test",
+      DATABASE_URL: validPostgresUrl,
+      DIRECT_URL: validPostgresUrl,
+    });
+
+    expect(() =>
+      assertTestDatabaseIsIsolated(testEnv, { DATABASE_URL: validPostgresUrl }),
+    ).toThrow(/must not match the development database/);
   });
 });
 

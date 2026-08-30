@@ -1,3 +1,5 @@
+import type { RequestContext } from "@/server/request-context";
+
 export type OrganizationRecord = {
   id: string;
   clerkOrganizationId: string | null;
@@ -11,19 +13,23 @@ export type OrganizationRecord = {
 
 export type OrganizationReader = {
   organization: {
-    findFirst: (args: { where: { id: string } }) => Promise<OrganizationRecord | null>;
+    findFirst: (args: {
+      where: { id?: string; clerkOrganizationId?: string };
+    }) => Promise<OrganizationRecord | null>;
   };
 };
 
 export function createOrganizationRepository(db: OrganizationReader) {
   return {
-    /**
-     * Tenant-facing organization lookup. The caller supplies the trusted
-     * organizationId from RequestContext — never a browser-provided value.
-     */
-    findById(input: { organizationId: string }): Promise<OrganizationRecord | null> {
+    findById(ctx: Pick<RequestContext, "organizationId">): Promise<OrganizationRecord | null> {
       return db.organization.findFirst({
-        where: { id: input.organizationId },
+        where: { id: ctx.organizationId },
+      });
+    },
+
+    findByClerkOrganizationId(clerkOrganizationId: string): Promise<OrganizationRecord | null> {
+      return db.organization.findFirst({
+        where: { clerkOrganizationId },
       });
     },
   };

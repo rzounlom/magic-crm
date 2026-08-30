@@ -98,8 +98,8 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `Location` unique on `(organizationId, slug)` — tenant-scoped, not global
 - `Location` unique on `(organizationId, id)` — candidate key for same-tenant default-location FK
 - `Location` indexes: `(organizationId)`, `(organizationId, active)`
-- `UserProfile.clerkUserId` unique, nullable
-- `UserProfile` indexes: `(organizationId)`, `(organizationId, defaultLocationId)`
+- `UserProfile` unique on `(organizationId, clerkUserId)` — one Clerk user may belong to many tenants
+- `UserProfile` indexes: `(organizationId)`, `(organizationId, defaultLocationId)`, `(clerkUserId)`
 
 Future tenant tables should lead compound indexes with `organizationId`.
 
@@ -124,6 +124,7 @@ Committed migrations:
 - `20260830200000_tenant_foundation` — Organization, Location, UserProfile
 - `20260830220000_user_profile_default_location_same_tenant` — same-tenant default location FK
 - `20260830221500_user_profile_default_location_restrict` — composite FK `ON DELETE RESTRICT`
+- `20260830223000_user_profile_org_membership` — UserProfile unique on `(organizationId, clerkUserId)`
 
 ## Seed strategy
 
@@ -133,9 +134,9 @@ Future development seeds should use generic names such as “MagicCRM Developmen
 
 ## Testing
 
-Unit tests cover environment validation, feature keys, and tenant-scoped repository query behavior.
+Unit tests cover environment validation, feature keys, request-context mapping, and tenant-scoped repository query behavior.
 
-A dedicated test database is required before repository integration tests run against Postgres. See [`../testing/database-integration-strategy.md`](../testing/database-integration-strategy.md). Never point automated tests at production or a developer’s normal Neon branch.
+Integration tests run only against the dedicated Neon TEST database (`pnpm test:db:prepare` then `pnpm test:integration`). See [`../testing/database-integration-strategy.md`](../testing/database-integration-strategy.md). Never point automated tests at production or a developer’s normal Neon branch.
 
 ## Future scaling
 

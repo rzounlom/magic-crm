@@ -12,6 +12,7 @@ System architecture documents. Current implementation notes:
 
 - `database.md`
 - `multi-tenancy.md`
+- `authentication.md`
 
 The product source of truth remains `MAGICCRM_SAAS_ARCHITECTURE.md`. Expected later examples:
 
@@ -26,8 +27,8 @@ The product source of truth remains `MAGICCRM_SAAS_ARCHITECTURE.md`. Expected la
 Architecture Decision Records. Use sequential filenames:
 
 ```text
-ADR-001-description.md
-ADR-002-description.md
+ADR-001-database-and-multi-tenancy.md
+ADR-002-clerk-organizations-and-tenant-context.md
 ```
 
 ### `phases/`

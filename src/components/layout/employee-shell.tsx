@@ -1,24 +1,24 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-type SiteShellProps = {
+import { EmployeeOrganizationControls } from "@/components/layout/employee-organization-controls";
+
+type EmployeeShellProps = {
   children: ReactNode;
 };
 
-export function SiteShell({ children }: SiteShellProps) {
+export function EmployeeShell({ children }: EmployeeShellProps) {
   return (
     <div className="flex min-h-full flex-col bg-background text-foreground">
       <header className="border-b border-border bg-muted/60">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-6">
-          <Link href="/" className="text-sm font-semibold tracking-wide text-foreground">
+          <Link href="/app" className="text-sm font-semibold tracking-wide text-foreground">
             MagicCRM
           </Link>
-          <Link href="/sign-in" className="text-sm text-primary">
-            Employee sign in
-          </Link>
+          <EmployeeOrganizationControls />
         </div>
       </header>
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-10">{children}</main>
     </div>
   );
 }

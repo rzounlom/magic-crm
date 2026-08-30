@@ -16,16 +16,24 @@ Never run destructive tests against:
 
 A developer’s everyday branch will accumulate local data and is too easy to reset accidentally.
 
-### Phase 2 prerequisite
+### Phase 2 status
 
-Phase 2 Clerk / tenant-provisioning integration tests **must not start** until a dedicated Neon test branch or test database exists, with its own gitignored credentials (for example `.env.test`).
+A dedicated Neon TEST branch exists. Local credentials are gitignored in `.env.test`. Integration tests inject trusted Clerk auth and do not call Clerk’s API.
 
 Do not invent those credentials in planning docs. Do not reuse `DATABASE_URL` / `DIRECT_URL` from the normal development `.env`.
 
-Until that test database is configured:
+Local test credentials live in gitignored `.env.test` and must include:
 
-```text
-Real Postgres integration tests remain blocked until a dedicated test database/Neon branch is configured.
+```env
+MAGICCRM_DATABASE_ROLE=test
+```
+
+`pnpm test:db:prepare` applies migrations to the test database only.  
+`pnpm test:integration` refuses to run if the role is missing or if the test URLs match development.
+
+```bash
+pnpm test:db:prepare
+pnpm test:integration
 ```
 
 ## Preferred isolation
