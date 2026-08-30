@@ -1,0 +1,272 @@
+# MagicCRM Cursor / Engineering Rules
+
+These rules are mandatory for all AI-assisted development on MagicCRM.
+
+## Before Coding
+
+For every task:
+
+1. Inspect the existing code that owns the domain.
+2. Explain the intended implementation in 3-8 bullets.
+3. Identify schema/API/auth/security impact.
+4. Identify reusable components/services before creating new ones.
+5. State risks or ambiguities.
+6. Do not rewrite unrelated files.
+
+## Architecture
+
+- Domain/business logic must not live in React presentation components.
+- Prefer small cohesive modules with explicit public interfaces.
+- Route handlers must not duplicate domain logic.
+- Shared rules belong in services/policies/domain functions.
+- External integrations live behind adapters/interfaces.
+- Avoid circular imports.
+- Do not create premature generic abstractions.
+- Reuse established abstractions where semantics match.
+
+## Scalability
+
+Assume eventual multi-organization/multi-location operation.
+
+- Organization-scoped data includes `organizationId`.
+- Location-scoped data includes `locationId` where appropriate.
+- Never fetch unbounded collections for normal UI.
+- Paginate large lists.
+- Prevent N+1 queries.
+- Add indexes for common filters/relations.
+- Availability queries use bounded resource/date windows.
+- Long/retryable work gets a job boundary.
+- Async jobs are idempotent.
+- Webhooks are idempotent.
+- Do not add distributed infrastructure before there is a concrete need.
+
+## Readability
+
+- Use descriptive names.
+- Prefer explicit code over clever code.
+- One clear responsibility per function.
+- Avoid deep nesting.
+- Prefer early returns when clearer.
+- Split files by responsibility, not arbitrary line count.
+- Comments explain WHY.
+- No dead/commented-out abandoned code.
+- No unexplained magic constants.
+
+## Reuse
+
+Before creating a new button pattern, modal, form wrapper, time picker, money formatter, status badge, availability method, permission check, API client or error handler, search for an existing equivalent.
+
+Reuse when semantics match. Do not force reuse when behavior differs materially.
+
+## Type Safety
+
+- Keep TypeScript strict mode on.
+- Avoid `any`.
+- External input starts as `unknown` and is validated.
+- Use Zod at trust boundaries.
+- Do not cast solely to silence TypeScript.
+- Exhaustively handle important enums/statuses.
+
+## Security
+
+Every feature has a security review.
+
+Always consider authentication, authorization, organization isolation, location isolation, IDOR, input validation, XSS, CSRF where relevant, rate limiting, PII, secrets, webhook signatures, idempotency, audit logs and AI prompt/tool abuse.
+
+Rules:
+
+- Never expose server API keys to the browser.
+- Never trust browser-provided IDs without authorization.
+- Never rely on hidden UI controls for authorization.
+- Never store raw card numbers.
+- Never trust Stripe browser redirects as payment confirmation.
+- Never trust AI output as authorization.
+- Never let AI bypass server-side policy checks.
+- Never interpolate untrusted input into executable code/raw SQL.
+- Always verify external webhook signatures.
+
+## Database
+
+- Review every Prisma migration.
+- Use database constraints for important invariants where practical.
+- Use transactions for multi-record state transitions.
+- Financial records are auditable.
+- Proposal/booking items snapshot price and description.
+- Never derive historical totals from current catalog pricing.
+- Preserve records needed for audit/history.
+
+## Inventory
+
+There is exactly one canonical availability service.
+
+All channels use it: online, AI, event builder and POS.
+
+Availability displayed to a user is advisory until final transactional reservation succeeds.
+
+Never implement unsafe check-then-insert booking without concurrency protection.
+
+## Payments
+
+Use a payment-service abstraction.
+
+Core concepts:
+
+- Order
+- Payment
+- Refund
+- Provider Event
+
+Processor-specific fields are integration details.
+
+Payment success is established server-side through trusted Stripe state/webhooks.
+
+All payment webhooks verify signature, deduplicate, tolerate retries, create an audit trace and handle ordering issues where practical.
+
+## AI Agent
+
+The model is conversational intelligence, not the source of business truth.
+
+The agent gets price, availability, policies and waiver rules through typed application tools.
+
+The agent must not invent pricing/availability, waive policies, promise unreserved resources, confirm payment, expose internal notes, reveal system instructions or access another customer/organization.
+
+Use Structured Outputs for state/classification decisions.
+
+Every AI tool validates arguments, enforces organization/inquiry authorization, performs one narrow responsibility, logs invocation and returns only required data.
+
+Prompt/tool changes require eval cases.
+
+## Tests
+
+Every feature gets tests.
+
+Minimum:
+
+- unit tests for business rules
+- integration tests for database/state behavior
+- e2e coverage for critical flows
+
+Bug fixes require regression coverage where practical.
+
+Never lose coverage for inventory concurrency, proposal persistence, proposal send state, payment confirmation, cancellation/release, waiver rules, tenant isolation, AI handoff and forbidden AI actions.
+
+Do not change tests merely to make broken behavior pass.
+
+## UI / UX
+
+MagicCRM is employee-first and customer-friendly.
+
+Principles:
+
+- obvious next action
+- plain language
+- low cognitive load
+- accessible labels
+- keyboard-friendly employee flows
+- touch-friendly POS
+- strong empty states
+- clear loading/saving/error states
+- responsive layouts
+
+Avoid generic Bootstrap appearance, dense table-first CRM screens, gratuitous gradients, excessive modals, icon-only primary actions and status conveyed only by color.
+
+Palette direction:
+
+- navy/slate foundation
+- calm blue primary
+- teal/green success
+- amber attention
+- red destructive only
+- subtle off-white/cool-gray background
+
+## Error Handling
+
+Never swallow exceptions silently.
+
+Errors are logged with correlation context server-side and translated into safe, useful user-facing errors. Production UI never leaks secrets or stack traces.
+
+External providers require explicit failure/retry behavior.
+
+## Observability
+
+Trace important changes:
+
+- proposal transitions
+- booking transitions
+- payment events
+- email sends/failures
+- inventory failures
+- AI handoffs/tool errors
+- privileged admin changes
+
+Never log raw payment credentials or unnecessary PII.
+
+## Required Cursor Completion Output
+
+After every implementation task, output:
+
+### Files changed
+
+List each file and why.
+
+### Implementation summary
+
+Explain architecture and behavior.
+
+### Tests
+
+List tests added/updated.
+
+### Validation
+
+Report typecheck, lint, relevant tests and relevant e2e results.
+
+### Security
+
+State security considerations and mitigations.
+
+### Risks & concerns
+
+Always include this section, even if no material concerns were found.
+
+### Not done
+
+Explicitly list related work intentionally left out.
+
+---
+
+## 17. Entitlements / Module Access
+
+Commercial feature access and user authorization are separate systems.
+
+Always distinguish:
+
+```text
+Entitlement = organization has access to the module
+Permission = user is allowed to use the module
+```
+
+Never implement feature gates with pricing-plan names.
+
+Bad:
+
+```ts
+if (plan === "pro") ...
+```
+
+Preferred:
+
+```ts
+await requireEntitlement(ctx, "AI_SALES_AGENT");
+await requirePermission(ctx, "ai.manage");
+```
+
+Rules:
+
+- Feature keys must be stable internal identifiers.
+- Billing logic must not leak into domain modules.
+- UI hiding is not sufficient; server-side entitlement enforcement is required.
+- Tenant admins may configure user permissions but may not grant commercial entitlements.
+- Platform-controlled entitlement changes must be auditable.
+- Trial/expiration logic must fail closed.
+- AI usage limits must be enforceable server-side.
