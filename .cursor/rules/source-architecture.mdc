@@ -1,0 +1,16 @@
+---
+description: MagicCRM source architecture and foundation conventions
+alwaysApply: true
+---
+
+# MagicCRM architecture
+
+- Design as a multi-tenant SaaS from inception. Never special-case a tenant (including Generations Adventureplex) in application architecture.
+- `src/app` contains Next.js routes and layouts only. Keep business logic out of route components.
+- `src/modules` holds feature/domain modules. Do not leak domain logic into shared folders.
+- `src/server/services` orchestrates business logic; `repositories` own data access; `policies` own authorization.
+- `src/lib` is shared infrastructure helpers only (db, auth, billing clients later).
+- `src/types` is for truly shared cross-domain types — not a dumping ground.
+- `src/components/ui` is low-level primitives; `src/components/layout` is application shell.
+- Do not use `any`. Keep TypeScript strict. Import alias is `@/*`.
+- Planning documents live in `planning/` and stay separate from production code.
