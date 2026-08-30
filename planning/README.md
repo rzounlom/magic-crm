@@ -8,7 +8,12 @@ Use it to decide architecture, record trade-offs, and specify work before implem
 
 ### `architecture/`
 
-System architecture documents. Expected later examples:
+System architecture documents. Current implementation notes:
+
+- `database.md`
+- `multi-tenancy.md`
+
+The product source of truth remains `MAGICCRM_SAAS_ARCHITECTURE.md`. Expected later examples:
 
 - `system-overview.md`
 - `multi-tenancy.md`

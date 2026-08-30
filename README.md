@@ -6,9 +6,9 @@ Generations Adventureplex is the first MagicCRM tenant. The system is being desi
 
 ## Current status
 
-Repository and Next.js application foundation only.
+Repository foundation plus Phase 1 tenant-aware persistence.
 
-The app currently renders a minimal landing page that proves the Next.js App Router, TypeScript, Tailwind CSS, and import alias setup. Business features, authentication, database access, payments, and AI integrations are not implemented yet.
+The app still renders a minimal landing page. Prisma, Neon connection configuration, Organization / Location / UserProfile, and tenant-scoped repositories are in place. Authentication, CRM, booking, payments, and AI are not implemented yet.
 
 ## Prerequisites
 
@@ -28,22 +28,56 @@ corepack prepare pnpm@11.24.0 --activate
 pnpm install
 ```
 
-Copy the environment example and leave values empty until a later phase configures each service:
+Copy the environment example:
 
 ```bash
 cp .env.example .env.local
 ```
 
-`.env.example` lists future integrations only. None of those services are configured in this foundation step. Never commit `.env` or `.env.local`.
+Never commit `.env` or `.env.local`. Clerk, Stripe, OpenAI, and QStash remain unconfigured placeholders.
+
+## Database (Neon + Prisma)
+
+Production, development, and test databases must be separate. Do not run migrations or tests against production.
+
+1. Create a Neon **development** project (or branch).
+2. Copy the **pooled** connection string into `DATABASE_URL`.
+3. Copy the **direct / unpooled** connection string into `DIRECT_URL`.
+4. Generate the Prisma Client, validate the schema, migrate, and test:
+
+```bash
+pnpm db:generate
+pnpm db:validate
+pnpm db:migrate    # development only; requires DIRECT_URL
+pnpm test
+```
+
+`DATABASE_URL` is the runtime application connection (Neon pooler).  
+`DIRECT_URL` is for Prisma CLI migrations, introspection, and Prisma Studio.
+
+`pnpm db:migrate`, `pnpm db:deploy`, and `pnpm db:studio` fail if `DIRECT_URL` is missing. They do not fall back to localhost. `pnpm db:validate` and `pnpm db:generate` can run without a live database.
+
+Prisma Studio (`pnpm db:studio`) is privileged admin tooling. Treat it like direct production-database access.
+
+There is no `db:reset` script. Do not add one casually.
+
+After `pnpm install`, run `pnpm db:generate` before `pnpm typecheck` if `src/generated` is not present.
 
 ## Commands
 
 ```bash
-pnpm dev        # development server (Turbopack)
-pnpm build      # production build
-pnpm start      # run the production build
-pnpm lint       # ESLint
-pnpm typecheck  # TypeScript (`tsc --noEmit`)
+pnpm dev          # development server (Turbopack)
+pnpm build        # prisma generate + production build
+pnpm start        # run the production build
+pnpm lint         # ESLint
+pnpm typecheck    # TypeScript (`tsc --noEmit`)
+pnpm test         # Vitest
+pnpm test:watch   # Vitest watch
+pnpm db:generate  # generate Prisma Client
+pnpm db:validate  # validate Prisma schema
+pnpm db:migrate   # create/apply development migrations
+pnpm db:deploy    # apply committed migrations
+pnpm db:studio    # privileged Prisma Studio
 ```
 
 Open [http://localhost:3000](http://localhost:3000) after starting `pnpm dev`.

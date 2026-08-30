@@ -1,0 +1,71 @@
+// MagicCRM tenant foundation.
+// Product domain tables are intentionally absent in this phase.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// One MagicCRM client. Generations Adventureplex is tenant data, never a schema special case.
+model Organization {
+  id                  String   @id @default(cuid(2))
+  clerkOrganizationId String?  @unique
+  name                String
+  slug                String   @unique
+  /// IANA timezone identifier. Required; no tenant-specific schema default.
+  timezone            String
+  /// ISO 4217 currency code. Monetary amounts must never use floating-point types.
+  currency            String   @db.VarChar(3)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  locations    Location[]
+  userProfiles UserProfile[]
+
+  @@map("organizations")
+}
+
+/// A physical or operational site belonging to exactly one organization.
+model Location {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  name           String
+  slug           String
+  timezone       String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization           Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  defaultForUserProfiles UserProfile[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([organizationId, active])
+  @@map("locations")
+}
+
+/// Tenant employee profile. Clerk mapping is nullable until authentication is introduced.
+/// Employee authorization will use Security Groups later — this model has no role field.
+model UserProfile {
+  id                String   @id @default(cuid(2))
+  clerkUserId       String?  @unique
+  organizationId    String
+  defaultLocationId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  /// Same-tenant default location. ON DELETE RESTRICT matches Prisma and PostgreSQL.
+  /// A future location-delete service must clear defaultLocationId in the same transaction.
+  defaultLocation Location?    @relation(fields: [organizationId, defaultLocationId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId])
+  @@index([organizationId, defaultLocationId])
+  @@map("user_profiles")
+}
