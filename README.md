@@ -58,6 +58,22 @@ pnpm dev
 
 Integration tests do not call Clerk. They inject trusted auth input.
 
+## Vercel
+
+The landing page does not use the database. A 500 on `/` is almost always Clerk Edge middleware, not Neon.
+
+In the Vercel project, set these for **Production** and **Preview**, then **redeploy**:
+
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `DATABASE_URL` (Neon pooled URL; required for `/app`, not for `/`)
+
+`DIRECT_URL` is not required on Vercel unless you run Prisma migrations there.
+
+In the Clerk Dashboard, add the Vercel URL (for example `https://your-app.vercel.app`) to the allowed origins / production domains. After changing env vars, a new deployment is required so Edge middleware picks them up.
+
+Check **Vercel → Logs** for `Missing publishableKey` or `Missing secretKey` if `/` still fails.
+
 ## Database (Neon + Prisma)
 
 Production, development, and test databases must be separate. Do not run migrations or tests against production.

@@ -40,6 +40,10 @@ Browser-provided organization IDs, query params, headers, and form fields are ne
 
 `clerkMiddleware()` in `src/proxy.ts` keeps the Clerk session available and requires a signed-in user for `/app`. Next.js middleware redirects must use an absolute sign-in URL. Middleware is not sufficient authorization. Server pages and services still resolve `RequestContext`.
 
+If Clerk keys are missing (common on a first Vercel deploy), middleware must not crash. Public routes still render; `/app` redirects to sign-in. `src/proxy.ts` must not import `@/lib/env`, because that module requires `DATABASE_URL`.
+
+Do not pass `secretKey` into `clerkMiddleware()` options. Clerk treats that as dynamic keys and then requires `CLERK_ENCRYPTION_KEY`. Let Clerk read keys from the environment.
+
 ## Employee routes
 
 | Area | Auth |
