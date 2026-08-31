@@ -11,6 +11,7 @@ export default defineConfig({
     include: ["tests/integration/**/*.test.ts"],
     setupFiles: ["tests/integration/setup.ts"],
     fileParallelism: false,
+    testTimeout: 20000,
   },
   resolve: {
     alias: {

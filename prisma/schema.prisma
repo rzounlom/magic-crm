@@ -1,5 +1,5 @@
-// MagicCRM tenant foundation.
-// Product domain tables are intentionally absent in this phase.
+// MagicCRM tenant foundation plus Phase 2B authorization.
+// Product domain tables (CRM, catalog, booking) are intentionally absent.
 
 generator client {
   provider = "prisma-client"
@@ -23,8 +23,10 @@ model Organization {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  locations    Location[]
-  userProfiles UserProfile[]
+  locations      Location[]
+  userProfiles   UserProfile[]
+  securityGroups SecurityGroup[]
+  auditLogs      AuditLog[]
 
   @@map("organizations")
 }
@@ -51,23 +53,125 @@ model Location {
 }
 
 /// Tenant employee membership. One Clerk user may have one profile per organization.
-/// Employee authorization will use Security Groups later — this model has no role field.
+/// Employee authorization uses Security Groups — this model has no role field.
+/// firstName/email/avatarUrl are a Clerk identity display snapshot, not authorization.
 model UserProfile {
   id                String   @id @default(cuid(2))
   clerkUserId       String
   organizationId    String
   defaultLocationId String?
+  firstName         String?  @db.VarChar(80)
+  lastName          String?  @db.VarChar(80)
+  displayName       String?  @db.VarChar(160)
+  /// Login/work email snapshot. Not unique: one Clerk user may belong to many tenants.
+  email             String?  @db.VarChar(254)
+  avatarUrl         String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organization         Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   /// Same-tenant default location. ON DELETE RESTRICT matches Prisma and PostgreSQL.
   /// A future location-delete service must clear defaultLocationId in the same transaction.
-  defaultLocation Location?    @relation(fields: [organizationId, defaultLocationId], references: [organizationId, id], onDelete: Restrict)
+  defaultLocation      Location?            @relation(fields: [organizationId, defaultLocationId], references: [organizationId, id], onDelete: Restrict)
+  securityGroupMembers SecurityGroupMember[]
 
+  @@unique([organizationId, id])
   @@unique([organizationId, clerkUserId])
   @@index([organizationId])
   @@index([organizationId, defaultLocationId])
   @@index([clerkUserId])
   @@map("user_profiles")
+}
+
+/// Platform-owned permission catalog. Tenants cannot create keys.
+model PermissionDefinition {
+  id          String   @id @default(cuid(2))
+  key         String   @unique @db.VarChar(80)
+  module      String   @db.VarChar(40)
+  name        String
+  description String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  groupPermissions SecurityGroupPermission[]
+
+  @@index([module])
+  @@index([active])
+  @@map("permission_definitions")
+}
+
+/// Tenant-defined grouping of platform permissions.
+model SecurityGroup {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  name           String   @db.VarChar(80)
+  description    String?
+  isSystem       Boolean  @default(false)
+  /// Stable template key such as "administrators". Null for custom groups.
+  systemKey      String?  @db.VarChar(64)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization              @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  permissions  SecurityGroupPermission[]
+  members      SecurityGroupMember[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, name])
+  @@unique([organizationId, systemKey])
+  @@index([organizationId])
+  @@index([organizationId, isSystem])
+  @@map("security_groups")
+}
+
+/// Permission assigned to a tenant security group.
+model SecurityGroupPermission {
+  id                     String @id @default(cuid(2))
+  organizationId         String
+  securityGroupId        String
+  permissionDefinitionId String
+
+  securityGroup        SecurityGroup        @relation(fields: [organizationId, securityGroupId], references: [organizationId, id], onDelete: Cascade)
+  permissionDefinition PermissionDefinition @relation(fields: [permissionDefinitionId], references: [id], onDelete: Restrict)
+
+  @@unique([securityGroupId, permissionDefinitionId])
+  @@index([organizationId])
+  @@index([permissionDefinitionId])
+  @@map("security_group_permissions")
+}
+
+/// Same-tenant membership: UserProfile and SecurityGroup share organizationId.
+model SecurityGroupMember {
+  id              String   @id @default(cuid(2))
+  organizationId  String
+  securityGroupId String
+  userProfileId   String
+  createdAt       DateTime @default(now())
+
+  securityGroup SecurityGroup @relation(fields: [organizationId, securityGroupId], references: [organizationId, id], onDelete: Cascade)
+  userProfile   UserProfile   @relation(fields: [organizationId, userProfileId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([securityGroupId, userProfileId])
+  @@index([organizationId])
+  @@index([userProfileId])
+  @@map("security_group_members")
+}
+
+/// Append-only tenant audit trail. No tenant edit/delete path.
+model AuditLog {
+  id                 String   @id @default(cuid(2))
+  organizationId     String
+  actorUserProfileId String?
+  action             String   @db.VarChar(80)
+  resourceType       String   @db.VarChar(80)
+  resourceId         String?
+  metadata           Json?
+  createdAt          DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, resourceType, resourceId])
+  @@map("audit_logs")
 }

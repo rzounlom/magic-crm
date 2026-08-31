@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Source_Sans_3 } from "next/font/google";
 
 import { clerkAppearance } from "@/lib/auth/clerk-appearance";
+import { AppToaster } from "@/components/ui/app-toaster";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -31,9 +32,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             signUpUrl="/sign-up"
           >
             {children}
+            <AppToaster />
           </ClerkProvider>
         ) : (
-          children
+          <>
+            {children}
+            <AppToaster />
+          </>
         )}
       </body>
     </html>

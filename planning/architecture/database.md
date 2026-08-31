@@ -65,6 +65,12 @@ Organization deletion does **not** cascade to locations, user profiles, or futur
 | `Location.organization` | `Restrict` | Deleting a tenant must not erase locations or later customers/events/payments. |
 | `UserProfile.organization` | `Restrict` | Same — business and audit data must not disappear accidentally. |
 | `UserProfile.defaultLocation` | `Restrict` | A location cannot be deleted while any same-tenant profile still points at it. |
+| `SecurityGroup.organization` | `Restrict` | Tenant delete must not erase authorization graph accidentally. |
+| `AuditLog.organization` | `Restrict` | Audit history is preserved. |
+| `SecurityGroupPermission.securityGroup` | `Cascade` | Group delete removes assignments. |
+| `SecurityGroupMember.securityGroup` | `Cascade` | Group delete removes memberships. |
+| `SecurityGroupMember.userProfile` | `Cascade` | Profile delete removes memberships only. |
+| `SecurityGroupPermission.permissionDefinition` | `Restrict` | Deactivate catalog keys instead of deleting them. |
 
 ### Same-tenant default location
 
@@ -99,7 +105,12 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `Location` unique on `(organizationId, id)` — candidate key for same-tenant default-location FK
 - `Location` indexes: `(organizationId)`, `(organizationId, active)`
 - `UserProfile` unique on `(organizationId, clerkUserId)` — one Clerk user may belong to many tenants
+- `UserProfile` unique on `(organizationId, id)` — candidate key for same-tenant security-group membership
 - `UserProfile` indexes: `(organizationId)`, `(organizationId, defaultLocationId)`, `(clerkUserId)`
+- `UserProfile.email` is nullable and **not** unique — display snapshot only
+- `SecurityGroup` unique on `(organizationId, name)` and `(organizationId, systemKey)`
+- `SecurityGroupMember` unique on `(securityGroupId, userProfileId)` with composite same-tenant FKs
+- `SecurityGroupPermission` unique on `(securityGroupId, permissionDefinitionId)`
 
 Future tenant tables should lead compound indexes with `organizationId`.
 
@@ -125,10 +136,20 @@ Committed migrations:
 - `20260830220000_user_profile_default_location_same_tenant` — same-tenant default location FK
 - `20260830221500_user_profile_default_location_restrict` — composite FK `ON DELETE RESTRICT`
 - `20260830223000_user_profile_org_membership` — UserProfile unique on `(organizationId, clerkUserId)`
+- `20260831051500_security_groups_and_audit` — PermissionDefinition, SecurityGroup, membership, AuditLog
+- `20260831060000_user_profile_identity_display` — UserProfile name/email/avatar display snapshot
 
-## Seed strategy
+## Seed / reference data
 
-This phase does not seed data. Production startup must never depend on seed execution.
+Schema lives in Prisma migrations. Permission catalog rows are application reference data, not migration SQL.
+
+```bash
+pnpm db:sync-auth
+```
+
+That command upserts `PermissionDefinition` rows from `PERMISSION_CATALOG` and ensures default security groups for every existing organization. It does not reset tenant data. Removed catalog keys are marked inactive, never deleted.
+
+There is no generic seed that creates a special-cased tenant. Production startup must never depend on seed execution.
 
 Future development seeds should use generic names such as “MagicCRM Development Organization” / “Main Location”. Generations Adventureplex configuration belongs in tenant data, not in application code.
 

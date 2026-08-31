@@ -7,6 +7,7 @@ export type TrustedClerkAuth = {
   clerkOrganizationId: string | null;
   organizationName?: string;
   organizationSlug?: string;
+  clerkOrganizationRole?: string | null;
 };
 
 /**
@@ -19,7 +20,7 @@ export type TrustedClerkAuth = {
  * Tests inject TrustedClerkAuth directly and never call Clerk.
  */
 export async function readTrustedClerkAuth(): Promise<TrustedClerkAuth> {
-  const { userId, orgId, orgSlug } = await auth();
+  const { userId, orgId, orgSlug, orgRole } = await auth();
 
   if (!userId) {
     return {
@@ -40,5 +41,6 @@ export async function readTrustedClerkAuth(): Promise<TrustedClerkAuth> {
     clerkOrganizationId: orgId,
     organizationSlug: orgSlug ?? undefined,
     organizationName: orgSlug ?? undefined,
+    clerkOrganizationRole: orgRole ?? null,
   };
 }

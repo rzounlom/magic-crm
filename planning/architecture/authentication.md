@@ -20,7 +20,7 @@ This document describes how MagicCRM currently authenticates employees. Tenant m
 - Future Security Groups and permissions (Phase 2B)
 - Future commercial entitlements
 
-Clerk organization admin/member roles are only for Clerk-side organization administration. They are not MagicCRM’s permission model.
+Clerk organization admin/member roles are only for Clerk-side organization administration and a one-time MagicCRM Administrators bootstrap when that group is empty. They are not MagicCRM’s permission model. See [`authorization.md`](./authorization.md).
 
 ## Trust boundary
 
@@ -55,6 +55,30 @@ Do not pass `secretKey` into `clerkMiddleware()` options. Clerk treats that as d
 Personal Clerk accounts cannot use the employee app. The user must have an active Clerk Organization (`OrganizationSwitcher` uses `hidePersonal`). Clerk 7.8.3 has no `hideCreateOrganization` prop. Employee UX hides the create action via the official `appearance.elements` API (`organizationSwitcherPopoverActionButton__createOrganization`). Tenant creation is Clerk Dashboard / platform-controlled. Membership and switching still use Clerk Organizations.
 
 Provisioning reads only the Clerk session (`userId`, `orgId`, `orgSlug`). The session JWT does **not** include an organization display name, so first provision stores the slug as `Organization.name`. That is a later organization metadata synchronization concern. Do not add a Clerk HTTP call on every request. Do not add webhooks solely for cosmetic name sync.
+
+## Employee identity display snapshot
+
+Clerk remains the source of authentication identity. MagicCRM stores a small **display snapshot** on `UserProfile`:
+
+- `firstName`, `lastName`, `displayName`, `email`, `avatarUrl`
+
+This snapshot is for employee administration labels (Security Groups). It is **not** authorization. `clerkUserId` remains the external identity key. `email` is not unique and is never used as tenant authority.
+
+When a UserProfile is created, or when an existing profile is missing `displayName` and `email`, the next authenticated `/app` visit reads the current Clerk user **once** (`currentUser()`) and persists the snapshot. That write updates **all** UserProfiles with the same `clerkUserId`, because name/email/avatar belong to the Clerk identity, not the tenant.
+
+Security administration may also refresh missing snapshots for **other** employees in the current tenant. That path:
+
+- loads UserProfiles in `RequestContext.organizationId` that are missing both `displayName` and `email`
+- resolves those Clerk user IDs with Clerk’s batched backend `users.getUserList({ userId })` (up to 100 IDs per call)
+- persists snapshots only onto UserProfiles in the current organization
+- never accepts Clerk user IDs from the browser; IDs come from tenant-scoped PostgreSQL rows
+- requires `users.manage` or `security_groups.manage`
+
+After those fields are populated, Security Groups and other pages read PostgreSQL only. Do not call Clerk per employee while rendering a member list.
+
+“Unknown employee” is a fallback when Clerk has no usable name/email for that user, or the identity provider lookup failed. Administrators can retry with **Refresh employee details**.
+
+Future Clerk user-update webhooks may refresh this snapshot. They are not implemented in this patch.
 
 ## Manual browser verification (Phase 2)
 

@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { Suspense } from "react";
 
-import { EmployeeOrganizationControls } from "@/components/layout/employee-organization-controls";
+import { EmployeeHeaderBar } from "@/components/layout/employee-header-bar";
+import {
+  EmployeeOrganizationSwitcher,
+  EmployeeUserButton,
+} from "@/components/layout/employee-organization-controls";
+import { SecurityAdminNavLink } from "@/components/layout/security-admin-nav-link";
 
 type EmployeeShellProps = {
   children: ReactNode;
@@ -10,14 +15,15 @@ type EmployeeShellProps = {
 export function EmployeeShell({ children }: EmployeeShellProps) {
   return (
     <div className="flex min-h-full flex-col bg-background text-foreground">
-      <header className="border-b border-border bg-muted/60">
-        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-6">
-          <Link href="/app" className="text-sm font-semibold tracking-wide text-foreground">
-            MagicCRM
-          </Link>
-          <EmployeeOrganizationControls />
-        </div>
-      </header>
+      <EmployeeHeaderBar
+        securityNav={
+          <Suspense fallback={null}>
+            <SecurityAdminNavLink />
+          </Suspense>
+        }
+        organizationSwitcher={<EmployeeOrganizationSwitcher />}
+        userButton={<EmployeeUserButton />}
+      />
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-10">{children}</main>
     </div>
   );

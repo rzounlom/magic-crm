@@ -28,7 +28,7 @@ Local test credentials live in gitignored `.env.test` and must include:
 MAGICCRM_DATABASE_ROLE=test
 ```
 
-`pnpm test:db:prepare` applies migrations to the test database only.  
+`pnpm test:db:prepare` applies migrations to the test database only, then syncs permission catalog reference data.  
 `pnpm test:integration` refuses to run if the role is missing or if the test URLs match development.
 
 ```bash

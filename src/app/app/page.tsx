@@ -1,7 +1,6 @@
-import { currentUser } from "@clerk/nextjs/server";
-
 import { readTrustedClerkAuth } from "@/lib/auth/trusted-clerk-auth";
 import { db } from "@/lib/db";
+import { formatUserDisplayLabel } from "@/lib/identity/user-display";
 import { isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import { createLocationRepository } from "@/server/repositories/location-repository";
@@ -44,6 +43,10 @@ export default async function EmployeeHomePage() {
           <dd className="mt-1 font-medium text-foreground">{view.userLabel}</dd>
         </div>
       </dl>
+        <p className="mt-8 max-w-md text-sm text-foreground/70">
+          Security groups control what employees can access. Administrators can open Security in the
+          header.
+        </p>
     </section>
   );
 }
@@ -70,8 +73,17 @@ async function loadEmployeeHomeView(): Promise<EmployeeHomeView> {
     const location = ctx.locationId
       ? await createLocationRepository(db).findById(ctx, ctx.locationId)
       : null;
-    const user = await currentUser();
-    const userLabel = user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "Signed in";
+    const profile = await db.userProfile.findFirst({
+      where: { id: ctx.userId, organizationId: ctx.organizationId },
+      select: {
+        clerkUserId: true,
+        firstName: true,
+        lastName: true,
+        displayName: true,
+        email: true,
+      },
+    });
+    const userLabel = profile ? formatUserDisplayLabel(profile) : "Signed in";
 
     return {
       kind: "ready",

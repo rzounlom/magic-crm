@@ -4,7 +4,9 @@ type TenantLogEvent =
   | "organization_reused"
   | "user_profile_provisioned"
   | "user_profile_reused"
-  | "tenant_mapping_failure";
+  | "tenant_mapping_failure"
+  | "administrator_bootstrapped"
+  | "employee_identity_refresh_failed";
 
 export function logTenantEvent(
   event: TenantLogEvent,

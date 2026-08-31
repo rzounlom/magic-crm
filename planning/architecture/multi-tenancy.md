@@ -79,7 +79,7 @@ Do not fetch by ID and compare organization afterward. If Tenant A knows Tenant 
 
 Platform employees (MagicCRM staff) and tenant employees are different authorization planes. Putting a platform role on the tenant profile would mix those planes and encourage treating support staff as tenant members.
 
-Platform roles belong in a later platform-identity design. Tenant employee authorization will use Security Groups (`PermissionDefinition`, `SecurityGroup`, `SecurityGroupPermission`, `SecurityGroupMember`) — also not implemented yet. `UserProfile` therefore has no `role` field.
+Platform roles belong in a later platform-identity design. Tenant employee authorization uses Security Groups. See [`authorization.md`](./authorization.md).
 
 ## Entitlements vs permissions
 

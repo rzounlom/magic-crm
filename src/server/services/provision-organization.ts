@@ -1,7 +1,13 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import type { TrustedClerkAuth } from "@/lib/auth/trusted-clerk-auth";
+import type { UserIdentitySnapshot } from "@/lib/identity/user-display";
 import { TenantContextError } from "@/server/errors";
 import { logTenantEvent } from "@/server/logging";
+import {
+  ensureDefaultSecurityGroups,
+  isClerkOrganizationAdminRole,
+} from "@/server/services/ensure-default-security-groups";
+import { persistUserIdentitySnapshot } from "@/server/services/sync-user-profile-identity";
 
 export const PRIMARY_LOCATION_SLUG = "main";
 export const PRIMARY_LOCATION_NAME = "Main Location";
@@ -15,6 +21,8 @@ export type ProvisionOrganizationInput = {
   organizationSlug?: string;
   timezone?: string;
   currency?: string;
+  isClerkOrganizationAdmin?: boolean;
+  identity?: UserIdentitySnapshot;
 };
 
 export type ProvisionOrganizationResult = {
@@ -26,7 +34,7 @@ export type ProvisionOrganizationResult = {
   userProfileCreated: boolean;
 };
 
-export type ProvisionDb = Pick<PrismaClient, "organization" | "location" | "userProfile">;
+export type ProvisionDb = PrismaClient;
 
 function slugify(value: string): string {
   const slug = value
@@ -53,6 +61,7 @@ export function provisionInputFromClerkAuth(auth: TrustedClerkAuth): ProvisionOr
     clerkOrganizationId: auth.clerkOrganizationId,
     organizationName: auth.organizationName?.trim() || "Organization",
     organizationSlug: auth.organizationSlug,
+    isClerkOrganizationAdmin: isClerkOrganizationAdminRole(auth.clerkOrganizationRole),
   };
 }
 
@@ -133,6 +142,17 @@ export async function provisionOrganization(
     logTenantEvent("user_profile_provisioned", {
       clerkOrganizationId: input.clerkOrganizationId,
     });
+  }
+
+  await ensureDefaultSecurityGroups(database, {
+    organizationId: organization.id,
+    userProfileId: userProfile.id,
+    organizationCreated: !existing,
+    isClerkOrganizationAdmin: input.isClerkOrganizationAdmin ?? false,
+  });
+
+  if (input.identity) {
+    await persistUserIdentitySnapshot(database, input.clerkUserId, input.identity);
   }
 
   return {

@@ -7,6 +7,16 @@ import { clerkAppearance } from "@/lib/auth/clerk-appearance";
 const organizationSwitcherAppearance = {
   ...clerkAppearance,
   elements: {
+    organizationSwitcherTrigger: {
+      cursor: "pointer",
+      maxWidth: "100%",
+    },
+    organizationPreview: {
+      maxWidth: "100%",
+    },
+    organizationPreviewTextContainer: {
+      minWidth: 0,
+    },
     /**
      * Clerk 7.8.3 OrganizationSwitcher has no hideCreateOrganization prop.
      * Appearance is the supported way to hide the create action in employee UX.
@@ -17,15 +27,32 @@ const organizationSwitcherAppearance = {
   },
 };
 
-export function EmployeeOrganizationControls() {
+const userButtonAppearance = {
+  ...clerkAppearance,
+  elements: {
+    userButtonBox: {
+      flexShrink: "0",
+    },
+    userButtonTrigger: {
+      cursor: "pointer",
+    },
+    userButtonAvatarBox: {
+      width: "1.75rem",
+      height: "1.75rem",
+    },
+  },
+};
+
+export function EmployeeOrganizationSwitcher() {
   return (
-    <div className="flex items-center gap-3">
-      <OrganizationSwitcher
-        hidePersonal
-        afterSelectOrganizationUrl="/app"
-        appearance={organizationSwitcherAppearance}
-      />
-      <UserButton appearance={clerkAppearance} />
-    </div>
+    <OrganizationSwitcher
+      hidePersonal
+      afterSelectOrganizationUrl="/app"
+      appearance={organizationSwitcherAppearance}
+    />
   );
+}
+
+export function EmployeeUserButton() {
+  return <UserButton appearance={userButtonAppearance} />;
 }

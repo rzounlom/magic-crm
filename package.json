@@ -18,7 +18,9 @@
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:sync-auth": "tsx --tsconfig tsconfig.json scripts/sync-auth-reference-data.ts",
+    "auth:bootstrap-admin": "tsx --tsconfig tsconfig.json scripts/bootstrap-administrator.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.8.3",
@@ -28,6 +30,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "0.0.1",
+    "sonner": "^2.0.8",
     "zod": "4.5.4"
   },
   "devDependencies": {
@@ -40,6 +43,7 @@
     "eslint-config-next": "16.3.3",
     "prisma": "7.10.0",
     "tailwindcss": "^4",
+    "tsx": "4.21.0",
     "typescript": "^5",
     "vitest": "4.1.11"
   },

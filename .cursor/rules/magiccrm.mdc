@@ -54,7 +54,9 @@ Assume eventual multi-organization/multi-location operation.
 
 ## Reuse
 
-Before creating a new button pattern, modal, form wrapper, time picker, money formatter, status badge, availability method, permission check, API client or error handler, search for an existing equivalent.
+Before creating a new button pattern, modal, form wrapper, toast, confirmation dialog, time picker, money formatter, status badge, availability method, permission check, API client or error handler, search for an existing equivalent.
+
+Reuse `notify` (`@/lib/ui/notify`) for mutation feedback and `ConfirmDialog` for destructive confirmation. Do not add a second toast library or `window.confirm()`.
 
 Reuse when semantics match. Do not force reuse when behavior differs materially.
 
@@ -167,6 +169,20 @@ Principles:
 - strong empty states
 - clear loading/saving/error states
 - responsive layouts
+- interactive controls use a pointer cursor (`cursor-pointer`)
+- disabled controls use a disabled cursor (`cursor: not-allowed`) and do not look clickable
+
+The authenticated employee header always includes, from left to right: MagicCRM brand, permission-aware module navigation, OrganizationSwitcher, and the Clerk UserButton. UserButton and OrganizationSwitcher are account/tenant controls for every signed-in employee. They must not depend on MagicCRM permissions such as `security_groups.view`. Only module links (for example Security) are permission-aware. Use a shrinking flex layout so a long organization name cannot push the UserButton off-screen.
+
+Apply pointer/disabled cursor in shared primitives or global component styles, not by sprinkling duplicate classes on every button. Do not add pointer cursor to plain text, read-only displays, or non-interactive containers.
+
+After a successful admin mutation (security groups, membership, permissions), the UI must show the authoritative server state without a manual browser refresh. Prefer `revalidatePath` / `refresh()` in the Server Action, then a MagicCRM toast (`notify.success` / `notify.error`). Do not use inline “Member added.” status text for mutation results. Field validation messages may stay beside the field.
+
+Use `ConfirmDialog` for destructive actions. Do not use `window.confirm()`.
+
+Any action that deletes data, removes access, cancels a confirmed object, issues money/refunds, or irreversibly changes business state requires an explicit confirmation step unless the action is trivially reversible and intentionally designed otherwise. Do not add confirmation dialogs to harmless actions such as saving text edits.
+
+Application code must call `@/lib/ui/notify` rather than the toast library directly. Confirmation UI is not authorization; server actions still use `getRequestContext()` and `requirePermission()`.
 
 Avoid generic Bootstrap appearance, dense table-first CRM screens, gratuitous gradients, excessive modals, icon-only primary actions and status conveyed only by color.
 

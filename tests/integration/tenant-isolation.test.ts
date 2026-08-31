@@ -15,14 +15,24 @@ async function cleanup() {
     return;
   }
 
+  const ids = [...createdOrganizationIds];
+  await db.auditLog.deleteMany({
+    where: { organizationId: { in: ids } },
+  });
+  await db.securityGroup.deleteMany({
+    where: { organizationId: { in: ids } },
+  });
   await db.userProfile.deleteMany({
-    where: { organizationId: { in: createdOrganizationIds } },
+    where: { organizationId: { in: ids } },
   });
   await db.location.deleteMany({
-    where: { organizationId: { in: createdOrganizationIds } },
+    where: { organizationId: { in: ids } },
+  });
+  await db.auditLog.deleteMany({
+    where: { organizationId: { in: ids } },
   });
   await db.organization.deleteMany({
-    where: { id: { in: createdOrganizationIds } },
+    where: { id: { in: ids } },
   });
   createdOrganizationIds.length = 0;
 }

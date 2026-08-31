@@ -6,7 +6,7 @@ Generations Adventureplex is the first MagicCRM tenant. The system is being desi
 
 ## Current status
 
-Phase 2 tenant authentication is in place: Clerk Organizations, MagicCRM provisioning, and a trusted `RequestContext`. CRM, booking, payments, and AI are not implemented yet.
+Phase 2B tenant authorization is in place: permission catalog, security groups, `requirePermission()`, and a Security admin page. CRM, booking, payments, and AI are not implemented yet.
 
 ## Prerequisites
 
@@ -55,6 +55,13 @@ pnpm dev
 4. MagicCRM provisions an Organization, `Main Location`, and your UserProfile. The stored organization name is the Clerk org slug until a later metadata sync.
 5. `/app` shows the active organization, default location, and user.
 6. Switching organizations in the header resolves a different MagicCRM tenant. Refreshing does not create duplicate records.
+
+Administrators can open **Security** to manage groups. Invited employees do not become administrators automatically.
+
+```bash
+pnpm db:sync-auth              # permission catalog + default groups for existing orgs
+pnpm auth:bootstrap-admin -- --organization-id <id> --user-profile-id <id>
+```
 
 Integration tests do not call Clerk. They inject trusted auth input.
 
@@ -127,7 +134,8 @@ pnpm db:generate  # generate Prisma Client
 pnpm db:validate  # validate Prisma schema
 pnpm db:migrate   # create/apply development migrations
 pnpm db:deploy    # apply committed migrations
-pnpm db:studio    # privileged Prisma Studio
+pnpm db:sync-auth          # permission catalog + default security groups
+pnpm auth:bootstrap-admin  # explicit Administrators membership (IDs required)
 ```
 
 Open [http://localhost:3000](http://localhost:3000) after starting `pnpm dev`.
