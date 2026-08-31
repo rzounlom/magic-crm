@@ -56,6 +56,8 @@ Services / repositories
 
 Switching Clerk organizations changes the active `clerkOrganizationId`. The next server render resolves a different MagicCRM Organization and UserProfile. Tenant-specific state is not cached across organizations.
 
+Manual browser verification also showed Clerk membership isolation in the employee UX: an invited second user could sign in and use the Generations organization, did not see MagicCRM Test Center B, and could not switch to that second organization. That live check supplements, and does not replace, the PostgreSQL tenant-isolation tests.
+
 ## Repository rule
 
 Tenant-facing lookups include organization scope in the database query itself.
@@ -93,6 +95,8 @@ Stable feature keys live in `src/types/feature-keys.ts`. They are module identif
 `provisionOrganization()` creates the Organization, a `Main Location`, and the initiating UserProfile. It is idempotent and uses unique constraints plus conflict recovery.
 
 Generic defaults for a new tenant: timezone `UTC`, currency `USD`, location name `Main Location`. These are not Generations-specific.
+
+First provision currently stores Clerk `orgSlug` as `Organization.name` because the trusted Clerk session (`auth()`) exposes `orgId` and `orgSlug` only — not a display name. Pretty-name sync is deferred. Do not fetch Clerk Organizations on every request. Do not add webhooks only for cosmetic renaming.
 
 ## Storage topology
 

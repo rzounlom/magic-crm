@@ -51,8 +51,8 @@ pnpm dev
 
 1. Open `/` and choose **Employee sign in**.
 2. Sign up or sign in.
-3. Create or select a Clerk Organization. Personal accounts cannot enter `/app`.
-4. MagicCRM provisions an Organization, `Main Location`, and your UserProfile.
+3. Select a Clerk Organization you already belong to. Personal accounts cannot enter `/app`. Tenant creation is controlled in the Clerk Dashboard, not the employee switcher.
+4. MagicCRM provisions an Organization, `Main Location`, and your UserProfile. The stored organization name is the Clerk org slug until a later metadata sync.
 5. `/app` shows the active organization, default location, and user.
 6. Switching organizations in the header resolves a different MagicCRM tenant. Refreshing does not create duplicate records.
 

@@ -10,7 +10,7 @@ This document describes how MagicCRM currently authenticates employees. Tenant m
 - Sign-in / sign-up
 - Organization membership
 - Active organization selection / switching
-- Organization invitations (later)
+- Organization invitations
 
 ### MagicCRM owns
 
@@ -52,9 +52,30 @@ Do not pass `secretKey` into `clerkMiddleware()` options. Clerk treats that as d
 | `/sign-in`, `/sign-up` | Public Clerk screens |
 | `/app` | Signed-in employee application |
 
-Personal Clerk accounts cannot use the employee app. The user must choose or create a Clerk Organization (`OrganizationSwitcher` uses `hidePersonal`).
+Personal Clerk accounts cannot use the employee app. The user must have an active Clerk Organization (`OrganizationSwitcher` uses `hidePersonal`). Clerk 7.8.3 has no `hideCreateOrganization` prop. Employee UX hides the create action via the official `appearance.elements` API (`organizationSwitcherPopoverActionButton__createOrganization`). Tenant creation is Clerk Dashboard / platform-controlled. Membership and switching still use Clerk Organizations.
 
-Provisioning reads only the Clerk session (`userId`, `orgId`, `orgSlug`). It does not call Clerk’s HTTP API on each request. Organization display names are refined later if needed.
+Provisioning reads only the Clerk session (`userId`, `orgId`, `orgSlug`). The session JWT does **not** include an organization display name, so first provision stores the slug as `Organization.name`. That is a later organization metadata synchronization concern. Do not add a Clerk HTTP call on every request. Do not add webhooks solely for cosmetic name sync.
+
+## Manual browser verification (Phase 2)
+
+Completed against Clerk development auth and the employee `/app` shell:
+
+| Check | Result |
+| --- | --- |
+| Clerk sign-in | Passed |
+| Authenticated `/app` access | Passed |
+| Organization A provisioned | Passed |
+| Organization B provisioned | Passed |
+| Organization switching | Passed |
+| Same Clerk user in both organizations | Passed |
+| RequestContext follows the active Clerk organization | Passed |
+| Refresh does not duplicate Organization / Location / UserProfile | Passed |
+| Invited second user accepted access and signed in | Passed |
+| Invited second user accessed the Generations organization | Passed |
+| Invited second user did not see MagicCRM Test Center B | Passed |
+| Invited second user could not switch to the second organization | Passed |
+
+This invited-user check confirms Clerk organization membership isolation in the live employee UX. It supplements, and does not replace, the PostgreSQL tenant-isolation tests.
 
 ## Initial tenant administration
 

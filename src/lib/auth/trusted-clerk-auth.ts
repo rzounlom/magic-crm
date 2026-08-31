@@ -12,8 +12,11 @@ export type TrustedClerkAuth = {
 /**
  * Narrow trusted input from the Clerk session.
  *
- * This is the only place MagicCRM reads Clerk identity. Tests inject
- * TrustedClerkAuth directly and never call Clerk.
+ * Session fields used here: userId, orgId, orgSlug. The session JWT does not
+ * include an organization display name (claims are org id, slug, and role).
+ * Do not call Clerk's HTTP API on every request to fetch the pretty name.
+ *
+ * Tests inject TrustedClerkAuth directly and never call Clerk.
  */
 export async function readTrustedClerkAuth(): Promise<TrustedClerkAuth> {
   const { userId, orgId, orgSlug } = await auth();

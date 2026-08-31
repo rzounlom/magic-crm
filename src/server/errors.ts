@@ -10,7 +10,7 @@ export type TenantContextErrorCode = (typeof TENANT_CONTEXT_ERROR_CODES)[number]
 
 const USER_MESSAGES: Record<TenantContextErrorCode, string> = {
   UNAUTHENTICATED: "Sign in to continue.",
-  NO_ACTIVE_ORGANIZATION: "Choose or create an organization to continue.",
+  NO_ACTIVE_ORGANIZATION: "Choose an organization to continue.",
   ORGANIZATION_NOT_PROVISIONED: "This organization is not ready yet. Try again in a moment.",
   USER_PROFILE_NOT_PROVISIONED: "Your employee profile is not ready yet. Try again in a moment.",
   INVALID_TENANT_MAPPING: "We could not load this organization. Sign in again or choose another organization.",

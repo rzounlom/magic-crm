@@ -59,7 +59,7 @@ async function loadEmployeeHomeView(): Promise<EmployeeHomeView> {
     return {
       kind: "status",
       title: "Choose an organization",
-      body: "Choose or create an organization to continue.",
+      body: "Choose an organization to continue.",
     };
   }
 
