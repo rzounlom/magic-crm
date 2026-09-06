@@ -16,7 +16,16 @@ export type AuditAction =
   | "employee.invitation_replaced"
   | "employee.group_assigned"
   | "tenant.client_created"
-  | "tenant.admin_invited";
+  | "tenant.admin_invited"
+  | "inquiry.created"
+  | "ai.conversation_started"
+  | "ai.message_generated"
+  | "ai.handoff_requested"
+  | "ai.paused"
+  | "ai.resumed"
+  | "employee.conversation_taken_over"
+  | "sales_knowledge.created"
+  | "sales_knowledge.updated";
 
 type AuditMetadata = Record<string, string | number | boolean | null>;
 

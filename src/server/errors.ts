@@ -123,3 +123,43 @@ export class TeamManagementError extends Error {
 export function isTeamManagementError(error: unknown): error is TeamManagementError {
   return error instanceof TeamManagementError;
 }
+
+export const INQUIRY_ERROR_CODES = [
+  "INVALID_INTAKE",
+  "TENANT_NOT_AVAILABLE",
+  "CONVERSATION_NOT_FOUND",
+  "RATE_LIMITED",
+  "DUPLICATE_SUBMISSION",
+  "AI_DISABLED",
+  "INVALID_KNOWLEDGE",
+] as const;
+
+export type InquiryErrorCode = (typeof INQUIRY_ERROR_CODES)[number];
+
+const INQUIRY_USER_MESSAGES: Record<InquiryErrorCode, string> = {
+  INVALID_INTAKE: "Check the form and try again.",
+  TENANT_NOT_AVAILABLE: "This inquiry page is not available.",
+  CONVERSATION_NOT_FOUND: "We could not find that conversation.",
+  RATE_LIMITED: "Please wait a moment before sending another message.",
+  DUPLICATE_SUBMISSION: "That message was already received.",
+  AI_DISABLED: "A team member will continue this conversation.",
+  INVALID_KNOWLEDGE: "Check the knowledge item and try again.",
+};
+
+export class InquiryError extends Error {
+  readonly code: InquiryErrorCode;
+
+  constructor(code: InquiryErrorCode, message?: string) {
+    super(message ?? INQUIRY_USER_MESSAGES[code]);
+    this.name = "InquiryError";
+    this.code = code;
+  }
+
+  get userMessage(): string {
+    return this.message;
+  }
+}
+
+export function isInquiryError(error: unknown): error is InquiryError {
+  return error instanceof InquiryError;
+}

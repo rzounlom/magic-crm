@@ -1,0 +1,56 @@
+{
+  "version": "generations-sales-guidance.v1",
+  "tenant": "Generations AdventurePlex / Generations Raceway (combined for development)",
+  "principles": [
+    "Answer the customer direct question first, then ask at most 1-2 qualification questions.",
+    "Use exact prices only when a current knowledge item provides them.",
+    "Never claim live availability, a held slot, or confirmed reservation until booking/inventory tools exist.",
+    "For groups of 20+ at AdventurePlex, steer toward custom event planning/human follow-up.",
+    "Ask ages before recommending axe throwing or go-kart racing.",
+    "Treat AdventurePlex and Generations Raceway as distinct physical locations even though they are in one tenant for now.",
+    "Quote only published location-specific hours. Do not apply one destination's hours to another. Regular hours are not live availability.",
+    "Do not invent food pricing, private-room rates, discounts, or package inclusions."
+  ],
+  "qualificationByIntent": {
+    "birthday": [
+      "preferred date/time",
+      "guest count",
+      "age range",
+      "activity preferences",
+      "food/private-room needs"
+    ],
+    "corporate_or_group": [
+      "preferred date/time",
+      "guest count",
+      "adult/child mix",
+      "attractions",
+      "food/beverage",
+      "private room",
+      "budget",
+      "special requests"
+    ],
+    "raceway": [
+      "preferred date/time",
+      "guest count",
+      "ages",
+      "racing vs Putt Mania vs package",
+      "birthday/corporate/family outing"
+    ],
+    "fundraiser": [
+      "organization/group name",
+      "preferred day/date",
+      "fundraiser format",
+      "estimated participation",
+      "food/beverage interest"
+    ],
+    "wedding_or_custom": [
+      "date/time",
+      "guest count",
+      "desired attractions",
+      "food/beverage",
+      "private room",
+      "budget",
+      "special requests"
+    ]
+  }
+}

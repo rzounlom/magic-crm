@@ -45,6 +45,7 @@ export function SecurityActionForm({
     pendingRef.current = true;
     setPending(true);
 
+    let keepPending = false;
     try {
       const result = await action(formData);
       const next = mutationNotice(result, {
@@ -56,6 +57,7 @@ export function SecurityActionForm({
         description: next.description || undefined,
       });
       if (next.redirectTo) {
+        keepPending = true;
         router.push(next.redirectTo);
         return;
       }
@@ -69,8 +71,10 @@ export function SecurityActionForm({
         description: "Something went wrong. Try again.",
       });
     } finally {
-      pendingRef.current = false;
-      setPending(false);
+      if (!keepPending) {
+        pendingRef.current = false;
+        setPending(false);
+      }
     }
   }
 

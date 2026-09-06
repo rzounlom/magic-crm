@@ -16,6 +16,12 @@ const organizationSwitcherAppearance = {
     },
     organizationPreviewTextContainer: {
       minWidth: 0,
+      overflow: "hidden",
+    },
+    organizationPreviewMainIdentifier: {
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
     },
     /**
      * Clerk 7.8.3 OrganizationSwitcher has no hideCreateOrganization prop.

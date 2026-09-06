@@ -16,6 +16,8 @@ System architecture documents. Current implementation notes:
 - `authorization.md`
 - `team-management.md`
 - `client-onboarding.md`
+- `inquiries.md`
+- `ai-sales-agent.md`
 - `ui-conventions.md`
 
 The product source of truth remains `MAGICCRM_SAAS_ARCHITECTURE.md`. Expected later examples:
@@ -35,6 +37,7 @@ ADR-001-database-and-multi-tenancy.md
 ADR-002-clerk-organizations-and-tenant-context.md
 ADR-003-magiccrm-security-groups-and-permissions.md
 ADR-004-team-invitations-and-client-bootstrap.md
+ADR-005-ai-sales-agent.md
 ```
 
 ### `phases/`

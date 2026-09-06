@@ -6,6 +6,9 @@ import {
   EmployeeOrganizationSwitcher,
   EmployeeUserButton,
 } from "@/components/layout/employee-organization-controls";
+import { AiKnowledgeNavLink } from "@/components/layout/ai-knowledge-nav-link";
+import { InquiryNavLink } from "@/components/layout/inquiry-nav-link";
+import { PublicInquiryNavLink } from "@/components/layout/public-inquiry-nav-link";
 import { SecurityAdminNavLink } from "@/components/layout/security-admin-nav-link";
 import { TeamAdminNavLink } from "@/components/layout/team-admin-nav-link";
 
@@ -17,6 +20,11 @@ export function EmployeeShell({ children }: EmployeeShellProps) {
   return (
     <div className="flex min-h-full flex-col bg-background text-foreground">
       <EmployeeHeaderBar
+        inquiriesNav={
+          <Suspense fallback={null}>
+            <InquiryNavLink />
+          </Suspense>
+        }
         teamNav={
           <Suspense fallback={null}>
             <TeamAdminNavLink />
@@ -25,6 +33,16 @@ export function EmployeeShell({ children }: EmployeeShellProps) {
         securityNav={
           <Suspense fallback={null}>
             <SecurityAdminNavLink />
+          </Suspense>
+        }
+        knowledgeNav={
+          <Suspense fallback={null}>
+            <AiKnowledgeNavLink />
+          </Suspense>
+        }
+        publicInquiryAction={
+          <Suspense fallback={null}>
+            <PublicInquiryNavLink />
           </Suspense>
         }
         organizationSwitcher={<EmployeeOrganizationSwitcher />}

@@ -1,0 +1,11 @@
+{
+  "dataset": "Generations MagicCRM AI Sales Knowledge",
+  "generatedAt": "2026-09-06",
+  "recordCount": 41,
+  "verificationFlags": 7,
+  "notes": [
+    "Generations Raceway intentionally included in same tenant for development per owner direction.",
+    "This targets the temporary SalesKnowledgeItem model, not the future full Catalog schema.",
+    "Review needs-verification.json before production use."
+  ]
+}

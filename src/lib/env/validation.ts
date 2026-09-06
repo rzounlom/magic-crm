@@ -71,6 +71,13 @@ export const runtimeEnvSchema = z.object({
     .min(1, { error: "CLERK_SECRET_KEY is required" })
     .optional(),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: optionalNonEmptyString("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"),
+  OPENAI_API_KEY: optionalNonEmptyString("OPENAI_API_KEY"),
+  OPENAI_SALES_MODEL: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .transform((value) => value || undefined),
 });
 
 export const prismaCliEnvSchema = z.object({
@@ -99,6 +106,8 @@ export function parseRuntimeEnv(source: NodeJS.Dict<string>): RuntimeEnv {
     APP_URL: source.APP_URL,
     CLERK_SECRET_KEY: source.CLERK_SECRET_KEY || undefined,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: source.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || undefined,
+    OPENAI_API_KEY: source.OPENAI_API_KEY || undefined,
+    OPENAI_SALES_MODEL: source.OPENAI_SALES_MODEL || undefined,
   });
 
   if (!result.success) {

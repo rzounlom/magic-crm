@@ -1,0 +1,70 @@
+[
+  {
+    "topic": "AdventurePlex operating hours",
+    "status": "PUBLISHED_IN_SALES_KNOWLEDGE",
+    "conflict": "Resolved. Regular hours are published as AdventurePlex Regular Operating Hours. Older later-hour FAQ pages are not used.",
+    "recommendedAction": "Do not add a second hours item. Update the published POLICY item if hours change.",
+    "sources": [
+      "https://generations-adventureplex.com/",
+      "https://generations-adventureplex.com/faq/",
+      "https://generations-adventureplex.com/holidays/"
+    ]
+  },
+  {
+    "topic": "Axe Throwing minimum age",
+    "status": "DO_NOT_SEED_CONFLICTING_RULE",
+    "conflict": "Current homepage and axe-specific pages say 16+. General FAQ still says 16+ weekends and 13+ Tue-Thu.",
+    "recommendedAction": "Treat 16+ as current candidate rule but confirm with management before production.",
+    "sources": [
+      "https://generations-adventureplex.com/",
+      "https://generations-adventureplex.com/axe-throwing-faq/",
+      "https://generations-adventureplex.com/faq/"
+    ]
+  },
+  {
+    "topic": "Go-kart waiver requirements",
+    "status": "VERIFY",
+    "conflict": "Raceway page states ages 8+ but extracted content did not explicitly state waiver requirements. Product owner intends waivers for go-kart races.",
+    "recommendedAction": "Keep waiverRequired=true in development per owner direction; confirm exact waiver/guardian policy before production.",
+    "sources": [
+      "https://generations-adventureplex.com/generations-raceway/"
+    ]
+  },
+  {
+    "topic": "Raceway operating hours",
+    "status": "VERIFY",
+    "conflict": "Raceway page currently shows SPECIAL HOURS & PRIVATE EVENTS: TBA.",
+    "recommendedAction": "Do not let AI invent Raceway hours.",
+    "sources": [
+      "https://generations-adventureplex.com/generations-raceway/"
+    ]
+  },
+  {
+    "topic": "Raceway Company Team Building guest limit",
+    "status": "VERIFY_WORDING",
+    "conflict": "Package lists Up to 20 Guests. Confirm whether this is a hard maximum or standard published package size.",
+    "recommendedAction": "AI may quote the published up-to-20 package but hand off larger requests.",
+    "sources": [
+      "https://generations-adventureplex.com/generations-raceway/"
+    ]
+  },
+  {
+    "topic": "Food menu and exact pricing",
+    "status": "NOT_CAPTURED",
+    "conflict": "Site confirms food and beverage options but exact current menu/pricing was not reliably retrieved in this crawl.",
+    "recommendedAction": "Do not seed exact menu items/prices yet.",
+    "sources": [
+      "https://generations-adventureplex.com/faq/",
+      "https://generations-adventureplex.com/house-policies/"
+    ]
+  },
+  {
+    "topic": "Birthday package room inclusion",
+    "status": "VERIFY",
+    "conflict": "Birthday page separately advertises reduced private-party-room rates and does not clearly state a room is included in base birthday package prices.",
+    "recommendedAction": "Do not tell customers a private room is included unless management confirms.",
+    "sources": [
+      "https://generations-adventureplex.com/birthdays/"
+    ]
+  }
+]

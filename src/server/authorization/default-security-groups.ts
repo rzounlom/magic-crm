@@ -48,6 +48,7 @@ export const DEFAULT_SECURITY_GROUPS: readonly DefaultSecurityGroupDefinition[] 
       PERMISSIONS.CALENDAR_VIEW,
       PERMISSIONS.COMMUNICATIONS_VIEW,
       PERMISSIONS.COMMUNICATIONS_SEND,
+      PERMISSIONS.AI_VIEW,
     ],
   },
   {

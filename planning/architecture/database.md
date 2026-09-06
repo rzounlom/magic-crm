@@ -70,6 +70,11 @@ Organization deletion does **not** cascade to locations, user profiles, or futur
 | `TeamInvitation.organization` | `Restrict` | Invitation history is preserved with the tenant. |
 | `TeamInvitationSecurityGroup.invitation` | `Cascade` | Invitation delete removes queued groups. |
 | `TeamInvitationSecurityGroup.securityGroup` | `Restrict` | A group cannot disappear out from under a queued assignment without application handling. |
+| `Inquiry.organization` / `Conversation.organization` / `ConversationMessage.organization` | `Restrict` | Leads and threads stay with the tenant. |
+| `Conversation.inquiry` | `Restrict` | Deleting an inquiry must be an explicit application action. |
+| `ConversationMessage.conversation` | `Cascade` | Message history is owned by the conversation only. |
+| `SalesKnowledgeItem.organization` | `Restrict` | Temporary AI knowledge is tenant-owned. |
+| `AiUsage.organization` / `AiUsage.inquiry` | `Restrict` | Usage metadata is retained for later pricing analysis. |
 | `SecurityGroupPermission.securityGroup` | `Cascade` | Group delete removes assignments. |
 | `SecurityGroupMember.securityGroup` | `Cascade` | Group delete removes memberships. |
 | `SecurityGroupMember.userProfile` | `Cascade` | Profile delete removes memberships only. |
@@ -117,6 +122,11 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `TeamInvitation` unique on `clerkOrganizationInvitationId`; pending unique on `(organizationId, emailNormalized)` via a partial SQL index
 - `TeamInvitationSecurityGroup` unique on `(teamInvitationId, securityGroupId)` with same-tenant composite FKs
 - `Organization.onboardingStatus` indexed for platform recovery
+- `Inquiry` unique on `(organizationId, id)`; indexes `(organizationId, status, createdAt)` and `(organizationId, customerEmailNormalized)`
+- `Conversation` unique on `publicTokenHash` and `(organizationId, id)`
+- `ConversationMessage` unique on `(conversationId, clientSubmissionId)` for idempotent public submits
+- `SalesKnowledgeItem` unique on `(organizationId, id)`; index `(organizationId, active, type)`
+- `AiUsage` indexed on `(organizationId, createdAt)`
 
 Future tenant tables should lead compound indexes with `organizationId`.
 
@@ -145,6 +155,7 @@ Committed migrations:
 - `20260831051500_security_groups_and_audit` — PermissionDefinition, SecurityGroup, membership, AuditLog
 - `20260831060000_user_profile_identity_display` — UserProfile name/email/avatar display snapshot
 - `20260902070000_team_invitations_and_onboarding` — TeamInvitation, queued groups, Organization.onboardingStatus
+- `20260906140000_ai_intake_sales_agent` — Inquiry, Conversation, ConversationMessage, SalesKnowledgeItem, AiUsage
 
 ## Seed / reference data
 
@@ -157,6 +168,8 @@ pnpm db:sync-auth
 That command upserts `PermissionDefinition` rows from `PERMISSION_CATALOG` and ensures default security groups for every existing organization. It does not reset tenant data. Removed catalog keys are marked inactive, never deleted.
 
 There is no generic seed that creates a special-cased tenant. Production startup must never depend on seed execution.
+
+`pnpm tenant:import-sales-knowledge -- --slug <slug> --confirm IMPORT` is a development-only, idempotent helper for the named tenant. It does not run during provisioning and does not hardcode Generations into application defaults.
 
 Future development seeds should use generic names such as “MagicCRM Development Organization” / “Main Location”. Generations Adventureplex configuration belongs in tenant data, not in application code.
 

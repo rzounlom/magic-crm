@@ -26,7 +26,12 @@ export function PendingSubmitButton({
   const pending = useContext(PendingActionContext);
 
   return (
-    <button type="submit" disabled={pending} className={className} aria-busy={pending}>
+    <button
+      type="submit"
+      disabled={pending}
+      className={`cursor-pointer disabled:cursor-not-allowed ${className ?? ""}`}
+      aria-busy={pending}
+    >
       {pending ? pendingLabel : children}
     </button>
   );

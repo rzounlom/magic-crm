@@ -33,4 +33,10 @@ export const env: RuntimeEnv = {
   get NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY() {
     return getEnv().NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   },
+  get OPENAI_API_KEY() {
+    return getEnv().OPENAI_API_KEY;
+  },
+  get OPENAI_SALES_MODEL() {
+    return getEnv().OPENAI_SALES_MODEL;
+  },
 };

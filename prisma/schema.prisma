@@ -25,11 +25,16 @@ model Organization {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  locations        Location[]
-  userProfiles     UserProfile[]
-  securityGroups   SecurityGroup[]
-  auditLogs        AuditLog[]
-  teamInvitations  TeamInvitation[]
+  locations           Location[]
+  userProfiles        UserProfile[]
+  securityGroups      SecurityGroup[]
+  auditLogs           AuditLog[]
+  teamInvitations     TeamInvitation[]
+  inquiries           Inquiry[]
+  conversations       Conversation[]
+  conversationMessages ConversationMessage[]
+  salesKnowledgeItems SalesKnowledgeItem[]
+  aiUsage             AiUsage[]
 
   @@index([onboardingStatus])
   @@map("organizations")
@@ -48,6 +53,8 @@ model Location {
 
   organization           Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   defaultForUserProfiles UserProfile[]
+  inquiries              Inquiry[]
+  salesKnowledgeItems    SalesKnowledgeItem[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
@@ -79,6 +86,7 @@ model UserProfile {
   defaultLocation      Location?             @relation(fields: [organizationId, defaultLocationId], references: [organizationId, id], onDelete: Restrict)
   securityGroupMembers SecurityGroupMember[]
   invitationsSent      TeamInvitation[]      @relation("TeamInvitationsSent")
+  assignedInquiries    Inquiry[]             @relation("InquiryAssignee")
 
   @@unique([organizationId, id])
   @@unique([organizationId, clerkUserId])
@@ -222,4 +230,141 @@ model TeamInvitationSecurityGroup {
   @@unique([teamInvitationId, securityGroupId])
   @@index([organizationId])
   @@map("team_invitation_security_groups")
+}
+
+/// Customer event inquiry. AI-stage CRM lead; booking/proposal come later.
+model Inquiry {
+  id                       String    @id @default(cuid(2))
+  organizationId           String
+  locationId               String?
+  status                   String    @db.VarChar(32)
+  source                   String    @db.VarChar(32)
+  customerFirstName        String?   @db.VarChar(80)
+  customerLastName         String?   @db.VarChar(80)
+  customerEmail            String    @db.VarChar(254)
+  customerEmailNormalized  String    @db.VarChar(254)
+  customerPhone            String?   @db.VarChar(32)
+  eventType                String?   @db.VarChar(80)
+  desiredDate              DateTime? @db.Date
+  desiredStartTime         String?   @db.VarChar(16)
+  guestCount               Int?
+  childGuestCount          Int?
+  adultGuestCount          Int?
+  budgetMin                Int?
+  budgetMax                Int?
+  occasion                 String?   @db.VarChar(120)
+  customerNotes            String?   @db.VarChar(2000)
+  internalSummary          String?   @db.VarChar(4000)
+  employeeInternalNotes    String?   @db.VarChar(4000)
+  assignedUserProfileId    String?
+  aiHandlingEnabled        Boolean   @default(true)
+  humanHandoffRequestedAt  DateTime?
+  humanHandoffReason       String?   @db.VarChar(500)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location      Location?       @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  assignedUser  UserProfile?    @relation("InquiryAssignee", fields: [organizationId, assignedUserProfileId], references: [organizationId, id], onDelete: Restrict)
+  conversations Conversation[]
+  aiUsage       AiUsage[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, customerEmailNormalized])
+  @@map("inquiries")
+}
+
+/// Customer conversation thread. One inquiry may have multiple channels later.
+model Conversation {
+  id              String    @id @default(cuid(2))
+  organizationId  String
+  inquiryId       String
+  channel         String    @db.VarChar(16)
+  publicTokenHash String    @unique
+  lastMessageAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  inquiry      Inquiry               @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+  messages     ConversationMessage[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, inquiryId])
+  @@map("conversations")
+}
+
+/// Durable conversation history. MagicCRM is the source of truth, not OpenAI.
+model ConversationMessage {
+  id                 String   @id @default(cuid(2))
+  organizationId     String
+  conversationId     String
+  direction          String   @db.VarChar(16)
+  senderType         String   @db.VarChar(16)
+  content            String   @db.VarChar(8000)
+  clientSubmissionId String?  @db.VarChar(80)
+  aiModel            String?  @db.VarChar(80)
+  aiResponseId       String?  @db.VarChar(120)
+  metadata           Json?
+  createdAt          DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  conversation Conversation @relation(fields: [organizationId, conversationId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, id])
+  @@unique([conversationId, clientSubmissionId])
+  @@index([organizationId, conversationId, createdAt])
+  @@map("conversation_messages")
+}
+
+/// Temporary AI-ready sales knowledge. Phase 3 Catalog may replace or back this.
+model SalesKnowledgeItem {
+  id                   String   @id @default(cuid(2))
+  organizationId       String
+  locationId           String?
+  type                 String   @db.VarChar(32)
+  name                 String   @db.VarChar(160)
+  shortDescription     String   @db.VarChar(280)
+  details              String   @db.VarChar(4000)
+  priceText            String?  @db.VarChar(160)
+  durationMinutes      Int?
+  minGuests            Int?
+  maxGuests            Int?
+  waiverRequired       Boolean  @default(false)
+  active               Boolean  @default(true)
+  salesNotes           String?  @db.VarChar(2000)
+  customerFacingNotes  String?  @db.VarChar(2000)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location?    @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, active, type])
+  @@map("sales_knowledge_items")
+}
+
+/// Tenant-scoped AI usage metadata for later pricing. Not billing.
+model AiUsage {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  inquiryId      String?
+  conversationId String?
+  model          String   @db.VarChar(80)
+  responseId     String?  @db.VarChar(120)
+  inputTokens    Int?
+  outputTokens   Int?
+  totalTokens    Int?
+  latencyMs      Int?
+  success        Boolean
+  errorCode      String?  @db.VarChar(80)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  inquiry      Inquiry?     @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, createdAt])
+  @@map("ai_usage")
 }

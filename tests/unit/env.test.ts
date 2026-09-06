@@ -74,6 +74,20 @@ describe("parseRuntimeEnv", () => {
     expect(env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY).toBeUndefined();
   });
 
+  it("treats OpenAI keys as optional and accepts an explicit sales model", () => {
+    const withoutKey = parseRuntimeEnv({ DATABASE_URL: validPostgresUrl, APP_URL: validAppUrl });
+    expect(withoutKey.OPENAI_API_KEY).toBeUndefined();
+    expect(withoutKey.OPENAI_SALES_MODEL).toBeUndefined();
+    const withKey = parseRuntimeEnv({
+      DATABASE_URL: validPostgresUrl,
+      APP_URL: validAppUrl,
+      OPENAI_API_KEY: "sk-test",
+      OPENAI_SALES_MODEL: "gpt-4.1-mini",
+    });
+    expect(withKey.OPENAI_API_KEY).toBe("sk-test");
+    expect(withKey.OPENAI_SALES_MODEL).toBe("gpt-4.1-mini");
+  });
+
   it("rejects a malformed value without echoing the secret", () => {
     try {
       parseRuntimeEnv({ DATABASE_URL: "not-a-url", APP_URL: validAppUrl });

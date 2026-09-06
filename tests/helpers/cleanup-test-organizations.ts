@@ -9,6 +9,11 @@ export async function deleteTestOrganizations(
   }
 
   const ids = [...organizationIds];
+  await database.conversationMessage.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.aiUsage.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.conversation.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.inquiry.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.salesKnowledgeItem.deleteMany({ where: { organizationId: { in: ids } } });
   await database.teamInvitation.deleteMany({ where: { organizationId: { in: ids } } });
   await database.auditLog.deleteMany({ where: { organizationId: { in: ids } } });
   await database.securityGroup.deleteMany({ where: { organizationId: { in: ids } } });

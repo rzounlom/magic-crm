@@ -1,3 +1,9 @@
+type SalesAgentLogEvent =
+  | "sales_agent_turn_failed"
+  | "sales_agent_tool_failed"
+  | "sales_agent_empty_output"
+  | "sales_agent_handoff_declined";
+
 type TenantLogEvent =
   | "organization_provisioning_started"
   | "organization_provisioned"
@@ -29,6 +35,29 @@ export function logTenantEvent(
   console.info(
     JSON.stringify({
       scope: "magiccrm.tenant",
+      event,
+      ...fields,
+    }),
+  );
+}
+
+export function logSalesAgentEvent(
+  event: SalesAgentLogEvent,
+  fields: {
+    inquiryId?: string;
+    conversationId?: string;
+    responseId?: string | null;
+    model?: string;
+    failureCategory?: string;
+    httpStatus?: number | null;
+    toolName?: string;
+    latencyMs?: number;
+    explicitHandoff?: boolean;
+  } = {},
+): void {
+  console.info(
+    JSON.stringify({
+      scope: "magiccrm.sales_agent",
       event,
       ...fields,
     }),
