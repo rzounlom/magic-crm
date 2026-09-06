@@ -5,9 +5,14 @@ import { describe, expect, it } from "vitest";
 
 import { EmployeeHeaderBar } from "@/components/layout/employee-header-bar";
 
-function renderHeader(options: { showSecurityNav: boolean; organizationName?: string }) {
+function renderHeader(options: {
+  showTeamNav?: boolean;
+  showSecurityNav: boolean;
+  organizationName?: string;
+}) {
   return renderToStaticMarkup(
     <EmployeeHeaderBar
+      teamNav={options.showTeamNav ? <span>Team</span> : null}
       securityNav={options.showSecurityNav ? <span>Security</span> : null}
       organizationSwitcher={
         <span>{options.organizationName ?? "Generations Adventureplex"}</span>
@@ -24,13 +29,12 @@ describe("EmployeeHeaderBar", () => {
     expect(html).toContain("MagicCRM");
   });
 
-  it("shows Security, organization switcher, and UserButton for an admin", () => {
-    const html = renderHeader({ showSecurityNav: true });
+  it("shows Team before Security for an administrator", () => {
+    const html = renderHeader({ showTeamNav: true, showSecurityNav: true });
+    expect(html).toContain("Team");
     expect(html).toContain("Security");
-    expect(html).toContain("Generations Adventureplex");
-    expect(html).toContain("Account");
+    expect(html.indexOf("Team")).toBeLessThan(html.indexOf("Security"));
     expect(html.indexOf("Security")).toBeLessThan(html.indexOf("Generations Adventureplex"));
-    expect(html.indexOf("Generations Adventureplex")).toBeLessThan(html.indexOf("Account"));
   });
 
   it("hides Security for a non-admin but keeps organization switcher and UserButton", () => {

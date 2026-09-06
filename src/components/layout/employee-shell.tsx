@@ -7,6 +7,7 @@ import {
   EmployeeUserButton,
 } from "@/components/layout/employee-organization-controls";
 import { SecurityAdminNavLink } from "@/components/layout/security-admin-nav-link";
+import { TeamAdminNavLink } from "@/components/layout/team-admin-nav-link";
 
 type EmployeeShellProps = {
   children: ReactNode;
@@ -16,6 +17,11 @@ export function EmployeeShell({ children }: EmployeeShellProps) {
   return (
     <div className="flex min-h-full flex-col bg-background text-foreground">
       <EmployeeHeaderBar
+        teamNav={
+          <Suspense fallback={null}>
+            <TeamAdminNavLink />
+          </Suspense>
+        }
         securityNav={
           <Suspense fallback={null}>
             <SecurityAdminNavLink />

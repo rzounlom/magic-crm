@@ -8,6 +8,7 @@ import {
   type UserIdentitySnapshot,
 } from "@/lib/identity/user-display";
 import type { UserIdentityDirectory } from "@/lib/identity/user-identity-directory";
+import { verifiedEmailsFromClerkUser } from "@/server/team/trusted-invitation-emails";
 
 /** Clerk getUserList accepts at most 100 user IDs per request. */
 const CLERK_USER_ID_BATCH_SIZE = 100;
@@ -28,6 +29,22 @@ export async function readCurrentClerkUserIdentity(): Promise<UserIdentitySnapsh
     fullName: user.fullName,
     imageUrl: user.imageUrl,
     primaryEmailAddress: user.primaryEmailAddress,
+  });
+}
+
+/**
+ * Trusted emails for invitation matching. Never use a browser-submitted email.
+ * Primary plus verified addresses only.
+ */
+export async function readCurrentClerkVerifiedEmails(): Promise<string[]> {
+  const user = await currentUser();
+  if (!user) {
+    return [];
+  }
+
+  return verifiedEmailsFromClerkUser({
+    primaryEmailAddress: user.primaryEmailAddress,
+    emailAddresses: user.emailAddresses,
   });
 }
 

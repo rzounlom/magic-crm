@@ -44,8 +44,7 @@ export default async function EmployeeHomePage() {
         </div>
       </dl>
         <p className="mt-8 max-w-md text-sm text-foreground/70">
-          Security groups control what employees can access. Administrators can open Security in the
-          header.
+          Administrators can open Team to invite employees, then Security to manage groups.
         </p>
     </section>
   );

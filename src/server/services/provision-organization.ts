@@ -36,7 +36,7 @@ export type ProvisionOrganizationResult = {
 
 export type ProvisionDb = PrismaClient;
 
-function slugify(value: string): string {
+export function slugifyOrganizationName(value: string): string {
   const slug = value
     .trim()
     .toLowerCase()
@@ -79,7 +79,7 @@ export async function provisionOrganization(
 
   const timezone = input.timezone ?? DEFAULT_TENANT_TIMEZONE;
   const currency = input.currency ?? DEFAULT_TENANT_CURRENCY;
-  const requestedSlug = slugify(input.organizationSlug ?? input.organizationName);
+  const requestedSlug = slugifyOrganizationName(input.organizationSlug ?? input.organizationName);
 
   const existing = await database.organization.findFirst({
     where: { clerkOrganizationId: input.clerkOrganizationId },

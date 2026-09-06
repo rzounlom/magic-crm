@@ -8,7 +8,15 @@ export type AuditAction =
   | "security_group.permissions_changed"
   | "security_group.member_added"
   | "security_group.member_removed"
-  | "security_group.administrator_bootstrapped";
+  | "security_group.administrator_bootstrapped"
+  | "employee.invited"
+  | "employee.invitation_revoked"
+  | "employee.invitation_accepted"
+  | "employee.invitation_reconciled"
+  | "employee.invitation_replaced"
+  | "employee.group_assigned"
+  | "tenant.client_created"
+  | "tenant.admin_invited";
 
 type AuditMetadata = Record<string, string | number | boolean | null>;
 

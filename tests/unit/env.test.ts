@@ -9,38 +9,74 @@ import {
 } from "@/lib/env/validation";
 
 const validPostgresUrl = "postgresql://magiccrm:secret@127.0.0.1:5432/magiccrm_dev";
+const validAppUrl = "http://localhost:3000";
 
 describe("parseRuntimeEnv", () => {
   it("accepts a valid pooled DATABASE_URL", () => {
-    const env = parseRuntimeEnv({ DATABASE_URL: validPostgresUrl });
+    const env = parseRuntimeEnv({ DATABASE_URL: validPostgresUrl, APP_URL: validAppUrl });
     expect(env.DATABASE_URL).toBe(validPostgresUrl);
+    expect(env.APP_URL).toBe(validAppUrl);
   });
 
   it("accepts the postgres:// protocol", () => {
     const env = parseRuntimeEnv({
       DATABASE_URL: "postgres://magiccrm:secret@127.0.0.1:5432/magiccrm_dev",
+      APP_URL: validAppUrl,
     });
     expect(env.DATABASE_URL).toContain("postgres://");
   });
 
   it("fails clearly when DATABASE_URL is missing", () => {
-    expect(() => parseRuntimeEnv({})).toThrow(EnvValidationError);
-    expect(() => parseRuntimeEnv({})).toThrow(/DATABASE_URL is required/);
+    expect(() => parseRuntimeEnv({ APP_URL: validAppUrl })).toThrow(EnvValidationError);
+    expect(() => parseRuntimeEnv({ APP_URL: validAppUrl })).toThrow(/DATABASE_URL is required/);
   });
 
   it("fails clearly when DATABASE_URL is empty", () => {
-    expect(() => parseRuntimeEnv({ DATABASE_URL: "   " })).toThrow(/DATABASE_URL is required/);
+    expect(() => parseRuntimeEnv({ DATABASE_URL: "   ", APP_URL: validAppUrl })).toThrow(
+      /DATABASE_URL is required/,
+    );
+  });
+
+  it("fails clearly when APP_URL is missing", () => {
+    expect(() => parseRuntimeEnv({ DATABASE_URL: validPostgresUrl })).toThrow(/APP_URL is required/);
+  });
+
+  it("accepts a production https origin and localhost http", () => {
+    expect(
+      parseRuntimeEnv({
+        DATABASE_URL: validPostgresUrl,
+        APP_URL: "https://crm.example.com",
+      }).APP_URL,
+    ).toBe("https://crm.example.com");
+    expect(
+      parseRuntimeEnv({
+        DATABASE_URL: validPostgresUrl,
+        APP_URL: "http://localhost:3000/",
+      }).APP_URL,
+    ).toBe("http://localhost:3000");
+  });
+
+  it("rejects a non-local http APP_URL and a malformed origin", () => {
+    expect(() =>
+      parseRuntimeEnv({ DATABASE_URL: validPostgresUrl, APP_URL: "http://example.com" }),
+    ).toThrow(EnvValidationError);
+    expect(() =>
+      parseRuntimeEnv({ DATABASE_URL: validPostgresUrl, APP_URL: "not-a-url" }),
+    ).toThrow(EnvValidationError);
+    expect(() =>
+      parseRuntimeEnv({ DATABASE_URL: validPostgresUrl, APP_URL: "https://evil.test/phish" }),
+    ).toThrow(EnvValidationError);
   });
 
   it("treats Clerk keys as optional and does not require live Clerk credentials", () => {
-    const env = parseRuntimeEnv({ DATABASE_URL: validPostgresUrl });
+    const env = parseRuntimeEnv({ DATABASE_URL: validPostgresUrl, APP_URL: validAppUrl });
     expect(env.CLERK_SECRET_KEY).toBeUndefined();
     expect(env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY).toBeUndefined();
   });
 
   it("rejects a malformed value without echoing the secret", () => {
     try {
-      parseRuntimeEnv({ DATABASE_URL: "not-a-url" });
+      parseRuntimeEnv({ DATABASE_URL: "not-a-url", APP_URL: validAppUrl });
       throw new Error("expected parseRuntimeEnv to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(EnvValidationError);
@@ -49,7 +85,10 @@ describe("parseRuntimeEnv", () => {
     }
 
     try {
-      parseRuntimeEnv({ DATABASE_URL: "https://user:super-secret-password@example.test/db" });
+      parseRuntimeEnv({
+        DATABASE_URL: "https://user:super-secret-password@example.test/db",
+        APP_URL: validAppUrl,
+      });
       throw new Error("expected parseRuntimeEnv to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(EnvValidationError);

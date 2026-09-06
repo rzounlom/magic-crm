@@ -14,6 +14,8 @@ System architecture documents. Current implementation notes:
 - `multi-tenancy.md`
 - `authentication.md`
 - `authorization.md`
+- `team-management.md`
+- `client-onboarding.md`
 - `ui-conventions.md`
 
 The product source of truth remains `MAGICCRM_SAAS_ARCHITECTURE.md`. Expected later examples:
@@ -32,6 +34,7 @@ Architecture Decision Records. Use sequential filenames:
 ADR-001-database-and-multi-tenancy.md
 ADR-002-clerk-organizations-and-tenant-context.md
 ADR-003-magiccrm-security-groups-and-permissions.md
+ADR-004-team-invitations-and-client-bootstrap.md
 ```
 
 ### `phases/`

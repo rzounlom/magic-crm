@@ -67,6 +67,9 @@ Organization deletion does **not** cascade to locations, user profiles, or futur
 | `UserProfile.defaultLocation` | `Restrict` | A location cannot be deleted while any same-tenant profile still points at it. |
 | `SecurityGroup.organization` | `Restrict` | Tenant delete must not erase authorization graph accidentally. |
 | `AuditLog.organization` | `Restrict` | Audit history is preserved. |
+| `TeamInvitation.organization` | `Restrict` | Invitation history is preserved with the tenant. |
+| `TeamInvitationSecurityGroup.invitation` | `Cascade` | Invitation delete removes queued groups. |
+| `TeamInvitationSecurityGroup.securityGroup` | `Restrict` | A group cannot disappear out from under a queued assignment without application handling. |
 | `SecurityGroupPermission.securityGroup` | `Cascade` | Group delete removes assignments. |
 | `SecurityGroupMember.securityGroup` | `Cascade` | Group delete removes memberships. |
 | `SecurityGroupMember.userProfile` | `Cascade` | Profile delete removes memberships only. |
@@ -111,6 +114,9 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `SecurityGroup` unique on `(organizationId, name)` and `(organizationId, systemKey)`
 - `SecurityGroupMember` unique on `(securityGroupId, userProfileId)` with composite same-tenant FKs
 - `SecurityGroupPermission` unique on `(securityGroupId, permissionDefinitionId)`
+- `TeamInvitation` unique on `clerkOrganizationInvitationId`; pending unique on `(organizationId, emailNormalized)` via a partial SQL index
+- `TeamInvitationSecurityGroup` unique on `(teamInvitationId, securityGroupId)` with same-tenant composite FKs
+- `Organization.onboardingStatus` indexed for platform recovery
 
 Future tenant tables should lead compound indexes with `organizationId`.
 
@@ -138,6 +144,7 @@ Committed migrations:
 - `20260830223000_user_profile_org_membership` — UserProfile unique on `(organizationId, clerkUserId)`
 - `20260831051500_security_groups_and_audit` — PermissionDefinition, SecurityGroup, membership, AuditLog
 - `20260831060000_user_profile_identity_display` — UserProfile name/email/avatar display snapshot
+- `20260902070000_team_invitations_and_onboarding` — TeamInvitation, queued groups, Organization.onboardingStatus
 
 ## Seed / reference data
 

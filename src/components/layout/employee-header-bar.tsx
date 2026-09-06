@@ -2,12 +2,14 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 type EmployeeHeaderBarProps = {
+  teamNav?: ReactNode;
   securityNav?: ReactNode;
   organizationSwitcher: ReactNode;
   userButton: ReactNode;
 };
 
 export function EmployeeHeaderBar({
+  teamNav,
   securityNav,
   organizationSwitcher,
   userButton,
@@ -22,7 +24,12 @@ export function EmployeeHeaderBar({
           MagicCRM
         </Link>
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-3">
-          {securityNav ? <div className="shrink-0">{securityNav}</div> : null}
+          {teamNav || securityNav ? (
+            <nav className="flex shrink-0 items-center gap-3" aria-label="Administration">
+              {teamNav}
+              {securityNav}
+            </nav>
+          ) : null}
           <div className="flex min-w-0 items-center justify-end gap-3">
             <div className="min-w-0 max-w-[min(100%,12rem)] overflow-hidden sm:max-w-[16rem]">
               {organizationSwitcher}

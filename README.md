@@ -6,7 +6,7 @@ Generations Adventureplex is the first MagicCRM tenant. The system is being desi
 
 ## Current status
 
-Phase 2B tenant authorization is in place: permission catalog, security groups, `requirePermission()`, and a Security admin page. CRM, booking, payments, and AI are not implemented yet.
+Phase 2C team management is in place: tenant Team UI, Clerk Organization invitations with queued Security Groups, and a platform-internal `pnpm tenant:create` client bootstrap. CRM, booking, payments, and AI are not implemented yet.
 
 ## Prerequisites
 
@@ -43,6 +43,16 @@ Create a Clerk application and enable Organizations. Copy:
 
 into `.env` / `.env.local`. Do not commit real keys.
 
+Also set the canonical application origin (not a secret):
+
+```bash
+APP_URL=http://localhost:3000
+```
+
+In production / Vercel, set `APP_URL` to the deployed https origin. Clerk Organization invitations use this origin to return employees to MagicCRM after they accept.
+
+In the Clerk Dashboard, add the same origin to **Allowed redirect origins** (and set the Account Portal home URL to that origin). Development needs `http://localhost:3000`; production needs the https origin. Localhost and production are configured separately.
+
 Then:
 
 ```bash
@@ -56,11 +66,12 @@ pnpm dev
 5. `/app` shows the active organization, default location, and user.
 6. Switching organizations in the header resolves a different MagicCRM tenant. Refreshing does not create duplicate records.
 
-Administrators can open **Security** to manage groups. Invited employees do not become administrators automatically.
+Administrators can open **Team** to invite employees and **Security** to manage groups. Invited employees do not become administrators automatically unless the invitation queued Administrators.
 
 ```bash
 pnpm db:sync-auth              # permission catalog + default groups for existing orgs
 pnpm auth:bootstrap-admin -- --organization-id <id> --user-profile-id <id>
+pnpm tenant:create -- --organization-name "Example Fun Center" --admin-email admin@example.com --confirm CREATE
 ```
 
 Integration tests do not call Clerk. They inject trusted auth input.
@@ -74,6 +85,7 @@ In the Vercel project, set these for **Production** and **Preview**, then **rede
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
 - `DATABASE_URL` (Neon pooled URL; required for `/app`, not for `/`)
+- `APP_URL` (canonical https origin of this deployment, for invitation return URLs)
 
 `DIRECT_URL` is not required on Vercel unless you run Prisma migrations there.
 
@@ -136,6 +148,7 @@ pnpm db:migrate   # create/apply development migrations
 pnpm db:deploy    # apply committed migrations
 pnpm db:sync-auth          # permission catalog + default security groups
 pnpm auth:bootstrap-admin  # explicit Administrators membership (IDs required)
+pnpm tenant:create         # platform-internal new client tenant (Clerk + MagicCRM)
 ```
 
 Open [http://localhost:3000](http://localhost:3000) after starting `pnpm dev`.

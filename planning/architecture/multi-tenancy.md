@@ -18,7 +18,7 @@ Generations Adventureplex is tenant #1. It is never a code-level special case. N
 - Every appropriate location-owned record also carries `locationId`.
 - Location slugs are unique per organization (`organizationId + slug`), not globally.
 - `UserProfile.defaultLocationId`, when set, must reference a Location in the **same** organization. The database enforces this with a composite foreign key on `(organizationId, defaultLocationId)` and `ON DELETE RESTRICT`.
-- Browser-provided `organizationId` is never authorization.
+- Browser-provided `organizationId` is never authorization. `APP_URL` is the deployment origin for invitation return URLs; it is not tenant identity.
 
 ## Trusted RequestContext
 
@@ -94,7 +94,11 @@ Stable feature keys live in `src/types/feature-keys.ts`. They are module identif
 
 `provisionOrganization()` creates the Organization, a `Main Location`, and the initiating UserProfile. It is idempotent and uses unique constraints plus conflict recovery.
 
+Platform-internal `createClientTenant()` creates a Clerk Organization, maps the MagicCRM tenant, and invites the first admin with explicit Administrators intent. Tenant employees cannot call it. See [`client-onboarding.md`](./client-onboarding.md).
+
 Generic defaults for a new tenant: timezone `UTC`, currency `USD`, location name `Main Location`. These are not Generations-specific.
+
+`Organization.onboardingStatus` is `ACTIVE` for session-provisioned tenants. Platform-created tenants move `PROVISIONING` → `AWAITING_ADMIN` → `ACTIVE`.
 
 First provision currently stores Clerk `orgSlug` as `Organization.name` because the trusted Clerk session (`auth()`) exposes `orgId` and `orgSlug` only — not a display name. Pretty-name sync is deferred. Do not fetch Clerk Organizations on every request. Do not add webhooks only for cosmetic renaming.
 

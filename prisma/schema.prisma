@@ -1,4 +1,4 @@
-// MagicCRM tenant foundation plus Phase 2B authorization.
+// MagicCRM tenant foundation plus authorization and team invitations.
 // Product domain tables (CRM, catalog, booking) are intentionally absent.
 
 generator client {
@@ -20,14 +20,18 @@ model Organization {
   timezone            String
   /// ISO 4217 currency code. Monetary amounts must never use floating-point types.
   currency            String   @db.VarChar(3)
+  /// PROVISIONING | AWAITING_ADMIN | ACTIVE | FAILED. Session-provisioned tenants stay ACTIVE.
+  onboardingStatus    String   @default("ACTIVE") @db.VarChar(32)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  locations      Location[]
-  userProfiles   UserProfile[]
-  securityGroups SecurityGroup[]
-  auditLogs      AuditLog[]
+  locations        Location[]
+  userProfiles     UserProfile[]
+  securityGroups   SecurityGroup[]
+  auditLogs        AuditLog[]
+  teamInvitations  TeamInvitation[]
 
+  @@index([onboardingStatus])
   @@map("organizations")
 }
 
@@ -69,11 +73,12 @@ model UserProfile {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  organization         Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   /// Same-tenant default location. ON DELETE RESTRICT matches Prisma and PostgreSQL.
   /// A future location-delete service must clear defaultLocationId in the same transaction.
-  defaultLocation      Location?            @relation(fields: [organizationId, defaultLocationId], references: [organizationId, id], onDelete: Restrict)
+  defaultLocation      Location?             @relation(fields: [organizationId, defaultLocationId], references: [organizationId, id], onDelete: Restrict)
   securityGroupMembers SecurityGroupMember[]
+  invitationsSent      TeamInvitation[]      @relation("TeamInvitationsSent")
 
   @@unique([organizationId, id])
   @@unique([organizationId, clerkUserId])
@@ -113,9 +118,10 @@ model SecurityGroup {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization              @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  permissions  SecurityGroupPermission[]
-  members      SecurityGroupMember[]
+  organization         Organization                   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  permissions          SecurityGroupPermission[]
+  members              SecurityGroupMember[]
+  invitationAssignments TeamInvitationSecurityGroup[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, name])
@@ -174,4 +180,46 @@ model AuditLog {
   @@index([organizationId, createdAt])
   @@index([organizationId, resourceType, resourceId])
   @@map("audit_logs")
+}
+
+/// MagicCRM invitation intent. Clerk owns the actual Organization invitation.
+model TeamInvitation {
+  id                            String    @id @default(cuid(2))
+  organizationId                String
+  clerkOrganizationInvitationId String    @unique
+  email                         String    @db.VarChar(254)
+  emailNormalized               String    @db.VarChar(254)
+  invitedByUserProfileId        String?
+  status                        String    @db.VarChar(24)
+  /// When true, acceptance must place the user in Administrators.
+  firstAdminIntent              Boolean   @default(false)
+  expiresAt                     DateTime?
+  acceptedAt                    DateTime?
+  revokedAt                     DateTime?
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+
+  organization Organization                   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  invitedBy    UserProfile?                   @relation("TeamInvitationsSent", fields: [organizationId, invitedByUserProfileId], references: [organizationId, id], onDelete: Restrict)
+  queuedGroups TeamInvitationSecurityGroup[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, status])
+  @@index([organizationId, emailNormalized, status])
+  @@map("team_invitations")
+}
+
+/// Queued Security Groups applied after the invitee’s first UserProfile exists.
+model TeamInvitationSecurityGroup {
+  id               String @id @default(cuid(2))
+  organizationId   String
+  teamInvitationId String
+  securityGroupId  String
+
+  invitation    TeamInvitation @relation(fields: [organizationId, teamInvitationId], references: [organizationId, id], onDelete: Cascade)
+  securityGroup SecurityGroup  @relation(fields: [organizationId, securityGroupId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([teamInvitationId, securityGroupId])
+  @@index([organizationId])
+  @@map("team_invitation_security_groups")
 }

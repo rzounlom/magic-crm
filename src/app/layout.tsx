@@ -30,6 +30,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             afterSignOutUrl="/"
             signInUrl="/sign-in"
             signUpUrl="/sign-up"
+            signInFallbackRedirectUrl="/app"
+            signUpFallbackRedirectUrl="/app"
           >
             {children}
             <AppToaster />

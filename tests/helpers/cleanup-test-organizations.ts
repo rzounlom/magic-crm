@@ -1,0 +1,18 @@
+import type { PrismaClient } from "@/generated/prisma/client";
+
+export async function deleteTestOrganizations(
+  database: PrismaClient,
+  organizationIds: readonly string[],
+): Promise<void> {
+  if (organizationIds.length === 0) {
+    return;
+  }
+
+  const ids = [...organizationIds];
+  await database.teamInvitation.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.auditLog.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.securityGroup.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.userProfile.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.location.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.organization.deleteMany({ where: { id: { in: ids } } });
+}

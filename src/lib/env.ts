@@ -24,6 +24,9 @@ export const env: RuntimeEnv = {
   get DATABASE_URL() {
     return getEnv().DATABASE_URL;
   },
+  get APP_URL() {
+    return getEnv().APP_URL;
+  },
   get CLERK_SECRET_KEY() {
     return getEnv().CLERK_SECRET_KEY;
   },

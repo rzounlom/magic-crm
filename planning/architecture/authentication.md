@@ -17,7 +17,8 @@ This document describes how MagicCRM currently authenticates employees. Tenant m
 - Internal `Organization`, `Location`, and `UserProfile` records
 - Trusted `RequestContext`
 - Tenant-scoped repositories
-- Future Security Groups and permissions (Phase 2B)
+- Security Groups and permissions
+- Team invitation intent and queued Security Group assignment
 - Future commercial entitlements
 
 Clerk organization admin/member roles are only for Clerk-side organization administration and a one-time MagicCRM Administrators bootstrap when that group is empty. They are not MagicCRM’s permission model. See [`authorization.md`](./authorization.md).
@@ -50,7 +51,45 @@ Do not pass `secretKey` into `clerkMiddleware()` options. Clerk treats that as d
 | --- | --- |
 | `/` | Public marketing/landing |
 | `/sign-in`, `/sign-up` | Public Clerk screens |
+| `/accept-invitation` | Public ticket router for Organization invitations |
 | `/app` | Signed-in employee application |
+
+`APP_URL` is the canonical public origin of this deployment (`http://localhost:3000` in development). It is configuration, not a secret. Invitation return URLs are built only from `APP_URL` on the server. Browser Host headers, query params, and form fields cannot choose the origin.
+
+Clerk `<SignIn>` and `<SignUp>` use `fallbackRedirectUrl="/app"`. `ClerkProvider` sets the same fallbacks so a successful MagicCRM-hosted sign-in/sign-up returns to the employee app rather than Clerk’s Account Portal default-redirect page.
+
+Organization invitations must also pass Clerk Backend `redirectUrl` (`${APP_URL}/accept-invitation`). Without it, Clerk completes authentication on `accounts.dev` and cannot return the employee to MagicCRM.
+
+### Clerk Dashboard (required for localhost and production)
+
+Add each MagicCRM origin to **Allowed redirect origins**:
+
+- Development: `http://localhost:3000`
+- Production: the same https origin as `APP_URL`
+
+Set the Account Portal **Home URL** to that origin. Localhost and production instances are configured separately; do not assume they share redirect allowlists.
+
+### Organization invitation return
+
+```text
+MagicCRM invitation
+        ↓
+Clerk email
+        ↓
+Clerk authentication (ticket)
+        ↓
+${APP_URL}/accept-invitation  (__clerk_ticket + __clerk_status)
+        ↓
+/sign-in or /sign-up (or /app if already complete)
+        ↓
+/app provisioning
+```
+
+`/accept-invitation` exists because Clerk’s Organization invitation `redirectUrl` appends `__clerk_ticket` and `__clerk_status` (`sign_in` | `sign_up` | `complete`). `/app` is session-protected and would drop those params. The page only forwards Clerk ticket params onto existing SignIn/SignUp screens. Visiting it does **not** mark a TeamInvitation accepted.
+
+After the ticket completes, Clerk activates the accepted Organization as the session’s active organization. MagicCRM still reads tenant identity only from `readTrustedClerkAuth()` / `RequestContext`.
+
+If the invitee never reaches `/app` after Clerk accepts the Organization invitation, the local `TeamInvitation` can remain `PENDING` until Team invitation administration reconciles Clerk state. Reconciliation does not grant Security Groups. Trusted `/app` provisioning remains the application path. Deleting the Clerk user later does not delete MagicCRM history.
 
 Personal Clerk accounts cannot use the employee app. The user must have an active Clerk Organization (`OrganizationSwitcher` uses `hidePersonal`). Clerk 7.8.3 has no `hideCreateOrganization` prop. Employee UX hides the create action via the official `appearance.elements` API (`organizationSwitcherPopoverActionButton__createOrganization`). Tenant creation is Clerk Dashboard / platform-controlled. Membership and switching still use Clerk Organizations.
 
@@ -103,6 +142,8 @@ This invited-user check confirms Clerk organization membership isolation in the 
 
 ## Initial tenant administration
 
-The first user who creates a Clerk Organization is a Clerk organization admin. That is enough for Clerk-side invites and switching.
+The first user who creates a Clerk Organization in the Dashboard is a Clerk organization admin. That is enough for Clerk-side switching.
 
-Phase 2B will introduce MagicCRM Security Groups. Do not add a `role` field to `UserProfile` as a shortcut.
+Preferred customer onboarding is platform-controlled: `createClientTenant` invites the first admin with explicit MagicCRM Administrators intent. See [`client-onboarding.md`](./client-onboarding.md) and [`team-management.md`](./team-management.md).
+
+Do not add a `role` field to `UserProfile`. Clerk organization admin is not MagicCRM authorization after Administrators has members.

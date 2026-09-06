@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ApplicationUrlError, parseApplicationOrigin } from "./application-url";
+
 const POSTGRES_PROTOCOLS = new Set(["postgres:", "postgresql:"]);
 
 export class EnvValidationError extends Error {
@@ -39,8 +41,30 @@ function optionalNonEmptyString(fieldName: string) {
     .optional();
 }
 
+function applicationOrigin() {
+  return z
+    .string({ error: "APP_URL is required" })
+    .trim()
+    .min(1, { error: "APP_URL is required" })
+    .transform((value, context) => {
+      try {
+        return parseApplicationOrigin(value);
+      } catch (error) {
+        context.addIssue({
+          code: "custom",
+          message:
+            error instanceof ApplicationUrlError
+              ? error.message
+              : "APP_URL must be an absolute http(s) origin",
+        });
+        return z.NEVER;
+      }
+    });
+}
+
 export const runtimeEnvSchema = z.object({
   DATABASE_URL: postgresUrl("DATABASE_URL"),
+  APP_URL: applicationOrigin(),
   CLERK_SECRET_KEY: z
     .string({ error: "CLERK_SECRET_KEY is required" })
     .trim()
@@ -72,6 +96,7 @@ function issueMessages(error: z.ZodError): string[] {
 export function parseRuntimeEnv(source: NodeJS.Dict<string>): RuntimeEnv {
   const result = runtimeEnvSchema.safeParse({
     DATABASE_URL: source.DATABASE_URL,
+    APP_URL: source.APP_URL,
     CLERK_SECRET_KEY: source.CLERK_SECRET_KEY || undefined,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: source.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || undefined,
   });

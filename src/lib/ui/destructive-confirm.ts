@@ -37,3 +37,21 @@ export function deleteSecurityGroupConfirm(groupName: string): DestructiveConfir
     confirmLabel: "Delete group",
   };
 }
+
+export function revokeInvitationConfirm(email: string): DestructiveConfirmCopy {
+  return {
+    title: "Revoke invitation?",
+    description: `Revoke the invitation for ${email}?`,
+    warning: "This invitation will no longer be usable.",
+    confirmLabel: "Revoke invitation",
+  };
+}
+
+export function sendNewInvitationConfirm(email: string): DestructiveConfirmCopy {
+  return {
+    title: "Send a new invitation?",
+    description: `Send a new invitation to ${email}?`,
+    warning: "The previous invitation will no longer be usable.",
+    confirmLabel: "Send new invitation",
+  };
+}

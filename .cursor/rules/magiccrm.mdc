@@ -172,7 +172,7 @@ Principles:
 - interactive controls use a pointer cursor (`cursor-pointer`)
 - disabled controls use a disabled cursor (`cursor: not-allowed`) and do not look clickable
 
-The authenticated employee header always includes, from left to right: MagicCRM brand, permission-aware module navigation, OrganizationSwitcher, and the Clerk UserButton. UserButton and OrganizationSwitcher are account/tenant controls for every signed-in employee. They must not depend on MagicCRM permissions such as `security_groups.view`. Only module links (for example Security) are permission-aware. Use a shrinking flex layout so a long organization name cannot push the UserButton off-screen.
+The authenticated employee header always includes, from left to right: MagicCRM brand, permission-aware module navigation (Team when `users.view`, Security when `security_groups.view`), OrganizationSwitcher, and the Clerk UserButton. UserButton and OrganizationSwitcher are account/tenant controls for every signed-in employee. They must not depend on MagicCRM permissions such as `security_groups.view` or `users.view`. Only module links are permission-aware. Use a shrinking flex layout so a long organization name cannot push the UserButton off-screen.
 
 Apply pointer/disabled cursor in shared primitives or global component styles, not by sprinkling duplicate classes on every button. Do not add pointer cursor to plain text, read-only displays, or non-interactive containers.
 
@@ -202,6 +202,8 @@ Never swallow exceptions silently.
 Errors are logged with correlation context server-side and translated into safe, useful user-facing errors. Production UI never leaks secrets or stack traces.
 
 External providers require explicit failure/retry behavior.
+
+Persisted copies of external identity-provider state (for example invitation status) are a last-known workflow view, not indefinitely authoritative. The provider owns the external lifecycle. Reconcile stale local pending state in the administration surface that depends on it. Reconciliation must not grant application authorization.
 
 ## Observability
 

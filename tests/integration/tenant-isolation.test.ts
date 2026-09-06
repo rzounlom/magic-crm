@@ -6,34 +6,13 @@ import { createUserProfileRepository } from "@/server/repositories/user-profile-
 import { resolveRequestContext } from "@/server/request-context";
 import { provisionOrganization } from "@/server/services/provision-organization";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
 
 async function cleanup() {
-  if (createdOrganizationIds.length === 0) {
-    return;
-  }
-
-  const ids = [...createdOrganizationIds];
-  await db.auditLog.deleteMany({
-    where: { organizationId: { in: ids } },
-  });
-  await db.securityGroup.deleteMany({
-    where: { organizationId: { in: ids } },
-  });
-  await db.userProfile.deleteMany({
-    where: { organizationId: { in: ids } },
-  });
-  await db.location.deleteMany({
-    where: { organizationId: { in: ids } },
-  });
-  await db.auditLog.deleteMany({
-    where: { organizationId: { in: ids } },
-  });
-  await db.organization.deleteMany({
-    where: { id: { in: ids } },
-  });
+  await deleteTestOrganizations(db, createdOrganizationIds);
   createdOrganizationIds.length = 0;
 }
 

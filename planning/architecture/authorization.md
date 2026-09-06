@@ -59,11 +59,13 @@ Each organization must keep at least one `SecurityGroupMember` on the Administra
 
 ## Bootstrap
 
-**New tenants:** the user who first provisions the organization is added to Administrators.
+**Preferred new clients:** `createClientTenant` invites the intended admin and queues Administrators on `TeamInvitation.firstAdminIntent`. The first `/app` visit after they accept applies that membership. This does not depend on “whoever is Clerk org admin visits first.”
 
-**Existing tenants:** default groups are created idempotently on provision / `pnpm db:sync-auth`. If Administrators has zero members, the current user is added only when they are a Clerk organization admin (`org:admin`). Invited members are not auto-elevated.
+**Legacy / development tenants:** the user who first provisions the organization is added to Administrators. If Administrators has zero members later, the current user is added only when they are a Clerk organization admin (`org:admin`). Invited members are not auto-elevated.
 
 Clerk organization admin is **not** permanent MagicCRM authorization. After Administrators has at least one member, later Clerk admins do not become MagicCRM Administrators automatically. An existing MagicCRM Administrator can add any same-tenant UserProfile to Administrators regardless of that person’s Clerk role.
+
+Team administration (`/app/admin/team`) requires `users.view` / `users.manage`. Clerk `org:admin` is not sufficient.
 
 Recovery CLI (explicit IDs only):
 

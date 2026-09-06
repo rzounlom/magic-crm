@@ -69,3 +69,57 @@ export class AuthorizationError extends Error {
 export function isAuthorizationError(error: unknown): error is AuthorizationError {
   return error instanceof AuthorizationError;
 }
+
+export const TEAM_MANAGEMENT_ERROR_CODES = [
+  "INVITATION_ALREADY_PENDING",
+  "ALREADY_ORGANIZATION_MEMBER",
+  "INVITATION_NOT_PENDING",
+  "INVITATION_NOT_FOUND",
+  "INVITATION_ALREADY_ACCEPTED",
+  "INVITATION_ALREADY_REVOKED",
+  "INVALID_INVITATION_EMAIL",
+  "ADMINISTRATORS_ASSIGNMENT_FORBIDDEN",
+  "QUEUED_GROUP_NOT_IN_TENANT",
+  "ORGANIZATION_NOT_FOUND_OR_UNAUTHORIZED",
+  "CLERK_UNAVAILABLE",
+  "CLERK_INVITATION_FAILED",
+  "CLERK_REVOKE_FAILED",
+  "CLIENT_TENANT_VALIDATION",
+] as const;
+
+export type TeamManagementErrorCode = (typeof TEAM_MANAGEMENT_ERROR_CODES)[number];
+
+const TEAM_USER_MESSAGES: Record<TeamManagementErrorCode, string> = {
+  INVITATION_ALREADY_PENDING: "There is already an active invitation for this email.",
+  ALREADY_ORGANIZATION_MEMBER: "This person is already a member of this organization.",
+  INVITATION_NOT_PENDING: "That invitation is no longer pending.",
+  INVITATION_NOT_FOUND: "That invitation is no longer pending.",
+  INVITATION_ALREADY_ACCEPTED: "That invitation is no longer pending.",
+  INVITATION_ALREADY_REVOKED: "That invitation is no longer pending.",
+  INVALID_INVITATION_EMAIL: "Enter a valid email address.",
+  ADMINISTRATORS_ASSIGNMENT_FORBIDDEN: "Only an administrator can assign the Administrators group.",
+  QUEUED_GROUP_NOT_IN_TENANT: "That security group is not in this organization.",
+  ORGANIZATION_NOT_FOUND_OR_UNAUTHORIZED: "We could not update that invitation. Try again.",
+  CLERK_UNAVAILABLE: "The invitation service is temporarily unavailable. Try again.",
+  CLERK_INVITATION_FAILED: "A new invitation could not be sent. Please try again.",
+  CLERK_REVOKE_FAILED: "The invitation could not be revoked. Please try again.",
+  CLIENT_TENANT_VALIDATION: "Check the organization name, admin email, timezone, and currency.",
+};
+
+export class TeamManagementError extends Error {
+  readonly code: TeamManagementErrorCode;
+
+  constructor(code: TeamManagementErrorCode, message?: string) {
+    super(message ?? TEAM_USER_MESSAGES[code]);
+    this.name = "TeamManagementError";
+    this.code = code;
+  }
+
+  get userMessage(): string {
+    return this.message;
+  }
+}
+
+export function isTeamManagementError(error: unknown): error is TeamManagementError {
+  return error instanceof TeamManagementError;
+}
