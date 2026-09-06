@@ -24,6 +24,18 @@ export function formatUsPhoneInput(value: string): string {
   return formatUsNationalNumber(usPhoneDigits(value).slice(0, 10));
 }
 
+export function formatPhoneDisplay(value: string | null | undefined): string {
+  const raw = value?.trim() ?? "";
+  if (!raw) {
+    return "";
+  }
+  const digits = usPhoneDigits(raw);
+  if (digits.length !== 10) {
+    return raw;
+  }
+  return formatUsNationalNumber(digits);
+}
+
 export function normalizeUsPhoneForStorage(value: string | undefined): string | undefined {
   const digits = usPhoneDigits(value ?? "");
   if (digits.length === 0) {

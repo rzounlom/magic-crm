@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { EmployeeInquiryConversation } from "@/components/layout/employee-inquiry-conversation";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { db } from "@/lib/db";
+import { formatInquiryEmployeeStatus } from "@/lib/inquiries/inquiry-status-display";
+import { formatPhoneDisplay } from "@/lib/inquiries/public-phone";
+import { formatEventLocalDateTime } from "@/lib/inquiries/tenant-datetime";
 import {
   resumeInquiryAiAction,
   sendEmployeeInquiryMessageAction,
@@ -14,7 +18,6 @@ import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/se
 import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
 import { getInquiryDetail } from "@/server/services/inquiry-service";
-import { MESSAGE_SENDER_TYPES } from "@/types/inquiry";
 import { PERMISSIONS } from "@/types/permissions";
 
 type InquiryDetailView =
@@ -70,8 +73,7 @@ export default async function InquiryDetailPage({
           inquiry.customerEmail}
       </h1>
       <p className="mt-2 text-sm text-foreground/70">
-        {inquiry.status.replaceAll("_", " ")}
-        {inquiry.aiHandlingEnabled ? " · Event Assistant active" : " · Human handling"}
+        {formatInquiryEmployeeStatus(inquiry.status, inquiry.aiHandlingEnabled)}
       </p>
       <dl className="mt-8 grid gap-4 border-t border-border pt-6 text-sm sm:grid-cols-2">
         <div>
@@ -80,7 +82,7 @@ export default async function InquiryDetailPage({
         </div>
         <div>
           <dt className="text-foreground/60">Phone</dt>
-          <dd className="mt-1">{inquiry.customerPhone || "—"}</dd>
+          <dd className="mt-1">{formatPhoneDisplay(inquiry.customerPhone) || "—"}</dd>
         </div>
         <div>
           <dt className="text-foreground/60">Event</dt>
@@ -89,8 +91,10 @@ export default async function InquiryDetailPage({
         <div>
           <dt className="text-foreground/60">Date / time</dt>
           <dd className="mt-1">
-            {inquiry.desiredDate?.toISOString().slice(0, 10) || "—"}
-            {inquiry.desiredStartTime ? ` ${inquiry.desiredStartTime}` : ""}
+            {formatEventLocalDateTime({
+              date: inquiry.desiredDate,
+              time: inquiry.desiredStartTime,
+            })}
           </dd>
         </div>
         <div>
@@ -143,22 +147,7 @@ export default async function InquiryDetailPage({
         </div>
       ) : null}
       <h2 className="mt-10 text-lg font-semibold">Conversation</h2>
-      <ol className="mt-4 space-y-3">
-        {(conversation?.messages ?? []).map((message) => (
-          <li key={message.id} className="rounded-md border border-border px-4 py-3 text-sm">
-            <p className="text-xs font-medium tracking-wide text-foreground/60 uppercase">
-              {message.senderType === MESSAGE_SENDER_TYPES.CUSTOMER
-                ? "Customer"
-                : message.senderType === MESSAGE_SENDER_TYPES.EMPLOYEE
-                  ? "Employee"
-                  : message.senderType === MESSAGE_SENDER_TYPES.SYSTEM
-                    ? "System"
-                    : "Event Assistant"}
-            </p>
-            <p className="mt-2 whitespace-pre-wrap">{message.content}</p>
-          </li>
-        ))}
-      </ol>
+      <EmployeeInquiryConversation messages={conversation?.messages ?? []} />
       {canManage && conversation ? (
         <SecurityActionForm
           action={sendEmployeeInquiryMessageAction}

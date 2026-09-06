@@ -65,6 +65,26 @@ The previously discussed employee pipeline still stands. This phase does not imp
 
 Do not treat `READY_FOR_HUMAN` as booked.
 
+Persisted status enums stay as stored. Employee UI uses `formatInquiryStatus` / `formatInquiryEmployeeStatus` (`src/lib/inquiries/inquiry-status-display.ts`). Examples: `READY_FOR_HUMAN` → Ready for live agent; `AI_ENGAGED` → AI handling; `NEEDS_FOLLOW_UP` → Needs follow-up. Do not show raw enum tokens. When status is already `READY_FOR_HUMAN` and AI is off, do not also append “Live agent”.
+
+## Date/time and phone presentation
+
+`desiredDate` (`@db.Date`) and `desiredStartTime` (wall-clock `HH:mm`) are **event-local** values. Format them with `formatEventLocalDateTime` without converting them as UTC instants. A customer who chose September 11 at 7:00 PM must stay September 11 at 7:00 PM for employees.
+
+`createdAt` / `updatedAt` are UTC timestamps. Convert those with `formatOrganizationTimestamp` into `Organization.timezone` loaded from `RequestContext.organizationId`. Tenant A’s timezone must not format Tenant B’s inquiries.
+
+Phone is stored as normalized 10-digit digits. Display with `formatPhoneDisplay` as `(555) 654-3333`. Malformed legacy values stay unchanged.
+
+## Conversation rendering
+
+Public and employee AI messages share `AssistantMarkdown` (bold, lists, paragraphs, `remark-breaks`, `skipHtml`). Customer, employee, and system text stay escaped plain text.
+
+## Next: Employee Inquiry Workspace MVP
+
+The current `/app/inquiries` list and `/app/inquiries/[id]` thread are a minimal inbox. The next product step is an Employee Inquiry Workspace (assignment, filtering, richer pipeline). Do not treat this polish as that workspace.
+
+Related employee-shell follow-up (not this inbox): sticky authenticated header. See `ui-conventions.md`.
+
 ## Channel abstraction
 
 `Inquiry.source` and `Conversation.channel` already include `WEB`, `EMAIL`, and `SMS`. Only WEB is implemented. One inquiry may have multiple conversations later. The current product uses one primary WEB conversation.

@@ -61,6 +61,18 @@ export async function getCurrentTenantPublicInquiryPath(
   return path;
 }
 
+export async function getCurrentTenantTimezone(
+  ctx: RequestContext,
+  database: InquiryDb,
+): Promise<string> {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
+  const organization = await database.organization.findFirst({
+    where: { id: ctx.organizationId },
+    select: { timezone: true },
+  });
+  return organization?.timezone?.trim() || "UTC";
+}
+
 export async function resolvePublicInquiryOrganization(
   database: InquiryDb,
   slug: string,

@@ -9,6 +9,7 @@ import {
 import {
   createPublicInquiry,
   getCurrentTenantPublicInquiryPath,
+  getCurrentTenantTimezone,
   getInquiryDetail,
   getPublicConversationByToken,
   listInquiries,
@@ -139,6 +140,19 @@ describe("public intake and AI inquiries (postgres)", () => {
     expect(await getCurrentTenantPublicInquiryPath(b.ctx, db)).toBe(`/inquire/${b.organization.slug}`);
     expect(await getCurrentTenantPublicInquiryPath(a.ctx, db)).not.toBe(
       `/inquire/${b.organization.slug}`,
+    );
+    await db.organization.update({
+      where: { id: a.organizationId },
+      data: { timezone: "America/New_York" },
+    });
+    await db.organization.update({
+      where: { id: b.organizationId },
+      data: { timezone: "America/Los_Angeles" },
+    });
+    expect(await getCurrentTenantTimezone(a.ctx, db)).toBe("America/New_York");
+    expect(await getCurrentTenantTimezone(b.ctx, db)).toBe("America/Los_Angeles");
+    expect(await getCurrentTenantTimezone(a.ctx, db)).not.toBe(
+      await getCurrentTenantTimezone(b.ctx, db),
     );
     const listB = await listInquiries(b.ctx, db);
     expect(listB.map((row) => row.id)).not.toContain(first.inquiryId);

@@ -18,7 +18,8 @@ System architecture documents. Current implementation notes:
 - `client-onboarding.md`
 - `inquiries.md`
 - `ai-sales-agent.md`
-- `ui-conventions.md`
+- `ui-conventions.md` — includes the planned **Employee shell polish / sticky authenticated header** follow-up
+- `inquiries.md` — current inbox plus **Employee Inquiry Workspace MVP** as the next employee product step
 
 The product source of truth remains `MAGICCRM_SAAS_ARCHITECTURE.md`. Expected later examples:
 

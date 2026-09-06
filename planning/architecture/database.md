@@ -52,6 +52,12 @@ Prisma Studio is privileged developer/admin tooling. Treat it like production da
 
 Foundational models use Prisma `cuid(2)` string IDs. They are not sequential and are difficult to enumerate. Tenant isolation still must not depend on obscure IDs — every tenant query also constrains `organizationId`.
 
+## Inquiry date fields
+
+`Inquiry.desiredDate` is a calendar date (`@db.Date`). `Inquiry.desiredStartTime` is a wall-clock string. Together they are event-local, not UTC instants. Employee UI must format them without timezone-shifting the chosen day or hour.
+
+`createdAt` / `updatedAt` (and similar audit timestamps) are UTC instants and should be shown in `Organization.timezone`.
+
 ## Currency
 
 `Organization.currency` is an ISO 4217 code (`CHAR(3)`). Future money columns must store integer minor units. Never use floating-point types for money.

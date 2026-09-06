@@ -2,16 +2,15 @@ import Link from "next/link";
 
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
+import { formatInquiryEmployeeStatus } from "@/lib/inquiries/inquiry-status-display";
+import { formatEventLocalDate, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import {
   getCurrentTenantPublicInquiryPath,
+  getCurrentTenantTimezone,
   listInquiries,
 } from "@/server/services/inquiry-service";
-
-function statusLabel(status: string): string {
-  return status.replaceAll("_", " ");
-}
 
 type InquiriesView =
   | { kind: "status"; title: string; body: string }
@@ -19,16 +18,18 @@ type InquiriesView =
       kind: "ready";
       inquiries: Awaited<ReturnType<typeof listInquiries>>;
       publicInquiryHref: string;
+      timeZone: string;
     };
 
 async function loadInquiriesView(): Promise<InquiriesView> {
   try {
     const ctx = await getRequestContext();
-    const [inquiries, publicInquiryHref] = await Promise.all([
+    const [inquiries, publicInquiryHref, timeZone] = await Promise.all([
       listInquiries(ctx, db),
       getCurrentTenantPublicInquiryPath(ctx, db),
+      getCurrentTenantTimezone(ctx, db),
     ]);
-    return { kind: "ready", inquiries, publicInquiryHref };
+    return { kind: "ready", inquiries, publicInquiryHref, timeZone };
   } catch (error) {
     if (isAuthorizationError(error) || isTenantContextError(error) || isInquiryError(error)) {
       return { kind: "status", title: "Inquiries", body: error.userMessage };
@@ -83,21 +84,20 @@ export default async function InquiriesPage() {
                       <p className="mt-1 text-sm text-foreground/70">
                         {inquiry.eventType || "Event"}
                         {inquiry.desiredDate
-                          ? ` · ${inquiry.desiredDate.toISOString().slice(0, 10)}`
+                          ? ` · ${formatEventLocalDate(inquiry.desiredDate)}`
                           : ""}
                         {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
                       </p>
                     </div>
-                    <span className="text-xs font-medium tracking-wide text-foreground/60 uppercase">
-                      {statusLabel(inquiry.status)}
-                      {inquiry.aiHandlingEnabled ? " · Assistant" : " · Human"}
+                    <span className="text-xs font-medium tracking-wide text-foreground/60">
+                      {formatInquiryEmployeeStatus(inquiry.status, inquiry.aiHandlingEnabled)}
                     </span>
                   </div>
                   {last ? (
                     <p className="mt-3 line-clamp-2 text-sm text-foreground/60">{last.content}</p>
                   ) : null}
                   <p className="mt-2 text-xs text-foreground/50">
-                    {inquiry.createdAt.toLocaleString()}
+                    {formatOrganizationTimestamp(inquiry.createdAt, view.timeZone)}
                   </p>
                 </Link>
               </li>

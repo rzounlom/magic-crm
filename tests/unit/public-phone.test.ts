@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatPhoneDisplay,
   formatUsPhoneInput,
   normalizeUsPhoneForStorage,
   usPhoneDigits,
@@ -67,5 +68,17 @@ describe("public US phone formatting", () => {
     }
     expect(isOptionalUsPhoneInput("abc")).toBe(false);
     expect(formatUsPhoneInput("45645654564564564654654")).toBe("(456) 456-5456");
+  });
+
+  it("displays stored 10-digit phones in national format", () => {
+    expect(formatPhoneDisplay("5556543333")).toBe("(555) 654-3333");
+  });
+
+  it("leaves malformed legacy phones unchanged instead of throwing", () => {
+    expect(() => formatPhoneDisplay("55512")).not.toThrow();
+    expect(formatPhoneDisplay("55512")).toBe("55512");
+    expect(formatPhoneDisplay("not-a-phone")).toBe("not-a-phone");
+    expect(formatPhoneDisplay("")).toBe("");
+    expect(formatPhoneDisplay(null)).toBe("");
   });
 });
