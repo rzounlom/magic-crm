@@ -23,7 +23,8 @@
     "auth:bootstrap-admin": "tsx --tsconfig tsconfig.json scripts/bootstrap-administrator.ts",
     "tenant:create": "tsx --tsconfig tsconfig.json scripts/create-client-tenant.ts",
     "tenant:seed-sales-knowledge": "tsx --tsconfig tsconfig.json scripts/seed-dev-sales-knowledge.ts",
-    "tenant:import-sales-knowledge": "tsx --tsconfig tsconfig.json scripts/seed-dev-sales-knowledge.ts"
+    "tenant:import-sales-knowledge": "tsx --tsconfig tsconfig.json scripts/seed-dev-sales-knowledge.ts",
+    "prepare": "husky"
   },
   "dependencies": {
     "@clerk/backend": "3.16.13",
@@ -51,6 +52,7 @@
     "dotenv": "17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
+    "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "prisma": "7.10.0",
     "tailwindcss": "^4",

@@ -26,6 +26,8 @@ corepack prepare pnpm@11.24.0 --activate
 pnpm install
 ```
 
+`pnpm install` also enables the Husky pre-push hook (via the `prepare` script).
+
 Copy the environment example:
 
 ```bash
@@ -158,6 +160,8 @@ pnpm auth:bootstrap-admin  # explicit Administrators membership (IDs required)
 pnpm tenant:create         # platform-internal new client tenant (Clerk + MagicCRM)
 pnpm tenant:import-sales-knowledge  # development-only curated sales knowledge for a slug
 ```
+
+`git push` runs `pnpm build` via a Husky **pre-push** hook so a broken production compile is caught before it reaches `main` or a host deploy. Skip only when you intend to: `HUSKY=0 git push`.
 
 Open [http://localhost:3000](http://localhost:3000) after starting `pnpm dev`.
 
