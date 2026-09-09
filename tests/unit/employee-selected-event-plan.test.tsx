@@ -66,6 +66,8 @@ describe("employee selected event plan", () => {
     expect(html).toContain("Inventory is not reserved");
     expect(html).toContain("Finite resources needed");
     expect(html).toContain("inventory not configured");
+    expect(html).toContain("original snapshot");
+    expect(html).not.toContain("booking tools are not available yet");
     expect(html).not.toContain("ranking");
     expect(html).not.toContain("Reserve inventory");
   });

@@ -42,8 +42,12 @@ export function EmployeeSelectedEventPlan({
       : plan.title;
 
   return (
-    <section className="mt-8 rounded-md border border-primary/40 bg-primary/5 px-5 py-5">
-      <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
+    <details className="rounded-md border border-border px-5 py-4">
+      <summary className="cursor-pointer text-sm font-medium">
+        Customer chose {plan.title}
+        {total > 0 ? ` · ${formatMoneyFromCents(total, plan.currency)}` : ""} — original snapshot
+      </summary>
+      <p className="mt-3 text-xs font-semibold tracking-[0.18em] text-primary uppercase">
         {CUSTOMER_SELECTED_PLAN_BANNER}
       </p>
       <h2 className="mt-2 text-lg font-semibold">Customer Selected Plan</h2>
@@ -151,9 +155,9 @@ export function EmployeeSelectedEventPlan({
         <p className="mt-3 text-sm text-foreground/70">{plan.availabilityNote}</p>
       ) : null}
       <p className="mt-4 text-xs text-foreground/55">
-        Selection is customer intent only. Inventory is not reserved. Confirm availability before a
-        deposit or booking. Proposal, deposit, and booking tools are not available yet.
+        Selection is customer intent only. Inventory is not reserved. Hold resources, then confirm the
+        booking from the bar at the top of this page.
       </p>
-    </section>
+    </details>
   );
 }

@@ -51,7 +51,7 @@ export function EmployeeSelectedPlanResourceCheck({
   canHold,
   canRelease,
   timeZone,
-  title = "Selected Plan — Resource Check",
+  title = "Rooms and lanes",
   scheduleHref,
   holdAffected = false,
 }: {
@@ -87,7 +87,7 @@ export function EmployeeSelectedPlanResourceCheck({
     <section className="mt-8 rounded-md border border-border px-5 py-5">
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-foreground/70">
-        Status: {PLAN_AVAILABILITY_STATUS_LABELS[status]}. Inquiry status is unchanged. This is not a booking.
+        {PLAN_AVAILABILITY_STATUS_LABELS[status]}. Place a hold here before you can confirm.
       </p>
       {scheduleHref ? (
         <a href={scheduleHref} className="mt-3 inline-block text-sm text-primary">

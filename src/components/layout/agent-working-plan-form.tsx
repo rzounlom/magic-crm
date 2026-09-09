@@ -44,10 +44,10 @@ export function AgentWorkingPlanForm({
 
   return (
     <section className="rounded-md border border-border px-5 py-5">
-      <h2 className="text-lg font-semibold">Current Agent Version</h2>
+      <h2 className="text-lg font-semibold">Plan you&apos;ll book</h2>
       <p className="mt-1 text-sm text-foreground/70">
-        Separate from the customer&apos;s original selection. Saving recalculates price from sales knowledge and
-        rechecks the Master Schedule.
+        Edit date, guests, and activities. Saving updates price and availability. The customer snapshot stays
+        unchanged.
       </p>
       <p className="mt-3 text-2xl font-semibold">
         {total > 0 ? formatMoneyFromCents(total, working.currency || currency) : "Pricing to confirm"}
@@ -188,11 +188,10 @@ export function AgentWorkingPlanForm({
           />
         </label>
 
-        <div>
-          <p className="text-sm font-medium">Rotations</p>
-          <p className="mt-1 text-xs text-foreground/60">
-            Optional. One assignment per line, like <code>Group A: Bowling</code>. Availability uses each segment&apos;s
-            window.
+        <details className="rounded-md border border-border px-3 py-3">
+          <summary className="cursor-pointer text-sm font-medium">Optional rotations</summary>
+          <p className="mt-2 text-xs text-foreground/60">
+            One assignment per line, like <code>Group A: Bowling</code>. Availability uses each segment&apos;s window.
           </p>
           {[0, 1, 2].map((index) => {
             const rotation = rotations[index];
@@ -230,7 +229,7 @@ export function AgentWorkingPlanForm({
               </div>
             );
           })}
-        </div>
+        </details>
 
         <p className="text-xs text-foreground/55">Current duration {formatEventDuration(payload.durationMinutes)}.</p>
         <PendingSubmitButton
