@@ -1,6 +1,8 @@
 # AI sales agent (Phase 3A)
 
-This document describes the implemented Event Assistant. It is not a Catalog, Booking, or communications platform.
+The customer-facing path is the **Personal Event Planner** (structured form → recommendations → selection). This document describes the leftover Event Assistant used for employee-resumed conversation turns. It is not a Catalog, Booking, or communications platform.
+
+Public intake no longer asks follow-up questions in chat. Recommendation ranking/copy is deterministic from tenant `SalesKnowledgeItem` rows in `src/server/event-planner/`. Do not let a model invent prices, capacities, hours, or availability.
 
 ## Agent boundary
 
@@ -46,7 +48,7 @@ Tools are application-owned. The model never supplies `organizationId`. The runt
 | `update_inquiry_details` | Whitelisted qualification fields only |
 | `request_human_handoff` | `READY_FOR_HUMAN`, pause AI, audit |
 
-There are no booking, availability, payment, or SQL tools.
+There are no booking, availability, payment, or SQL tools. Live inventory must go through `checkResourceAvailability`, not a model tool.
 
 ## Tenant scoping
 

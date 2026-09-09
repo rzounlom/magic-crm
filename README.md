@@ -6,7 +6,7 @@ Generations Adventureplex is the first MagicCRM tenant. The system is being desi
 
 ## Current status
 
-Phase 3A AI intake is in place: public slug-based inquiry form, Event Assistant conversation thread, tenant sales knowledge, and an employee inquiry inbox. Catalog, booking, proposals, payments, SMS, and customer email are not implemented yet.
+Phase 3A intake is in place: public slug-based Personal Event Planner form, tenant-knowledge recommendations, opaque plan link, and an employee inquiry inbox with a Ready for live agent queue. Finite-resource types and a shared availability service exist as groundwork; numbered inventory, holds, booking, and outbound email are not live yet. Catalog, proposals, payments, and SMS are not implemented.
 
 ## Prerequisites
 
@@ -68,18 +68,19 @@ pnpm dev
 5. `/app` shows the active organization, default location, and user.
 6. Switching organizations in the header resolves a different MagicCRM tenant. Refreshing does not create duplicate records.
 
-Administrators can open **Inquiries** for Event Assistant leads, **Team** to invite employees, **Security** to manage groups, and **AI Knowledge** for tenant sales facts the assistant may use. Invited employees do not become administrators automatically unless the invitation queued Administrators.
+Administrators can open **Inquiries** for Personal Event Planner leads, **Team** to invite employees, **Security** to manage groups, and **AI Knowledge** for tenant sales facts used by recommendations. Invited employees do not become administrators automatically unless the invitation queued Administrators.
 
-Public intake is `/inquire/<organization-slug>`. Customers continue at `/conversation/<opaque-token>` without signing in.
+Public intake is `/inquire/<organization-slug>`. Customers continue at `/plan/<opaque-token>` without signing in. `/conversation/<token>` redirects to that plan.
 
 ```bash
 pnpm db:sync-auth              # permission catalog + default groups for existing orgs
 pnpm auth:bootstrap-admin -- --organization-id <id> --user-profile-id <id>
 pnpm tenant:create -- --organization-name "Example Fun Center" --admin-email admin@example.com --confirm CREATE
 pnpm tenant:import-sales-knowledge -- --slug <organization-slug> --confirm IMPORT
+pnpm tenant:sync-resource-types -- --slug <organization-slug> --confirm SYNC
 ```
 
-`OPENAI_API_KEY` is server-only. If it is unset, inquiries still save and a team member follows up. `OPENAI_SALES_MODEL` is optional and defaults to `gpt-4.1-mini`. Do not commit real keys.
+`OPENAI_API_KEY` is server-only and is not required for Personal Event Planner recommendations. `OPENAI_SALES_MODEL` is optional and defaults to `gpt-4.1-mini` for leftover employee-resumed assistant turns. Do not commit real keys.
 
 Integration tests do not call Clerk. They inject trusted auth input.
 
@@ -93,7 +94,7 @@ In the Vercel project, set these for **Production** and **Preview**, then **rede
 - `CLERK_SECRET_KEY`
 - `DATABASE_URL` (Neon pooled URL; required for `/app`, not for `/`)
 - `APP_URL` (canonical https origin of this deployment, for invitation return URLs)
-- `OPENAI_API_KEY` (server-only; required for live Event Assistant replies)
+- `OPENAI_API_KEY` (server-only; optional leftover Event Assistant replies)
 - `OPENAI_SALES_MODEL` (optional; defaults to `gpt-4.1-mini`)
 
 `DIRECT_URL` is not required on Vercel unless you run Prisma migrations there.
@@ -159,6 +160,7 @@ pnpm db:sync-auth          # permission catalog + default security groups
 pnpm auth:bootstrap-admin  # explicit Administrators membership (IDs required)
 pnpm tenant:create         # platform-internal new client tenant (Clerk + MagicCRM)
 pnpm tenant:import-sales-knowledge  # development-only curated sales knowledge for a slug
+pnpm tenant:sync-resource-types     # resource types + knowledge links; no invented lane counts
 ```
 
 `git push` runs `pnpm build` via a Husky **pre-push** hook so a broken production compile is caught before it reaches `main` or a host deploy. Skip only when you intend to: `HUSKY=0 git push`.

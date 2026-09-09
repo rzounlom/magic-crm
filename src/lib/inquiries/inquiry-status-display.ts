@@ -1,3 +1,7 @@
+import {
+  CUSTOMER_SELECTED_PLAN_BANNER,
+  isCustomerSelectedPlanReason,
+} from "@/lib/inquiries/ready-for-human-reason";
 import { INQUIRY_STATUSES, type InquiryStatus } from "@/types/inquiry";
 
 const INQUIRY_STATUS_LABELS: Record<InquiryStatus, string> = {
@@ -31,4 +35,16 @@ export function formatInquiryEmployeeStatus(status: string, aiHandlingEnabled: b
     return `${label} · Live agent`;
   }
   return label;
+}
+
+export function formatInquiryQueueLabel(inquiry: {
+  status: string;
+  aiHandlingEnabled: boolean;
+  selectedEventPlanId?: string | null;
+  humanHandoffReason?: string | null;
+}): string {
+  if (isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)) {
+    return CUSTOMER_SELECTED_PLAN_BANNER;
+  }
+  return formatInquiryEmployeeStatus(inquiry.status, inquiry.aiHandlingEnabled);
 }

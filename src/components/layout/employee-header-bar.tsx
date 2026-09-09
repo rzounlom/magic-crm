@@ -3,6 +3,8 @@ import Link from "next/link";
 
 type EmployeeHeaderBarProps = {
   inquiriesNav?: ReactNode;
+  scheduleNav?: ReactNode;
+  resourcesNav?: ReactNode;
   teamNav?: ReactNode;
   securityNav?: ReactNode;
   knowledgeNav?: ReactNode;
@@ -13,6 +15,8 @@ type EmployeeHeaderBarProps = {
 
 export function EmployeeHeaderBar({
   inquiriesNav,
+  scheduleNav,
+  resourcesNav,
   teamNav,
   securityNav,
   knowledgeNav,
@@ -20,7 +24,7 @@ export function EmployeeHeaderBar({
   organizationSwitcher,
   userButton,
 }: EmployeeHeaderBarProps) {
-  const hasModuleNav = inquiriesNav || teamNav || securityNav || knowledgeNav;
+  const hasModuleNav = inquiriesNav || scheduleNav || resourcesNav || teamNav || securityNav || knowledgeNav;
   return (
     <header className="border-b border-border bg-muted/60">
       <div className="mx-auto flex h-14 w-full min-w-0 max-w-5xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
@@ -37,6 +41,8 @@ export function EmployeeHeaderBar({
           >
             <div className="flex w-max items-center gap-3">
               {inquiriesNav}
+              {scheduleNav}
+              {resourcesNav}
               {teamNav}
               {securityNav}
               {knowledgeNav}

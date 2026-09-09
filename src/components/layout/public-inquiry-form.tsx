@@ -10,6 +10,8 @@ import {
   type ChangeEventHandler,
   type FormEvent,
   type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
 } from "react";
 
 import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pending-submit-button";
@@ -23,18 +25,38 @@ import { notify } from "@/lib/ui/notify";
 import { yieldToPaint } from "@/lib/ui/yield-to-paint";
 import { submitPublicInquiryAction } from "@/server/actions/public-inquiry";
 import { readPublicIntakeFields } from "@/server/inquiries/intake-validation";
+import {
+  BUDGET_BAND_LABELS,
+  BUDGET_BAND_VALUES,
+  DINING_PREFERENCE_LABELS,
+  DINING_PREFERENCE_VALUES,
+  EVENT_DURATION_LABELS,
+  EVENT_DURATION_MINUTES,
+  EVENT_GOAL_OPTIONS,
+  EVENT_TYPE_OPTIONS,
+  GUEST_MIX_LABELS,
+  GUEST_MIX_VALUES,
+  SPACE_PREFERENCE_LABELS,
+  SPACE_PREFERENCE_VALUES,
+} from "@/types/event-planner";
 import type { SecurityActionResult } from "@/types/security-action";
 
 const FIELD_CLASS =
   "mt-1 w-full rounded-md border border-border bg-background px-3 py-2 disabled:cursor-not-allowed";
 
+export type PublicPlannerCatalogOption = { id: string; name: string };
+
 export function PublicInquiryForm({
   organizationSlug,
   organizationName,
+  attractions = [],
+  diningOptions = [],
   action = submitPublicInquiryAction,
 }: {
   organizationSlug: string;
   organizationName: string;
+  attractions?: PublicPlannerCatalogOption[];
+  diningOptions?: PublicPlannerCatalogOption[];
   action?: (formData: FormData) => Promise<SecurityActionResult>;
 }) {
   const router = useRouter();
@@ -66,13 +88,20 @@ export function PublicInquiryForm({
     const clientCheck = readPublicIntakeFields({
       firstName: String(formData.get("firstName") ?? ""),
       lastName: String(formData.get("lastName") ?? ""),
+      customerGroupName: String(formData.get("customerGroupName") ?? ""),
       email: String(formData.get("email") ?? ""),
       phone: String(formData.get("phone") ?? ""),
       eventType: String(formData.get("eventType") ?? ""),
-      occasion: String(formData.get("occasion") ?? ""),
       preferredDate: String(formData.get("preferredDate") ?? ""),
       startTime: String(formData.get("startTime") ?? ""),
       guestCount: String(formData.get("guestCount") ?? ""),
+      guestMix: String(formData.get("guestMix") ?? ""),
+      desiredDurationMinutes: String(formData.get("desiredDurationMinutes") ?? ""),
+      budgetBand: String(formData.get("budgetBand") ?? ""),
+      eventGoal: String(formData.get("eventGoal") ?? ""),
+      diningPreference: String(formData.get("diningPreference") ?? ""),
+      spacePreference: String(formData.get("spacePreference") ?? ""),
+      attractionInterestIds: formData.getAll("attractionInterestIds").map(String),
       notes: String(formData.get("notes") ?? ""),
       companyWebsite: String(formData.get("companyWebsite") ?? ""),
       submissionId: String(formData.get("submissionId") ?? ""),
@@ -117,6 +146,18 @@ export function PublicInquiryForm({
     }
   }
 
+  const diningChoices =
+    diningOptions.length > 0
+      ? [
+          ...diningOptions.map((item) => ({ value: item.id, label: item.name })),
+          { value: "not_sure", label: DINING_PREFERENCE_LABELS.not_sure },
+          { value: "none", label: DINING_PREFERENCE_LABELS.none },
+        ]
+      : DINING_PREFERENCE_VALUES.map((value) => ({
+          value,
+          label: DINING_PREFERENCE_LABELS[value],
+        }));
+
   return (
     <PendingActionProvider pending={pending}>
       <form className="mt-8 space-y-5" aria-busy={pending} onSubmit={onSubmit}>
@@ -126,9 +167,18 @@ export function PublicInquiryForm({
           <label htmlFor={honeypotId}>Company website</label>
           <input id={honeypotId} name="companyWebsite" tabIndex={-1} autoComplete="off" />
         </div>
+
+        <IntakeField
+          label="Customer / group name (optional)"
+          name="customerGroupName"
+          maxLength={160}
+          disabled={pending}
+          error={fieldErrors.customerGroupName}
+          onChange={() => clearError("customerGroupName")}
+        />
         <div className="grid gap-5 sm:grid-cols-2">
           <IntakeField
-            label="First name"
+            label="Contact first name"
             name="firstName"
             required
             maxLength={80}
@@ -137,7 +187,7 @@ export function PublicInquiryForm({
             onChange={() => clearError("firstName")}
           />
           <IntakeField
-            label="Last name"
+            label="Contact last name"
             name="lastName"
             required
             maxLength={80}
@@ -170,35 +220,33 @@ export function PublicInquiryForm({
             clearError("phone");
           }}
         />
-        <IntakeField
-          label="What are you planning?"
+        <IntakeSelect
+          label="Customer / event type"
           name="eventType"
           required
-          maxLength={80}
-          placeholder="Birthday, corporate event, school outing…"
           disabled={pending}
           error={fieldErrors.eventType}
           onChange={() => clearError("eventType")}
-        />
-        <IntakeField
-          label="Occasion (optional)"
-          name="occasion"
-          maxLength={120}
-          disabled={pending}
-          error={fieldErrors.occasion}
-          onChange={() => clearError("occasion")}
-        />
+        >
+          <option value="">Choose an event type</option>
+          {EVENT_TYPE_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </IntakeSelect>
         <div className="grid gap-5 sm:grid-cols-2">
           <IntakeField
-            label="Preferred date"
+            label="Requested event date"
             name="preferredDate"
             type="date"
+            required
             disabled={pending}
             error={fieldErrors.preferredDate}
             onChange={() => clearError("preferredDate")}
           />
           <IntakeField
-            label="Approximate start (optional)"
+            label="Preferred start time (optional)"
             name="startTime"
             type="time"
             disabled={pending}
@@ -206,17 +254,132 @@ export function PublicInquiryForm({
             onChange={() => clearError("startTime")}
           />
         </div>
-        <IntakeField
-          label="Guest count"
-          name="guestCount"
-          type="number"
-          min={1}
-          max={500}
-          step={1}
+        <div className="grid gap-5 sm:grid-cols-2">
+          <IntakeField
+            label="Estimated guest count"
+            name="guestCount"
+            type="number"
+            required
+            min={1}
+            max={500}
+            step={1}
+            disabled={pending}
+            error={fieldErrors.guestCount}
+            onChange={() => clearError("guestCount")}
+          />
+          <IntakeSelect
+            label="Guest mix"
+            name="guestMix"
+            required
+            disabled={pending}
+            error={fieldErrors.guestMix}
+            onChange={() => clearError("guestMix")}
+          >
+            <option value="">Choose a guest mix</option>
+            {GUEST_MIX_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {GUEST_MIX_LABELS[value]}
+              </option>
+            ))}
+          </IntakeSelect>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <IntakeSelect
+            label="Desired event length"
+            name="desiredDurationMinutes"
+            required
+            disabled={pending}
+            error={fieldErrors.desiredDurationMinutes}
+            onChange={() => clearError("desiredDurationMinutes")}
+          >
+            <option value="">Choose a length</option>
+            {EVENT_DURATION_MINUTES.map((value) => (
+              <option key={value} value={value}>
+                {EVENT_DURATION_LABELS[value]}
+              </option>
+            ))}
+          </IntakeSelect>
+          <IntakeSelect
+            label="Approximate budget"
+            name="budgetBand"
+            required
+            disabled={pending}
+            error={fieldErrors.budgetBand}
+            onChange={() => clearError("budgetBand")}
+          >
+            <option value="">Choose a budget</option>
+            {BUDGET_BAND_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {BUDGET_BAND_LABELS[value]}
+              </option>
+            ))}
+          </IntakeSelect>
+        </div>
+        <IntakeSelect
+          label="Main event goal"
+          name="eventGoal"
+          required
           disabled={pending}
-          error={fieldErrors.guestCount}
-          onChange={() => clearError("guestCount")}
-        />
+          error={fieldErrors.eventGoal}
+          onChange={() => clearError("eventGoal")}
+        >
+          <option value="">Choose a goal</option>
+          {EVENT_GOAL_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </IntakeSelect>
+        <IntakeSelect
+          label="Dining preference"
+          name="diningPreference"
+          required
+          disabled={pending}
+          error={fieldErrors.diningPreference}
+          onChange={() => clearError("diningPreference")}
+        >
+          <option value="">Choose a dining preference</option>
+          {diningChoices.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </IntakeSelect>
+        <IntakeSelect
+          label="Space preference"
+          name="spacePreference"
+          required
+          disabled={pending}
+          error={fieldErrors.spacePreference}
+          onChange={() => clearError("spacePreference")}
+        >
+          <option value="">Choose a space preference</option>
+          {SPACE_PREFERENCE_VALUES.map((value) => (
+            <option key={value} value={value}>
+              {SPACE_PREFERENCE_LABELS[value]}
+            </option>
+          ))}
+        </IntakeSelect>
+        {attractions.length > 0 ? (
+          <fieldset className="space-y-2">
+            <legend className="text-sm text-foreground/70">Attractions of interest (optional)</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {attractions.map((item) => (
+                <label key={item.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="attractionInterestIds"
+                    value={item.id}
+                    disabled={pending}
+                    onChange={() => clearError("attractionInterestIds")}
+                  />
+                  <span>{item.name}</span>
+                </label>
+              ))}
+            </div>
+            <FieldError id="attractionInterestIds-error" message={fieldErrors.attractionInterestIds} />
+          </fieldset>
+        ) : null}
         <label className="block text-sm">
           <span className="text-foreground/70">Anything else we should know?</span>
           <textarea
@@ -235,7 +398,7 @@ export function PublicInquiryForm({
           pendingLabel={PUBLIC_INQUIRY_PENDING_COPY}
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
-          Start conversation
+          Create my event plan
         </PendingSubmitButton>
         {pending ? <PublicInquiryPendingBanner /> : null}
         <p className="sr-only">Submitting for {organizationName}</p>
@@ -268,6 +431,39 @@ function IntakeField({
         onChange={onChange}
         className={FIELD_CLASS}
       />
+      <FieldError id={errorId} message={error} />
+    </label>
+  );
+}
+
+function IntakeSelect({
+  label,
+  name,
+  error,
+  children,
+  onChange,
+  ...select
+}: {
+  label: string;
+  name: string;
+  error?: string;
+  children: ReactNode;
+  onChange?: ChangeEventHandler<HTMLSelectElement>;
+} & Omit<SelectHTMLAttributes<HTMLSelectElement>, "name" | "className">) {
+  const errorId = `${name}-error`;
+  return (
+    <label className="block text-sm">
+      <span className="text-foreground/70">{label}</span>
+      <select
+        {...select}
+        name={name}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
+        onChange={onChange}
+        className={FIELD_CLASS}
+      >
+        {children}
+      </select>
       <FieldError id={errorId} message={error} />
     </label>
   );

@@ -1,5 +1,5 @@
-// MagicCRM tenant foundation plus authorization and team invitations.
-// Product domain tables (CRM, catalog, booking) are intentionally absent.
+// MagicCRM tenant foundation plus authorization, inquiries, and finite-resource schedule groundwork.
+// Catalog products, Booking records, and outbound email delivery are not implemented yet.
 
 generator client {
   provider = "prisma-client"
@@ -34,6 +34,12 @@ model Organization {
   conversations       Conversation[]
   conversationMessages ConversationMessage[]
   salesKnowledgeItems SalesKnowledgeItem[]
+  eventPlanRecommendations EventPlanRecommendation[]
+  resourceTypes       ResourceType[]
+  resources           Resource[]
+  knowledgeResourceRequirements KnowledgeResourceRequirement[]
+  resourceReservations ResourceReservation[]
+  communicationEvents CommunicationEvent[]
   aiUsage             AiUsage[]
 
   @@index([onboardingStatus])
@@ -55,6 +61,8 @@ model Location {
   defaultForUserProfiles UserProfile[]
   inquiries              Inquiry[]
   salesKnowledgeItems    SalesKnowledgeItem[]
+  resourceTypes          ResourceType[]
+  resources              Resource[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
@@ -87,6 +95,7 @@ model UserProfile {
   securityGroupMembers SecurityGroupMember[]
   invitationsSent      TeamInvitation[]      @relation("TeamInvitationsSent")
   assignedInquiries    Inquiry[]             @relation("InquiryAssignee")
+  resourceReservations ResourceReservation[] @relation("ResourceReservationCreatedBy")
 
   @@unique([organizationId, id])
   @@unique([organizationId, clerkUserId])
@@ -232,7 +241,7 @@ model TeamInvitationSecurityGroup {
   @@map("team_invitation_security_groups")
 }
 
-/// Customer event inquiry. AI-stage CRM lead; booking/proposal come later.
+/// Customer event inquiry. CRM lead; booking/proposal come later.
 model Inquiry {
   id                       String    @id @default(cuid(2))
   organizationId           String
@@ -241,6 +250,7 @@ model Inquiry {
   source                   String    @db.VarChar(32)
   customerFirstName        String?   @db.VarChar(80)
   customerLastName         String?   @db.VarChar(80)
+  customerGroupName        String?   @db.VarChar(160)
   customerEmail            String    @db.VarChar(254)
   customerEmailNormalized  String    @db.VarChar(254)
   customerPhone            String?   @db.VarChar(32)
@@ -250,9 +260,17 @@ model Inquiry {
   guestCount               Int?
   childGuestCount          Int?
   adultGuestCount          Int?
+  guestMix                 String?   @db.VarChar(32)
+  desiredDurationMinutes   Int?
+  /// Integer minor units (cents) when present. Not floating-point.
   budgetMin                Int?
   budgetMax                Int?
   occasion                 String?   @db.VarChar(120)
+  eventGoal                String?   @db.VarChar(80)
+  diningPreference         String?   @db.VarChar(80)
+  spacePreference          String?   @db.VarChar(32)
+  /// Tenant sales-knowledge item ids the customer selected. Empty array when none.
+  attractionInterestIds    Json?
   customerNotes            String?   @db.VarChar(2000)
   internalSummary          String?   @db.VarChar(4000)
   employeeInternalNotes    String?   @db.VarChar(4000)
@@ -260,6 +278,10 @@ model Inquiry {
   aiHandlingEnabled        Boolean   @default(true)
   humanHandoffRequestedAt  DateTime?
   humanHandoffReason       String?   @db.VarChar(500)
+  recommendationsGeneratedAt DateTime?
+  recommendationsViewedAt  DateTime?
+  selectedEventPlanId      String?
+  customerSelectedAt       DateTime?
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
@@ -267,12 +289,48 @@ model Inquiry {
   location      Location?       @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
   assignedUser  UserProfile?    @relation("InquiryAssignee", fields: [organizationId, assignedUserProfileId], references: [organizationId, id], onDelete: Restrict)
   conversations Conversation[]
+  eventPlanRecommendations EventPlanRecommendation[]
+  resourceReservations ResourceReservation[]
+  communicationEvents  CommunicationEvent[]
   aiUsage       AiUsage[]
 
   @@unique([organizationId, id])
   @@index([organizationId, status, createdAt])
   @@index([organizationId, customerEmailNormalized])
+  @@index([organizationId, selectedEventPlanId])
+  @@index([organizationId, customerSelectedAt])
   @@map("inquiries")
+}
+
+/// Tenant-scoped recommended event plan tied to one inquiry. Not a reservation.
+model EventPlanRecommendation {
+  id                    String   @id @default(cuid(2))
+  organizationId        String
+  inquiryId             String
+  tier                  String   @db.VarChar(32)
+  title                 String   @db.VarChar(120)
+  sortOrder             Int
+  estimatedTotalCents   Int?
+  currency              String   @db.VarChar(3)
+  guestCount            Int?
+  durationMinutes       Int?
+  customerFacingReason  String   @db.VarChar(1000)
+  availabilityValidated Boolean  @default(false)
+  availabilityNote      String?  @db.VarChar(500)
+  /// NOT_VALIDATED | AVAILABLE | NEEDS_ADJUSTMENT | AVAILABILITY_CHANGED — plan-level, not Inquiry.status.
+  availabilityStatus    String   @default("NOT_VALIDATED") @db.VarChar(32)
+  availabilityCheckedAt DateTime?
+  payload               Json
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  inquiry      Inquiry      @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, inquiryId, tier])
+  @@index([organizationId, inquiryId])
+  @@map("event_plan_recommendations")
 }
 
 /// Customer conversation thread. One inquiry may have multiple channels later.
@@ -340,10 +398,154 @@ model SalesKnowledgeItem {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   location     Location?    @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  resourceRequirements KnowledgeResourceRequirement[]
 
   @@unique([organizationId, id])
   @@index([organizationId, active, type])
   @@map("sales_knowledge_items")
+}
+
+/// Tenant-configurable finite inventory category (bowling lanes, rooms, etc.).
+model ResourceType {
+  id                      String   @id @default(cuid(2))
+  organizationId          String
+  locationId              String?
+  name                    String   @db.VarChar(120)
+  slug                    String   @db.VarChar(80)
+  /// SLOTTED (fixed increments) or CONTINUOUS.
+  schedulingMode          String   @default("SLOTTED") @db.VarChar(24)
+  slotMinutes             Int      @default(30)
+  defaultDurationMinutes  Int?
+  bufferBeforeMinutes     Int      @default(0)
+  bufferAfterMinutes      Int      @default(0)
+  /// False until an Admin has created numbered Resource rows for this type.
+  inventoryConfigured     Boolean  @default(false)
+  active                  Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location?    @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  resources    Resource[]
+  requirements KnowledgeResourceRequirement[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId, active])
+  @@map("resource_types")
+}
+
+/// One numbered finite unit (Bowling Lane 1). Capacity is optional and must not be invented.
+model Resource {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  resourceTypeId String
+  locationId     String?
+  name           String   @db.VarChar(120)
+  displayOrder   Int
+  capacity       Int?
+  active         Boolean  @default(true)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  resourceType ResourceType @relation(fields: [organizationId, resourceTypeId], references: [organizationId, id], onDelete: Restrict)
+  location     Location?    @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  reservations ResourceReservation[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, resourceTypeId, displayOrder])
+  @@index([organizationId, resourceTypeId, active])
+  @@map("resources")
+}
+
+/// How a sales-knowledge offering consumes a finite resource type. Missing ratios stay unconfigured.
+model KnowledgeResourceRequirement {
+  id                         String   @id @default(cuid(2))
+  organizationId             String
+  salesKnowledgeItemId       String
+  resourceTypeId             String
+  /// FIXED | PER_GUESTS | UNKNOWN
+  quantityRule               String   @db.VarChar(24)
+  quantity                   Int?
+  guestsPerUnit              Int?
+  durationMinutes            Int?
+  requiresStaffConfiguration Boolean  @default(false)
+  notes                      String?  @db.VarChar(500)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  salesKnowledgeItem SalesKnowledgeItem @relation(fields: [organizationId, salesKnowledgeItemId], references: [organizationId, id], onDelete: Restrict)
+  resourceType       ResourceType       @relation(fields: [organizationId, resourceTypeId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, salesKnowledgeItemId, resourceTypeId])
+  @@index([organizationId, resourceTypeId])
+  @@map("knowledge_resource_requirements")
+}
+
+/// Occupies a finite resource. AVAILABLE is the absence of an active HOLD or BOOKED row — not a stored status.
+model ResourceReservation {
+  id                    String    @id @default(cuid(2))
+  organizationId        String
+  resourceId            String
+  /// HOLD | BOOKED
+  status                String    @db.VarChar(16)
+  /// Event-local calendar date.
+  slotDate              DateTime  @db.Date
+  /// Minutes from local midnight; endMinute may exceed 1440 if the window crosses midnight.
+  startMinute           Int
+  endMinute             Int
+  inquiryId             String?
+  /// Future Booking id. No FK until Booking exists.
+  bookingId             String?
+  /// INQUIRY | BOOKING | MANUAL
+  sourceType            String    @db.VarChar(24)
+  expiresAt             DateTime?
+  reason                String?   @db.VarChar(240)
+  createdByUserProfileId String?
+  releasedAt            DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  resource     Resource      @relation(fields: [organizationId, resourceId], references: [organizationId, id], onDelete: Restrict)
+  inquiry      Inquiry?      @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+  createdBy    UserProfile?  @relation("ResourceReservationCreatedBy", fields: [organizationId, createdByUserProfileId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, resourceId, slotDate])
+  @@index([organizationId, inquiryId])
+  @@index([organizationId, status, releasedAt])
+  @@map("resource_reservations")
+}
+
+/// Outbound communication log. Rows may be SKIPPED when no provider is configured — that is not a send.
+model CommunicationEvent {
+  id                 String    @id @default(cuid(2))
+  organizationId     String
+  channel            String    @db.VarChar(16)
+  kind               String    @db.VarChar(64)
+  status             String    @db.VarChar(24)
+  skipReason         String?   @db.VarChar(80)
+  toAddress          String?   @db.VarChar(254)
+  subject            String?   @db.VarChar(200)
+  inquiryId          String?
+  bookingId          String?
+  providerMessageId  String?   @db.VarChar(160)
+  payload            Json?
+  sentAt             DateTime?
+  createdAt          DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  inquiry      Inquiry?     @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, inquiryId])
+  @@index([organizationId, kind, status])
+  @@map("communication_events")
 }
 
 /// Tenant-scoped AI usage metadata for later pricing. Not billing.

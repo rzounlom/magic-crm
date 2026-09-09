@@ -18,6 +18,11 @@ export type AuditAction =
   | "tenant.client_created"
   | "tenant.admin_invited"
   | "inquiry.created"
+  | "inquiry.plan_generated"
+  | "inquiry.plan_viewed"
+  | "inquiry.plan_selected"
+  | "communication.plan_selection_skipped"
+  | "communication.booking_confirmation_skipped"
   | "ai.conversation_started"
   | "ai.message_generated"
   | "ai.handoff_requested"
@@ -25,7 +30,17 @@ export type AuditAction =
   | "ai.resumed"
   | "employee.conversation_taken_over"
   | "sales_knowledge.created"
-  | "sales_knowledge.updated";
+  | "sales_knowledge.updated"
+  | "resource_type.created"
+  | "resource_type.updated"
+  | "resource.created"
+  | "resource.updated"
+  | "resource.deactivated"
+  | "resource.hold_created"
+  | "resource.hold_released"
+  | "resource.hold_expired"
+  | "resource.hold_conflict_rejected"
+  | "knowledge_requirement.updated";
 
 type AuditMetadata = Record<string, string | number | boolean | null>;
 

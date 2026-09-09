@@ -5,7 +5,9 @@ import {
   isPlausiblePublicConversationToken,
 } from "@/lib/ai/public-conversation-token";
 import { getPublicRateLimiter, type RateLimiter } from "@/lib/ai/rate-limiter";
+import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
 import { publicInquiryPathForActiveOrganization } from "@/lib/inquiries/organization-display-name";
+import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { AuthorizationError, InquiryError } from "@/server/errors";
 import {
   isHoneypotFilled,
@@ -16,6 +18,8 @@ import {
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
+import { attractionInterestIdsFromJson } from "@/server/event-planner/build-event-plans";
+import { generateEventPlansForInquiry } from "@/server/services/event-plan-service";
 import { runSalesAgentTurn, type SalesAgentRuntime } from "@/server/services/sales-agent-service";
 import {
   CONVERSATION_CHANNELS,
@@ -25,6 +29,7 @@ import {
   MESSAGE_SENDER_TYPES,
 } from "@/types/inquiry";
 import { PERMISSIONS } from "@/types/permissions";
+import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 
 type InquiryDb = PrismaClient;
 
@@ -33,13 +38,20 @@ export type PublicIntakeInput = {
   rateLimitKey: string;
   firstName: string;
   lastName: string;
+  customerGroupName?: string;
   email: string;
   phone?: string;
   eventType?: string;
-  occasion?: string;
   preferredDate?: string;
   startTime?: string;
   guestCount?: number;
+  guestMix?: string;
+  desiredDurationMinutes?: number;
+  budgetBand?: string;
+  eventGoal?: string;
+  diningPreference?: string;
+  spacePreference?: string;
+  attractionInterestIds?: string[];
   notes?: string;
   companyWebsite?: string;
   submissionId: string;
@@ -90,7 +102,7 @@ export async function resolvePublicInquiryOrganization(
 export async function createPublicInquiry(
   database: InquiryDb,
   input: PublicIntakeInput,
-  runtime: SalesAgentRuntime,
+  _runtime?: SalesAgentRuntime,
   rateLimiter: RateLimiter = getPublicRateLimiter(),
 ) {
   const parsed = publicIntakeSchema.safeParse(input);
@@ -121,16 +133,25 @@ export async function createPublicInquiry(
         source: INQUIRY_SOURCES.WEB,
         customerFirstName: parsed.data.firstName,
         customerLastName: parsed.data.lastName,
+        customerGroupName: parsed.data.customerGroupName?.trim() || null,
         customerEmail: parsed.data.email.trim(),
         customerEmailNormalized: emailNormalized,
         customerPhone: parsed.data.phone || null,
         eventType: parsed.data.eventType,
-        occasion: parsed.data.occasion?.trim() || null,
+        occasion: parsed.data.eventGoal,
+        eventGoal: parsed.data.eventGoal,
         desiredDate,
         desiredStartTime: parsed.data.startTime?.trim() || null,
-        guestCount: parsed.data.guestCount ?? null,
+        guestCount: parsed.data.guestCount,
+        guestMix: parsed.data.guestMix,
+        desiredDurationMinutes: parsed.data.desiredDurationMinutes,
+        budgetMin: parsed.data.budgetMin,
+        budgetMax: parsed.data.budgetMax,
+        diningPreference: parsed.data.diningPreference,
+        spacePreference: parsed.data.spacePreference,
+        attractionInterestIds: parsed.data.attractionInterestIds,
         customerNotes: parsed.data.notes?.trim() || null,
-        aiHandlingEnabled: true,
+        aiHandlingEnabled: false,
       },
     });
 
@@ -171,13 +192,34 @@ export async function createPublicInquiry(
     metadata: { source: INQUIRY_SOURCES.WEB, channel: CONVERSATION_CHANNELS.WEB },
   });
 
-  await runSalesAgentTurn(database, runtime, {
-    organizationId: organization.id,
-    organizationName: organization.name,
-    inquiryId: created.inquiry.id,
-    conversationId: created.conversation.id,
-    trigger: "intake",
-  });
+  try {
+    const appUrl = process.env.APP_URL?.trim();
+    await generateEventPlansForInquiry(database, {
+      organizationId: organization.id,
+      inquiryId: created.inquiry.id,
+      ...(appUrl
+        ? {
+            planNotification: personalEventPlanNotification({
+              customerEmail: parsed.data.email.trim(),
+              customerFirstName: parsed.data.firstName,
+              customerLastName: parsed.data.lastName,
+              organizationName: organization.name,
+              planPath: `/plan/${token}`,
+              appUrl,
+              eventDate: parsed.data.preferredDate ?? null,
+            }),
+          }
+        : {}),
+    });
+  } catch {
+    await database.inquiry.update({
+      where: { id: created.inquiry.id },
+      data: {
+        status: INQUIRY_STATUSES.NEEDS_FOLLOW_UP,
+        humanHandoffReason: READY_FOR_HUMAN_REASONS.GENERATION_FAILED,
+      },
+    });
+  }
 
   return {
     inquiryId: created.inquiry.id,
@@ -321,6 +363,16 @@ export async function listInquiries(ctx: RequestContext, database: InquiryDb) {
           },
         },
       },
+      eventPlanRecommendations: {
+        orderBy: { sortOrder: "asc" },
+        select: {
+          id: true,
+          tier: true,
+          title: true,
+          estimatedTotalCents: true,
+          currency: true,
+        },
+      },
     },
   });
 }
@@ -331,7 +383,7 @@ export async function getInquiryDetail(
   inquiryId: string,
 ) {
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
-  return database.inquiry.findFirst({
+  const inquiry = await database.inquiry.findFirst({
     where: { id: inquiryId, organizationId: ctx.organizationId },
     include: {
       conversations: {
@@ -339,8 +391,46 @@ export async function getInquiryDetail(
           messages: { orderBy: { createdAt: "asc" } },
         },
       },
+      eventPlanRecommendations: { orderBy: { sortOrder: "asc" } },
+      resourceReservations: {
+        where: {
+          releasedAt: null,
+          status: RESOURCE_RESERVATION_STATUSES.HOLD,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
+        include: {
+          resource: {
+            select: {
+              id: true,
+              name: true,
+              resourceType: { select: { id: true, name: true } },
+            },
+          },
+        },
+        orderBy: [{ startMinute: "asc" }, { createdAt: "asc" }],
+      },
     },
   });
+  if (!inquiry) {
+    return null;
+  }
+
+  const interestIds = attractionInterestIdsFromJson(inquiry.attractionInterestIds);
+  const interestItems =
+    interestIds.length > 0
+      ? await database.salesKnowledgeItem.findMany({
+          where: { organizationId: ctx.organizationId, id: { in: interestIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+  const namesById = new Map(interestItems.map((item) => [item.id, item.name]));
+
+  return {
+    ...inquiry,
+    attractionInterestNames: interestIds
+      .map((id) => namesById.get(id))
+      .filter((name): name is string => Boolean(name)),
+  };
 }
 
 export async function takeOverInquiry(
@@ -363,7 +453,9 @@ export async function takeOverInquiry(
       status: INQUIRY_STATUSES.READY_FOR_HUMAN,
       assignedUserProfileId: ctx.userId,
       humanHandoffRequestedAt: inquiry.humanHandoffRequestedAt ?? new Date(),
-      humanHandoffReason: inquiry.humanHandoffReason ?? "Employee took over the conversation.",
+      humanHandoffReason: inquiry.selectedEventPlanId
+        ? inquiry.humanHandoffReason ?? READY_FOR_HUMAN_REASONS.CUSTOMER_SELECTED_PLAN
+        : READY_FOR_HUMAN_REASONS.MANUAL_ESCALATION,
     },
   });
 
@@ -456,25 +548,35 @@ export async function addEmployeeConversationMessage(
 function formatIntakeMessage(input: {
   firstName: string;
   lastName: string;
+  customerGroupName?: string;
   email: string;
   phone?: string;
   eventType?: string;
-  occasion?: string;
+  eventGoal?: string;
   preferredDate?: string;
   startTime?: string;
   guestCount?: number;
+  guestMix?: string;
+  desiredDurationMinutes?: number;
+  diningPreference?: string;
+  spacePreference?: string;
   notes?: string;
 }): string {
   const lines = [
     `${input.firstName} ${input.lastName} submitted an event inquiry.`,
     `Email: ${input.email}`,
   ];
+  if (input.customerGroupName) lines.push(`Group: ${input.customerGroupName}`);
   if (input.phone) lines.push(`Phone: ${input.phone}`);
   if (input.eventType) lines.push(`Planning: ${input.eventType}`);
-  if (input.occasion) lines.push(`Occasion: ${input.occasion}`);
+  if (input.eventGoal) lines.push(`Goal: ${input.eventGoal}`);
   if (input.preferredDate) lines.push(`Preferred date: ${input.preferredDate}`);
   if (input.startTime) lines.push(`Approximate start: ${input.startTime}`);
   if (input.guestCount) lines.push(`Guest count: ${input.guestCount}`);
+  if (input.guestMix) lines.push(`Guest mix: ${input.guestMix}`);
+  if (input.desiredDurationMinutes) lines.push(`Duration minutes: ${input.desiredDurationMinutes}`);
+  if (input.diningPreference) lines.push(`Dining: ${input.diningPreference}`);
+  if (input.spacePreference) lines.push(`Space: ${input.spacePreference}`);
   if (input.notes) lines.push(`Notes: ${input.notes}`);
   return lines.join("\n");
 }

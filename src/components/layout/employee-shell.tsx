@@ -9,6 +9,8 @@ import {
 import { AiKnowledgeNavLink } from "@/components/layout/ai-knowledge-nav-link";
 import { InquiryNavLink } from "@/components/layout/inquiry-nav-link";
 import { PublicInquiryNavLink } from "@/components/layout/public-inquiry-nav-link";
+import { ResourcesNavLink } from "@/components/layout/resources-nav-link";
+import { ScheduleNavLink } from "@/components/layout/schedule-nav-link";
 import { SecurityAdminNavLink } from "@/components/layout/security-admin-nav-link";
 import { TeamAdminNavLink } from "@/components/layout/team-admin-nav-link";
 
@@ -23,6 +25,16 @@ export function EmployeeShell({ children }: EmployeeShellProps) {
         inquiriesNav={
           <Suspense fallback={null}>
             <InquiryNavLink />
+          </Suspense>
+        }
+        scheduleNav={
+          <Suspense fallback={null}>
+            <ScheduleNavLink />
+          </Suspense>
+        }
+        resourcesNav={
+          <Suspense fallback={null}>
+            <ResourcesNavLink />
           </Suspense>
         }
         teamNav={

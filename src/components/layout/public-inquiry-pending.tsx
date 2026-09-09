@@ -1,5 +1,5 @@
-export const PUBLIC_INQUIRY_PENDING_COPY = "Starting conversation…";
-export const PUBLIC_INQUIRY_PREPARING_COPY = "Event Assistant is preparing your response…";
+export const PUBLIC_INQUIRY_PENDING_COPY = "Creating your event plan…";
+export const PUBLIC_INQUIRY_PREPARING_COPY = "Building personalized event options…";
 
 export function PublicInquiryPendingBanner() {
   return (

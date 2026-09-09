@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatInquiryEmployeeStatus,
+  formatInquiryQueueLabel,
   formatInquiryStatus,
 } from "@/lib/inquiries/inquiry-status-display";
 import { INQUIRY_STATUSES } from "@/types/inquiry";
@@ -29,5 +30,15 @@ describe("inquiry status display", () => {
     expect(formatInquiryEmployeeStatus(INQUIRY_STATUSES.READY_FOR_HUMAN, false)).not.toContain(
       "Live agent ·",
     );
+  });
+
+  it("labels a selected plan as ready to book", () => {
+    expect(
+      formatInquiryQueueLabel({
+        status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+        aiHandlingEnabled: false,
+        selectedEventPlanId: "plan_1",
+      }),
+    ).toBe("CUSTOMER SELECTED PLAN — READY TO BOOK");
   });
 });

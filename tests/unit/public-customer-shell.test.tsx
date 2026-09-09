@@ -26,7 +26,7 @@ function renderPublicInquiry() {
   return renderToStaticMarkup(
     <PublicCustomerShell>
       <PublicInquiryView organizationName={DISPLAY_NAME}>
-        <button type="submit">Start conversation</button>
+        <button type="submit">Create my event plan</button>
       </PublicInquiryView>
     </PublicCustomerShell>,
   );
@@ -65,11 +65,11 @@ describe("public customer shell", () => {
   it("does not show Employee sign in on the public inquiry route", () => {
     const html = renderPublicInquiry();
     expect(html).not.toContain("Employee sign in");
-    expect(html).toContain("Plan an event");
+    expect(html).toContain("Personal Event Planner");
     expect(html).toContain("MagicCRM");
   });
 
-  it("does not show Employee sign in on the public conversation route", () => {
+  it("does not show Employee sign in on the public event plan route", () => {
     const html = renderPublicConversation();
     expect(html).not.toContain("Employee sign in");
     expect(html).toContain("Event Assistant");
@@ -132,18 +132,25 @@ describe("public customer shell", () => {
       path.join(process.cwd(), "src/app/inquire/[organizationSlug]/page.tsx"),
       "utf8",
     );
+    const planLayout = readFileSync(
+      path.join(process.cwd(), "src/app/plan/layout.tsx"),
+      "utf8",
+    );
     const conversationPage = readFileSync(
       path.join(process.cwd(), "src/app/conversation/[token]/page.tsx"),
       "utf8",
     );
+    const planPage = readFileSync(path.join(process.cwd(), "src/app/plan/[token]/page.tsx"), "utf8");
     const appLayout = readFileSync(path.join(process.cwd(), "src/app/app/layout.tsx"), "utf8");
 
     expect(inquireLayout).toContain("PublicCustomerShell");
     expect(conversationLayout).toContain("PublicCustomerShell");
+    expect(planLayout).toContain("PublicCustomerShell");
     expect(inquirePage).not.toContain("SiteShell");
     expect(inquirePage).not.toContain("Employee sign in");
-    expect(conversationPage).not.toContain("SiteShell");
-    expect(conversationPage).not.toContain("Employee sign in");
+    expect(conversationPage).toContain("redirect(`/plan/${token}`)");
+    expect(planPage).not.toContain("SiteShell");
+    expect(planPage).not.toContain("Employee sign in");
     expect(appLayout).toContain("EmployeeShell");
     expect(appLayout).not.toContain("PublicCustomerShell");
   });

@@ -132,6 +132,7 @@ export const INQUIRY_ERROR_CODES = [
   "DUPLICATE_SUBMISSION",
   "AI_DISABLED",
   "INVALID_KNOWLEDGE",
+  "PLAN_NOT_FOUND",
 ] as const;
 
 export type InquiryErrorCode = (typeof INQUIRY_ERROR_CODES)[number];
@@ -144,6 +145,7 @@ const INQUIRY_USER_MESSAGES: Record<InquiryErrorCode, string> = {
   DUPLICATE_SUBMISSION: "That message was already received.",
   AI_DISABLED: "A team member will continue this conversation.",
   INVALID_KNOWLEDGE: "Check the knowledge item and try again.",
+  PLAN_NOT_FOUND: "We could not find that event plan.",
 };
 
 export class InquiryError extends Error {
@@ -162,4 +164,41 @@ export class InquiryError extends Error {
 
 export function isInquiryError(error: unknown): error is InquiryError {
   return error instanceof InquiryError;
+}
+
+export const RESOURCE_ERROR_CODES = [
+  "INVALID_RESOURCE",
+  "RESOURCE_NOT_FOUND",
+  "RESOURCE_CONFLICT",
+  "HOLD_NOT_FOUND",
+  "BOOKED_CANNOT_RELEASE",
+] as const;
+
+export type ResourceErrorCode = (typeof RESOURCE_ERROR_CODES)[number];
+
+const RESOURCE_USER_MESSAGES: Record<ResourceErrorCode, string> = {
+  INVALID_RESOURCE: "Check the resource details and try again.",
+  RESOURCE_NOT_FOUND: "That resource could not be found.",
+  RESOURCE_CONFLICT:
+    "That resource is no longer available for the selected time. Please choose another resource or time.",
+  HOLD_NOT_FOUND: "That hold is no longer active.",
+  BOOKED_CANNOT_RELEASE: "Confirmed bookings cannot be released from this action.",
+};
+
+export class ResourceError extends Error {
+  readonly code: ResourceErrorCode;
+
+  constructor(code: ResourceErrorCode, message?: string) {
+    super(message ?? RESOURCE_USER_MESSAGES[code]);
+    this.name = "ResourceError";
+    this.code = code;
+  }
+
+  get userMessage(): string {
+    return this.message;
+  }
+}
+
+export function isResourceError(error: unknown): error is ResourceError {
+  return error instanceof ResourceError;
 }

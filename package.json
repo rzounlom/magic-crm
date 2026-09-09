@@ -24,6 +24,7 @@
     "tenant:create": "tsx --tsconfig tsconfig.json scripts/create-client-tenant.ts",
     "tenant:seed-sales-knowledge": "tsx --tsconfig tsconfig.json scripts/seed-dev-sales-knowledge.ts",
     "tenant:import-sales-knowledge": "tsx --tsconfig tsconfig.json scripts/seed-dev-sales-knowledge.ts",
+    "tenant:sync-resource-types": "tsx --tsconfig tsconfig.json scripts/sync-tenant-resource-types.ts",
     "prepare": "husky"
   },
   "dependencies": {

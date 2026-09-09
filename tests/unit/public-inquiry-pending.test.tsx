@@ -17,7 +17,7 @@ describe("public inquiry pending UX", () => {
       <PendingActionProvider pending>
         <PublicInquiryPendingBanner />
         <PendingSubmitButton pendingLabel={PUBLIC_INQUIRY_PENDING_COPY}>
-          Start conversation
+          Create my event plan
         </PendingSubmitButton>
       </PendingActionProvider>,
     );

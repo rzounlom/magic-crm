@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -36,6 +36,23 @@ afterEach(() => {
   cleanup();
 });
 
+async function fillRequiredPlannerFields(
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  await user.type(screen.getByLabelText(/Contact first name/), "Ada");
+  await user.type(screen.getByLabelText(/Contact last name/), "Lovelace");
+  await user.type(screen.getByLabelText(/^Email/), "ada@example.com");
+  await user.selectOptions(screen.getByLabelText(/Customer \/ event type/), "Birthday Party");
+  fireEvent.change(screen.getByLabelText(/Requested event date/), { target: { value: "2026-10-15" } });
+  await user.type(screen.getByLabelText(/Estimated guest count/), "12");
+  await user.selectOptions(screen.getByLabelText(/Guest mix/), "mostly_children");
+  await user.selectOptions(screen.getByLabelText(/Desired event length/), "180");
+  await user.selectOptions(screen.getByLabelText(/Approximate budget/), "1500_3000");
+  await user.selectOptions(screen.getByLabelText(/Main event goal/), "Celebration");
+  await user.selectOptions(screen.getByLabelText(/Dining preference/), "not_sure");
+  await user.selectOptions(screen.getByLabelText(/Space preference/), "semi_private");
+}
+
 describe("public inquiry form pending state", () => {
   it("paints starting and preparing copy immediately and restores after an error", async () => {
     const user = userEvent.setup();
@@ -55,12 +72,9 @@ describe("public inquiry form pending state", () => {
       />,
     );
 
-    await user.type(screen.getByLabelText(/First name/), "Ada");
-    await user.type(screen.getByLabelText(/Last name/), "Lovelace");
-    await user.type(screen.getByLabelText(/^Email/), "ada@example.com");
-    await user.type(screen.getByLabelText(/What are you planning/), "Birthday party");
+    await fillRequiredPlannerFields(user);
 
-    const submitPromise = user.click(screen.getByRole("button", { name: "Start conversation" }));
+    const submitPromise = user.click(screen.getByRole("button", { name: "Create my event plan" }));
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: PUBLIC_INQUIRY_PENDING_COPY })).toBeTruthy();
@@ -68,7 +82,7 @@ describe("public inquiry form pending state", () => {
       expect(action).toHaveBeenCalledTimes(1);
     });
     expect(screen.getByRole("button", { name: PUBLIC_INQUIRY_PENDING_COPY })).toHaveProperty("disabled", true);
-    expect(screen.getByLabelText(/First name/)).toHaveProperty("disabled", true);
+    expect(screen.getByLabelText(/Contact first name/)).toHaveProperty("disabled", true);
 
     await user.click(screen.getByRole("button", { name: PUBLIC_INQUIRY_PENDING_COPY }));
     expect(action).toHaveBeenCalledTimes(1);
@@ -77,11 +91,11 @@ describe("public inquiry form pending state", () => {
     await submitPromise;
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Start conversation" })).toHaveProperty("disabled", false);
+      expect(screen.getByRole("button", { name: "Create my event plan" })).toHaveProperty("disabled", false);
     });
     expect(screen.queryByText(PUBLIC_INQUIRY_PREPARING_COPY)).toBeNull();
 
-    const retryPromise = user.click(screen.getByRole("button", { name: "Start conversation" }));
+    const retryPromise = user.click(screen.getByRole("button", { name: "Create my event plan" }));
     await waitFor(() => {
       expect(screen.getByText(PUBLIC_INQUIRY_PREPARING_COPY)).toBeTruthy();
       expect(action).toHaveBeenCalledTimes(2);

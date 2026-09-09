@@ -7,6 +7,7 @@ import { createPrismaClient } from "@/lib/db/create-client";
 import { parseRuntimeEnv } from "@/lib/env/validation";
 import { loadSalesKnowledgeDatasetFromDirectory } from "@/server/sales-knowledge/load-dataset-files";
 import { importSalesKnowledgeItems } from "@/server/services/sales-knowledge-import-service";
+import { syncResourceCatalogFromKnowledge } from "@/server/resources/sync-from-knowledge";
 
 if (process.env.MAGICCRM_DATABASE_ROLE === "test") {
   throw new Error("Do not import development sales knowledge into the test database.");
@@ -92,6 +93,12 @@ async function main() {
     for (const [type, count] of Object.entries(result.byType)) {
       console.info(`    ${type}: ${count}`);
     }
+
+    const resources = await syncResourceCatalogFromKnowledge(database, result.organizationId);
+    console.info("Resource type sync from knowledge complete.");
+    console.info(`  Resource type upserts: ${resources.resourceTypes}`);
+    console.info(`  Knowledge requirement upserts: ${resources.requirements}`);
+    console.info("  Numbered lane/room inventory was not created — counts are not published.");
   } finally {
     await database.$disconnect();
   }

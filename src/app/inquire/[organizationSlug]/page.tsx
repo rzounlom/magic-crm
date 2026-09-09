@@ -5,11 +5,11 @@ import { PublicInquiryView } from "@/components/layout/public-inquiry-view";
 import { db } from "@/lib/db";
 import { customerFacingOrganizationName } from "@/lib/inquiries/organization-display-name";
 import { isInquiryError } from "@/server/errors";
-import { resolvePublicInquiryOrganization } from "@/server/services/inquiry-service";
+import { listPublicPlannerCatalog } from "@/server/services/event-plan-service";
 
-async function loadPublicInquiryOrganization(organizationSlug: string) {
+async function loadPublicPlanner(organizationSlug: string) {
   try {
-    return await resolvePublicInquiryOrganization(db, organizationSlug);
+    return await listPublicPlannerCatalog(db, organizationSlug);
   } catch (error) {
     if (isInquiryError(error)) {
       return null;
@@ -24,18 +24,20 @@ export default async function PublicInquirePage({
   params: Promise<{ organizationSlug: string }>;
 }) {
   const { organizationSlug } = await params;
-  const organization = await loadPublicInquiryOrganization(organizationSlug);
-  if (!organization) {
+  const catalog = await loadPublicPlanner(organizationSlug);
+  if (!catalog) {
     notFound();
   }
 
-  const organizationName = customerFacingOrganizationName(organization.name);
+  const organizationName = customerFacingOrganizationName(catalog.organization.name);
 
   return (
     <PublicInquiryView organizationName={organizationName}>
       <PublicInquiryForm
-        organizationSlug={organization.slug}
+        organizationSlug={catalog.organization.slug}
         organizationName={organizationName}
+        attractions={catalog.attractions.map((item) => ({ id: item.id, name: item.name }))}
+        diningOptions={catalog.diningItems.map((item) => ({ id: item.id, name: item.name }))}
       />
     </PublicInquiryView>
   );
