@@ -39,7 +39,7 @@ function isoDate(value: Date | string | null | undefined): string | null {
   return value.toISOString().slice(0, 10);
 }
 
-function tenantDateStamp(timeZone: string, now = new Date()): string {
+function tenantDateStamp(timeZone: string | null | undefined, now = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: resolveOrganizationTimeZone(timeZone),
     year: "numeric",
