@@ -54,6 +54,7 @@ export async function onBookingConfirmed(
   database: EventDb,
   payload: Extract<DomainEvent, { type: typeof DOMAIN_EVENT_TYPES.BOOKING_CONFIRMED }>["payload"],
 ): Promise<void> {
+  const draft = bookingConfirmationDraft(payload);
   await database.communicationEvent.create({
     data: {
       organizationId: payload.organizationId,
@@ -63,12 +64,11 @@ export async function onBookingConfirmed(
       skipReason: payload.bookingId
         ? COMMUNICATION_SKIP_REASONS.NO_EMAIL_PROVIDER
         : COMMUNICATION_SKIP_REASONS.NO_BOOKING_RECORD,
+      toAddress: payload.customerEmail ?? null,
+      subject: draft.subject,
       inquiryId: payload.inquiryId ?? null,
       bookingId: payload.bookingId,
-      payload: {
-        bookingId: payload.bookingId,
-        inquiryId: payload.inquiryId ?? null,
-      },
+      payload: draft as Prisma.InputJsonValue,
     },
   });
   await recordAuditEvent(database, {
@@ -84,6 +84,52 @@ export async function onBookingConfirmed(
       inquiryId: payload.inquiryId ?? null,
     },
   });
+}
+
+export function bookingConfirmationDraft(payload: {
+  organizationName?: string;
+  bookingNumber?: string;
+  customerFirstName?: string | null;
+  customerLastName?: string | null;
+  customerGroupName?: string | null;
+  eventDate?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  guestCount?: number | null;
+  activities?: string[];
+  dining?: string;
+  spaces?: string[];
+  totalCents?: number | null;
+  currency?: string;
+}): {
+  subject: string;
+  bookingNumber: string | null;
+  eventDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  guestCount: number | null;
+  activities: string[];
+  dining: string;
+  spaces: string[];
+  totalCents: number | null;
+  currency: string | null;
+  reserved: true;
+} {
+  const organizationName = payload.organizationName || "our venue";
+  return {
+    subject: `Your ${organizationName} Event Is Confirmed`,
+    bookingNumber: payload.bookingNumber ?? null,
+    eventDate: payload.eventDate ?? null,
+    startTime: payload.startTime ?? null,
+    endTime: payload.endTime ?? null,
+    guestCount: payload.guestCount ?? null,
+    activities: payload.activities ?? [],
+    dining: payload.dining ?? "Dining to be confirmed",
+    spaces: payload.spaces ?? [],
+    totalCents: payload.totalCents ?? null,
+    currency: payload.currency ?? null,
+    reserved: true,
+  };
 }
 
 export function planSelectionConfirmationDraft(payload: {

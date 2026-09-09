@@ -3,8 +3,7 @@ import Link from "next/link";
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
 import { CUSTOMER_SELECTED_PLAN_BANNER } from "@/lib/inquiries/ready-for-human-reason";
 import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display";
-import { isCustomerSelectedPlanReason } from "@/lib/inquiries/ready-for-human-reason";
-import { sortLiveAgentQueue } from "@/lib/inquiries/live-agent-queue";
+import { isLiveAgentQueueCandidate, sortLiveAgentQueue } from "@/lib/inquiries/live-agent-queue";
 import { INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGE_LABELS, EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { PLAN_AVAILABILITY_STATUS_LABELS, PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 import { formatEventLocalDate, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
@@ -48,6 +47,7 @@ type InquiryListItem = {
     availabilityStatus: string;
   }>;
   resourceReservations: Array<{ id: string; expiresAt: Date | null }>;
+  bookings?: Array<{ id: string; bookingNumber: string; status: string }>;
 };
 
 export function LiveAgentInquiryQueue({
@@ -59,14 +59,14 @@ export function LiveAgentInquiryQueue({
 }) {
   const selected = sortLiveAgentQueue(
     inquiries
-      .filter((inquiry) => isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId))
+      .filter((inquiry) => isLiveAgentQueueCandidate(inquiry))
       .map((inquiry) => toQueueItem(inquiry)),
   );
   const otherReady = inquiries
     .filter(
       (inquiry) =>
         inquiry.status === INQUIRY_STATUSES.READY_FOR_HUMAN &&
-        !isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId),
+        !isLiveAgentQueueCandidate(inquiry),
     )
     .sort((left, right) => {
       const leftWait = left.humanHandoffRequestedAt ?? left.createdAt;
@@ -75,7 +75,7 @@ export function LiveAgentInquiryQueue({
     });
   const rest = inquiries.filter(
     (inquiry) =>
-      !isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId) &&
+      !isLiveAgentQueueCandidate(inquiry) &&
       inquiry.status !== INQUIRY_STATUSES.READY_FOR_HUMAN,
   );
 
@@ -181,7 +181,10 @@ function InquiryRow({
             </p>
           </div>
           <span className="text-xs font-medium tracking-wide text-foreground/60">
-            {formatInquiryQueueLabel(inquiry)}
+            {formatInquiryQueueLabel({
+              ...inquiry,
+              bookingNumber: inquiry.bookings?.[0]?.bookingNumber,
+            })}
           </span>
         </div>
         {priority ? (

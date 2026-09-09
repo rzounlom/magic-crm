@@ -35,6 +35,7 @@ export default async function PublicEventPlanPage({
       inquiry={view.inquiry}
       plans={view.plans}
       token={token}
+      booking={view.booking}
     />
   );
 }

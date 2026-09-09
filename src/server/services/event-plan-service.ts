@@ -21,6 +21,7 @@ import { emitDomainEvent } from "@/server/domain-events/emit";
 import { DOMAIN_EVENT_TYPES } from "@/server/domain-events/types";
 import { recordAuditEvent } from "@/server/services/audit";
 import { type EventPlanPayload } from "@/types/event-planner";
+import { BOOKING_STATUSES } from "@/types/booking";
 import {
   CONVERSATION_CHANNELS,
   EVENT_PLAN_KINDS,
@@ -322,6 +323,20 @@ export async function getPublicEventPlanByToken(database: PlannerDb, token: stri
             where: { kind: EVENT_PLAN_KINDS.RECOMMENDATION },
             orderBy: { sortOrder: "asc" },
           },
+          bookings: {
+            where: { status: BOOKING_STATUSES.CONFIRMED },
+            orderBy: { confirmedAt: "desc" },
+            take: 1,
+            select: {
+              id: true,
+              bookingNumber: true,
+              status: true,
+              eventDate: true,
+              startTime: true,
+              endTime: true,
+              guestCount: true,
+            },
+          },
         },
       },
       organization: { select: { name: true, slug: true, currency: true } },
@@ -345,14 +360,17 @@ export async function getPublicEventPlanByToken(database: PlannerDb, token: stri
     });
   }
 
+  const { bookings, ...inquiryFields } = conversation.inquiry;
+
   return {
     organizationName: conversation.organization.name,
     organizationSlug: conversation.organization.slug,
     currency: conversation.organization.currency,
     inquiry: {
-      ...conversation.inquiry,
+      ...inquiryFields,
       employeeInternalNotes: null,
     },
+    booking: bookings[0] ?? null,
     plans: conversation.inquiry.eventPlanRecommendations,
   };
 }
@@ -380,6 +398,9 @@ export async function selectPublicEventPlan(
   });
   if (!conversation) {
     throw new InquiryError("CONVERSATION_NOT_FOUND");
+  }
+  if (conversation.inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    throw new InquiryError("INQUIRY_ALREADY_BOOKED");
   }
 
   const plan = await database.eventPlanRecommendation.findFirst({

@@ -15,8 +15,22 @@ export type LiveAgentQueueInquiry = {
   earliestHoldExpiresAt?: Date | null;
 };
 
+export function isLiveAgentQueueCandidate(inquiry: {
+  status: string;
+  selectedEventPlanId?: string | null;
+  humanHandoffReason?: string | null;
+}): boolean {
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    return false;
+  }
+  return isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId);
+}
+
 export function liveAgentQueuePriority(inquiry: LiveAgentQueueInquiry, now = new Date()): number {
-  const selected = isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId);
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    return 99;
+  }
+  const selected = isLiveAgentQueueCandidate(inquiry);
   if (selected && !inquiry.assignedUserProfileId) {
     return 0;
   }

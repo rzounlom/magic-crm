@@ -58,8 +58,8 @@ export default async function InquiriesPage() {
         </a>
       </div>
       <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Ready for Live Agent is the booking workspace queue. Customer-selected plans are prioritized. This is
-        not a booking or payment tool.
+        Ready for Live Agent is the booking workspace queue. Customer-selected plans are prioritized. Confirmed
+        events move to Bookings. This queue is not a payment tool.
       </p>
       {view.inquiries.length === 0 ? (
         <p className="mt-8 text-sm text-foreground/70">No inquiries yet.</p>

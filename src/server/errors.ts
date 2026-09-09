@@ -135,6 +135,7 @@ export const INQUIRY_ERROR_CODES = [
   "PLAN_NOT_FOUND",
   "WORKING_PLAN_INVALID",
   "STALE_INQUIRY",
+  "INQUIRY_ALREADY_BOOKED",
 ] as const;
 
 export type InquiryErrorCode = (typeof INQUIRY_ERROR_CODES)[number];
@@ -150,6 +151,7 @@ const INQUIRY_USER_MESSAGES: Record<InquiryErrorCode, string> = {
   PLAN_NOT_FOUND: "We could not find that event plan.",
   WORKING_PLAN_INVALID: "Check the working event plan and try again.",
   STALE_INQUIRY: "This inquiry was updated by someone else. Refresh and try again.",
+  INQUIRY_ALREADY_BOOKED: "This event plan has already been finalized.",
 };
 
 export class InquiryError extends Error {
@@ -205,4 +207,44 @@ export class ResourceError extends Error {
 
 export function isResourceError(error: unknown): error is ResourceError {
   return error instanceof ResourceError;
+}
+
+export const BOOKING_ERROR_CODES = [
+  "NOT_READY_TO_FINALIZE",
+  "HOLD_MISSING",
+  "HOLD_EXPIRED",
+  "HOLD_MISMATCH",
+  "ALREADY_BOOKED",
+  "BOOKING_NOT_FOUND",
+  "AVAILABILITY_CONFLICT",
+] as const;
+
+export type BookingErrorCode = (typeof BOOKING_ERROR_CODES)[number];
+
+const BOOKING_USER_MESSAGES: Record<BookingErrorCode, string> = {
+  NOT_READY_TO_FINALIZE: "Mark this inquiry Ready to Finalize before confirming a booking.",
+  HOLD_MISSING: "Place a resource hold for every required finite resource before confirming.",
+  HOLD_EXPIRED: "A resource hold has expired. Recheck availability and place a new hold.",
+  HOLD_MISMATCH: "The current resource holds do not match the working event plan. Update the hold first.",
+  ALREADY_BOOKED: "This inquiry has already been converted to a booking.",
+  BOOKING_NOT_FOUND: "That booking could not be found.",
+  AVAILABILITY_CONFLICT: "Required resources are no longer available. Recheck the Master Schedule.",
+};
+
+export class BookingError extends Error {
+  readonly code: BookingErrorCode;
+
+  constructor(code: BookingErrorCode, message?: string) {
+    super(message ?? BOOKING_USER_MESSAGES[code]);
+    this.name = "BookingError";
+    this.code = code;
+  }
+
+  get userMessage(): string {
+    return this.message;
+  }
+}
+
+export function isBookingError(error: unknown): error is BookingError {
+  return error instanceof BookingError;
 }

@@ -15,8 +15,16 @@ type ScheduleReservation = {
   startMinute: number;
   endMinute: number;
   inquiryId: string | null;
+  bookingId?: string | null;
   inquiry: {
     id: string;
+    customerGroupName: string | null;
+    customerFirstName: string | null;
+    customerLastName: string | null;
+  } | null;
+  booking?: {
+    id: string;
+    bookingNumber: string;
     customerGroupName: string | null;
     customerFirstName: string | null;
     customerLastName: string | null;
@@ -99,8 +107,13 @@ export function MasterScheduleGrid({
                 }
                 const isStart = reservation.startMinute >= slot && reservation.startMinute < slot + slotMinutes;
                 const isHold = reservation.status === RESOURCE_RESERVATION_STATUSES.HOLD;
-                const label = scheduleDisplayName(reservation.inquiry);
+                const label = scheduleDisplayName(reservation.booking ?? reservation.inquiry);
                 const range = `${formatEventLocalTime(minutesToClock(reservation.startMinute))}–${formatEventLocalTime(minutesToClock(reservation.endMinute))}`;
+                const bookingHref = reservation.booking?.id
+                  ? `/app/bookings/${reservation.booking.id}`
+                  : reservation.bookingId
+                    ? `/app/bookings/${reservation.bookingId}`
+                    : null;
                 return (
                   <td key={resource.id} className="px-1 py-1">
                     <div
@@ -110,10 +123,22 @@ export function MasterScheduleGrid({
                         <>
                           <p className="font-medium">{isHold ? "HOLD" : "BOOKED"}</p>
                           <p>{label}</p>
+                          {reservation.booking?.bookingNumber ? (
+                            <p className="text-foreground/60">{reservation.booking.bookingNumber}</p>
+                          ) : null}
                           <p className="text-foreground/60">{range}</p>
-                          {reservation.inquiryId ? (
+                          {bookingHref ? (
+                            <Link href={bookingHref} className="text-primary">
+                              Open booking
+                            </Link>
+                          ) : reservation.inquiryId ? (
                             <Link href={`/app/inquiries/${reservation.inquiryId}`} className="text-primary">
                               Open inquiry
+                            </Link>
+                          ) : null}
+                          {bookingHref && reservation.inquiryId ? (
+                            <Link href={`/app/inquiries/${reservation.inquiryId}`} className="ml-2 text-primary">
+                              Original inquiry
                             </Link>
                           ) : null}
                           {canRelease && isHold ? (

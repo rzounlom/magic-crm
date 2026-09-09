@@ -42,7 +42,11 @@ export function formatInquiryQueueLabel(inquiry: {
   aiHandlingEnabled: boolean;
   selectedEventPlanId?: string | null;
   humanHandoffReason?: string | null;
+  bookingNumber?: string | null;
 }): string {
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    return inquiry.bookingNumber ? `Converted to Booking ${inquiry.bookingNumber}` : "Converted to Booking";
+  }
   if (isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)) {
     return CUSTOMER_SELECTED_PLAN_BANNER;
   }

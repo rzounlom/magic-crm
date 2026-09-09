@@ -7,6 +7,7 @@ import {
   EmployeeUserButton,
 } from "@/components/layout/employee-organization-controls";
 import { AiKnowledgeNavLink } from "@/components/layout/ai-knowledge-nav-link";
+import { BookingsNavLink } from "@/components/layout/bookings-nav-link";
 import { InquiryNavLink } from "@/components/layout/inquiry-nav-link";
 import { PublicInquiryNavLink } from "@/components/layout/public-inquiry-nav-link";
 import { ResourcesNavLink } from "@/components/layout/resources-nav-link";
@@ -25,6 +26,11 @@ export function EmployeeShell({ children }: EmployeeShellProps) {
         inquiriesNav={
           <Suspense fallback={null}>
             <InquiryNavLink />
+          </Suspense>
+        }
+        bookingsNav={
+          <Suspense fallback={null}>
+            <BookingsNavLink />
           </Suspense>
         }
         scheduleNav={

@@ -41,4 +41,15 @@ describe("inquiry status display", () => {
       }),
     ).toBe("CUSTOMER SELECTED PLAN — READY TO BOOK");
   });
+
+  it("labels a converted inquiry with the booking reference", () => {
+    expect(
+      formatInquiryQueueLabel({
+        status: INQUIRY_STATUSES.BOOKED,
+        aiHandlingEnabled: false,
+        selectedEventPlanId: "plan_1",
+        bookingNumber: "FUN-2026-00421",
+      }),
+    ).toBe("Converted to Booking FUN-2026-00421");
+  });
 });

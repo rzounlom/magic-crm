@@ -8,6 +8,8 @@ import { PublicInquiryLink } from "@/components/layout/public-inquiry-link";
 
 function renderHeader(options: {
   showInquiriesNav?: boolean;
+  showBookingsNav?: boolean;
+  showScheduleNav?: boolean;
   showTeamNav?: boolean;
   showSecurityNav: boolean;
   showKnowledgeNav?: boolean;
@@ -17,6 +19,8 @@ function renderHeader(options: {
   return renderToStaticMarkup(
     <EmployeeHeaderBar
       inquiriesNav={options.showInquiriesNav === false ? null : <span>Inquiries</span>}
+      bookingsNav={options.showBookingsNav ? <span>Bookings</span> : null}
+      scheduleNav={options.showScheduleNav ? <span>Schedule</span> : null}
       teamNav={options.showTeamNav ? <span>Team</span> : null}
       securityNav={options.showSecurityNav ? <span>Security</span> : null}
       knowledgeNav={options.showKnowledgeNav ? <span>AI Knowledge</span> : null}
@@ -36,6 +40,17 @@ function accountSlotIndex(html: string) {
 }
 
 describe("EmployeeHeaderBar", () => {
+  it("shows Bookings between Inquiries and Schedule", () => {
+    const html = renderHeader({
+      showBookingsNav: true,
+      showScheduleNav: true,
+      showSecurityNav: false,
+    });
+    expect(html).toContain("Bookings");
+    expect(html.indexOf("Inquiries")).toBeLessThan(html.indexOf("Bookings"));
+    expect(html.indexOf("Bookings")).toBeLessThan(html.indexOf("Schedule"));
+  });
+
   it("renders the UserButton slot for an authenticated employee", () => {
     const html = renderHeader({ showSecurityNav: false });
     expect(html).toContain("Account");

@@ -1,8 +1,8 @@
 # Inquiries (Phase 3A)
 
-Inquiry is the CRM lead / event-sales anchor. Public customers now complete a structured **Personal Event Planner** form. The inquiry remains the primary record. This phase does not implement proposals, booking, payments, email delivery of plans, or live inventory reservation.
+Inquiry is the CRM lead / event-sales anchor. Public customers complete a structured **Personal Event Planner** form. The same Inquiry remains throughout sales. After **Confirm Booking**, a distinct `Booking` record becomes the operational source of truth. This phase does not implement payments or outbound email delivery.
 
-See also [`resource-schedule.md`](./resource-schedule.md) (shared finite-resource availability) and [`communications.md`](./communications.md) (future plan-selection vs booking-confirmed emails).
+See also [`resource-schedule.md`](./resource-schedule.md) (shared finite-resource availability) and [`communications.md`](./communications.md) (plan-selection vs booking-confirmed emails).
 
 ## Public intake
 
@@ -52,18 +52,20 @@ The token is the existing 32-byte public conversation token. Only the SHA-256 ha
 
 ## Employee UI
 
-- `/app/inquiries` — `crm.inquiries.view`. **Ready for Live Agent** is the live-booking queue. Inquiries with `humanHandoffReason = CUSTOMER_SELECTED_PLAN` are listed first with **CUSTOMER SELECTED PLAN — READY TO BOOK**
-- `/app/inquiries/[id]` — same view permission. Customer-selected inquiries open the **Live Agent Booking Workspace** (original snapshot + Current Agent Version). Other inquiries keep the simpler inbox detail
-- Start Working records `assignedUserProfileId` / `assignedAt` and copies the selected plan into an `EventPlanRecommendation` row with `kind = AGENT_WORKING`. The customer-selected row is never overwritten
-- Contact customer (mailto / copy phone and email) is available now. Proposal, deposit, and convert-to-booking actions are not built
+- `/app/inquiries` — `crm.inquiries.view`. **Ready for Live Agent** is the live-booking queue. Inquiries with `humanHandoffReason = CUSTOMER_SELECTED_PLAN` are listed first with **CUSTOMER SELECTED PLAN — READY TO BOOK**. Converted inquiries (`status = BOOKED`) leave that queue and appear under Bookings.
+- `/app/inquiries/[id]` — same view permission. Customer-selected inquiries open the **Live Agent Booking Workspace** (original snapshot + Current Agent Version). After conversion the workspace shows **Converted to Booking** with a link to `/app/bookings/{id}`.
+- `/app/bookings` and `/app/bookings/[id]` — `events.view`. Operational list and read-only detail for confirmed Bookings.
+- Start Working records `assignedUserProfileId` / `assignedAt` and copies the selected plan into an `EventPlanRecommendation` row with `kind = AGENT_WORKING`. The customer-selected row is never overwritten.
+- **Confirm Booking** requires `events.confirm` plus `crm.inquiries.manage`, Ready to Finalize, a Current Agent Version, and active unexpired HOLDs covering finite requirements. It is atomic: Booking + line items + HOLD→BOOKED + Inquiry `BOOKED` + audit, then `booking.confirmed`.
+- Contact customer (mailto / copy phone and email) is available now. Proposal, deposit, and booking edits are not built.
 - Internal notes use `Inquiry.employeeInternalNotes` and are never shown on `/plan/{token}`
 - Take over / leftover conversation notes — `crm.inquiries.manage`
 
 Front Desk does not receive inquiry permissions. Event Sales can view/manage inquiries, view the Master Schedule, and place/release permitted holds. They do not receive Admin Resource Configuration (`inventory.manage`). Administrators have all keys. `ai.manage` is required to create/edit sales knowledge (`/app/admin/ai/knowledge`).
 
-Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK**. Staff should start from the chosen package rather than repeating discovery. Selection is not a reservation. The furthest operational state is **Ready to Finalize** with HOLDs still in place — never `BOOKED`, payment, or outbound confirmation.
+Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK**. Staff should start from the chosen package rather than repeating discovery. Selection is not a reservation. **Confirm Booking** creates the Booking record from the Current Agent Version and converts HOLDs to BOOKED.
 
-Workflow stays on `Inquiry.status = READY_FOR_HUMAN`. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → `HOLD_PLACED` → `READY_TO_FINALIZE`. The Current Agent Version is the future Booking source; Booking conversion is not implemented.
+Workflow stays on `Inquiry.status = READY_FOR_HUMAN` until confirmation. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → `HOLD_PLACED` → `READY_TO_FINALIZE`. After confirmation, `Inquiry.status = BOOKED` and the Inquiry is sales history linked to Booking (`@@unique([organizationId, inquiryId])`).
 
 ## Status workflow
 
@@ -75,11 +77,11 @@ Workflow stays on `Inquiry.status = READY_FOR_HUMAN`. Substatus is `workflowStag
 | `NEEDS_FOLLOW_UP` | No feasible plan, or a team member should nudge |
 | `READY_FOR_HUMAN` | Customer selected a plan, handoff, or employee takeover. Selection is not a reservation. |
 | `DECLINED` | Reserved; no UI yet |
-| `BOOKED` | Reserved for the future Booking engine; unused. Confirmed booking is a later record, not this inquiry status. |
+| `BOOKED` | Inquiry converted to a confirmed Booking. Remains as sales history. |
 
 These are three different customer states: (1) inquiry submitted, (2) plan selected / ready to book, (3) booking confirmed. Staff queue copy for (2) is **CUSTOMER SELECTED PLAN — READY TO BOOK**. See [`communications.md`](./communications.md).
 
-`READY_FOR_HUMAN` stays the status. Distinguish *why* with `humanHandoffReason` codes (`CUSTOMER_SELECTED_PLAN`, `AVAILABILITY_NEEDS_ADJUSTMENT` for a future failed hold, `NO_FEASIBLE_PLAN`, `GENERATION_FAILED`, `STAFF_ASSISTANCE`, `MANUAL_ESCALATION`). Distinguish *where the live agent is* with `workflowStage`. Do not treat `READY_FOR_HUMAN`, plan selection, or Ready to Finalize as booked.
+`READY_FOR_HUMAN` stays the status until confirmation. Distinguish *why* with `humanHandoffReason` codes (`CUSTOMER_SELECTED_PLAN`, `AVAILABILITY_NEEDS_ADJUSTMENT` for a future failed hold, `NO_FEASIBLE_PLAN`, `GENERATION_FAILED`, `STAFF_ASSISTANCE`, `MANUAL_ESCALATION`). Distinguish *where the live agent is* with `workflowStage`. Do not treat `READY_FOR_HUMAN`, plan selection, or Ready to Finalize as booked.
 
 Persisted status enums stay as stored. Employee UI uses `formatInquiryStatus` / `formatInquiryEmployeeStatus` / `formatInquiryQueueLabel` / `formatReadyForHumanReason`. Do not show raw enum tokens.
 
@@ -97,11 +99,11 @@ Phone is stored as normalized 10-digit digits. Display with `formatPhoneDisplay`
 
 Customer-selected inquiries open a staff workspace on the same Inquiry. The customer-selected `EventPlanRecommendation` (`kind = RECOMMENDATION`) remains the historical choice. Staff edits persist on a separate `AGENT_WORKING` row (`Inquiry.agentWorkingPlanId`). Saving a draft reprices from sales knowledge and re-runs `checkResourceAvailability`. Place / Update / Extend / Release Hold reuse `resource-hold-service` and never create `BOOKED` rows.
 
-The Current Agent Version is structured so a future Booking record can be created from it (inquiry, date/time, guests, products, pricing, rotations, holds). That conversion is not built.
+The Current Agent Version is the source for Confirm Booking (inquiry, date/time, guests, products, pricing, rotations, holds). The customer-selected recommendation stays immutable history. After confirmation the Booking is the operational record; the working draft is not edited further.
 
 ## Next
 
-Catalog, Booking, proposals, deposits, and plan/booking email delivery remain later phases. The Live Agent workspace is the staff handoff after Personal Event Planner selection.
+Catalog, proposals, deposits, booking edits/reschedule, cancellation, and email delivery remain later phases.
 
 Related employee-shell follow-up (not this inbox): sticky authenticated header. See `ui-conventions.md`.
 

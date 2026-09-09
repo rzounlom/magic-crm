@@ -77,6 +77,7 @@ Organization deletion does **not** cascade to locations, user profiles, or futur
 | `TeamInvitationSecurityGroup.invitation` | `Cascade` | Invitation delete removes queued groups. |
 | `TeamInvitationSecurityGroup.securityGroup` | `Restrict` | A group cannot disappear out from under a queued assignment without application handling. |
 | `Inquiry.organization` / `Conversation.organization` / `ConversationMessage.organization` / `EventPlanRecommendation.organization` | `Restrict` | Leads, threads, and recommended plans stay with the tenant. |
+| `Booking.organization` / `Booking.inquiry` / `BookingLineItem.booking` | `Restrict` | Confirmed events stay with the tenant and originating inquiry. |
 | `Conversation.inquiry` | `Restrict` | Deleting an inquiry must be an explicit application action. |
 | `ConversationMessage.conversation` | `Cascade` | Message history is owned by the conversation only. |
 | `SalesKnowledgeItem.organization` | `Restrict` | Temporary AI knowledge is tenant-owned. |
@@ -131,6 +132,8 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `TeamInvitationSecurityGroup` unique on `(teamInvitationId, securityGroupId)` with same-tenant composite FKs
 - `Organization.onboardingStatus` indexed for platform recovery
 - `Inquiry` unique on `(organizationId, id)`; indexes `(organizationId, status, createdAt)`, `(organizationId, customerEmailNormalized)`, `(organizationId, selectedEventPlanId)`, `(organizationId, customerSelectedAt)`, `(organizationId, workflowStage)`
+- `Booking` unique on `(organizationId, id)`, `(organizationId, inquiryId)`, `(organizationId, bookingNumber)`; indexes `(organizationId, eventDate)`, `(organizationId, status, eventDate)`
+- `OrganizationBookingSequence` primary key `(organizationId, year)`
 - `EventPlanRecommendation` unique on `(organizationId, id)` and `(organizationId, inquiryId, kind, tier)`; index `(organizationId, inquiryId)`. `kind` is `RECOMMENDATION` or `AGENT_WORKING`
 - `Conversation` unique on `publicTokenHash` and `(organizationId, id)`
 - `ConversationMessage` unique on `(conversationId, clientSubmissionId)` for idempotent public submits
@@ -138,8 +141,8 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `ResourceType` unique on `(organizationId, id)` and `(organizationId, slug)`
 - `Resource` unique on `(organizationId, id)` and `(organizationId, resourceTypeId, displayOrder)`
 - `KnowledgeResourceRequirement` unique on `(organizationId, salesKnowledgeItemId, resourceTypeId)`
-- `ResourceReservation` unique on `(organizationId, id)`; indexes `(organizationId, resourceId, slotDate)`, `(organizationId, inquiryId)`, `(organizationId, status, releasedAt)`; SQL exclusion `resource_reservations_no_overlap` on `(resourceId, slotDate, int4range(startMinute,endMinute))` for unreleased HOLD/BOOKED
-- `CommunicationEvent` indexes `(organizationId, createdAt)`, `(organizationId, inquiryId)`, `(organizationId, kind, status)`
+- `ResourceReservation` unique on `(organizationId, id)`; indexes `(organizationId, resourceId, slotDate)`, `(organizationId, inquiryId)`, `(organizationId, bookingId)`, `(organizationId, status, releasedAt)`; SQL exclusion `resource_reservations_no_overlap` on `(resourceId, slotDate, int4range(startMinute,endMinute))` for unreleased HOLD/BOOKED
+- `CommunicationEvent` indexes `(organizationId, createdAt)`, `(organizationId, inquiryId)`, `(organizationId, bookingId)`, `(organizationId, kind, status)`
 - `AiUsage` indexed on `(organizationId, createdAt)`
 
 Future tenant tables should lead compound indexes with `organizationId`.
@@ -174,6 +177,7 @@ Committed migrations:
 - `20260909140000_finite_resource_schedule` — ResourceType, Resource, KnowledgeResourceRequirement, ResourceReservation, CommunicationEvent; gist exclusion on active HOLD/BOOKED overlaps
 - `20260909160000_resource_management_schedule` — Admin resource configuration and Master Schedule occupancy
 - `20260909180000_live_agent_workspace` — Inquiry workflowStage/assignment timestamps, EventPlanRecommendation.kind, unique `(organizationId, inquiryId, kind, tier)`
+- `20260909200000_confirmed_bookings` — Booking, BookingLineItem, OrganizationBookingSequence; ResourceReservation/CommunicationEvent booking FKs
 
 ## Seed / reference data
 

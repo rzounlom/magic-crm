@@ -8,6 +8,7 @@ import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pend
 import { formatEventDuration, personalEventPlannerTitle } from "@/lib/event-planner/labels";
 import { formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { isBestFitTier, readEventPlanPayload } from "@/lib/event-planner/payload";
+import { formatEventLocalDateTime, formatEventLocalTime } from "@/lib/inquiries/tenant-datetime";
 import { onSafeSubmitAttempt } from "@/lib/ui/confirm-gate";
 import { notify } from "@/lib/ui/notify";
 import { yieldToPaint } from "@/lib/ui/yield-to-paint";
@@ -32,6 +33,7 @@ export function PublicEventPlanView({
   inquiry,
   plans,
   token,
+  booking = null,
 }: {
   organizationName: string;
   currency: string;
@@ -40,20 +42,41 @@ export function PublicEventPlanView({
     guestCount: number | null;
     eventGoal: string | null;
     selectedEventPlanId: string | null;
+    status?: string | null;
   };
   plans: PlanCard[];
   token: string;
+  booking?: {
+    bookingNumber: string;
+    eventDate: Date | string;
+    startTime: string;
+    endTime: string;
+    guestCount: number;
+  } | null;
 }) {
   const selectedId = inquiry.selectedEventPlanId;
   const firstName = inquiry.customerFirstName || "there";
   const selectedPlan = plans.find((plan) => plan.id === selectedId);
+  const confirmed = Boolean(booking);
+  const finalized = confirmed || inquiry.status === "BOOKED";
 
   return (
     <section className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
       <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">
         {organizationName}
       </p>
-      {selectedPlan ? (
+      {confirmed && booking ? (
+        <ConfirmedBookingPanel organizationName={organizationName} booking={booking} />
+      ) : finalized ? (
+        <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-5 py-6">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            This event plan has already been finalized.
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm text-foreground/80">
+            Your event team has locked in the details. You cannot select a different recommendation.
+          </p>
+        </div>
+      ) : selectedPlan ? (
         <ConfirmationPanel
           organizationName={organizationName}
           planTitle={selectedPlan.title}
@@ -89,12 +112,44 @@ export function PublicEventPlanView({
               currency={currency}
               token={token}
               selected={selectedId === plan.id}
-              hideCta={Boolean(selectedId)}
+              hideCta={Boolean(selectedId) || finalized}
             />
           ))}
         </div>
       )}
     </section>
+  );
+}
+
+function ConfirmedBookingPanel({
+  organizationName,
+  booking,
+}: {
+  organizationName: string;
+  booking: {
+    bookingNumber: string;
+    eventDate: Date | string;
+    startTime: string;
+    endTime: string;
+    guestCount: number;
+  };
+}) {
+  return (
+    <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-5 py-6">
+      <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">Your event is confirmed</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">Your Event Is Confirmed</h1>
+      <p className="mt-3 max-w-2xl text-sm text-foreground/80">
+        {organizationName} has confirmed your event. You cannot select a different plan.
+      </p>
+      <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-foreground/70">
+        <li>Reference: {booking.bookingNumber}</li>
+        <li>{formatEventLocalDateTime({ date: booking.eventDate, time: booking.startTime })}</li>
+        <li>
+          {formatEventLocalTime(booking.startTime)}–{formatEventLocalTime(booking.endTime)} · {booking.guestCount}{" "}
+          guests
+        </li>
+      </ul>
+    </div>
   );
 }
 

@@ -79,6 +79,15 @@ export async function getMasterScheduleDay(
           customerLastName: true,
         },
       },
+      booking: {
+        select: {
+          id: true,
+          bookingNumber: true,
+          customerGroupName: true,
+          customerFirstName: true,
+          customerLastName: true,
+        },
+      },
     },
     orderBy: [{ startMinute: "asc" }, { resourceId: "asc" }],
   });
@@ -94,17 +103,17 @@ export async function getMasterScheduleDay(
   };
 }
 
-export function scheduleDisplayName(inquiry: {
+export function scheduleDisplayName(record: {
   customerGroupName: string | null;
   customerFirstName: string | null;
   customerLastName: string | null;
 } | null): string {
-  if (!inquiry) {
+  if (!record) {
     return "Held";
   }
-  if (inquiry.customerGroupName?.trim()) {
-    return inquiry.customerGroupName.trim();
+  if (record.customerGroupName?.trim()) {
+    return record.customerGroupName.trim();
   }
-  const name = [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ").trim();
+  const name = [record.customerFirstName, record.customerLastName].filter(Boolean).join(" ").trim();
   return name || "Inquiry";
 }

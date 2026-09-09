@@ -44,6 +44,7 @@ type InquiryDetailView =
       canManage: boolean;
       canHold: boolean;
       canRelease: boolean;
+      canConfirm: boolean;
       timeZone: string;
       resourceCheck: Awaited<ReturnType<typeof getInquiryPlanAvailabilitySnapshot>> | null;
       knowledge: Awaited<ReturnType<typeof listWorkspaceKnowledge>>;
@@ -54,11 +55,12 @@ type InquiryDetailView =
 async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
   try {
     const ctx = await getRequestContext();
-    const [inquiry, canManage, canHold, canRelease, timeZone] = await Promise.all([
+    const [inquiry, canManage, canHold, canRelease, canConfirm, timeZone] = await Promise.all([
       getInquiryDetail(ctx, db, id),
       hasPermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CREATE, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_EDIT, db),
+      hasPermission(ctx, PERMISSIONS.EVENTS_CONFIRM, db),
       getCurrentTenantTimezone(ctx, db),
     ]);
     if (!inquiry) {
@@ -81,6 +83,7 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       canManage,
       canHold,
       canRelease,
+      canConfirm,
       timeZone,
       resourceCheck,
       knowledge,
@@ -109,7 +112,7 @@ export default async function InquiryDetailPage({
     notFound();
   }
 
-  const { inquiry, canManage, canHold, canRelease, timeZone, resourceCheck, knowledge, activity, currentUserId } = view;
+  const { inquiry, canManage, canHold, canRelease, canConfirm, timeZone, resourceCheck, knowledge, activity, currentUserId } = view;
   const conversation = inquiry.conversations[0];
   const selectedPlan = inquiry.eventPlanRecommendations.find(
     (plan) => plan.id === inquiry.selectedEventPlanId,
@@ -142,6 +145,7 @@ export default async function InquiryDetailPage({
         canManage={canManage}
         canHold={canHold}
         canRelease={canRelease}
+        canConfirm={canConfirm}
         timeZone={timeZone}
       />
     );
@@ -154,9 +158,19 @@ export default async function InquiryDetailPage({
       </Link>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{displayName}</h1>
       <p className="mt-2 text-sm font-medium text-foreground">
-        {formatInquiryQueueLabel(inquiry)}
+        {formatInquiryQueueLabel({
+          ...inquiry,
+          bookingNumber: inquiry.bookings[0]?.bookingNumber,
+        })}
       </p>
-      {inquiry.selectedEventPlanId ? (
+      {inquiry.bookings[0] ? (
+        <p className="mt-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
+          Converted to Booking{" "}
+          <Link href={`/app/bookings/${inquiry.bookings[0].id}`} className="text-primary">
+            {inquiry.bookings[0].bookingNumber}
+          </Link>
+        </p>
+      ) : inquiry.selectedEventPlanId ? (
         <p className="mt-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm font-semibold tracking-[0.12em] uppercase">
           {CUSTOMER_SELECTED_PLAN_BANNER}
         </p>

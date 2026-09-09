@@ -1,5 +1,5 @@
-// MagicCRM tenant foundation plus authorization, inquiries, and finite-resource schedule groundwork.
-// Catalog products, Booking records, and outbound email delivery are not implemented yet.
+// MagicCRM tenant foundation plus authorization, inquiries, finite-resource schedule, and confirmed Bookings.
+// Catalog products and outbound email delivery are not implemented yet.
 
 generator client {
   provider = "prisma-client"
@@ -40,6 +40,9 @@ model Organization {
   knowledgeResourceRequirements KnowledgeResourceRequirement[]
   resourceReservations ResourceReservation[]
   communicationEvents CommunicationEvent[]
+  bookings            Booking[]
+  bookingLineItems    BookingLineItem[]
+  bookingSequences    OrganizationBookingSequence[]
   aiUsage             AiUsage[]
 
   @@index([onboardingStatus])
@@ -63,6 +66,7 @@ model Location {
   salesKnowledgeItems    SalesKnowledgeItem[]
   resourceTypes          ResourceType[]
   resources              Resource[]
+  bookings               Booking[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
@@ -95,6 +99,7 @@ model UserProfile {
   securityGroupMembers SecurityGroupMember[]
   invitationsSent      TeamInvitation[]      @relation("TeamInvitationsSent")
   assignedInquiries    Inquiry[]             @relation("InquiryAssignee")
+  confirmedBookings    Booking[]             @relation("BookingConfirmedBy")
   resourceReservations ResourceReservation[] @relation("ResourceReservationCreatedBy")
 
   @@unique([organizationId, id])
@@ -241,7 +246,7 @@ model TeamInvitationSecurityGroup {
   @@map("team_invitation_security_groups")
 }
 
-/// Customer event inquiry. CRM lead; booking/proposal come later.
+/// Customer event inquiry. CRM lead; Booking is the confirmed operational record.
 model Inquiry {
   id                       String    @id @default(cuid(2))
   organizationId           String
@@ -298,7 +303,8 @@ model Inquiry {
   eventPlanRecommendations EventPlanRecommendation[]
   resourceReservations ResourceReservation[]
   communicationEvents  CommunicationEvent[]
-  aiUsage       AiUsage[]
+  bookings             Booking[]
+  aiUsage              AiUsage[]
 
   @@unique([organizationId, id])
   @@index([organizationId, status, createdAt])
@@ -508,7 +514,6 @@ model ResourceReservation {
   startMinute           Int
   endMinute             Int
   inquiryId             String?
-  /// Future Booking id. No FK until Booking exists.
   bookingId             String?
   /// INQUIRY | BOOKING | MANUAL
   sourceType            String    @db.VarChar(24)
@@ -522,11 +527,13 @@ model ResourceReservation {
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   resource     Resource      @relation(fields: [organizationId, resourceId], references: [organizationId, id], onDelete: Restrict)
   inquiry      Inquiry?      @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+  booking      Booking?      @relation(fields: [organizationId, bookingId], references: [organizationId, id], onDelete: Restrict)
   createdBy    UserProfile?  @relation("ResourceReservationCreatedBy", fields: [organizationId, createdByUserProfileId], references: [organizationId, id], onDelete: Restrict)
 
   @@unique([organizationId, id])
   @@index([organizationId, resourceId, slotDate])
   @@index([organizationId, inquiryId])
+  @@index([organizationId, bookingId])
   @@index([organizationId, status, releasedAt])
   @@map("resource_reservations")
 }
@@ -550,11 +557,105 @@ model CommunicationEvent {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   inquiry      Inquiry?     @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+  booking      Booking?     @relation(fields: [organizationId, bookingId], references: [organizationId, id], onDelete: Restrict)
 
   @@index([organizationId, createdAt])
   @@index([organizationId, inquiryId])
+  @@index([organizationId, bookingId])
   @@index([organizationId, kind, status])
   @@map("communication_events")
+}
+
+/// Tenant-year counter for human-readable booking numbers. Not a public ID.
+model OrganizationBookingSequence {
+  organizationId String
+  year           Int
+  lastValue      Int
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@id([organizationId, year])
+  @@map("organization_booking_sequences")
+}
+
+/// Confirmed event. Authoritative after Confirm Booking. Inquiry remains sales history.
+model Booking {
+  id                       String    @id @default(cuid(2))
+  organizationId           String
+  inquiryId                String
+  locationId               String?
+  bookingNumber            String    @db.VarChar(32)
+  /// CONFIRMED | CANCELLED | COMPLETED. This pass uses CONFIRMED.
+  status                   String    @db.VarChar(24)
+  eventDate                DateTime  @db.Date
+  startTime                String    @db.VarChar(16)
+  endTime                  String    @db.VarChar(16)
+  startMinute              Int
+  endMinute                Int
+  guestCount               Int
+  eventType                String?   @db.VarChar(80)
+  eventGoal                String?   @db.VarChar(80)
+  diningLabel              String?   @db.VarChar(160)
+  subtotalCents            Int
+  taxCents                 Int       @default(0)
+  totalCents               Int
+  currency                 String    @db.VarChar(3)
+  customerGroupName        String?   @db.VarChar(160)
+  customerFirstName        String?   @db.VarChar(80)
+  customerLastName         String?   @db.VarChar(80)
+  customerEmail            String    @db.VarChar(254)
+  customerPhone            String?   @db.VarChar(32)
+  customerNotes            String?   @db.VarChar(2000)
+  internalNotes            String?   @db.VarChar(4000)
+  confirmedByUserProfileId String
+  confirmedAt              DateTime
+  selectedEventPlanId      String?
+  agentWorkingPlanId       String?
+  /// Snapshot of the Current Agent Version payload at confirmation.
+  payload                  Json
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  inquiry      Inquiry          @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+  location     Location?        @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  confirmedBy  UserProfile      @relation("BookingConfirmedBy", fields: [organizationId, confirmedByUserProfileId], references: [organizationId, id], onDelete: Restrict)
+  lineItems    BookingLineItem[]
+  reservations ResourceReservation[]
+  communicationEvents CommunicationEvent[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, inquiryId])
+  @@unique([organizationId, bookingNumber])
+  @@index([organizationId, eventDate])
+  @@index([organizationId, status, eventDate])
+  @@map("bookings")
+}
+
+/// Snapshotted confirmed line item. Prices do not change with later catalog edits.
+model BookingLineItem {
+  id               String  @id @default(cuid(2))
+  organizationId   String
+  bookingId        String
+  /// ACTIVITY | DINING | SPACE
+  kind             String  @db.VarChar(24)
+  knowledgeItemId  String?
+  name             String  @db.VarChar(160)
+  quantity         Int     @default(1)
+  unitPriceCents   Int
+  totalCents       Int
+  startTime        String? @db.VarChar(16)
+  endTime          String? @db.VarChar(16)
+  sortOrder        Int
+  createdAt        DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  booking      Booking      @relation(fields: [organizationId, bookingId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, bookingId])
+  @@map("booking_line_items")
 }
 
 /// Tenant-scoped AI usage metadata for later pricing. Not billing.

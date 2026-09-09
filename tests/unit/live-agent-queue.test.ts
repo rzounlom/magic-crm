@@ -51,6 +51,10 @@ describe("live agent queue priority", () => {
     expect(liveAgentQueuePriority(otherReady, now)).toBe(4);
   });
 
+  it("keeps converted inquiries out of the live-agent priority band", () => {
+    expect(liveAgentQueuePriority(inquiry("booked", { status: INQUIRY_STATUSES.BOOKED }), now)).toBe(99);
+  });
+
   it("orders oldest waiting customer first within the same priority", () => {
     const newer = inquiry("newer", { customerSelectedAt: new Date("2026-09-09T14:00:00.000Z") });
     const older = inquiry("older", { customerSelectedAt: new Date("2026-09-09T10:00:00.000Z") });

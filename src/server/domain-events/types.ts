@@ -28,6 +28,21 @@ export type BookingConfirmedPayload = {
   organizationId: string;
   bookingId: string;
   inquiryId?: string | null;
+  bookingNumber?: string;
+  organizationName?: string;
+  customerEmail?: string;
+  customerFirstName?: string | null;
+  customerLastName?: string | null;
+  customerGroupName?: string | null;
+  eventDate?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  guestCount?: number | null;
+  activities?: string[];
+  dining?: string;
+  spaces?: string[];
+  totalCents?: number | null;
+  currency?: string;
 };
 
 export type DomainEvent =

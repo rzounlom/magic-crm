@@ -34,15 +34,15 @@ Do not say the event is booked.
 
 ### State 3 — Booking confirmed
 
-A future Booking record is confirmed and finite resources are BOOKED.
+A `Booking` record is confirmed (`status = CONFIRMED`) and associated finite resources are BOOKED.
 
-This email is **not** triggered by inquiry selection. Domain event: `booking.confirmed` → `onBookingConfirmed({ bookingId })`.
+This email is **not** triggered by inquiry selection. Domain event: `booking.confirmed` → `onBookingConfirmed`. Confirm Booking emits it only after the conversion transaction commits.
 
 Suggested subject: `Your {organizationName} Event Is Confirmed`.
 
 Contents belong on the booking: confirmed date/time, guest count, activities, assigned resources, dining, pricing, deposit, arrival, waivers, change contact.
 
-`onBookingConfirmed` is not called from production flows until Booking exists. If invoked without a booking id, the log uses `skipReason = NO_BOOKING_RECORD`.
+If invoked without a booking id, the log uses `skipReason = NO_BOOKING_RECORD`. With a booking id and no mailer, the log uses `NO_EMAIL_PROVIDER` / `SKIPPED`. That is not a send.
 
 ## Why not one-off inquiry columns
 

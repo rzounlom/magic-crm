@@ -10,7 +10,10 @@ export async function deleteTestOrganizations(
 
   const ids = [...organizationIds];
   await database.communicationEvent.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.bookingLineItem.deleteMany({ where: { organizationId: { in: ids } } });
   await database.resourceReservation.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.booking.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.organizationBookingSequence.deleteMany({ where: { organizationId: { in: ids } } });
   await database.knowledgeResourceRequirement.deleteMany({ where: { organizationId: { in: ids } } });
   await database.resource.deleteMany({ where: { organizationId: { in: ids } } });
   await database.resourceType.deleteMany({ where: { organizationId: { in: ids } } });

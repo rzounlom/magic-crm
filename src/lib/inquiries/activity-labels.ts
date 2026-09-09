@@ -16,6 +16,10 @@ const ACTIVITY_LABELS: Record<string, string> = {
   "resource.hold_released": "Resource hold released",
   "resource.hold_updated": "Resource hold updated",
   "resource.hold_extended": "Resource hold extended",
+  "resource.converted_to_booked": "Resource holds converted to BOOKED",
+  "booking.confirmed": "Booking confirmed",
+  "inquiry.converted_to_booking": "Inquiry converted to Booking",
+  "communication.booking_confirmation_skipped": "booking.confirmed recorded (email skipped — no provider)",
   "ai.handoff_requested": "Inquiry entered Ready for Live Agent",
 };
 

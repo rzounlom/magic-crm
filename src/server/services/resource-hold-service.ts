@@ -14,7 +14,7 @@ import {
   releaseExpiredHolds,
   reserveResourcesInTransaction,
 } from "@/server/services/resource-availability-service";
-import { EVENT_PLAN_KINDS, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
+import { EVENT_PLAN_KINDS, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
 import type { EventPlanPayload } from "@/types/event-planner";
 import { PERMISSIONS } from "@/types/permissions";
 import {
@@ -266,6 +266,9 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
   });
   if (!inquiry || !inquiry.selectedEventPlanId) {
     throw new ResourceError("INVALID_RESOURCE", "Select an event plan before placing a hold.");
+  }
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    throw new ResourceError("INVALID_RESOURCE", "This inquiry has already been converted to a booking.");
   }
   const plan =
     inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.agentWorkingPlanId) ??

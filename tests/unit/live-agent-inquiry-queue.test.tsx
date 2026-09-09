@@ -85,4 +85,50 @@ describe("live agent inquiry queue", () => {
     expect(html).toContain("Assigned to Jane Smith");
     expect(html).not.toContain("BOOKED");
   });
+
+  it("keeps converted inquiries out of Ready for Live Agent", () => {
+    const html = renderToStaticMarkup(
+      <LiveAgentInquiryQueue
+        timeZone="UTC"
+        inquiries={[
+          {
+            id: "inq_booked",
+            status: INQUIRY_STATUSES.BOOKED,
+            selectedEventPlanId: "plan_best",
+            humanHandoffReason: "CUSTOMER_SELECTED_PLAN",
+            assignedUserProfileId: "agent_a",
+            customerSelectedAt: new Date("2026-09-09T12:00:00.000Z"),
+            createdAt: new Date("2026-09-09T11:00:00.000Z"),
+            humanHandoffRequestedAt: new Date("2026-09-09T12:00:00.000Z"),
+            workflowStage: null,
+            aiHandlingEnabled: false,
+            customerGroupName: "Apex Robotics",
+            customerFirstName: "Ada",
+            customerLastName: "Lovelace",
+            customerEmail: "ada@example.com",
+            eventType: "Corporate Event",
+            desiredDate: new Date("2026-10-15T00:00:00.000Z"),
+            guestCount: 75,
+            assignedUser: null,
+            eventPlanRecommendations: [
+              {
+                id: "plan_best",
+                kind: EVENT_PLAN_KINDS.RECOMMENDATION,
+                title: "Best Fit",
+                estimatedTotalCents: 485000,
+                currency: "USD",
+                availabilityStatus: PLAN_AVAILABILITY_STATUSES.AVAILABLE,
+              },
+            ],
+            resourceReservations: [],
+            bookings: [{ id: "bk_1", bookingNumber: "FUN-2026-00421", status: "CONFIRMED" }],
+          },
+        ]}
+      />,
+    );
+
+    expect(html).not.toContain("Ready for Live Agent");
+    expect(html).toContain("Converted to Booking FUN-2026-00421");
+    expect(html).toContain("Apex Robotics");
+  });
 });

@@ -97,6 +97,9 @@ export async function startWorkingInquiry(ctx: RequestContext, database: LiveAge
   if (!inquiry) {
     throw new InquiryError("PLAN_NOT_FOUND");
   }
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    throw new InquiryError("INQUIRY_ALREADY_BOOKED");
+  }
   if (!inquiry.selectedEventPlanId) {
     throw new InquiryError("WORKING_PLAN_INVALID", "Start working from a customer-selected plan.");
   }
@@ -253,6 +256,9 @@ export async function saveAgentWorkingPlan(
   if (!inquiry?.selectedEventPlanId) {
     throw new InquiryError("PLAN_NOT_FOUND");
   }
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    throw new InquiryError("INQUIRY_ALREADY_BOOKED");
+  }
   if (expectedUpdatedAt && inquiry.updatedAt.toISOString() !== expectedUpdatedAt) {
     throw new InquiryError("STALE_INQUIRY");
   }
@@ -376,6 +382,9 @@ export async function markInquiryReadyToFinalize(
   if (!inquiry?.selectedEventPlanId) {
     throw new InquiryError("PLAN_NOT_FOUND");
   }
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    throw new InquiryError("INQUIRY_ALREADY_BOOKED");
+  }
   if (expectedUpdatedAt && inquiry.updatedAt.toISOString() !== expectedUpdatedAt) {
     throw new InquiryError("STALE_INQUIRY");
   }
@@ -463,11 +472,41 @@ export async function listInquiryActivity(ctx: RequestContext, database: LiveAge
   if (!inquiry) {
     return [];
   }
-  const rows = await database.auditLog.findMany({
-    where: { organizationId: ctx.organizationId, resourceType: "inquiry", resourceId: inquiry.id },
-    orderBy: { createdAt: "asc" },
-    take: 80,
+  const [inquiryRows, bookingRows] = await Promise.all([
+    database.auditLog.findMany({
+      where: { organizationId: ctx.organizationId, resourceType: "inquiry", resourceId: inquiry.id },
+      orderBy: { createdAt: "asc" },
+      take: 80,
+    }),
+    database.auditLog.findMany({
+      where: {
+        organizationId: ctx.organizationId,
+        resourceType: "booking",
+        action: {
+          in: [
+            "booking.confirmed",
+            "resource.converted_to_booked",
+            "communication.booking_confirmation_skipped",
+          ],
+        },
+      },
+      orderBy: { createdAt: "asc" },
+      take: 80,
+    }),
+  ]);
+  const relatedBookingRows = bookingRows.filter((row) => {
+    const metadata = row.metadata;
+    return Boolean(
+      metadata &&
+        typeof metadata === "object" &&
+        !Array.isArray(metadata) &&
+        "inquiryId" in metadata &&
+        metadata.inquiryId === inquiry.id,
+    );
   });
+  const rows = [...inquiryRows, ...relatedBookingRows].sort(
+    (left, right) => left.createdAt.getTime() - right.createdAt.getTime(),
+  );
   const actorIds = [...new Set(rows.map((row) => row.actorUserProfileId).filter((id): id is string => Boolean(id)))];
   const actors =
     actorIds.length > 0

@@ -2,7 +2,7 @@
 
 The Resource Schedule is the future **single source of truth** for finite event inventory. Personal Event Planner recommendations, live agents, inquiries, proposals, booking, and staff scheduling must all ask the same availability service. Features must not independently calculate or store occupancy.
 
-This pass adds the data model, Admin resource configuration, the staff Master Schedule, and live-agent holds. It does **not** implement automatic customer holds, a Booking record, payments, or outbound email delivery.
+This pass adds the data model, Admin resource configuration, the staff Master Schedule, live-agent holds, and Confirm Booking conversion of HOLD→BOOKED. It does **not** implement automatic customer holds, payments, or outbound email delivery.
 
 ## Status model
 
@@ -55,7 +55,7 @@ Authorized staff (Events create/edit, typically Event Sales or Administrators) c
 - Place a temporary HOLD from the Master Schedule or from a selected-plan Inquiry (`Place Resource Hold`)
 - Release a HOLD (not BOOKED)
 
-Inquiry plan holds assign specific `Resource` rows in one transaction with a 24-hour `expiresAt`. If any required unit cannot be assigned, no partial holds remain. Holds do **not** emit `event_plan.selected` or `booking.confirmed`.
+Inquiry plan holds assign specific `Resource` rows in one transaction with a 24-hour `expiresAt`. If any required unit cannot be assigned, no partial holds remain. Holds do **not** emit `event_plan.selected` or `booking.confirmed`. Confirm Booking converts those HOLD rows in place to BOOKED and sets `bookingId`.
 
 Expired HOLDs are opportunistically marked `releasedAt` so the PostgreSQL exclusion constraint no longer blocks that window. History rows are kept.
 
@@ -67,9 +67,9 @@ Overnight windows that cross local midnight are a known limitation (`slotDate` i
 
 ## Staff UI
 
-`/app/schedule` is the Master Schedule: date previous/today/next/picker, resource-type tabs from configured `ResourceType` rows, numbered resource columns, 30-minute rows, Available / HOLD / BOOKED from live `ResourceReservation` records. Occupied cells link to the associated Inquiry when one exists. Staff can place and release HOLDs there.
+`/app/schedule` is the Master Schedule: date previous/today/next/picker, resource-type tabs from configured `ResourceType` rows, numbered resource columns, 30-minute rows, Available / HOLD / BOOKED from live `ResourceReservation` records. HOLD cells link to the associated Inquiry. BOOKED cells open `/app/bookings/{id}` (with a link back to the originating Inquiry). Staff can place and release HOLDs there; BOOKED rows are not released from this UI.
 
-Ready-for-Live-Agent inquiries open the Live Agent Booking Workspace. Resource checks, Place / Update / Extend / Release Hold, and Master Schedule deep links all use this same availability service. Holds stay `HOLD` through Ready to Finalize. `BOOKED` is reserved for a future Booking conversion.
+Ready-for-Live-Agent inquiries open the Live Agent Booking Workspace. Resource checks, Place / Update / Extend / Release Hold, and Master Schedule deep links all use this same availability service. Confirm Booking rechecks availability, verifies unexpired HOLDs, then converts them to BOOKED in the same transaction as the Booking insert. The PostgreSQL overlap exclusion still applies to BOOKED vs HOLD/BOOKED.
 
 ## Seed
 

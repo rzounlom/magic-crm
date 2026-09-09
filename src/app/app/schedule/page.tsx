@@ -94,8 +94,8 @@ export default async function MasterSchedulePage({
       <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Operations</p>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Master Schedule</h1>
       <p className="mt-4 max-w-2xl text-sm text-foreground/70">
-        Live occupancy from HOLD and BOOKED reservations. Available is the absence of an active reservation.
-        This is not a booking or payment tool.
+        Live occupancy from HOLD and BOOKED reservations. BOOKED cells open the Booking record. Available is
+        the absence of an active reservation. This is not a payment tool.
       </p>
       <div className="mt-6 flex flex-wrap items-end gap-3">
         <Link href={`/app/schedule?date=${prev}${typeQuery}`} className="rounded-md border border-border px-3 py-2 text-sm">

@@ -386,6 +386,11 @@ export async function listInquiries(ctx: RequestContext, database: InquiryDb) {
         },
         select: { id: true, expiresAt: true },
       },
+      bookings: {
+        orderBy: { confirmedAt: "desc" },
+        take: 1,
+        select: { id: true, bookingNumber: true, status: true },
+      },
     },
   });
 }
@@ -408,11 +413,21 @@ export async function getInquiryDetail(
       assignedUser: {
         select: { id: true, firstName: true, lastName: true, displayName: true, email: true },
       },
+      bookings: {
+        orderBy: { confirmedAt: "desc" },
+        take: 1,
+        select: { id: true, bookingNumber: true, status: true, confirmedAt: true },
+      },
       resourceReservations: {
         where: {
           releasedAt: null,
-          status: RESOURCE_RESERVATION_STATUSES.HOLD,
-          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          OR: [
+            {
+              status: RESOURCE_RESERVATION_STATUSES.HOLD,
+              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+            },
+            { status: RESOURCE_RESERVATION_STATUSES.BOOKED },
+          ],
         },
         include: {
           resource: {

@@ -27,13 +27,16 @@ import {
   saveInternalNotesAction,
   startWorkingInquiryAction,
 } from "@/server/actions/live-agent";
+import { bookingConfirmationBlockers } from "@/lib/bookings/confirmation-blockers";
+import { holdCoverageErrors } from "@/lib/bookings/hold-coverage";
+import { confirmBookingAction } from "@/server/actions/bookings";
 import { sendEmployeeInquiryMessageAction } from "@/server/actions/inquiries";
 import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display";
 import {
   deriveInquiryWorkflowStage,
   employeeDisplayName,
 } from "@/lib/inquiries/workflow-stage";
-import { INQUIRY_WORKFLOW_STAGE_LABELS, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
+import { INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGE_LABELS, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
 
 type WorkspaceInquiry = {
   id: string;
@@ -89,11 +92,14 @@ type WorkspaceInquiry = {
   }>;
   resourceReservations: Array<{
     id: string;
+    status?: string;
+    releasedAt?: Date | null;
     startMinute: number;
     endMinute: number;
     expiresAt: Date | null;
-    resource: { name: string; resourceType: { name: string } };
+    resource: { name: string; resourceType: { id?: string; name: string } };
   }>;
+  bookings?: Array<{ id: string; bookingNumber: string; status: string; confirmedAt: Date }>;
 };
 
 export function LiveAgentWorkspace({
@@ -107,6 +113,7 @@ export function LiveAgentWorkspace({
   canManage,
   canHold,
   canRelease,
+  canConfirm = false,
   timeZone,
 }: {
   inquiry: WorkspaceInquiry;
@@ -136,6 +143,7 @@ export function LiveAgentWorkspace({
   canManage: boolean;
   canHold: boolean;
   canRelease: boolean;
+  canConfirm?: boolean;
   timeZone: string;
 }) {
   const displayName =
@@ -143,6 +151,8 @@ export function LiveAgentWorkspace({
     [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
     inquiry.customerEmail;
   const phoneDisplay = formatPhoneDisplay(inquiry.customerPhone);
+  const booking = inquiry.bookings?.[0] ?? null;
+  const booked = inquiry.status === INQUIRY_STATUSES.BOOKED || Boolean(booking);
   const stage = deriveInquiryWorkflowStage({
     workflowStage: inquiry.workflowStage,
     selectedEventPlanId: inquiry.selectedEventPlanId,
@@ -156,6 +166,7 @@ export function LiveAgentWorkspace({
   );
   const workingPayload = readEventPlanPayload((workingPlan ?? selectedPlan).payload);
   const holdAffected =
+    !booked &&
     inquiry.resourceReservations.length > 0 &&
     workingPlanAffectsExistingHolds(workingPayload, inquiry.resourceReservations);
   const eventDate = workingPayload.eventDate;
@@ -167,24 +178,85 @@ export function LiveAgentWorkspace({
     : "/app/schedule";
   const conversation = inquiry.conversations[0];
   const mailto = `mailto:${inquiry.customerEmail}`;
+  const confirmBlockers = booked
+    ? []
+    : [
+        ...bookingConfirmationBlockers({
+          inquiryStatus: inquiry.status,
+          workflowStage: inquiry.workflowStage,
+          readyToFinalizeAt: inquiry.readyToFinalizeAt,
+          selectedEventPlanId: inquiry.selectedEventPlanId,
+          assignedUserProfileId: inquiry.assignedUserProfileId,
+          workingPlan: workingPlan
+            ? {
+                availabilityStatus: workingPlan.availabilityStatus ?? null,
+                estimatedTotalCents: workingPlan.estimatedTotalCents,
+                payload: workingPayload,
+              }
+            : null,
+          holds: inquiry.resourceReservations.map((row) => ({
+            status: row.status ?? "HOLD",
+            expiresAt: row.expiresAt,
+            releasedAt: row.releasedAt ?? null,
+            startMinute: row.startMinute,
+            endMinute: row.endMinute,
+            resource: {
+              resourceType: {
+                id: row.resource.resourceType.id ?? "",
+                name: row.resource.resourceType.name,
+              },
+            },
+          })),
+          hasFiniteRequirements: Boolean(
+            resourceCheck?.requirements.some((row) => row.quantity != null && row.quantity > 0),
+          ),
+        }),
+        ...(workingPlan && resourceCheck
+          ? holdCoverageErrors(workingPayload, resourceCheck.requirements, inquiry.resourceReservations.map((row) => ({
+              id: row.id,
+              status: row.status ?? "HOLD",
+              expiresAt: row.expiresAt,
+              releasedAt: row.releasedAt ?? null,
+              startMinute: row.startMinute,
+              endMinute: row.endMinute,
+              resource: {
+                resourceType: {
+                  id: row.resource.resourceType.id ?? "",
+                  name: row.resource.resourceType.name,
+                },
+              },
+            })))
+          : []),
+      ];
+  const canSubmitConfirm = canConfirm && !booked && confirmBlockers.length === 0;
 
   return (
     <section className="w-full max-w-6xl">
       <Link href="/app/inquiries" className="text-sm text-primary">
         Back to inquiries
       </Link>
-      <p className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm font-semibold tracking-[0.12em] uppercase">
-        {CUSTOMER_SELECTED_PLAN_BANNER}
-      </p>
+      {booked && booking ? (
+        <p className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
+          <span className="font-semibold tracking-[0.12em] uppercase">Converted to Booking</span>
+          {" · "}
+          <Link href={`/app/bookings/${booking.id}`} className="text-primary">
+            {booking.bookingNumber}
+          </Link>
+        </p>
+      ) : (
+        <p className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm font-semibold tracking-[0.12em] uppercase">
+          {CUSTOMER_SELECTED_PLAN_BANNER}
+        </p>
+      )}
       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">{displayName}</h1>
           <p className="mt-2 text-sm font-medium">
-            {formatInquiryQueueLabel(inquiry)}
-            {stage ? ` · ${INQUIRY_WORKFLOW_STAGE_LABELS[stage]}` : ""}
+            {formatInquiryQueueLabel({ ...inquiry, bookingNumber: booking?.bookingNumber })}
+            {!booked && stage ? ` · ${INQUIRY_WORKFLOW_STAGE_LABELS[stage]}` : ""}
           </p>
         </div>
-        {canManage && !inquiry.assignedUserProfileId ? (
+        {canManage && !booked && !inquiry.assignedUserProfileId ? (
           <SecurityActionForm
             action={startWorkingInquiryAction}
             notice={{ successTitle: "You are working this inquiry", errorTitle: "Unable to start working" }}
@@ -219,7 +291,7 @@ export function LiveAgentWorkspace({
             selectedAt={inquiry.customerSelectedAt}
             timeZone={timeZone}
           />
-          {workingPlan && canManage && !assignedToOther ? (
+          {workingPlan && canManage && !assignedToOther && !booked ? (
             <div className="mt-8">
               <AgentWorkingPlanForm
                 inquiryId={inquiry.id}
@@ -261,8 +333,8 @@ export function LiveAgentWorkspace({
               availabilityStatus={workingPlan?.availabilityStatus ?? selectedPlan.availabilityStatus ?? "NOT_VALIDATED"}
               live={resourceCheck}
               holds={inquiry.resourceReservations}
-              canHold={canHold && canManage}
-              canRelease={canRelease && canManage}
+              canHold={canHold && canManage && !booked}
+              canRelease={canRelease && canManage && !booked}
               timeZone={timeZone}
               title="Working version — resource check"
               scheduleHref={scheduleHref}
@@ -391,7 +463,7 @@ export function LiveAgentWorkspace({
             )}
           </section>
 
-          {canManage && inquiry.resourceReservations.length > 0 ? (
+          {canManage && !booked && inquiry.resourceReservations.length > 0 ? (
             <SecurityActionForm
               action={markReadyToFinalizeAction}
               notice={{ successTitle: "Ready to finalize", errorTitle: "Unable to mark ready to finalize" }}
@@ -410,6 +482,47 @@ export function LiveAgentWorkspace({
                 {stage === INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE ? "Already ready to finalize" : "Mark Ready to Finalize"}
               </PendingSubmitButton>
             </SecurityActionForm>
+          ) : null}
+
+          {canConfirm && !booked ? (
+            <section className="rounded-md border border-border px-4 py-4 text-sm">
+              <h2 className="font-semibold">Confirm Booking</h2>
+              <p className="mt-1 text-xs text-foreground/60">
+                Creates the operational Booking from the Current Agent Version, converts HOLDs to BOOKED, and
+                leaves this inquiry as sales history. No payment is collected and no email is sent.
+              </p>
+              {confirmBlockers.length > 0 ? (
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-foreground/80">
+                  {confirmBlockers.map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {canSubmitConfirm ? (
+                <SecurityActionForm
+                  action={confirmBookingAction}
+                  className="mt-4"
+                  notice={{ successTitle: "Booking confirmed", errorTitle: "Unable to confirm booking" }}
+                  confirm={{
+                    title: "Confirm this booking?",
+                    description:
+                      "This creates a Booking record and converts resource HOLDs to BOOKED. The customer-selected plan stays as history. No email is sent.",
+                    confirmLabel: "Confirm Booking",
+                  }}
+                >
+                  <input type="hidden" name="inquiryId" value={inquiry.id} />
+                  <input type="hidden" name="expectedUpdatedAt" value={inquiry.updatedAt.toISOString()} />
+                  <PendingSubmitButton
+                    pendingLabel="Confirming…"
+                    className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                  >
+                    Confirm Booking
+                  </PendingSubmitButton>
+                </SecurityActionForm>
+              ) : (
+                <p className="mt-3 text-foreground/60">Resolve the items above, then confirm.</p>
+              )}
+            </section>
           ) : null}
 
           <section className="rounded-md border border-border px-4 py-4 text-sm">
