@@ -47,11 +47,16 @@ export function formatEventLocalDateTime(input: {
   return MISSING_EVENT_LOCAL_LABEL;
 }
 
+export function resolveOrganizationTimeZone(timeZone: string | null | undefined): string {
+  const zone = timeZone?.trim() || "UTC";
+  return isSupportedTimeZone(zone) ? zone : "UTC";
+}
+
 export function formatOrganizationTimestamp(
   value: Date,
   timeZone: string,
 ): string {
-  const zone = isSupportedTimeZone(timeZone) ? timeZone : "UTC";
+  const zone = resolveOrganizationTimeZone(timeZone);
   const datePart = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",

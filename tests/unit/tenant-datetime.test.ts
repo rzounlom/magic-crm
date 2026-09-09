@@ -5,6 +5,7 @@ import {
   formatEventLocalDateTime,
   formatEventLocalTime,
   formatOrganizationTimestamp,
+  resolveOrganizationTimeZone,
 } from "@/lib/inquiries/tenant-datetime";
 
 describe("tenant date/time display", () => {
@@ -52,5 +53,14 @@ describe("tenant date/time display", () => {
     expect(tenantA).not.toBe(tenantB);
     expect(tenantA).toContain("7:00 PM");
     expect(tenantB).toContain("4:00 PM");
+  });
+
+  it("falls back to UTC when the stored timezone is not a valid IANA zone", () => {
+    const instant = new Date("2026-09-11T23:00:00.000Z");
+    expect(resolveOrganizationTimeZone("IANA")).toBe("UTC");
+    expect(resolveOrganizationTimeZone("America/New_York")).toBe("America/New_York");
+    expect(formatOrganizationTimestamp(instant, "IANA")).toBe(
+      formatOrganizationTimestamp(instant, "UTC"),
+    );
   });
 });

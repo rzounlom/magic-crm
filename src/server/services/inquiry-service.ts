@@ -8,6 +8,7 @@ import { getPublicRateLimiter, type RateLimiter } from "@/lib/ai/rate-limiter";
 import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
 import { publicInquiryPathForActiveOrganization } from "@/lib/inquiries/organization-display-name";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
+import { resolveOrganizationTimeZone } from "@/lib/inquiries/tenant-datetime";
 import { AuthorizationError, InquiryError } from "@/server/errors";
 import {
   isHoneypotFilled,
@@ -82,7 +83,7 @@ export async function getCurrentTenantTimezone(
     where: { id: ctx.organizationId },
     select: { timezone: true },
   });
-  return organization?.timezone?.trim() || "UTC";
+  return resolveOrganizationTimeZone(organization?.timezone);
 }
 
 export async function resolvePublicInquiryOrganization(

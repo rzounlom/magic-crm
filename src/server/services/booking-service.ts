@@ -5,6 +5,7 @@ import { bookingNumberPrefix, formatBookingNumber } from "@/lib/bookings/booking
 import { holdCoverageErrors } from "@/lib/bookings/hold-coverage";
 import { planPayloadTotal } from "@/lib/inquiries/plan-diff";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
+import { resolveOrganizationTimeZone } from "@/lib/inquiries/tenant-datetime";
 import { BookingError, InquiryError } from "@/server/errors";
 import { emitDomainEvent } from "@/server/domain-events/emit";
 import { DOMAIN_EVENT_TYPES } from "@/server/domain-events/types";
@@ -40,7 +41,7 @@ function isoDate(value: Date | string | null | undefined): string | null {
 
 function tenantDateStamp(timeZone: string, now = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
+    timeZone: resolveOrganizationTimeZone(timeZone),
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -479,7 +480,7 @@ export async function listBookings(
     where: { id: ctx.organizationId },
     select: { timezone: true },
   });
-  const today = tenantDateStamp(organization?.timezone || "UTC");
+  const today = tenantDateStamp(organization?.timezone);
   const weekEnd = shiftDate(today, 7);
   const filter = input.filter ?? BOOKING_LIST_FILTERS.UPCOMING;
   const search = input.search?.trim() || "";
