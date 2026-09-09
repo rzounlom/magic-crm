@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -229,5 +231,17 @@ describe("public event plan view", () => {
     expect(html).toContain("24 guests");
     expect(html).not.toContain("Choose This Event Plan");
     expect(html).not.toContain("not reserved yet");
+  });
+
+  it("captures form data before yielding so React does not drop currentTarget", () => {
+    const source = readFileSync(
+      path.join(process.cwd(), "src/components/layout/public-event-plan-view.tsx"),
+      "utf8",
+    );
+    const formDataAt = source.indexOf("new FormData(event.currentTarget)");
+    const yieldAt = source.indexOf("await yieldToPaint()");
+    expect(formDataAt).toBeGreaterThan(-1);
+    expect(yieldAt).toBeGreaterThan(-1);
+    expect(formDataAt).toBeLessThan(yieldAt);
   });
 });

@@ -302,11 +302,11 @@ function ChoosePlanButton({
     if (onSafeSubmitAttempt(pendingRef.current) === "block") {
       return;
     }
+    const formData = new FormData(event.currentTarget);
     pendingRef.current = true;
     setPending(true);
     await yieldToPaint();
     try {
-      const formData = new FormData(event.currentTarget);
       const result = await selectPublicEventPlanAction(formData);
       if (!result.ok) {
         notify.error({ title: result.title ?? "Unable to save that plan", description: result.message });
