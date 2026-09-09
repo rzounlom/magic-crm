@@ -58,6 +58,7 @@ describe("employee selected event plan", () => {
     );
 
     expect(html).toContain("CUSTOMER SELECTED PLAN — READY TO BOOK");
+    expect(html).toContain("Customer Selected Plan");
     expect(html).toContain("Go-Karts");
     expect(html).toContain("Catered Slider Bar");
     expect(html).toContain("Private Event Room");

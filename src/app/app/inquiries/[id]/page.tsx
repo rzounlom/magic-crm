@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { LiveAgentWorkspace } from "@/components/layout/live-agent-workspace";
 import { EmployeeInquiryConversation } from "@/components/layout/employee-inquiry-conversation";
-import { EmployeeSelectedEventPlan } from "@/components/layout/employee-selected-event-plan";
-import { EmployeeSelectedPlanResourceCheck } from "@/components/layout/employee-selected-plan-resource-check";
 import { InquiryFunnel } from "@/components/layout/inquiry-funnel";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
@@ -27,6 +26,8 @@ import {
   sendEmployeeInquiryMessageAction,
   takeOverInquiryAction,
 } from "@/server/actions/inquiries";
+import { EVENT_PLAN_KINDS } from "@/types/inquiry";
+import { listInquiryActivity, listWorkspaceKnowledge } from "@/server/services/live-agent-service";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
@@ -45,6 +46,9 @@ type InquiryDetailView =
       canRelease: boolean;
       timeZone: string;
       resourceCheck: Awaited<ReturnType<typeof getInquiryPlanAvailabilitySnapshot>> | null;
+      knowledge: Awaited<ReturnType<typeof listWorkspaceKnowledge>>;
+      activity: Awaited<ReturnType<typeof listInquiryActivity>>;
+      currentUserId: string;
     };
 
 async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
@@ -61,10 +65,28 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       return { kind: "missing" };
     }
     const selectedPlan = inquiry.eventPlanRecommendations.find((plan) => plan.id === inquiry.selectedEventPlanId);
-    const resourceCheck = selectedPlan
-      ? await getInquiryPlanAvailabilitySnapshot(ctx, db, inquiry, selectedPlan)
-      : null;
-    return { kind: "ready", inquiry, canManage, canHold, canRelease, timeZone, resourceCheck };
+    const workingPlan =
+      inquiry.eventPlanRecommendations.find((plan) => plan.id === inquiry.agentWorkingPlanId) ??
+      inquiry.eventPlanRecommendations.find((plan) => plan.kind === EVENT_PLAN_KINDS.AGENT_WORKING) ??
+      null;
+    const planForCheck = workingPlan ?? selectedPlan;
+    const [resourceCheck, knowledge, activity] = await Promise.all([
+      planForCheck ? getInquiryPlanAvailabilitySnapshot(ctx, db, inquiry, planForCheck) : Promise.resolve(null),
+      listWorkspaceKnowledge(ctx, db),
+      listInquiryActivity(ctx, db, inquiry.id),
+    ]);
+    return {
+      kind: "ready",
+      inquiry,
+      canManage,
+      canHold,
+      canRelease,
+      timeZone,
+      resourceCheck,
+      knowledge,
+      activity,
+      currentUserId: ctx.userId,
+    };
   } catch (error) {
     if (isAuthorizationError(error) || isTenantContextError(error) || isInquiryError(error)) {
       return { kind: "status", title: "Inquiry", body: error.userMessage };
@@ -87,11 +109,15 @@ export default async function InquiryDetailPage({
     notFound();
   }
 
-  const { inquiry, canManage, canHold, canRelease, timeZone, resourceCheck } = view;
+  const { inquiry, canManage, canHold, canRelease, timeZone, resourceCheck, knowledge, activity, currentUserId } = view;
   const conversation = inquiry.conversations[0];
   const selectedPlan = inquiry.eventPlanRecommendations.find(
     (plan) => plan.id === inquiry.selectedEventPlanId,
   );
+  const workingPlan =
+    inquiry.eventPlanRecommendations.find((plan) => plan.id === inquiry.agentWorkingPlanId) ??
+    inquiry.eventPlanRecommendations.find((plan) => plan.kind === EVENT_PLAN_KINDS.AGENT_WORKING) ??
+    null;
   const displayName =
     inquiry.customerGroupName ||
     [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
@@ -102,6 +128,24 @@ export default async function InquiryDetailPage({
       ? `?subject=${encodeURIComponent(`Your event plan at our venue`)}`
       : ""
   }`;
+
+  if (selectedPlan) {
+    return (
+      <LiveAgentWorkspace
+        inquiry={inquiry}
+        selectedPlan={selectedPlan}
+        workingPlan={workingPlan}
+        resourceCheck={resourceCheck}
+        knowledge={knowledge}
+        activity={activity}
+        currentUserId={currentUserId}
+        canManage={canManage}
+        canHold={canHold}
+        canRelease={canRelease}
+        timeZone={timeZone}
+      />
+    );
+  }
 
   return (
     <section className="max-w-3xl">
@@ -124,8 +168,8 @@ export default async function InquiryDetailPage({
           timeZone={timeZone}
           inquiry={{
             ...inquiry,
-            selectedPlanTitle: selectedPlan?.title,
-            selectedPlanTier: selectedPlan?.tier,
+            selectedPlanTitle: undefined,
+            selectedPlanTier: undefined,
           }}
         />
       </div>
@@ -204,27 +248,6 @@ export default async function InquiryDetailPage({
           <p className="text-foreground/60">Customer notes</p>
           <p className="mt-1 whitespace-pre-wrap text-foreground/80">{inquiry.customerNotes}</p>
         </div>
-      ) : null}
-
-      {selectedPlan ? (
-        <EmployeeSelectedEventPlan
-          plan={selectedPlan}
-          desiredDate={inquiry.desiredDate}
-          desiredStartTime={inquiry.desiredStartTime}
-          selectedAt={inquiry.customerSelectedAt}
-          timeZone={timeZone}
-        />
-      ) : null}
-      {selectedPlan && resourceCheck ? (
-        <EmployeeSelectedPlanResourceCheck
-          inquiryId={inquiry.id}
-          availabilityStatus={selectedPlan.availabilityStatus}
-          live={resourceCheck}
-          holds={inquiry.resourceReservations}
-          canHold={canHold && canManage}
-          canRelease={canRelease && canManage}
-          timeZone={timeZone}
-        />
       ) : null}
 
       {inquiry.internalSummary ? (

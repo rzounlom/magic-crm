@@ -130,8 +130,8 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `TeamInvitation` unique on `clerkOrganizationInvitationId`; pending unique on `(organizationId, emailNormalized)` via a partial SQL index
 - `TeamInvitationSecurityGroup` unique on `(teamInvitationId, securityGroupId)` with same-tenant composite FKs
 - `Organization.onboardingStatus` indexed for platform recovery
-- `Inquiry` unique on `(organizationId, id)`; indexes `(organizationId, status, createdAt)`, `(organizationId, customerEmailNormalized)`, `(organizationId, selectedEventPlanId)`, `(organizationId, customerSelectedAt)`
-- `EventPlanRecommendation` unique on `(organizationId, id)` and `(organizationId, inquiryId, tier)`; index `(organizationId, inquiryId)`
+- `Inquiry` unique on `(organizationId, id)`; indexes `(organizationId, status, createdAt)`, `(organizationId, customerEmailNormalized)`, `(organizationId, selectedEventPlanId)`, `(organizationId, customerSelectedAt)`, `(organizationId, workflowStage)`
+- `EventPlanRecommendation` unique on `(organizationId, id)` and `(organizationId, inquiryId, kind, tier)`; index `(organizationId, inquiryId)`. `kind` is `RECOMMENDATION` or `AGENT_WORKING`
 - `Conversation` unique on `publicTokenHash` and `(organizationId, id)`
 - `ConversationMessage` unique on `(conversationId, clientSubmissionId)` for idempotent public submits
 - `SalesKnowledgeItem` unique on `(organizationId, id)`; index `(organizationId, active, type)`
@@ -172,6 +172,8 @@ Committed migrations:
 - `20260906140000_ai_intake_sales_agent` — Inquiry, Conversation, ConversationMessage, SalesKnowledgeItem, AiUsage
 - `20260909120000_personal_event_planner` — Inquiry planner fields, EventPlanRecommendation
 - `20260909140000_finite_resource_schedule` — ResourceType, Resource, KnowledgeResourceRequirement, ResourceReservation, CommunicationEvent; gist exclusion on active HOLD/BOOKED overlaps
+- `20260909160000_resource_management_schedule` — Admin resource configuration and Master Schedule occupancy
+- `20260909180000_live_agent_workspace` — Inquiry workflowStage/assignment timestamps, EventPlanRecommendation.kind, unique `(organizationId, inquiryId, kind, tier)`
 
 ## Seed / reference data
 

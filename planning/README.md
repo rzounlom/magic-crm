@@ -16,7 +16,7 @@ System architecture documents. Current implementation notes:
 - `authorization.md`
 - `team-management.md`
 - `client-onboarding.md`
-- `inquiries.md` — Personal Event Planner intake, recommendations, selected-plan queue, plus **Employee Inquiry Workspace MVP** as the next employee product step
+- `inquiries.md` — Personal Event Planner intake, recommendations, selected-plan queue, and Live Agent Booking Workspace
 - `resource-schedule.md` — tenant finite-resource model, Admin inventory, Master Schedule, staff HOLDs, shared availability service
 - `communications.md` — inquiry vs selected-plan vs booking-confirmed emails; `CommunicationEvent` log without a mailer
 - `ai-sales-agent.md`

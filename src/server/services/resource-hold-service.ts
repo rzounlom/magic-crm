@@ -4,7 +4,8 @@ import { ResourceError } from "@/server/errors";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
-import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-window";
+import { applyRotationWindows } from "@/server/resources/rotation-windows";
+import { localEventWindow, minutesToClock, parseClockToMinutes } from "@/server/resources/time-window";
 import { recordAuditEvent } from "@/server/services/audit";
 import {
   checkResourceAvailability,
@@ -13,6 +14,7 @@ import {
   releaseExpiredHolds,
   reserveResourcesInTransaction,
 } from "@/server/services/resource-availability-service";
+import { EVENT_PLAN_KINDS, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
 import type { EventPlanPayload } from "@/types/event-planner";
 import { PERMISSIONS } from "@/types/permissions";
 import {
@@ -24,10 +26,25 @@ import {
 
 type HoldDb = PrismaClient;
 
-function minutesToClock(total: number): string {
-  const hour = Math.floor(total / 60) % 24;
-  const minute = total % 60;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+type HoldAssignment = {
+  resourceId: string;
+  startMinute: number;
+  endMinute: number;
+};
+
+function requirementWindow(
+  requirement: PlanResourceRequirement,
+  fallback: { slotDate: string; startMinute: number; endMinute: number },
+) {
+  if (!requirement.windowStartTime || !requirement.windowEndTime) {
+    return fallback;
+  }
+  const startMinute = parseClockToMinutes(requirement.windowStartTime);
+  const endMinute = parseClockToMinutes(requirement.windowEndTime);
+  if (startMinute == null || endMinute == null || endMinute <= startMinute) {
+    return fallback;
+  }
+  return { slotDate: fallback.slotDate, startMinute, endMinute };
 }
 
 async function assignResourcesForRequirements(
@@ -37,9 +54,11 @@ async function assignResourcesForRequirements(
     window: { slotDate: string; startMinute: number; endMinute: number };
     requirements: PlanResourceRequirement[];
     excludeInquiryId?: string | null;
+    preferredResourceIds?: string[];
   },
-): Promise<string[]> {
-  const assigned: string[] = [];
+): Promise<HoldAssignment[]> {
+  const assigned: HoldAssignment[] = [];
+  const preferred = new Set(input.preferredResourceIds ?? []);
   for (const requirement of input.requirements) {
     if (!requirement.resourceTypeId || requirement.quantity == null || requirement.quantity < 1) {
       throw new ResourceError(
@@ -53,6 +72,7 @@ async function assignResourcesForRequirements(
         `${requirement.resourceTypeName} inventory is not configured.`,
       );
     }
+    const window = requirementWindow(requirement, input.window);
     const units = await database.resource.findMany({
       where: {
         organizationId: input.organizationId,
@@ -65,13 +85,25 @@ async function assignResourcesForRequirements(
     const available = await listAvailableResourceIds(database, {
       organizationId: input.organizationId,
       resourceIds: units.map((row) => row.id),
-      window: input.window,
+      window,
       excludeInquiryId: input.excludeInquiryId,
     });
-    if (available.length < requirement.quantity) {
-      throw new ResourceError("RESOURCE_CONFLICT");
+    const preferredAvailable = available.filter((id) => preferred.has(id));
+    const rest = available.filter((id) => !preferred.has(id));
+    const chosen = [...preferredAvailable, ...rest].slice(0, requirement.quantity);
+    if (chosen.length < requirement.quantity) {
+      throw new ResourceError(
+        "RESOURCE_CONFLICT",
+        `Only ${available.length} ${requirement.resourceTypeName}${available.length === 1 ? "" : "s"} are available for ${requirement.windowStartTime ?? minutesToClock(window.startMinute)}–${requirement.windowEndTime ?? minutesToClock(window.endMinute)}; this plan requires ${requirement.quantity}.`,
+      );
     }
-    assigned.push(...available.slice(0, requirement.quantity));
+    assigned.push(
+      ...chosen.map((resourceId) => ({
+        resourceId,
+        startMinute: window.startMinute,
+        endMinute: window.endMinute,
+      })),
+    );
   }
   return assigned;
 }
@@ -99,10 +131,16 @@ export async function getInquiryPlanAvailabilitySnapshot(
     where: { organizationId: ctx.organizationId },
     select: { id: true, _count: { select: { resources: { where: { active: true } } } } },
   });
-  const requirements = applyInventoryFeasibility(payload.resourceRequirements ?? [], inventory.map((row) => ({
-    id: row.id,
-    activeCount: row._count.resources,
-  })));
+  const requirements = applyRotationWindows(
+    applyInventoryFeasibility(
+      payload.resourceRequirements ?? [],
+      inventory.map((row) => ({
+        id: row.id,
+        activeCount: row._count.resources,
+      })),
+    ),
+    payload,
+  );
   const result = await checkResourceAvailability(database, {
     organizationId: ctx.organizationId,
     date: payload.eventDate ?? (inquiry.desiredDate ? inquiry.desiredDate.toISOString().slice(0, 10) : null),
@@ -229,7 +267,10 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
   if (!inquiry || !inquiry.selectedEventPlanId) {
     throw new ResourceError("INVALID_RESOURCE", "Select an event plan before placing a hold.");
   }
-  const plan = inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.selectedEventPlanId);
+  const plan =
+    inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.agentWorkingPlanId) ??
+    inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING) ??
+    inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.selectedEventPlanId);
   if (!plan) {
     throw new ResourceError("INVALID_RESOURCE", "The selected event plan could not be found.");
   }
@@ -261,10 +302,13 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
     where: { organizationId: ctx.organizationId },
     select: { id: true, _count: { select: { resources: { where: { active: true } } } } },
   });
-  const requirements = applyInventoryFeasibility(payload.resourceRequirements ?? [], inventory.map((row) => ({
-    id: row.id,
-    activeCount: row._count.resources,
-  })));
+  const requirements = applyRotationWindows(
+    applyInventoryFeasibility(payload.resourceRequirements ?? [], inventory.map((row) => ({
+      id: row.id,
+      activeCount: row._count.resources,
+    }))),
+    payload,
+  );
   if (requirements.length === 0) {
     throw new ResourceError("INVALID_RESOURCE", "This plan has no finite resources to hold.");
   }
@@ -283,28 +327,28 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
   let resourceCount = 0;
   try {
     await database.$transaction(async (tx) => {
-      const resourceIds = await assignResourcesForRequirements(tx as HoldDb, {
+      const assignments = await assignResourcesForRequirements(tx as HoldDb, {
         organizationId: ctx.organizationId,
         window,
         requirements,
         excludeInquiryId: inquiry.id,
       });
-      if (resourceIds.length === 0) {
+      if (assignments.length === 0) {
         throw new ResourceError("RESOURCE_CONFLICT");
       }
-      resourceCount = resourceIds.length;
+      resourceCount = assignments.length;
       await tx.resourceReservation.createMany({
-        data: resourceIds.map((resourceId) => ({
+        data: assignments.map((assignment) => ({
           organizationId: ctx.organizationId,
-          resourceId,
+          resourceId: assignment.resourceId,
           status: RESOURCE_RESERVATION_STATUSES.HOLD,
           slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
-          startMinute: window.startMinute,
-          endMinute: window.endMinute,
+          startMinute: assignment.startMinute,
+          endMinute: assignment.endMinute,
           inquiryId: inquiry.id,
           sourceType: RESOURCE_RESERVATION_SOURCES.INQUIRY,
           expiresAt,
-          reason: `Hold for selected plan ${plan.title}`,
+          reason: `Hold for ${plan.title}`,
           createdByUserProfileId: ctx.userId,
         })),
       });
@@ -336,12 +380,196 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
     resourceId: inquiry.id,
     metadata: { planId: plan.id, resourceCount },
   });
+  await database.inquiry.update({
+    where: { id: inquiry.id },
+    data: { workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED },
+  });
   return {
     resourceCount,
     startTime,
     endTime: minutesToClock(window.endMinute),
     expiresAt,
   };
+}
+
+export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldDb, inquiryId: string) {
+  await requirePermission(ctx, PERMISSIONS.EVENTS_CREATE, database);
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId: ctx.organizationId },
+    include: { eventPlanRecommendations: true },
+  });
+  if (!inquiry?.selectedEventPlanId) {
+    throw new ResourceError("INVALID_RESOURCE", "Select an event plan before updating a hold.");
+  }
+  const plan =
+    inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.agentWorkingPlanId) ??
+    inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING) ??
+    inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.selectedEventPlanId);
+  if (!plan) {
+    throw new ResourceError("INVALID_RESOURCE", "The working event plan could not be found.");
+  }
+  const payload = plan.payload as EventPlanPayload;
+  const window = localEventWindow({
+    date: payload.eventDate,
+    startTime: payload.startTime,
+    durationMinutes: plan.durationMinutes ?? payload.durationMinutes,
+  });
+  if (!window || !payload.eventDate || !payload.startTime) {
+    throw new ResourceError("INVALID_RESOURCE", "A date and start time are required before updating a hold.");
+  }
+  const existing = await database.resourceReservation.findMany({
+    where: {
+      organizationId: ctx.organizationId,
+      inquiryId: inquiry.id,
+      status: RESOURCE_RESERVATION_STATUSES.HOLD,
+      releasedAt: null,
+    },
+  });
+  if (existing.length === 0) {
+    throw new ResourceError("HOLD_NOT_FOUND");
+  }
+  const inventory = await database.resourceType.findMany({
+    where: { organizationId: ctx.organizationId },
+    select: { id: true, _count: { select: { resources: { where: { active: true } } } } },
+  });
+  const requirements = applyRotationWindows(
+    applyInventoryFeasibility(
+      payload.resourceRequirements ?? [],
+      inventory.map((row) => ({ id: row.id, activeCount: row._count.resources })),
+    ),
+    payload,
+  );
+  const availability = await checkResourceAvailability(database, {
+    organizationId: ctx.organizationId,
+    date: payload.eventDate,
+    startTime: payload.startTime,
+    durationMinutes: plan.durationMinutes ?? payload.durationMinutes,
+    resourceRequirements: requirements,
+    excludeInquiryId: inquiry.id,
+  });
+  if (!availability.validated || !availability.available) {
+    throw new ResourceError("RESOURCE_CONFLICT");
+  }
+  const expiresAt = existing[0]?.expiresAt ?? new Date(Date.now() + DEFAULT_HOLD_HOURS * 60 * 60 * 1000);
+  try {
+    await database.$transaction(async (tx) => {
+      const assignments = await assignResourcesForRequirements(tx as HoldDb, {
+        organizationId: ctx.organizationId,
+        window,
+        requirements,
+        excludeInquiryId: inquiry.id,
+        preferredResourceIds: existing.map((row) => row.resourceId),
+      });
+      const existingByResource = new Map(existing.map((row) => [row.resourceId, row]));
+      const desiredIds = new Set(assignments.map((row) => row.resourceId));
+      const toCreate = assignments.filter((row) => !existingByResource.has(row.resourceId));
+      if (toCreate.length > 0) {
+        await tx.resourceReservation.createMany({
+          data: toCreate.map((assignment) => ({
+            organizationId: ctx.organizationId,
+            resourceId: assignment.resourceId,
+            status: RESOURCE_RESERVATION_STATUSES.HOLD,
+            slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
+            startMinute: assignment.startMinute,
+            endMinute: assignment.endMinute,
+            inquiryId: inquiry.id,
+            sourceType: RESOURCE_RESERVATION_SOURCES.INQUIRY,
+            expiresAt,
+            reason: `Updated hold for ${plan.title}`,
+            createdByUserProfileId: ctx.userId,
+          })),
+        });
+      }
+      for (const assignment of assignments) {
+        const current = existingByResource.get(assignment.resourceId);
+        if (!current) {
+          continue;
+        }
+        if (current.startMinute !== assignment.startMinute || current.endMinute !== assignment.endMinute) {
+          await tx.resourceReservation.update({
+            where: { id: current.id },
+            data: {
+              startMinute: assignment.startMinute,
+              endMinute: assignment.endMinute,
+              slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
+            },
+          });
+        }
+      }
+      const toRelease = existing.filter((row) => !desiredIds.has(row.resourceId));
+      if (toRelease.length > 0) {
+        await tx.resourceReservation.updateMany({
+          where: { id: { in: toRelease.map((row) => row.id) }, organizationId: ctx.organizationId },
+          data: { releasedAt: new Date() },
+        });
+      }
+    });
+  } catch (error) {
+    await recordAuditEvent(database, {
+      organizationId: ctx.organizationId,
+      actorUserProfileId: ctx.userId,
+      action: "resource.hold_conflict_rejected",
+      resourceType: "inquiry",
+      resourceId: inquiry.id,
+      metadata: { planId: plan.id, update: true },
+    });
+    if (error instanceof ResourceError) {
+      throw error;
+    }
+    if (isReservationOverlapError(error)) {
+      throw new ResourceError("RESOURCE_CONFLICT");
+    }
+    throw error;
+  }
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "resource.hold_updated",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: { planId: plan.id },
+  });
+  await database.inquiry.update({
+    where: { id: inquiry.id },
+    data: { workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED },
+  });
+}
+
+export async function extendInquiryHolds(
+  ctx: RequestContext,
+  database: HoldDb,
+  inquiryId: string,
+  additionalHours = DEFAULT_HOLD_HOURS,
+) {
+  await requirePermission(ctx, PERMISSIONS.EVENTS_EDIT, database);
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const holds = await database.resourceReservation.findMany({
+    where: {
+      organizationId: ctx.organizationId,
+      inquiryId,
+      status: RESOURCE_RESERVATION_STATUSES.HOLD,
+      releasedAt: null,
+    },
+  });
+  if (holds.length === 0) {
+    throw new ResourceError("HOLD_NOT_FOUND");
+  }
+  const hours = additionalHours > 0 ? additionalHours : DEFAULT_HOLD_HOURS;
+  const nextExpiry = new Date(Date.now() + hours * 60 * 60 * 1000);
+  await database.resourceReservation.updateMany({
+    where: { id: { in: holds.map((row) => row.id) }, organizationId: ctx.organizationId },
+    data: { expiresAt: nextExpiry },
+  });
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "resource.hold_extended",
+    resourceType: "inquiry",
+    resourceId: inquiryId,
+    metadata: { additionalHours: hours },
+  });
+  return nextExpiry;
 }
 
 export async function releaseHold(
@@ -409,5 +637,9 @@ export async function releaseInquiryHolds(ctx: RequestContext, database: HoldDb,
     resourceType: "inquiry",
     resourceId: inquiry.id,
     metadata: { holdCount: holds.length },
+  });
+  await database.inquiry.update({
+    where: { id: inquiry.id },
+    data: { workflowStage: INQUIRY_WORKFLOW_STAGES.AGENT_WORKING, readyToFinalizeAt: null },
   });
 }

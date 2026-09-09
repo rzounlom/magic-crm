@@ -282,6 +282,12 @@ model Inquiry {
   recommendationsViewedAt  DateTime?
   selectedEventPlanId      String?
   customerSelectedAt       DateTime?
+  /// READY_FOR_LIVE_AGENT | AGENT_WORKING | HOLD_PLACED | READY_TO_FINALIZE. Inquiry.status stays READY_FOR_HUMAN.
+  workflowStage            String?   @db.VarChar(32)
+  assignedAt               DateTime?
+  customerContactedAt      DateTime?
+  agentWorkingPlanId       String?
+  readyToFinalizeAt        DateTime?
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
@@ -299,6 +305,7 @@ model Inquiry {
   @@index([organizationId, customerEmailNormalized])
   @@index([organizationId, selectedEventPlanId])
   @@index([organizationId, customerSelectedAt])
+  @@index([organizationId, workflowStage])
   @@map("inquiries")
 }
 
@@ -320,6 +327,8 @@ model EventPlanRecommendation {
   /// NOT_VALIDATED | AVAILABLE | NEEDS_ADJUSTMENT | AVAILABILITY_CHANGED — plan-level, not Inquiry.status.
   availabilityStatus    String   @default("NOT_VALIDATED") @db.VarChar(32)
   availabilityCheckedAt DateTime?
+  /// RECOMMENDATION | AGENT_WORKING. Customer-selected rows stay RECOMMENDATION and are not overwritten by staff edits.
+  kind                  String   @default("RECOMMENDATION") @db.VarChar(24)
   payload               Json
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -328,7 +337,7 @@ model EventPlanRecommendation {
   inquiry      Inquiry      @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
 
   @@unique([organizationId, id])
-  @@unique([organizationId, inquiryId, tier])
+  @@unique([organizationId, inquiryId, kind, tier], map: "event_plan_recommendations_org_inquiry_kind_tier_key")
   @@index([organizationId, inquiryId])
   @@map("event_plan_recommendations")
 }

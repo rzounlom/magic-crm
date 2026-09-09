@@ -151,6 +151,19 @@ export type EventPlanDining = {
   priceText?: string | null;
 };
 
+export type EventPlanRotationAssignment = {
+  groupLabel: string;
+  activityName: string;
+  knowledgeItemId?: string;
+  guestCount?: number;
+};
+
+export type EventPlanRotation = {
+  startTime: string;
+  endTime: string;
+  assignments: EventPlanRotationAssignment[];
+};
+
 export type EventPlanSpace = {
   knowledgeItemId: string;
   name: string;
@@ -176,6 +189,7 @@ export type EventPlanPayload = {
   historicalInfluence?: string | null;
   customerAvailabilityNote?: string;
   ranking?: EventPlanRanking;
+  rotations?: EventPlanRotation[];
   resourceRequirements?: PlanResourceRequirement[];
   selectionAvailability?: {
     status: string;

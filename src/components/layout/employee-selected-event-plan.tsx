@@ -46,6 +46,8 @@ export function EmployeeSelectedEventPlan({
       <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
         {CUSTOMER_SELECTED_PLAN_BANNER}
       </p>
+      <h2 className="mt-2 text-lg font-semibold">Customer Selected Plan</h2>
+      <p className="mt-1 text-xs text-foreground/60">Original customer choice. Staff edits do not change this snapshot.</p>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-2xl font-semibold">{plan.title}</h2>

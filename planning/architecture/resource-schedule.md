@@ -69,7 +69,7 @@ Overnight windows that cross local midnight are a known limitation (`slotDate` i
 
 `/app/schedule` is the Master Schedule: date previous/today/next/picker, resource-type tabs from configured `ResourceType` rows, numbered resource columns, 30-minute rows, Available / HOLD / BOOKED from live `ResourceReservation` records. Occupied cells link to the associated Inquiry when one exists. Staff can place and release HOLDs there.
 
-Ready-for-Live-Agent inquiries show **Selected Plan — Resource Check** against the same availability service, plus Place/Release Resource Hold when authorized.
+Ready-for-Live-Agent inquiries open the Live Agent Booking Workspace. Resource checks, Place / Update / Extend / Release Hold, and Master Schedule deep links all use this same availability service. Holds stay `HOLD` through Ready to Finalize. `BOOKED` is reserved for a future Booking conversion.
 
 ## Seed
 

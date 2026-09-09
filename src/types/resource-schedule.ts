@@ -70,6 +70,8 @@ export type PlanResourceRequirement = {
   requiresStaffConfiguration: boolean;
   rotationWaves?: number | null;
   rotationNote?: string | null;
+  windowStartTime?: string | null;
+  windowEndTime?: string | null;
 };
 
 export type ResourceAvailabilityRequest = {

@@ -21,7 +21,13 @@ import { emitDomainEvent } from "@/server/domain-events/emit";
 import { DOMAIN_EVENT_TYPES } from "@/server/domain-events/types";
 import { recordAuditEvent } from "@/server/services/audit";
 import { type EventPlanPayload } from "@/types/event-planner";
-import { CONVERSATION_CHANNELS, INQUIRY_STATUSES, SALES_KNOWLEDGE_TYPES } from "@/types/inquiry";
+import {
+  CONVERSATION_CHANNELS,
+  EVENT_PLAN_KINDS,
+  INQUIRY_STATUSES,
+  INQUIRY_WORKFLOW_STAGES,
+  SALES_KNOWLEDGE_TYPES,
+} from "@/types/inquiry";
 import { RESOURCE_QUANTITY_RULES, type ResourceQuantityRule } from "@/types/resource-schedule";
 
 type PlannerDb = PrismaClient;
@@ -243,7 +249,11 @@ export async function generateEventPlansForInquiry(
 
   await database.$transaction(async (tx) => {
     await tx.eventPlanRecommendation.deleteMany({
-      where: { organizationId: input.organizationId, inquiryId: inquiry.id },
+      where: {
+        organizationId: input.organizationId,
+        inquiryId: inquiry.id,
+        kind: EVENT_PLAN_KINDS.RECOMMENDATION,
+      },
     });
     if (drafts.length > 0) {
       await tx.eventPlanRecommendation.createMany({
@@ -262,6 +272,7 @@ export async function generateEventPlansForInquiry(
           availabilityNote: draft.availabilityNote,
           availabilityStatus: draft.availabilityStatus ?? "NOT_VALIDATED",
           availabilityCheckedAt: new Date(),
+          kind: EVENT_PLAN_KINDS.RECOMMENDATION,
           payload: draft.payload as Prisma.InputJsonValue,
         })),
       });
@@ -307,7 +318,10 @@ export async function getPublicEventPlanByToken(database: PlannerDb, token: stri
     include: {
       inquiry: {
         include: {
-          eventPlanRecommendations: { orderBy: { sortOrder: "asc" } },
+          eventPlanRecommendations: {
+            where: { kind: EVENT_PLAN_KINDS.RECOMMENDATION },
+            orderBy: { sortOrder: "asc" },
+          },
         },
       },
       organization: { select: { name: true, slug: true, currency: true } },
@@ -335,7 +349,10 @@ export async function getPublicEventPlanByToken(database: PlannerDb, token: stri
     organizationName: conversation.organization.name,
     organizationSlug: conversation.organization.slug,
     currency: conversation.organization.currency,
-    inquiry: conversation.inquiry,
+    inquiry: {
+      ...conversation.inquiry,
+      employeeInternalNotes: null,
+    },
     plans: conversation.inquiry.eventPlanRecommendations,
   };
 }
@@ -370,6 +387,7 @@ export async function selectPublicEventPlan(
       id: input.planId,
       organizationId: conversation.organizationId,
       inquiryId: conversation.inquiryId,
+      kind: EVENT_PLAN_KINDS.RECOMMENDATION,
     },
   });
   if (!plan) {
@@ -415,6 +433,7 @@ export async function selectPublicEventPlan(
         selectedEventPlanId: plan.id,
         customerSelectedAt: new Date(),
         status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+        workflowStage: INQUIRY_WORKFLOW_STAGES.READY_FOR_LIVE_AGENT,
         aiHandlingEnabled: false,
         humanHandoffRequestedAt: conversation.inquiry.humanHandoffRequestedAt ?? new Date(),
         humanHandoffReason: READY_FOR_HUMAN_REASONS.CUSTOMER_SELECTED_PLAN,

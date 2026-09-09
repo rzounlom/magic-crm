@@ -1,6 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
-import { localEventWindow } from "@/server/resources/time-window";
+import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-window";
 import type { PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import { recordAuditEvent } from "@/server/services/audit";
 import {
@@ -155,10 +155,28 @@ export async function checkResourceAvailability(
       continue;
     }
 
+    const requirementWindow =
+      requirement.windowStartTime && requirement.windowEndTime
+        ? localEventWindow({
+            date: input.date,
+            startTime: requirement.windowStartTime,
+            durationMinutes: Math.max(
+              1,
+              (parseClockFromRequirement(requirement.windowEndTime) ?? 0) -
+                (parseClockFromRequirement(requirement.windowStartTime) ?? 0),
+            ),
+          })
+        : window;
+    if (!requirementWindow) {
+      allConfigured = false;
+      types.push(unconfiguredType(requirement));
+      continue;
+    }
+
     const availableIds = await listAvailableResourceIds(database, {
       organizationId: input.organizationId,
       resourceIds: units.map((row) => row.id),
-      window,
+      window: requirementWindow,
       excludeInquiryId: input.excludeInquiryId,
       excludeBookingId: input.excludeBookingId,
       excludeReservationId: input.excludeReservationId,
@@ -217,6 +235,10 @@ export async function listAvailableResourceIds(
       .map((row) => row.resourceId),
   );
   return input.resourceIds.filter((id) => !occupied.has(id));
+}
+
+function parseClockFromRequirement(value: string | null | undefined): number | null {
+  return parseClockToMinutes(value);
 }
 
 function unconfiguredType(requirement: {

@@ -45,4 +45,4 @@ Desired later behavior:
 - no overlap with page content
 - responsive behavior remains sane
 
-This is **Employee shell polish / sticky authenticated header**. It is not part of the current inquiry presentation patch. Implement it in the employee shell (`EmployeeHeaderBar` / `EmployeeShell`), not as a per-page inquiry hack. Track it with the Employee Inquiry Workspace MVP so it cannot be forgotten.
+This is **Employee shell polish / sticky authenticated header**. It is not part of the Live Agent Booking Workspace. Implement it in the employee shell (`EmployeeHeaderBar` / `EmployeeShell`), not as a per-page inquiry hack.

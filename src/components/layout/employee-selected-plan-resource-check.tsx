@@ -2,7 +2,13 @@ import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatEventLocalTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { minutesToClock } from "@/server/resources/time-window";
-import { placeInquiryHoldAction, releaseInquiryHoldsAction } from "@/server/actions/resource-schedule";
+import { formatHoldTimeRemaining, holdExpiresSoon } from "@/lib/inquiries/workflow-stage";
+import {
+  extendInquiryHoldAction,
+  placeInquiryHoldAction,
+  releaseInquiryHoldsAction,
+  updateInquiryHoldAction,
+} from "@/server/actions/resource-schedule";
 import { PLAN_AVAILABILITY_STATUS_LABELS, PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 import type { PlanAvailabilityStatus, ResourceAvailabilityResult, PlanResourceRequirement } from "@/types/resource-schedule";
 
@@ -45,6 +51,9 @@ export function EmployeeSelectedPlanResourceCheck({
   canHold,
   canRelease,
   timeZone,
+  title = "Selected Plan — Resource Check",
+  scheduleHref,
+  holdAffected = false,
 }: {
   inquiryId: string;
   availabilityStatus: string;
@@ -59,6 +68,9 @@ export function EmployeeSelectedPlanResourceCheck({
   canHold: boolean;
   canRelease: boolean;
   timeZone: string;
+  title?: string;
+  scheduleHref?: string;
+  holdAffected?: boolean;
 }) {
   const status = (availabilityStatus in PLAN_AVAILABILITY_STATUS_LABELS
     ? availabilityStatus
@@ -66,13 +78,22 @@ export function EmployeeSelectedPlanResourceCheck({
   const bySlug = new Map(live.result.types.map((row) => [row.resourceTypeSlug, row]));
   const allAvailable =
     live.result.validated && live.result.available && live.requirements.every((row) => row.quantity != null);
+  const soonest = holds
+    .map((row) => row.expiresAt)
+    .filter((value): value is Date => Boolean(value))
+    .sort((left, right) => left.getTime() - right.getTime())[0];
 
   return (
     <section className="mt-8 rounded-md border border-border px-5 py-5">
-      <h2 className="text-lg font-semibold">Selected Plan — Resource Check</h2>
+      <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-foreground/70">
         Status: {PLAN_AVAILABILITY_STATUS_LABELS[status]}. Inquiry status is unchanged. This is not a booking.
       </p>
+      {scheduleHref ? (
+        <a href={scheduleHref} className="mt-3 inline-block text-sm text-primary">
+          View Master Schedule
+        </a>
+      ) : null}
       {live.requirements.length === 0 ? (
         <p className="mt-4 text-sm text-foreground/70">No finite resources are mapped to this plan.</p>
       ) : (
@@ -88,13 +109,18 @@ export function EmployeeSelectedPlanResourceCheck({
                 ? "Needs adjustment"
                 : "Available";
             return (
-              <li key={`${requirement.knowledgeItemId}-${requirement.resourceTypeSlug}`}>
+              <li key={`${requirement.knowledgeItemId}-${requirement.resourceTypeSlug}-${requirement.windowStartTime ?? "event"}`}>
                 <p className="font-medium">{requirement.resourceTypeName}</p>
                 <p className="text-foreground/70">
                   Required: {required ?? "Unknown"}
                   {available != null ? ` · Currently available: ${available}` : ""}
                   {` · Status: ${label}`}
                 </p>
+                {requirement.windowStartTime && requirement.windowEndTime ? (
+                  <p className="text-foreground/60">
+                    {requirement.windowStartTime}–{requirement.windowEndTime}
+                  </p>
+                ) : null}
                 {requirement.rotationNote ? (
                   <p className="mt-1 text-foreground/60">{requirement.rotationNote}</p>
                 ) : null}
@@ -118,6 +144,19 @@ export function EmployeeSelectedPlanResourceCheck({
               </li>
             ))}
           </ul>
+          {soonest && holdExpiresSoon(soonest) ? (
+            <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm font-medium">
+              Resource hold expires in {formatHoldTimeRemaining(soonest)}
+            </p>
+          ) : soonest ? (
+            <p className="mt-2 text-xs text-foreground/60">Hold expires: {formatHoldTimeRemaining(soonest)}</p>
+          ) : null}
+          {holdAffected ? (
+            <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+              This change affects the current resource hold.
+            </p>
+          ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
           {canRelease ? (
             <SecurityActionForm
               action={releaseInquiryHoldsAction}
@@ -135,6 +174,34 @@ export function EmployeeSelectedPlanResourceCheck({
               </PendingSubmitButton>
             </SecurityActionForm>
           ) : null}
+          {canHold && holdAffected ? (
+            <SecurityActionForm
+              action={updateInquiryHoldAction}
+              notice={{ successTitle: "Resource hold updated", errorTitle: "Unable to update resource hold" }}
+              confirm={{
+                title: "Update the resource hold?",
+                description: "New holds are created first. The current hold stays if the replacement cannot complete.",
+                confirmLabel: "Update resource hold",
+              }}
+            >
+              <input type="hidden" name="inquiryId" value={inquiryId} />
+              <PendingSubmitButton pendingLabel="Updating…" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+                Update Resource Hold
+              </PendingSubmitButton>
+            </SecurityActionForm>
+          ) : null}
+          {canRelease ? (
+            <SecurityActionForm
+              action={extendInquiryHoldAction}
+              notice={{ successTitle: "Hold extended", errorTitle: "Unable to extend hold" }}
+            >
+              <input type="hidden" name="inquiryId" value={inquiryId} />
+              <PendingSubmitButton pendingLabel="Extending…" className="rounded-md border border-border px-4 py-2 text-sm font-medium">
+                Extend Hold
+              </PendingSubmitButton>
+            </SecurityActionForm>
+          ) : null}
+          </div>
         </div>
       ) : canHold && allAvailable ? (
         <SecurityActionForm

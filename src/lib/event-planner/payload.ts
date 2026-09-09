@@ -11,6 +11,7 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     dining: payload.dining ?? { label: "Dining to be confirmed", priceCents: 0 },
     spaces: Array.isArray(payload.spaces) ? payload.spaces : [],
     schedule: Array.isArray(payload.schedule) ? payload.schedule : [],
+    rotations: Array.isArray(payload.rotations) ? payload.rotations : [],
     pricingComplete: payload.pricingComplete === true,
     historicalInfluence: payload.historicalInfluence ?? null,
     customerAvailabilityNote: payload.customerAvailabilityNote,

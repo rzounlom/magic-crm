@@ -52,14 +52,18 @@ The token is the existing 32-byte public conversation token. Only the SHA-256 ha
 
 ## Employee UI
 
-- `/app/inquiries` — `crm.inquiries.view`, with a **CUSTOMER SELECTED PLAN — READY TO BOOK** section for selected plans
-- `/app/inquiries/[id]` — same view permission; shows planner answers, funnel timestamps, and the selected plan without reopening `/plan/{token}`
-- Contact customer (mailto) is available now. Proposal, deposit, and convert-to-booking actions are not built
+- `/app/inquiries` — `crm.inquiries.view`. **Ready for Live Agent** is the live-booking queue. Inquiries with `humanHandoffReason = CUSTOMER_SELECTED_PLAN` are listed first with **CUSTOMER SELECTED PLAN — READY TO BOOK**
+- `/app/inquiries/[id]` — same view permission. Customer-selected inquiries open the **Live Agent Booking Workspace** (original snapshot + Current Agent Version). Other inquiries keep the simpler inbox detail
+- Start Working records `assignedUserProfileId` / `assignedAt` and copies the selected plan into an `EventPlanRecommendation` row with `kind = AGENT_WORKING`. The customer-selected row is never overwritten
+- Contact customer (mailto / copy phone and email) is available now. Proposal, deposit, and convert-to-booking actions are not built
+- Internal notes use `Inquiry.employeeInternalNotes` and are never shown on `/plan/{token}`
 - Take over / leftover conversation notes — `crm.inquiries.manage`
 
-Front Desk does not receive inquiry permissions. Event Sales can view/manage inquiries and view AI knowledge. Administrators have all keys. `ai.manage` is required to create/edit sales knowledge (`/app/admin/ai/knowledge`).
+Front Desk does not receive inquiry permissions. Event Sales can view/manage inquiries, view the Master Schedule, and place/release permitted holds. They do not receive Admin Resource Configuration (`inventory.manage`). Administrators have all keys. `ai.manage` is required to create/edit sales knowledge (`/app/admin/ai/knowledge`).
 
-Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK**. Staff should start from the chosen package rather than repeating discovery. Selection is not a reservation.
+Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK**. Staff should start from the chosen package rather than repeating discovery. Selection is not a reservation. The furthest operational state is **Ready to Finalize** with HOLDs still in place — never `BOOKED`, payment, or outbound confirmation.
+
+Workflow stays on `Inquiry.status = READY_FOR_HUMAN`. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → `HOLD_PLACED` → `READY_TO_FINALIZE`. The Current Agent Version is the future Booking source; Booking conversion is not implemented.
 
 ## Status workflow
 
@@ -75,7 +79,7 @@ Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK**. Staff should s
 
 These are three different customer states: (1) inquiry submitted, (2) plan selected / ready to book, (3) booking confirmed. Staff queue copy for (2) is **CUSTOMER SELECTED PLAN — READY TO BOOK**. See [`communications.md`](./communications.md).
 
-`READY_FOR_HUMAN` stays the status. Distinguish *why* with `humanHandoffReason` codes (`CUSTOMER_SELECTED_PLAN`, `AVAILABILITY_NEEDS_ADJUSTMENT` for a future failed hold, `NO_FEASIBLE_PLAN`, `GENERATION_FAILED`, `STAFF_ASSISTANCE`, `MANUAL_ESCALATION`). Do not treat `READY_FOR_HUMAN` or plan selection as booked.
+`READY_FOR_HUMAN` stays the status. Distinguish *why* with `humanHandoffReason` codes (`CUSTOMER_SELECTED_PLAN`, `AVAILABILITY_NEEDS_ADJUSTMENT` for a future failed hold, `NO_FEASIBLE_PLAN`, `GENERATION_FAILED`, `STAFF_ASSISTANCE`, `MANUAL_ESCALATION`). Distinguish *where the live agent is* with `workflowStage`. Do not treat `READY_FOR_HUMAN`, plan selection, or Ready to Finalize as booked.
 
 Persisted status enums stay as stored. Employee UI uses `formatInquiryStatus` / `formatInquiryEmployeeStatus` / `formatInquiryQueueLabel` / `formatReadyForHumanReason`. Do not show raw enum tokens.
 
@@ -89,9 +93,15 @@ Phone is stored as normalized 10-digit digits. Display with `formatPhoneDisplay`
 
 `budgetMin` / `budgetMax` / `estimatedTotalCents` are integer minor units.
 
-## Next: Employee Inquiry Workspace MVP
+## Live Agent Booking Workspace
 
-The current `/app/inquiries` list and `/app/inquiries/[id]` record are a minimal inbox plus selected-plan queue. The next product step is an Employee Inquiry Workspace (assignment, filtering, richer pipeline). Catalog, Booking, proposals, deposits, plan email, and the staff Resource Schedule UI remain later phases.
+Customer-selected inquiries open a staff workspace on the same Inquiry. The customer-selected `EventPlanRecommendation` (`kind = RECOMMENDATION`) remains the historical choice. Staff edits persist on a separate `AGENT_WORKING` row (`Inquiry.agentWorkingPlanId`). Saving a draft reprices from sales knowledge and re-runs `checkResourceAvailability`. Place / Update / Extend / Release Hold reuse `resource-hold-service` and never create `BOOKED` rows.
+
+The Current Agent Version is structured so a future Booking record can be created from it (inquiry, date/time, guests, products, pricing, rotations, holds). That conversion is not built.
+
+## Next
+
+Catalog, Booking, proposals, deposits, and plan/booking email delivery remain later phases. The Live Agent workspace is the staff handoff after Personal Event Planner selection.
 
 Related employee-shell follow-up (not this inbox): sticky authenticated header. See `ui-conventions.md`.
 

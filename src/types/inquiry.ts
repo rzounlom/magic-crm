@@ -10,6 +10,32 @@ export const INQUIRY_STATUSES = {
 
 export type InquiryStatus = (typeof INQUIRY_STATUSES)[keyof typeof INQUIRY_STATUSES];
 
+export const INQUIRY_WORKFLOW_STAGES = {
+  READY_FOR_LIVE_AGENT: "READY_FOR_LIVE_AGENT",
+  AGENT_WORKING: "AGENT_WORKING",
+  HOLD_PLACED: "HOLD_PLACED",
+  READY_TO_FINALIZE: "READY_TO_FINALIZE",
+} as const;
+
+export type InquiryWorkflowStage =
+  (typeof INQUIRY_WORKFLOW_STAGES)[keyof typeof INQUIRY_WORKFLOW_STAGES];
+
+export const INQUIRY_WORKFLOW_STAGE_LABELS: Record<InquiryWorkflowStage, string> = {
+  [INQUIRY_WORKFLOW_STAGES.READY_FOR_LIVE_AGENT]: "Ready for live agent",
+  [INQUIRY_WORKFLOW_STAGES.AGENT_WORKING]: "Agent working",
+  [INQUIRY_WORKFLOW_STAGES.HOLD_PLACED]: "Resources held",
+  [INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE]: "Ready to finalize",
+};
+
+export const EVENT_PLAN_KINDS = {
+  RECOMMENDATION: "RECOMMENDATION",
+  AGENT_WORKING: "AGENT_WORKING",
+} as const;
+
+export type EventPlanKind = (typeof EVENT_PLAN_KINDS)[keyof typeof EVENT_PLAN_KINDS];
+
+export const HOLD_EXPIRING_SOON_HOURS = 4;
+
 export const INQUIRY_SOURCES = {
   WEB: "WEB",
   EMAIL: "EMAIL",

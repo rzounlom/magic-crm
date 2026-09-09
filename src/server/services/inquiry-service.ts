@@ -351,6 +351,9 @@ export async function listInquiries(ctx: RequestContext, database: InquiryDb) {
     orderBy: { createdAt: "desc" },
     take: 100,
     include: {
+      assignedUser: {
+        select: { id: true, firstName: true, lastName: true, displayName: true, email: true },
+      },
       conversations: {
         orderBy: { createdAt: "asc" },
         take: 1,
@@ -367,11 +370,21 @@ export async function listInquiries(ctx: RequestContext, database: InquiryDb) {
         orderBy: { sortOrder: "asc" },
         select: {
           id: true,
+          kind: true,
           tier: true,
           title: true,
           estimatedTotalCents: true,
           currency: true,
+          availabilityStatus: true,
         },
+      },
+      resourceReservations: {
+        where: {
+          releasedAt: null,
+          status: RESOURCE_RESERVATION_STATUSES.HOLD,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
+        select: { id: true, expiresAt: true },
       },
     },
   });
@@ -392,6 +405,9 @@ export async function getInquiryDetail(
         },
       },
       eventPlanRecommendations: { orderBy: { sortOrder: "asc" } },
+      assignedUser: {
+        select: { id: true, firstName: true, lastName: true, displayName: true, email: true },
+      },
       resourceReservations: {
         where: {
           releasedAt: null,
@@ -452,6 +468,7 @@ export async function takeOverInquiry(
       aiHandlingEnabled: false,
       status: INQUIRY_STATUSES.READY_FOR_HUMAN,
       assignedUserProfileId: ctx.userId,
+      assignedAt: inquiry.assignedAt ?? new Date(),
       humanHandoffRequestedAt: inquiry.humanHandoffRequestedAt ?? new Date(),
       humanHandoffReason: inquiry.selectedEventPlanId
         ? inquiry.humanHandoffReason ?? READY_FOR_HUMAN_REASONS.CUSTOMER_SELECTED_PLAN

@@ -133,6 +133,8 @@ export const INQUIRY_ERROR_CODES = [
   "AI_DISABLED",
   "INVALID_KNOWLEDGE",
   "PLAN_NOT_FOUND",
+  "WORKING_PLAN_INVALID",
+  "STALE_INQUIRY",
 ] as const;
 
 export type InquiryErrorCode = (typeof INQUIRY_ERROR_CODES)[number];
@@ -146,6 +148,8 @@ const INQUIRY_USER_MESSAGES: Record<InquiryErrorCode, string> = {
   AI_DISABLED: "A team member will continue this conversation.",
   INVALID_KNOWLEDGE: "Check the knowledge item and try again.",
   PLAN_NOT_FOUND: "We could not find that event plan.",
+  WORKING_PLAN_INVALID: "Check the working event plan and try again.",
+  STALE_INQUIRY: "This inquiry was updated by someone else. Refresh and try again.",
 };
 
 export class InquiryError extends Error {

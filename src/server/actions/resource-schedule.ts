@@ -12,10 +12,12 @@ import {
 import { getRequestContext } from "@/server/get-request-context";
 import { revalidateScheduleAndInquiry } from "@/server/actions/revalidate-resources";
 import {
+  extendInquiryHolds,
   placeInquiryPlanHold,
   placeManualHold,
   releaseHold,
   releaseInquiryHolds,
+  updateInquiryPlanHold,
 } from "@/server/services/resource-hold-service";
 import type { SecurityActionResult } from "@/types/security-action";
 
@@ -89,5 +91,35 @@ export async function releaseInquiryHoldsAction(formData: FormData): Promise<Sec
   } catch (error) {
     unstable_rethrow(error);
     return toResult(error, "Unable to release holds");
+  }
+}
+
+export async function updateInquiryHoldAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = z.string().trim().min(1).parse(String(formData.get("inquiryId") ?? ""));
+    const ctx = await getRequestContext();
+    await updateInquiryPlanHold(ctx, db, inquiryId);
+    await revalidateScheduleAndInquiry(inquiryId);
+    return {
+      ok: true,
+      title: "Resource hold updated",
+      message: "Replacement holds were applied in one transaction. Existing holds stay if the update cannot complete.",
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to update resource hold");
+  }
+}
+
+export async function extendInquiryHoldAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = z.string().trim().min(1).parse(String(formData.get("inquiryId") ?? ""));
+    const ctx = await getRequestContext();
+    await extendInquiryHolds(ctx, db, inquiryId);
+    await revalidateScheduleAndInquiry(inquiryId);
+    return { ok: true, title: "Hold extended", message: "The resource hold expiration was extended." };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to extend hold");
   }
 }
