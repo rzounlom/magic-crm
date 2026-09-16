@@ -131,7 +131,7 @@ pnpm test:integration
 `DATABASE_URL` is the runtime application connection (Neon pooler).  
 `DIRECT_URL` is for Prisma CLI migrations, introspection, and Prisma Studio.
 
-`pnpm db:migrate`, `pnpm db:deploy`, and `pnpm db:studio` fail if `DIRECT_URL` is missing. They do not fall back to localhost. `pnpm db:validate` and `pnpm db:generate` can run without a live database.
+`pnpm db:migrate`, `pnpm db:deploy`, and `pnpm db:studio` fail if `DIRECT_URL` is missing. They do not fall back to localhost. `pnpm db:migrate` and `pnpm db:deploy` also apply committed migrations to the isolated test database. `pnpm db:validate` and `pnpm db:generate` can run without a live database.
 
 Prisma Studio (`pnpm db:studio`) is privileged admin tooling. Treat it like direct production-database access.
 
@@ -154,8 +154,8 @@ pnpm test:db:prepare   # apply migrations to TEST database
 pnpm test:watch        # unit test watch
 pnpm db:generate  # generate Prisma Client
 pnpm db:validate  # validate Prisma schema
-pnpm db:migrate   # create/apply development migrations
-pnpm db:deploy    # apply committed migrations
+pnpm db:migrate   # create/apply development migrations, then deploy them to TEST
+pnpm db:deploy    # apply committed migrations to development and TEST
 pnpm db:sync-auth          # permission catalog + default security groups
 pnpm auth:bootstrap-admin  # explicit Administrators membership (IDs required)
 pnpm tenant:create         # platform-internal new client tenant (Clerk + MagicCRM)

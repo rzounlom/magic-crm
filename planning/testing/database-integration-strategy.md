@@ -29,6 +29,7 @@ MAGICCRM_DATABASE_ROLE=test
 ```
 
 `pnpm test:db:prepare` applies migrations to the test database only, then syncs permission catalog reference data.  
+`pnpm db:migrate` and `pnpm db:deploy` apply to the development database first, then deploy the same committed migrations to the test database so the two schemas stay in sync. They never reset either database.  
 `pnpm test:integration` refuses to run if the role is missing or if the test URLs match development.
 
 ```bash
@@ -47,7 +48,7 @@ pnpm test:integration
 CI and local integration suites should:
 
 1. Provision or select the test database.
-2. Apply committed migrations (`prisma migrate deploy`).
+2. Apply committed migrations (`pnpm db:deploy`, which updates development and the isolated test database).
 3. Run tests.
 4. Fail if the schema is behind the committed migration history.
 

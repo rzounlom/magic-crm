@@ -24,19 +24,20 @@ Released rows (`releasedAt`) and expired HOLDs (`expiresAt` in the past) are ign
 Finite inventory is data, not application code.
 
 - `ResourceType` — bowling lanes, axe lanes, party rooms, meeting rooms, etc. Tenant-scoped `slug`, 30-minute slotted scheduling by default, buffers, `inventoryConfigured`
-- `Resource` — one numbered unit (`Bowling Lane 1`). Optional `capacity`. Do not invent a count
-- `KnowledgeResourceRequirement` — how a `SalesKnowledgeItem` (future Catalog product) consumes a resource type (`FIXED`, `PER_GUESTS`, `UNKNOWN`)
+- `Resource` — one numbered unit (`Bowling Lane 1`). Optional `capacity`. Do not invent a count. Resources are location-specific.
+- `KnowledgeResourceRequirement` — how a `SalesKnowledgeItem` consumes a resource type (`FIXED`, `PER_GUESTS`, `UNKNOWN`)
+- `ProductResourceRequirement` — how a catalog `Product` consumes a resource type (`FIXED`, `PER_GUESTS`, `ALL_OF_TYPE`). `guestsPerUnit` is tenant configuration.
 - `ResourceReservation` — HOLD/BOOKED occupancy with event-local `slotDate` + `startMinute`/`endMinute`
 
-Admin UI (`/app/admin/resources`) lets an organization administrator create resource types, bulk-create numbered units, deactivate inventory, and link sales-knowledge offerings. Counts are tenant data. Re-running knowledge sync upserts types and requirement **links**; it must not fabricate lane/room counts. Prototype demos (for example 8 bowling lanes / 4 axe lanes) are **not** production data.
+Admin UI (`/app/admin/resources`) lets an organization administrator create resource types, bulk-create numbered units, deactivate inventory, and link sales-knowledge offerings. Counts are tenant data. Re-running knowledge sync upserts types and requirement **links**; it must not fabricate lane/room counts. Prototype demos are **not** production data and are not MagicCRM defaults.
 
 `inventoryConfigured` is true only when at least one active `Resource` row exists for that type. Missing numbered inventory is `NOT_VALIDATED`, never a fake `available: false`.
 
 ## Availability service
 
-`checkResourceAvailability` in `src/server/services/resource-availability-service.ts` is the shared checker.
+`checkResourceAvailability` in `src/server/services/resource-availability-service.ts` is the shared checker. Queries constrain `organizationId` and, when known, `locationId` in the database (`WHERE organizationId = ? AND resourceTypeId = ?` plus location scope). Do not fetch globally by resource id and compare tenant in JavaScript.
 
-`generateRecommendations({ inquiry, knowledge, availabilityProvider, resourceCatalog, storedRequirements })` always goes through `PlanAvailabilityProvider`. Production uses `createResourceScheduleAvailabilityProvider`, which calls the same checker.
+`generateRecommendations` (knowledge path) and `buildCatalogEventPlans` (catalog path) always go through `PlanAvailabilityProvider`. Production uses `createResourceScheduleAvailabilityProvider`, which calls the same checker. Nearby start-time search is `findNearbyAvailableStarts` and is shared by public proposal generation and the live-agent workspace.
 
 `availabilityValidated = true` only when **every** finite requirement:
 
@@ -44,7 +45,7 @@ Admin UI (`/app/admin/resources`) lets an organization administrator create reso
 2. has configured numbered inventory,
 3. has no HOLD/BOOKED conflict in that window.
 
-Otherwise keep `availabilityValidated = false` and do not claim resources are free. Static published limits (age, max guests per lane) still apply in `buildEventPlans`.
+Otherwise keep `availabilityValidated = false` and do not claim resources are free. Configured inventory that is fully occupied is `UNAVAILABLE`, with deterministic nearby start times when the checker can validate an alternate window. Static published limits (age, max guests per lane) still apply in `buildEventPlans`.
 
 Recommendation generation **must not** insert HOLD or BOOKED rows. Customer plan selection re-checks availability, saves the selected plan on the same Inquiry, and sets `READY_FOR_HUMAN` / `CUSTOMER_SELECTED_PLAN`. It does **not** reserve inventory. If the window is no longer free, the plan is kept and marked `AVAILABILITY_CHANGED` (a plan-level status, not an Inquiry status).
 
@@ -73,4 +74,4 @@ Ready-for-Live-Agent inquiries open the Live Agent Booking Workspace. Resource c
 
 ## Seed
 
-`pnpm tenant:import-sales-knowledge` syncs resource **types** and knowledge links after import. `pnpm tenant:sync-resource-types -- --slug <slug> --confirm SYNC` does the same without re-importing knowledge. Numbered inventory stays empty until an Admin configures it.
+`npm run tenant:import-booking-catalog -- --slug <slug> --confirm IMPORT` also seeds numbered inventory from the compiled catalog dataset for the slug you pass. That dataset is tenant bootstrap data, not a platform default. `npm run tenant:sync-resource-types -- --slug <slug> --confirm SYNC` upserts types and knowledge links without re-importing knowledge. Catalog import is the only path that fabricates numbered lane/bay/room counts, and only from the file you import into the named tenant.

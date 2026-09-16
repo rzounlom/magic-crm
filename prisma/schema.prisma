@@ -1,5 +1,5 @@
-// MagicCRM tenant foundation plus authorization, inquiries, finite-resource schedule, and confirmed Bookings.
-// Catalog products and outbound email delivery are not implemented yet.
+// MagicCRM tenant foundation plus authorization, inquiries, finite-resource schedule, catalog, and confirmed Bookings.
+// Outbound email delivery and payment collection are not implemented yet.
 
 generator client {
   provider = "prisma-client"
@@ -38,6 +38,12 @@ model Organization {
   resourceTypes       ResourceType[]
   resources           Resource[]
   knowledgeResourceRequirements KnowledgeResourceRequirement[]
+  productCategories   ProductCategory[]
+  products            Product[]
+  productPrices       ProductPrice[]
+  productResourceRequirements ProductResourceRequirement[]
+  productServings     ProductServing[]
+  recommendationProfiles RecommendationProfile[]
   resourceReservations ResourceReservation[]
   communicationEvents CommunicationEvent[]
   bookings            Booking[]
@@ -66,6 +72,7 @@ model Location {
   salesKnowledgeItems    SalesKnowledgeItem[]
   resourceTypes          ResourceType[]
   resources              Resource[]
+  products               Product[]
   bookings               Booking[]
 
   @@unique([organizationId, id])
@@ -289,6 +296,12 @@ model Inquiry {
   customerSelectedAt       DateTime?
   /// READY_FOR_LIVE_AGENT | AGENT_WORKING | HOLD_PLACED | READY_TO_FINALIZE. Inquiry.status stays READY_FOR_HUMAN.
   workflowStage            String?   @db.VarChar(32)
+  /// INQUIRY | PROPOSAL_READY | READY_TO_BOOK | HOLD_PLACED | DEPOSIT_PENDING | BOOKED | CLOSED | LOST
+  salesStage               String?   @db.VarChar(32)
+  /// KIDS_YOUTH | ADULTS | MIXED
+  audience                 String?   @db.VarChar(24)
+  /// KNOWN | RECOMMEND
+  attractionMode           String?   @db.VarChar(16)
   assignedAt               DateTime?
   customerContactedAt      DateTime?
   agentWorkingPlanId       String?
@@ -312,6 +325,7 @@ model Inquiry {
   @@index([organizationId, selectedEventPlanId])
   @@index([organizationId, customerSelectedAt])
   @@index([organizationId, workflowStage])
+  @@index([organizationId, salesStage])
   @@map("inquiries")
 }
 
@@ -330,7 +344,7 @@ model EventPlanRecommendation {
   customerFacingReason  String   @db.VarChar(1000)
   availabilityValidated Boolean  @default(false)
   availabilityNote      String?  @db.VarChar(500)
-  /// NOT_VALIDATED | AVAILABLE | NEEDS_ADJUSTMENT | AVAILABILITY_CHANGED — plan-level, not Inquiry.status.
+  /// NOT_VALIDATED | AVAILABLE | UNAVAILABLE | NEEDS_ADJUSTMENT | AVAILABILITY_CHANGED — plan-level, not Inquiry.status.
   availabilityStatus    String   @default("NOT_VALIDATED") @db.VarChar(32)
   availabilityCheckedAt DateTime?
   /// RECOMMENDATION | AGENT_WORKING. Customer-selected rows stay RECOMMENDATION and are not overwritten by staff edits.
@@ -443,6 +457,7 @@ model ResourceType {
   location     Location?    @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
   resources    Resource[]
   requirements KnowledgeResourceRequirement[]
+  productRequirements ProductResourceRequirement[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
@@ -499,6 +514,156 @@ model KnowledgeResourceRequirement {
   @@unique([organizationId, salesKnowledgeItemId, resourceTypeId])
   @@index([organizationId, resourceTypeId])
   @@map("knowledge_resource_requirements")
+}
+
+/// Tenant catalog grouping (birthday packages, food, rentals). Not sales-knowledge copy.
+model ProductCategory {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  slug           String   @db.VarChar(80)
+  name           String   @db.VarChar(120)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  products     Product[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("product_categories")
+}
+
+/// Sellable catalog SKU. Prices and resource use live on related rows, not in prose.
+model Product {
+  id               String   @id @default(cuid(2))
+  organizationId   String
+  locationId       String?
+  categoryId       String
+  slug             String   @db.VarChar(80)
+  name             String   @db.VarChar(160)
+  /// ATTRACTION | PACKAGE | RENTAL | FOOD | ADD_ON | FIELD_TRIP
+  kind             String   @db.VarChar(24)
+  /// KIDS_YOUTH | ADULTS | MIXED | ALL
+  audience         String   @db.VarChar(24)
+  shortDescription String?  @db.VarChar(500)
+  durationMinutes  Int?
+  minGuests        Int?
+  maxGuests        Int?
+  weekendOnly      Boolean  @default(false)
+  fulfillmentGroup String?  @db.VarChar(80)
+  active           Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location?    @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  category     ProductCategory @relation(fields: [organizationId, categoryId], references: [organizationId, id], onDelete: Restrict)
+  prices       ProductPrice[]
+  resourceRequirements ProductResourceRequirement[]
+  servings     ProductServing[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId, categoryId])
+  @@index([organizationId, active, kind])
+  @@map("products")
+}
+
+/// One pricing strategy row for a product. Amounts are integer cents.
+model ProductPrice {
+  id                   String   @id @default(cuid(2))
+  organizationId       String
+  productId            String
+  /// PACKAGE_BASE_PLUS_ADDITIONAL | PER_PERSON | PER_LANE_WEEKDAY_WEEKEND | FIXED_RENTAL | DAY_SPECIFIC_RENTAL | DURATION_BASE_PLUS_ADDITIONAL_HOUR | TIME_WINDOW_RENTAL | FOOD_PER_PERSON | FOOD_PER_COMBO | FOOD_PER_PLATTER | FOOD_FIXED_SET
+  strategy             String   @db.VarChar(48)
+  amountCents          Int
+  additionalGuestCents Int?
+  includedGuests       Int?
+  includedHours        Int?
+  additionalHourCents  Int?
+  minGuests            Int?
+  weekdayAmountCents   Int?
+  weekendAmountCents   Int?
+  /// JSON string array of weekday keys: sun, mon, tue, wed, thu, fri, sat
+  daysOfWeek           Json?
+  afterHour            Int?
+  afterHourAmountCents Int?
+  shoeAddOnCents       Int?
+  unitLabel            String?  @db.VarChar(40)
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  product      Product      @relation(fields: [organizationId, productId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, productId])
+  @@map("product_prices")
+}
+
+/// How a catalog product consumes a finite resource type.
+model ProductResourceRequirement {
+  id              String   @id @default(cuid(2))
+  organizationId  String
+  productId       String
+  resourceTypeId  String
+  /// FIXED | PER_GUESTS | ALL_OF_TYPE
+  quantityRule    String   @db.VarChar(24)
+  quantity        Int?
+  guestsPerUnit   Int?
+  durationMinutes Int?
+  exclusive       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  product      Product      @relation(fields: [organizationId, productId], references: [organizationId, id], onDelete: Restrict)
+  resourceType ResourceType @relation(fields: [organizationId, resourceTypeId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, productId, resourceTypeId])
+  @@index([organizationId, resourceTypeId])
+  @@map("product_resource_requirements")
+}
+
+/// Optional food serving bounds. Import must not invent quantities beyond source ranges.
+model ProductServing {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  productId      String
+  servesMin      Int
+  servesMax      Int
+  unitCount      Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  product      Product      @relation(fields: [organizationId, productId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, productId])
+  @@map("product_servings")
+}
+
+/// Per-audience proposal defaults for one tenant. JSON payload, not LLM arithmetic.
+model RecommendationProfile {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  /// KIDS_YOUTH | ADULTS | MIXED
+  audience       String   @db.VarChar(24)
+  payload        Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, audience])
+  @@map("recommendation_profiles")
 }
 
 /// Occupies a finite resource. AVAILABLE is the absence of an active HOLD or BOOKED row — not a stored status.

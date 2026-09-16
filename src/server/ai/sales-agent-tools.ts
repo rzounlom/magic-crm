@@ -4,6 +4,28 @@ import type { SalesAgentToolDefinition } from "@/lib/ai/sales-agent-model";
 import { HUMAN_HANDOFF_TOOL_DESCRIPTION } from "@/server/ai/handoff-policy";
 import { SALES_KNOWLEDGE_TYPES } from "@/types/inquiry";
 
+const UNTRUSTED_TENANT_KEYS = [
+  "organizationId",
+  "organizationSlug",
+  "locationId",
+  "tenantId",
+  "resourceId",
+  "resourceIds",
+  "productId",
+  "priceId",
+] as const;
+
+export function omitUntrustedTenantContext(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+  const next = { ...(value as Record<string, unknown>) };
+  for (const key of UNTRUSTED_TENANT_KEYS) {
+    delete next[key];
+  }
+  return next;
+}
+
 const knowledgeType = z.enum([
   SALES_KNOWLEDGE_TYPES.ATTRACTION,
   SALES_KNOWLEDGE_TYPES.PACKAGE,
@@ -41,6 +63,16 @@ export const requestHumanHandoffArgsSchema = z.object({
   reason: z.string().trim().min(1).max(500),
   summary: z.string().trim().min(1).max(2000),
   urgency: z.enum(["normal", "high"]).optional(),
+});
+
+export const lookupAvailabilityArgsSchema = z.object({
+  date: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Use YYYY-MM-DD" })
+    .nullable()
+    .optional(),
+  startTime: z.string().trim().max(16).nullable().optional(),
 });
 
 export const SALES_AGENT_TOOL_DEFINITIONS: SalesAgentToolDefinition[] = [
@@ -104,6 +136,31 @@ export const SALES_AGENT_TOOL_DEFINITIONS: SalesAgentToolDefinition[] = [
         urgency: { type: "string", enum: ["normal", "high"] },
       },
       required: ["reason", "summary"],
+    },
+  },
+  {
+    name: "recommend_proposals",
+    description:
+      "Return structured Good / Recommended / Premium proposal DTOs already priced by the server. Do not calculate prices. Organization is injected by the server.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "lookup_availability",
+    description:
+      "Look up live resource availability for the current inquiry using the shared Resource Schedule. Do not invent availability. Organization is injected by the server.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        date: { type: ["string", "null"] },
+        startTime: { type: ["string", "null"] },
+      },
+      required: [],
     },
   },
 ];

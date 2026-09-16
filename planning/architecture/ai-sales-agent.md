@@ -39,7 +39,7 @@ Transport lives in `src/lib/ai/openai-sales-agent-client.ts`.
 
 ## Tool model
 
-Tools are application-owned. The model never supplies `organizationId`. The runtime injects the current tenant, inquiry, and conversation.
+Tools are application-owned. The model never supplies `organizationId`, `locationId`, resource IDs, prices, or capacities. The runtime injects the current tenant, inquiry, location, and conversation. Extra tenant keys in tool arguments are stripped before validation.
 
 | Tool | Effect |
 | --- | --- |
@@ -47,8 +47,10 @@ Tools are application-owned. The model never supplies `organizationId`. The runt
 | `get_inquiry_details` | Qualification fields for the current inquiry only |
 | `update_inquiry_details` | Whitelisted qualification fields only |
 | `request_human_handoff` | `READY_FOR_HUMAN`, pause AI, audit |
+| `recommend_proposals` | Server-built Good / Recommended / Premium DTOs (catalog or knowledge). The model does not calculate prices. |
+| `lookup_availability` | Shared `checkResourceAvailability` for the current inquiry. The model does not invent availability. |
 
-There are no booking, availability, payment, or SQL tools. Live inventory must go through `checkResourceAvailability`, not a model tool.
+There are no payment or SQL tools. The model never supplies `organizationId`. Live inventory must go through `checkResourceAvailability`.
 
 ## Tenant scoping
 

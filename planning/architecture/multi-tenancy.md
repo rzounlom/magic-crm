@@ -5,12 +5,33 @@ This document describes how the current codebase implements the decisions in [`M
 ## Current model
 
 ```text
-Organization  = tenant
-Location      belongs to Organization
-UserProfile   belongs to Organization
+MagicCRM Platform
+  → Organization (tenant)
+    → Location
+      → Products / Prices (org-wide or location-specific)
+      → Resources (physical, location-specific)
+      → Recommendation Profiles (organization configuration)
+      → Scheduling configuration
+      → Customers / Inquiries
+      → Proposals
+      → Resource allocations
+      → Bookings
 ```
 
-Generations Adventureplex is tenant #1. It is never a code-level special case. No `if (organization === "Generations")` logic is permitted.
+**MagicCRM owns engines; organizations own configuration.**
+
+Generations Adventureplex is tenant #1 and the current development/reference dataset. It is never a code-level special case and never a global default. No `if (organization === "Generations")` logic (or slug/name equivalent) is permitted.
+
+### Configuration levels
+
+| Level | Examples |
+| --- | --- |
+| Organization | timezone, currency, recommendation profiles, sales policies, future deposit/booking rules |
+| Location | physical resources, operating hours, location-specific availability, optional location catalog/pricing |
+| Product | pricing strategy values, duration, guest constraints, resource requirements, serving rules, itinerary eligibility |
+
+Entitlements (future) answer whether a tenant has access to a MagicCRM module such as `EVENT_BOOKING`. They are not product/resource configuration and are not implemented in this phase.
+
 
 ## Scoping rules
 

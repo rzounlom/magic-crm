@@ -9,6 +9,7 @@ import {
   EVENT_DURATION_MINUTES,
   GUEST_MIX_VALUES,
   SPACE_PREFERENCE_VALUES,
+  ATTRACTION_MODE_VALUES,
 } from "@/types/event-planner";
 import { PUBLIC_INTAKE_LIMITS } from "@/types/inquiry";
 
@@ -88,6 +89,12 @@ export const publicIntakeSchema = z
     eventGoal: z.string().trim().min(1, { error: "Choose a main event goal." }).max(80),
     diningPreference: z.string().trim().min(1, { error: "Choose a dining preference." }).max(80),
     spacePreference: z.enum(SPACE_PREFERENCE_VALUES, { error: "Choose a space preference." }),
+    attractionMode: z.preprocess((value) => {
+      if (value == null || value === "") {
+        return undefined;
+      }
+      return String(value).trim().toLowerCase();
+    }, z.enum(ATTRACTION_MODE_VALUES).optional()),
     attractionInterestIds: z.preprocess((value) => {
       if (value == null || value === "") {
         return [];

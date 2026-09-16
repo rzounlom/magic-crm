@@ -26,6 +26,8 @@ import { yieldToPaint } from "@/lib/ui/yield-to-paint";
 import { submitPublicInquiryAction } from "@/server/actions/public-inquiry";
 import { readPublicIntakeFields } from "@/server/inquiries/intake-validation";
 import {
+  ATTRACTION_MODE_LABELS,
+  ATTRACTION_MODE_VALUES,
   BUDGET_BAND_LABELS,
   BUDGET_BAND_VALUES,
   DINING_PREFERENCE_LABELS,
@@ -101,6 +103,7 @@ export function PublicInquiryForm({
       eventGoal: String(formData.get("eventGoal") ?? ""),
       diningPreference: String(formData.get("diningPreference") ?? ""),
       spacePreference: String(formData.get("spacePreference") ?? ""),
+      attractionMode: String(formData.get("attractionMode") ?? ""),
       attractionInterestIds: formData.getAll("attractionInterestIds").map(String),
       notes: String(formData.get("notes") ?? ""),
       companyWebsite: String(formData.get("companyWebsite") ?? ""),
@@ -362,7 +365,23 @@ export function PublicInquiryForm({
         </IntakeSelect>
         {attractions.length > 0 ? (
           <fieldset className="space-y-2">
-            <legend className="text-sm text-foreground/70">Attractions of interest (optional)</legend>
+            <legend className="text-sm text-foreground/70">Attractions</legend>
+            <div className="space-y-2">
+              {ATTRACTION_MODE_VALUES.map((value) => (
+                <label key={value} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="attractionMode"
+                    value={value}
+                    defaultChecked={value === "recommend"}
+                    disabled={pending}
+                    onChange={() => clearError("attractionMode")}
+                  />
+                  <span>{ATTRACTION_MODE_LABELS[value]}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-foreground/55">Optional: select specific attractions if you already know them.</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {attractions.map((item) => (
                 <label key={item.id} className="flex items-center gap-2 text-sm">

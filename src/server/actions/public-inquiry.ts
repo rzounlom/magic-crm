@@ -39,6 +39,7 @@ export async function submitPublicInquiryAction(formData: FormData): Promise<Sec
       eventGoal: String(formData.get("eventGoal") ?? ""),
       diningPreference: String(formData.get("diningPreference") ?? ""),
       spacePreference: String(formData.get("spacePreference") ?? ""),
+      attractionMode: String(formData.get("attractionMode") ?? ""),
       attractionInterestIds: formData.getAll("attractionInterestIds").map(String),
       notes: String(formData.get("notes") ?? ""),
       companyWebsite: String(formData.get("companyWebsite") ?? ""),

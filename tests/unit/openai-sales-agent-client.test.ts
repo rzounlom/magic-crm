@@ -24,6 +24,8 @@ describe("OpenAI sales agent request construction", () => {
       "get_inquiry_details",
       "update_inquiry_details",
       "request_human_handoff",
+      "recommend_proposals",
+      "lookup_availability",
     ]);
     expect(params.tools.every((tool) => tool.strict === false)).toBe(true);
     expect(params.tools.find((tool) => tool.name === "request_human_handoff")?.description).toMatch(

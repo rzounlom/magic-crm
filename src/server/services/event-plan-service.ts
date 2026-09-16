@@ -14,8 +14,13 @@ import {
   type PlannerKnowledgeItem,
 } from "@/server/event-planner/build-event-plans";
 import { generateRecommendations } from "@/server/event-planner/generate-recommendations";
+import { loadCatalogForProposal } from "@/server/catalog/load-for-proposal";
+import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
+import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
+import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { planAvailabilityStatusFromCheck } from "@/server/resources/plan-availability-status";
+import { buildCatalogEventPlans } from "@/server/services/proposal-engine";
 import { checkResourceAvailability, createResourceScheduleAvailabilityProvider } from "@/server/services/resource-availability-service";
 import { emitDomainEvent } from "@/server/domain-events/emit";
 import { DOMAIN_EVENT_TYPES } from "@/server/domain-events/types";
@@ -25,6 +30,7 @@ import { BOOKING_STATUSES } from "@/types/booking";
 import {
   CONVERSATION_CHANNELS,
   EVENT_PLAN_KINDS,
+  INQUIRY_SALES_STAGES,
   INQUIRY_STATUSES,
   INQUIRY_WORKFLOW_STAGES,
   SALES_KNOWLEDGE_TYPES,
@@ -152,15 +158,41 @@ export async function listPublicPlannerCatalog(database: PlannerDb, organization
     orderBy: { name: "asc" },
   });
 
-  const attractions = items.filter((item) => item.type === SALES_KNOWLEDGE_TYPES.ATTRACTION);
-  const diningItems = items.filter(
-    (item) =>
-      item.type === SALES_KNOWLEDGE_TYPES.FOOD_BEVERAGE ||
-      (item.type === SALES_KNOWLEDGE_TYPES.ADD_ON &&
-        /food|pizza|cater|dining|menu|appetizer|entree|tableside/i.test(
-          `${item.name} ${item.shortDescription}`,
-        )),
-  );
+  const catalogProducts = await database.product.findMany({
+    where: {
+      organizationId: organization.id,
+      active: true,
+      kind: { in: ["ATTRACTION", "PACKAGE"] },
+    },
+    select: { id: true, name: true, kind: true },
+    orderBy: { sortOrder: "asc" },
+  });
+  const catalogDining = await database.product.findMany({
+    where: { organizationId: organization.id, active: true, kind: "FOOD" },
+    select: { id: true, name: true, slug: true },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  const attractions =
+    catalogProducts.length > 0
+      ? catalogProducts.map((item) => ({ id: item.id, type: item.kind, name: item.name, shortDescription: null }))
+      : items.filter((item) => item.type === SALES_KNOWLEDGE_TYPES.ATTRACTION);
+  const diningItems =
+    catalogDining.length > 0
+      ? catalogDining.map((item) => ({
+          id: item.slug,
+          type: "FOOD",
+          name: item.name,
+          shortDescription: null,
+        }))
+      : items.filter(
+          (item) =>
+            item.type === SALES_KNOWLEDGE_TYPES.FOOD_BEVERAGE ||
+            (item.type === SALES_KNOWLEDGE_TYPES.ADD_ON &&
+              /food|pizza|cater|dining|menu|appetizer|entree|tableside/i.test(
+                `${item.name} ${item.shortDescription}`,
+              )),
+        );
 
   return { organization, attractions, diningItems };
 }
@@ -181,6 +213,8 @@ export async function generateEventPlansForInquiry(
     throw new InquiryError("PLAN_NOT_FOUND");
   }
 
+  const locationId = await resolveInquiryLocationId(database, inquiry);
+  const resourceWhere = resourcesInLocationWhere(locationId);
   const [organization, knowledge, resourceCatalog, storedRequirementRows] = await Promise.all([
     database.organization.findFirstOrThrow({
       where: { id: input.organizationId },
@@ -196,7 +230,7 @@ export async function generateEventPlansForInquiry(
         slug: true,
         name: true,
         inventoryConfigured: true,
-        _count: { select: { resources: { where: { active: true } } } },
+        _count: { select: { resources: { where: resourceWhere } } },
       },
     }),
     database.knowledgeResourceRequirement.findMany({
@@ -229,24 +263,49 @@ export async function generateEventPlansForInquiry(
     ];
   });
 
-  const historical = await similarActivityNames(database, input.organizationId, inquiry);
-  const drafts = await generateRecommendations({
-    inquiry: toPlannerFacts(inquiry),
-    knowledge: knowledge as PlannerKnowledgeItem[],
-    similarActivityNames: historical,
-    currency: organization.currency,
-    resourceCatalog: resourceCatalog.map((row) => ({
-      id: row.id,
-      slug: row.slug,
-      name: row.name,
-      inventoryConfigured: row.inventoryConfigured,
-      activeCount: row._count.resources,
-    })),
-    storedRequirements,
-    excludeInquiryId: inquiry.id,
-    availabilityProvider:
-      input.availabilityProvider ?? createResourceScheduleAvailabilityProvider(database, input.organizationId),
+  const facts = toPlannerFacts(inquiry);
+  const audience = audienceFromGuestMix(inquiry.guestMix);
+  const attractionMode = attractionModeFromIntake({
+    attractionMode: inquiry.attractionMode,
+    attractionInterestIds: facts.attractionInterestIds,
   });
+  const availabilityProvider =
+    input.availabilityProvider ??
+    createResourceScheduleAvailabilityProvider(database, input.organizationId, locationId);
+
+  const catalog = await loadCatalogForProposal(database, input.organizationId, locationId);
+  let drafts;
+  if (catalog.products.length > 0) {
+    drafts = await buildCatalogEventPlans({
+      organizationId: input.organizationId,
+      locationId,
+      inquiry: facts,
+      products: catalog.products,
+      profiles: catalog.profiles,
+      resourceRequirements: catalog.resourceRequirements,
+      currency: organization.currency,
+      availabilityProvider,
+      excludeInquiryId: inquiry.id,
+    });
+  } else {
+    const historical = await similarActivityNames(database, input.organizationId, inquiry);
+    drafts = await generateRecommendations({
+      inquiry: facts,
+      knowledge: knowledge as PlannerKnowledgeItem[],
+      similarActivityNames: historical,
+      currency: organization.currency,
+      resourceCatalog: resourceCatalog.map((row) => ({
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        inventoryConfigured: row.inventoryConfigured,
+        activeCount: row._count.resources,
+      })),
+      storedRequirements,
+      excludeInquiryId: inquiry.id,
+      availabilityProvider,
+    });
+  }
 
   await database.$transaction(async (tx) => {
     await tx.eventPlanRecommendation.deleteMany({
@@ -282,6 +341,9 @@ export async function generateEventPlansForInquiry(
       where: { id: inquiry.id },
       data: {
         recommendationsGeneratedAt: new Date(),
+        audience,
+        attractionMode,
+        salesStage: drafts.length > 0 ? INQUIRY_SALES_STAGES.PROPOSAL_READY : inquiry.salesStage,
         status: drafts.length > 0 ? INQUIRY_STATUSES.AWAITING_CUSTOMER : INQUIRY_STATUSES.NEEDS_FOLLOW_UP,
         humanHandoffReason:
           drafts.length > 0 ? inquiry.humanHandoffReason : READY_FOR_HUMAN_REASONS.NO_FEASIBLE_PLAN,
@@ -416,9 +478,13 @@ export async function selectPublicEventPlan(
   }
 
   const planPayload = plan.payload as EventPlanPayload;
+  const locationId = await resolveInquiryLocationId(database, conversation.inquiry);
   const inventory = await database.resourceType.findMany({
     where: { organizationId: conversation.organizationId },
-    select: { id: true, _count: { select: { resources: { where: { active: true } } } } },
+    select: {
+      id: true,
+      _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } },
+    },
   });
   const requirements = applyInventoryFeasibility(
     planPayload.resourceRequirements ?? [],
@@ -426,6 +492,7 @@ export async function selectPublicEventPlan(
   );
   const recheck = await checkResourceAvailability(database, {
     organizationId: conversation.organizationId,
+    locationId,
     date: planPayload.eventDate ?? isoDate(conversation.inquiry.desiredDate),
     startTime: planPayload.startTime ?? conversation.inquiry.desiredStartTime,
     durationMinutes: plan.durationMinutes ?? planPayload.durationMinutes,
@@ -453,6 +520,7 @@ export async function selectPublicEventPlan(
       data: {
         selectedEventPlanId: plan.id,
         customerSelectedAt: new Date(),
+        salesStage: INQUIRY_SALES_STAGES.READY_TO_BOOK,
         status: INQUIRY_STATUSES.READY_FOR_HUMAN,
         workflowStage: INQUIRY_WORKFLOW_STAGES.READY_FOR_LIVE_AGENT,
         aiHandlingEnabled: false,

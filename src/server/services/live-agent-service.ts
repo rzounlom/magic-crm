@@ -5,9 +5,11 @@ import { deriveInquiryWorkflowStage } from "@/lib/inquiries/workflow-stage";
 import { InquiryError } from "@/server/errors";
 import type { PlannerKnowledgeItem } from "@/server/event-planner/build-event-plans";
 import { repriceWorkingPlan } from "@/server/event-planner/reprice-working-plan";
+import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
+import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { planAvailabilityStatusFromCheck } from "@/server/resources/plan-availability-status";
 import {
   derivePlanResourceRequirements,
@@ -15,6 +17,7 @@ import {
 } from "@/server/resources/requirements";
 import { applyRotationWindows } from "@/server/resources/rotation-windows";
 import { recordAuditEvent } from "@/server/services/audit";
+import { findNearbyAvailableStarts } from "@/server/services/nearby-availability";
 import { checkResourceAvailability } from "@/server/services/resource-availability-service";
 import type { EventPlanPayload, EventPlanRotation } from "@/types/event-planner";
 import { EVENT_PLAN_KINDS, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES, SALES_KNOWLEDGE_TYPES } from "@/types/inquiry";
@@ -126,7 +129,8 @@ export async function startWorkingInquiry(ctx: RequestContext, database: LiveAge
   return updated;
 }
 
-async function loadCatalog(database: LiveAgentDb, organizationId: string) {
+async function loadCatalog(database: LiveAgentDb, organizationId: string, locationId?: string | null) {
+  const resourceWhere = resourcesInLocationWhere(locationId);
   const [knowledge, resourceCatalog, storedRequirementRows] = await Promise.all([
     database.salesKnowledgeItem.findMany({ where: { organizationId, active: true } }),
     database.resourceType.findMany({
@@ -136,7 +140,7 @@ async function loadCatalog(database: LiveAgentDb, organizationId: string) {
         slug: true,
         name: true,
         inventoryConfigured: true,
-        _count: { select: { resources: { where: { active: true } } } },
+        _count: { select: { resources: { where: resourceWhere } } },
       },
     }),
     database.knowledgeResourceRequirement.findMany({
@@ -175,8 +179,13 @@ export async function refreshWorkingPlanAvailability(
   organizationId: string,
   payload: EventPlanPayload,
   excludeInquiryId: string,
+  locationId?: string | null,
 ) {
-  const { knowledge, resourceCatalog, storedRequirements } = await loadCatalog(database, organizationId);
+  const { knowledge, resourceCatalog, storedRequirements } = await loadCatalog(
+    database,
+    organizationId,
+    locationId,
+  );
   const inventory = resourceCatalog.map((row) => ({ id: row.id, activeCount: row._count.resources }));
   const derived = derivePlanResourceRequirements({
     activities: payload.activities,
@@ -190,6 +199,7 @@ export async function refreshWorkingPlanAvailability(
   const withRotations = applyRotationWindows(applyInventoryFeasibility(derived, inventory), payload);
   const result = await checkResourceAvailability(database, {
     organizationId,
+    locationId,
     date: payload.eventDate,
     startTime: payload.startTime,
     durationMinutes: payload.durationMinutes,
@@ -267,7 +277,8 @@ export async function saveAgentWorkingPlan(
     throw new InquiryError("PLAN_NOT_FOUND");
   }
   const draft = await copySelectedPlanToWorkingDraft(database, inquiry.id, ctx.organizationId);
-  const { knowledge } = await loadCatalog(database, ctx.organizationId);
+  const locationId = await resolveInquiryLocationId(database, inquiry);
+  const { knowledge } = await loadCatalog(database, ctx.organizationId, locationId);
   const byId = new Map(knowledge.map((item) => [item.id, item]));
   const currentPayload = draft.payload as EventPlanPayload;
   const activities = input.activityIds.flatMap((id) => {
@@ -313,7 +324,13 @@ export async function saveAgentWorkingPlan(
   if (errors.length > 0) {
     throw new InquiryError("WORKING_PLAN_INVALID", errors[0]);
   }
-  const refreshed = await refreshWorkingPlanAvailability(database, ctx.organizationId, nextPayload, inquiry.id);
+  const refreshed = await refreshWorkingPlanAvailability(
+    database,
+    ctx.organizationId,
+    nextPayload,
+    inquiry.id,
+    locationId,
+  );
   nextPayload.resourceRequirements = refreshed.resourceRequirements;
   const selectedPayload = selected.payload as EventPlanPayload;
   const changes = summarizePlanChanges(selectedPayload, nextPayload, draft.currency);
@@ -546,31 +563,20 @@ export async function suggestClosestAvailableAlternatives(
   if (!start) {
     return [];
   }
-  const [hour, minute] = start.split(":").map(Number);
-  const base = (hour ?? 0) * 60 + (minute ?? 0);
-  const offsets = [-60, -30, 30, 60, 90];
-  const suggestions: Array<{ startTime: string; available: boolean; note: string }> = [];
-  for (const offset of offsets) {
-    const next = base + offset;
-    if (next < 8 * 60 || next > 21 * 60) {
-      continue;
-    }
-    const startTime = `${String(Math.floor(next / 60)).padStart(2, "0")}:${String(next % 60).padStart(2, "0")}`;
-    const refreshed = await refreshWorkingPlanAvailability(
-      database,
-      ctx.organizationId,
-      { ...payload, startTime },
-      inquiry.id,
-    );
-    if (refreshed.result.available && refreshed.result.validated) {
-      suggestions.push({
-        startTime,
-        available: true,
-        note: `Start at ${startTime} currently fits the required resources.`,
-      });
-    }
-  }
-  return suggestions.slice(0, 3);
+  const locationId = await resolveInquiryLocationId(database, inquiry);
+  return findNearbyAvailableStarts({
+    startTime: start,
+    check: async (startTime) => {
+      const refreshed = await refreshWorkingPlanAvailability(
+        database,
+        ctx.organizationId,
+        { ...payload, startTime },
+        inquiry.id,
+        locationId,
+      );
+      return refreshed.result;
+    },
+  });
 }
 
 export async function listWorkspaceKnowledge(ctx: RequestContext, database: LiveAgentDb) {

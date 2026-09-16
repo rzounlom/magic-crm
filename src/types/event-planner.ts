@@ -9,9 +9,9 @@ export const EVENT_PLAN_TIERS = {
 export type EventPlanTier = (typeof EVENT_PLAN_TIERS)[keyof typeof EVENT_PLAN_TIERS];
 
 export const EVENT_PLAN_TIER_TITLES: Record<EventPlanTier, string> = {
-  [EVENT_PLAN_TIERS.BUDGET]: "Budget Friendly",
-  [EVENT_PLAN_TIERS.BEST_FIT]: "Best Fit",
-  [EVENT_PLAN_TIERS.PREMIUM]: "Premium Experience",
+  [EVENT_PLAN_TIERS.BUDGET]: "Good",
+  [EVENT_PLAN_TIERS.BEST_FIT]: "Recommended",
+  [EVENT_PLAN_TIERS.PREMIUM]: "Premium",
 };
 
 export const GUEST_MIX_VALUES = [
@@ -62,6 +62,15 @@ export const EVENT_GOAL_OPTIONS = [
   "Competition",
   "Social Event",
 ] as const;
+
+export const ATTRACTION_MODE_VALUES = ["known", "recommend"] as const;
+
+export type AttractionModeInput = (typeof ATTRACTION_MODE_VALUES)[number];
+
+export const ATTRACTION_MODE_LABELS: Record<AttractionModeInput, string> = {
+  known: "I know which attractions I want",
+  recommend: "Recommend attractions for me",
+};
 
 export const SPACE_PREFERENCE_VALUES = ["private", "semi_private", "no_preference"] as const;
 
@@ -133,6 +142,7 @@ export const NO_FEASIBLE_PLAN_REASON =
 
 export type EventPlanActivity = {
   knowledgeItemId: string;
+  productId?: string;
   name: string;
   quantity: number;
   unitLabel?: string;
@@ -141,6 +151,24 @@ export type EventPlanActivity = {
   startTime?: string | null;
   endTime?: string | null;
   rotationNote?: string | null;
+};
+
+export type EventPlanLineItem = {
+  productId: string;
+  slug: string;
+  name: string;
+  kind: string;
+  quantity: number;
+  unitLabel?: string | null;
+  unitPriceCents: number;
+  totalCents: number;
+};
+
+export type EventPlanItinerarySegment = {
+  startTime: string;
+  endTime: string;
+  label: string;
+  productId?: string;
 };
 
 export type EventPlanDining = {
@@ -177,6 +205,8 @@ export type EventPlanRanking = {
 };
 
 export type EventPlanPayload = {
+  organizationId?: string;
+  locationId?: string | null;
   guestCount: number;
   eventDate: string | null;
   startTime: string | null;
@@ -191,6 +221,12 @@ export type EventPlanPayload = {
   ranking?: EventPlanRanking;
   rotations?: EventPlanRotation[];
   resourceRequirements?: PlanResourceRequirement[];
+  lineItems?: EventPlanLineItem[];
+  depositPreviewCents?: number | null;
+  depositPreviewNote?: string;
+  itinerary?: EventPlanItinerarySegment[];
+  suggestedStartTimes?: string[];
+  catalogBacked?: boolean;
   selectionAvailability?: {
     status: string;
     checkedAt: string;

@@ -81,7 +81,7 @@ describe("inquiry funnel", () => {
       "Inquiry submitted",
       "Recommendations generated",
       "Personal Event Plan viewed",
-      "Best Fit selected",
+      "Recommended selected",
       "Ready for Live Agent",
     ]);
     expect(stages.every((stage) => stage.complete)).toBe(true);

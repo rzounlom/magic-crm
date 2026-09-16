@@ -1,0 +1,1856 @@
+{
+  "version": 1,
+  "sourceFiles": [
+    "Product Price List G1 (1).xlsx",
+    "Generations_Food_Options_Pricing_List (1).xlsx"
+  ],
+  "ambiguities": [
+    {
+      "code": "PIZZA_COMBO_SERVING",
+      "severity": "info",
+      "message": "Pizza & Pitcher Combination serves 4\u20135 adults. Quantity rule is ceil(guestCount / 4) unless the customer states otherwise."
+    },
+    {
+      "code": "BROWNIE_TRAY_TYPO",
+      "severity": "warning",
+      "message": "Brownie tray source text says Serves 45\u201340. Treated as servesMin=40, servesMax=45."
+    },
+    {
+      "code": "FULL_FACILITY_MISSING_DOLLAR",
+      "severity": "info",
+      "message": "Full Facility rows listed as 5995 without a dollar sign are stored as $5,995 (599500 cents). Full-facility additional hours 1995 stored as $1,995."
+    },
+    {
+      "code": "BOWLING_SHOES",
+      "severity": "info",
+      "message": "Bowling shoes $3.50 per person are a separate add-on on the bowling product, not folded into the lane rate."
+    },
+    {
+      "code": "UNLIMITED_LASER_WEEKENDS",
+      "severity": "info",
+      "message": "Unlimited Laser Tag 90 minutes is weekends-only as a product constraint, not a resource count."
+    },
+    {
+      "code": "LASER_ARENA_TWO_SKUS",
+      "severity": "info",
+      "message": "Laser Tag Arena Saturday $599/hour and 90 minute Sun\u2013Thu $550 are two products."
+    },
+    {
+      "code": "BOWLING_2H_OVERLAP",
+      "severity": "info",
+      "message": "Bowling 2h rental modeled as $750 default vs $850 Friday\u2013Saturday after 16:00."
+    },
+    {
+      "code": "BEER_WALL_ABSENT",
+      "severity": "info",
+      "message": "Beer Wall is not in either workbook and was not invented as a catalog SKU."
+    },
+    {
+      "code": "HAVE_A_BALL_VARIANTS",
+      "severity": "info",
+      "message": "Have a Ball bowling and mini golf are two fulfillment variants. Proposals pick one from the customer attraction choice."
+    }
+  ],
+  "categories": [
+    {
+      "slug": "kids-birthday-packages",
+      "name": "Kids Birthday Packages",
+      "sortOrder": 10
+    },
+    {
+      "slug": "timed-attractions",
+      "name": "Timed Attractions",
+      "sortOrder": 20
+    },
+    {
+      "slug": "adult-packages",
+      "name": "Adult and Mixed Packages",
+      "sortOrder": 30
+    },
+    {
+      "slug": "exclusive-area-rentals",
+      "name": "Exclusive Area Rentals",
+      "sortOrder": 40
+    },
+    {
+      "slug": "youth",
+      "name": "Youth and Field Trips",
+      "sortOrder": 50
+    },
+    {
+      "slug": "add-on-hours",
+      "name": "Add-On Hours",
+      "sortOrder": 60
+    },
+    {
+      "slug": "food",
+      "name": "Food",
+      "sortOrder": 70
+    }
+  ],
+  "resourceTypes": [
+    {
+      "slug": "bowling-lane",
+      "name": "Bowling Lane",
+      "count": 8,
+      "capacity": 6,
+      "schedulingMode": "SLOTTED",
+      "notes": "6 guests per lane; 8 lanes."
+    },
+    {
+      "slug": "axe-throwing-lane",
+      "name": "Axe Throwing Lane",
+      "count": 8,
+      "capacity": 8,
+      "schedulingMode": "SLOTTED",
+      "notes": "8 guests per bay; 8 bays for planning."
+    },
+    {
+      "slug": "laser-tag-arena",
+      "name": "Laser Tag Arena",
+      "count": 1,
+      "capacity": 20,
+      "schedulingMode": "SLOTTED",
+      "notes": "Recommended group size 12-20 per game."
+    },
+    {
+      "slug": "mini-golf-course",
+      "name": "Mini Golf Course",
+      "count": 1,
+      "capacity": 150,
+      "schedulingMode": "CONTINUOUS",
+      "notes": "One shared course."
+    },
+    {
+      "slug": "climbing-area",
+      "name": "Climbing Area",
+      "count": 1,
+      "capacity": 200,
+      "schedulingMode": "CONTINUOUS",
+      "notes": "One shared climbing area."
+    },
+    {
+      "slug": "lower-event-room",
+      "name": "Lower Event Room",
+      "count": 1,
+      "capacity": 35,
+      "schedulingMode": "SLOTTED",
+      "notes": "Lower party room capacity 35."
+    },
+    {
+      "slug": "skybox",
+      "name": "Skybox",
+      "count": 1,
+      "capacity": 44,
+      "schedulingMode": "SLOTTED",
+      "notes": "44 seated."
+    },
+    {
+      "slug": "mezzanine",
+      "name": "Mezzanine",
+      "count": 1,
+      "capacity": 150,
+      "schedulingMode": "SLOTTED",
+      "notes": "Comfortable event capacity 150."
+    },
+    {
+      "slug": "full-facility",
+      "name": "Full Facility",
+      "count": 1,
+      "capacity": 999,
+      "schedulingMode": "SLOTTED",
+      "notes": "Overall facility capacity for event planning."
+    }
+  ],
+  "products": [
+    {
+      "slug": "have-a-ball-bowling",
+      "name": "Have a Ball Birthday Party (Bowling)",
+      "kind": "PACKAGE",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "kids-birthday-packages",
+      "durationMinutes": 60,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": "have-a-ball",
+      "shortDescription": "Birthday package with 1 hour bowling plus arcade credits.",
+      "prices": [
+        {
+          "strategy": "PACKAGE_BASE_PLUS_ADDITIONAL",
+          "amountCents": 27599,
+          "additionalGuestCents": 2749,
+          "includedGuests": 10,
+          "unitLabel": "package"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "bowling-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 6,
+          "durationMinutes": 60,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "have-a-ball-mini-golf",
+      "name": "Have a Ball Birthday Party (Mini Golf)",
+      "kind": "PACKAGE",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "kids-birthday-packages",
+      "durationMinutes": 60,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": "have-a-ball",
+      "shortDescription": "Birthday package with mini golf plus arcade credits.",
+      "prices": [
+        {
+          "strategy": "PACKAGE_BASE_PLUS_ADDITIONAL",
+          "amountCents": 27599,
+          "additionalGuestCents": 2749,
+          "includedGuests": 10,
+          "unitLabel": "package"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "mini-golf-course",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "have-a-blast",
+      "name": "Have a Blast Laser Tag Birthday Party",
+      "kind": "PACKAGE",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "kids-birthday-packages",
+      "durationMinutes": 90,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Birthday package centered on 90 minutes unlimited laser tag.",
+      "prices": [
+        {
+          "strategy": "PACKAGE_BASE_PLUS_ADDITIONAL",
+          "amountCents": 34999,
+          "additionalGuestCents": 3499,
+          "includedGuests": 10,
+          "unitLabel": "package"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "laser-tag-arena",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 90,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "have-it-all",
+      "name": "Have It All / Taste of Adventure Birthday Party",
+      "kind": "PACKAGE",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "kids-birthday-packages",
+      "durationMinutes": 120,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Birthday package combining bowling, laser tag, climbing, and arcade.",
+      "prices": [
+        {
+          "strategy": "PACKAGE_BASE_PLUS_ADDITIONAL",
+          "amountCents": 42999,
+          "additionalGuestCents": 4299,
+          "includedGuests": 10,
+          "unitLabel": "package"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "bowling-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 6,
+          "durationMinutes": 30,
+          "exclusive": false
+        },
+        {
+          "resourceTypeSlug": "laser-tag-arena",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 90,
+          "exclusive": false
+        },
+        {
+          "resourceTypeSlug": "climbing-area",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 90,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "axe-throwing-30",
+      "name": "Axe Throwing - 30 Minutes",
+      "kind": "ATTRACTION",
+      "audience": "ADULTS",
+      "categorySlug": "timed-attractions",
+      "durationMinutes": 30,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "30 minutes of axe throwing.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 1750,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 8,
+          "durationMinutes": 30,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "axe-throwing-60",
+      "name": "Axe Throwing - 60 Minutes",
+      "kind": "ATTRACTION",
+      "audience": "ADULTS",
+      "categorySlug": "timed-attractions",
+      "durationMinutes": 60,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "60 minutes of axe throwing.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 3000,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 8,
+          "durationMinutes": 60,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "unlimited-arcade-1h",
+      "name": "1 Hour Unlimited Arcade Play",
+      "kind": "ATTRACTION",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "timed-attractions",
+      "durationMinutes": 60,
+      "minGuests": 20,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "One hour of unlimited arcade play.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 2500,
+          "minGuests": 20,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "bowling-1h",
+      "name": "Bowling - 1 Hour",
+      "kind": "ATTRACTION",
+      "audience": "MIXED",
+      "categorySlug": "timed-attractions",
+      "durationMinutes": 60,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "One hour of bowling with shoe rental.",
+      "prices": [
+        {
+          "strategy": "PER_LANE_WEEKDAY_WEEKEND",
+          "amountCents": 3000,
+          "weekdayAmountCents": 3000,
+          "weekendAmountCents": 4000,
+          "shoeAddOnCents": 350,
+          "unitLabel": "lane"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "bowling-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 6,
+          "durationMinutes": 60,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "laser-plex-card",
+      "name": "Laser Plex Card",
+      "kind": "ATTRACTION",
+      "audience": "MIXED",
+      "categorySlug": "timed-attractions",
+      "durationMinutes": null,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Laser Plex card play.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 2000,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "unlimited-laser-tag-90",
+      "name": "Unlimited Laser Tag - 90 Minutes",
+      "kind": "ATTRACTION",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "timed-attractions",
+      "durationMinutes": 90,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": true,
+      "fulfillmentGroup": null,
+      "shortDescription": "90 minutes unlimited laser tag. Weekends only.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 2500,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "laser-tag-arena",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 90,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "all-access",
+      "name": "All Access Package",
+      "kind": "PACKAGE",
+      "audience": "ADULTS",
+      "categorySlug": "adult-packages",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Adult all-access package.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 5500,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "axe-treme",
+      "name": "Axe-Treme Package",
+      "kind": "PACKAGE",
+      "audience": "ADULTS",
+      "categorySlug": "adult-packages",
+      "durationMinutes": 120,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Adult axe-focused package.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 4500,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 8,
+          "durationMinutes": 120,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "laser-plex-package",
+      "name": "Laser Plex Package",
+      "kind": "PACKAGE",
+      "audience": "MIXED",
+      "categorySlug": "adult-packages",
+      "durationMinutes": 90,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Laser Plex package.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 2000,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "play-axtion",
+      "name": "Play Axtion Package",
+      "kind": "PACKAGE",
+      "audience": "ADULTS",
+      "categorySlug": "adult-packages",
+      "durationMinutes": 120,
+      "minGuests": 20,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Adult Play Axtion package.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 4250,
+          "minGuests": 20,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 8,
+          "durationMinutes": 120,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "climbers-cove-90",
+      "name": "Climbers Cove - 90 Minute Rental",
+      "kind": "RENTAL",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 90,
+      "minGuests": 1,
+      "maxGuests": 200,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Exclusive Climbers Cove rental.",
+      "prices": [
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 52500,
+          "daysOfWeek": [
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri"
+          ],
+          "unitLabel": "rental"
+        },
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 60000,
+          "daysOfWeek": [
+            "sun"
+          ],
+          "unitLabel": "rental"
+        },
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 65000,
+          "daysOfWeek": [
+            "sat"
+          ],
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "climbing-area",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 90,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "bowling-lounge-1h",
+      "name": "Bowling Lanes & Lounge - 1 Hour Exclusive Rental",
+      "kind": "RENTAL",
+      "audience": "MIXED",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 60,
+      "minGuests": 1,
+      "maxGuests": 48,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Exclusive bowling lanes and lounge for one hour.",
+      "prices": [
+        {
+          "strategy": "FIXED_RENTAL",
+          "amountCents": 52500,
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "bowling-lane",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "bowling-lounge-2h",
+      "name": "Bowling Lanes & Lounge Area - 2 Hour Exclusive Rental",
+      "kind": "RENTAL",
+      "audience": "MIXED",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 120,
+      "minGuests": 1,
+      "maxGuests": 48,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Exclusive bowling lanes and lounge for two hours.",
+      "prices": [
+        {
+          "strategy": "TIME_WINDOW_RENTAL",
+          "amountCents": 75000,
+          "unitLabel": "rental"
+        },
+        {
+          "strategy": "TIME_WINDOW_RENTAL",
+          "amountCents": 85000,
+          "daysOfWeek": [
+            "fri",
+            "sat"
+          ],
+          "afterHour": 16,
+          "afterHourAmountCents": 85000,
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "bowling-lane",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 120,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "axe-den-2h",
+      "name": "The Axe Den - 2 Hour Rental",
+      "kind": "RENTAL",
+      "audience": "ADULTS",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 120,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Exclusive Axe Den rental.",
+      "prices": [
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 150000,
+          "daysOfWeek": [
+            "sun",
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri"
+          ],
+          "unitLabel": "rental"
+        },
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 199500,
+          "daysOfWeek": [
+            "sat"
+          ],
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 120,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "laser-tag-arena-90",
+      "name": "Laser Tag Arena - 90 Minute Exclusive Rental",
+      "kind": "RENTAL",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 90,
+      "minGuests": 1,
+      "maxGuests": 20,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Exclusive laser tag arena rental, Sunday through Thursday.",
+      "prices": [
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 55000,
+          "daysOfWeek": [
+            "sun",
+            "mon",
+            "tue",
+            "wed",
+            "thu"
+          ],
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "laser-tag-arena",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 90,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "laser-tag-arena-sat-hourly",
+      "name": "Laser Tag Arena - Saturday Exclusive Rental",
+      "kind": "RENTAL",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 60,
+      "minGuests": 1,
+      "maxGuests": 20,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Saturday exclusive laser tag arena rental, billed hourly.",
+      "prices": [
+        {
+          "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
+          "amountCents": 59900,
+          "includedHours": 1,
+          "additionalHourCents": 59900,
+          "daysOfWeek": [
+            "sat"
+          ],
+          "unitLabel": "hour"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "laser-tag-arena",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "skybox",
+      "name": "Skybox Private Event Room",
+      "kind": "RENTAL",
+      "audience": "ADULTS",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 44,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Private Skybox event room.",
+      "prices": [
+        {
+          "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
+          "amountCents": 25000,
+          "includedHours": 3,
+          "additionalHourCents": 9900,
+          "unitLabel": "block"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "skybox",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "lower-event-room",
+      "name": "Lower Event Room",
+      "kind": "RENTAL",
+      "audience": "MIXED",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 35,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Lower event / party room.",
+      "prices": [
+        {
+          "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
+          "amountCents": 15000,
+          "includedHours": 3,
+          "additionalHourCents": 5000,
+          "unitLabel": "block"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "lower-event-room",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "mezzanine-sun-thu",
+      "name": "Mezzanine Exclusive Rental - Sun-Thu",
+      "kind": "RENTAL",
+      "audience": "ADULTS",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 150,
+      "weekendOnly": false,
+      "fulfillmentGroup": "mezzanine",
+      "shortDescription": "Mezzanine exclusive rental Sunday through Thursday.",
+      "prices": [
+        {
+          "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
+          "amountCents": 275000,
+          "includedHours": 3,
+          "additionalHourCents": 92500,
+          "daysOfWeek": [
+            "sun",
+            "mon",
+            "tue",
+            "wed",
+            "thu"
+          ],
+          "unitLabel": "block"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "mezzanine",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "mezzanine-friday",
+      "name": "Mezzanine Exclusive Rental - Friday",
+      "kind": "RENTAL",
+      "audience": "ADULTS",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 150,
+      "weekendOnly": false,
+      "fulfillmentGroup": "mezzanine",
+      "shortDescription": "Mezzanine exclusive rental on Friday.",
+      "prices": [
+        {
+          "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
+          "amountCents": 475000,
+          "includedHours": 3,
+          "additionalHourCents": 158500,
+          "daysOfWeek": [
+            "fri"
+          ],
+          "unitLabel": "block"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "mezzanine",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "mezzanine-saturday",
+      "name": "Mezzanine Exclusive Rental - Saturday",
+      "kind": "RENTAL",
+      "audience": "ADULTS",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 150,
+      "weekendOnly": false,
+      "fulfillmentGroup": "mezzanine",
+      "shortDescription": "Mezzanine exclusive rental on Saturday.",
+      "prices": [
+        {
+          "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
+          "amountCents": 549500,
+          "includedHours": 3,
+          "additionalHourCents": 183500,
+          "daysOfWeek": [
+            "sat"
+          ],
+          "unitLabel": "block"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "mezzanine",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "mezzanine-2h-fri-sat",
+      "name": "Mezzanine 2-Hour Rental - Fri/Sat",
+      "kind": "RENTAL",
+      "audience": "ADULTS",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 120,
+      "minGuests": 1,
+      "maxGuests": 150,
+      "weekendOnly": false,
+      "fulfillmentGroup": "mezzanine",
+      "shortDescription": "Two-hour mezzanine rental Friday or Saturday.",
+      "prices": [
+        {
+          "strategy": "FIXED_RENTAL",
+          "amountCents": 309500,
+          "daysOfWeek": [
+            "fri",
+            "sat"
+          ],
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "mezzanine",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 120,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "full-facility-before-4-sun-fri",
+      "name": "Full Facility Rental - Before 4 PM Sun-Fri",
+      "kind": "RENTAL",
+      "audience": "MIXED",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 999,
+      "weekendOnly": false,
+      "fulfillmentGroup": "full-facility",
+      "shortDescription": "Full facility rental before 4 PM Sunday through Friday.",
+      "prices": [
+        {
+          "strategy": "TIME_WINDOW_RENTAL",
+          "amountCents": 549500,
+          "daysOfWeek": [
+            "sun",
+            "mon",
+            "tue",
+            "wed",
+            "thu",
+            "fri"
+          ],
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "full-facility",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": null,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "full-facility-sat-after-4",
+      "name": "Full Facility Rental - Saturday after 4pm",
+      "kind": "RENTAL",
+      "audience": "MIXED",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 999,
+      "weekendOnly": false,
+      "fulfillmentGroup": "full-facility",
+      "shortDescription": "Full facility rental Saturday after 4 PM.",
+      "prices": [
+        {
+          "strategy": "TIME_WINDOW_RENTAL",
+          "amountCents": 599500,
+          "daysOfWeek": [
+            "sat"
+          ],
+          "afterHour": 16,
+          "afterHourAmountCents": 599500,
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "full-facility",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": null,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "full-facility-after-4-mon-thu",
+      "name": "Full Facility Rental - After 4 PM Mon-Thu",
+      "kind": "RENTAL",
+      "audience": "MIXED",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 999,
+      "weekendOnly": false,
+      "fulfillmentGroup": "full-facility",
+      "shortDescription": "Full facility rental after 4 PM Monday through Thursday.",
+      "prices": [
+        {
+          "strategy": "TIME_WINDOW_RENTAL",
+          "amountCents": 599500,
+          "daysOfWeek": [
+            "mon",
+            "tue",
+            "wed",
+            "thu"
+          ],
+          "afterHour": 16,
+          "afterHourAmountCents": 599500,
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "full-facility",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": null,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "full-facility-after-4-friday",
+      "name": "Full Facility Rental - After 4 PM Friday",
+      "kind": "RENTAL",
+      "audience": "MIXED",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 999,
+      "weekendOnly": false,
+      "fulfillmentGroup": "full-facility",
+      "shortDescription": "Full facility rental after 4 PM Friday. Source listed 5995 without a dollar sign.",
+      "prices": [
+        {
+          "strategy": "TIME_WINDOW_RENTAL",
+          "amountCents": 599500,
+          "daysOfWeek": [
+            "fri"
+          ],
+          "afterHour": 16,
+          "afterHourAmountCents": 599500,
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "full-facility",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": null,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "full-facility-after-4-saturday",
+      "name": "Full Facility Rental - After 4 PM Saturday",
+      "kind": "RENTAL",
+      "audience": "MIXED",
+      "categorySlug": "exclusive-area-rentals",
+      "durationMinutes": 180,
+      "minGuests": 1,
+      "maxGuests": 999,
+      "weekendOnly": false,
+      "fulfillmentGroup": "full-facility",
+      "shortDescription": "Full facility rental after 4 PM Saturday. Source listed 5995 without a dollar sign.",
+      "prices": [
+        {
+          "strategy": "TIME_WINDOW_RENTAL",
+          "amountCents": 599500,
+          "daysOfWeek": [
+            "sat"
+          ],
+          "afterHour": 16,
+          "afterHourAmountCents": 599500,
+          "unitLabel": "rental"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "full-facility",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": null,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "field-trip-laser-arcade",
+      "name": "Field Trip: Laser Tag & Arcade",
+      "kind": "FIELD_TRIP",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "youth",
+      "durationMinutes": 120,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Field trip laser tag and arcade.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 3000,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "laser-tag-arena",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 90,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "field-trip-laser-bowling",
+      "name": "Field Trip: Laser Tag & Bowling",
+      "kind": "FIELD_TRIP",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "youth",
+      "durationMinutes": 120,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Field trip laser tag and bowling. Shoes included.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 1800,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "laser-tag-arena",
+          "quantityRule": "FIXED",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": false
+        },
+        {
+          "resourceTypeSlug": "bowling-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 6,
+          "durationMinutes": 60,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "field-trip-laserplex",
+      "name": "Field Trip: LaserPlex Package",
+      "kind": "FIELD_TRIP",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "youth",
+      "durationMinutes": 90,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Field trip LaserPlex package.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 2000,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "field-trip-bowling",
+      "name": "Field Trip: Bowling Package",
+      "kind": "FIELD_TRIP",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "youth",
+      "durationMinutes": 60,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Field trip bowling package.",
+      "prices": [
+        {
+          "strategy": "PER_PERSON",
+          "amountCents": 1050,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "bowling-lane",
+          "quantityRule": "PER_GUESTS",
+          "quantity": null,
+          "guestsPerUnit": 6,
+          "durationMinutes": 60,
+          "exclusive": false
+        }
+      ]
+    },
+    {
+      "slug": "youth-group-lock-in",
+      "name": "Youth Group Lock-In",
+      "kind": "PACKAGE",
+      "audience": "KIDS_YOUTH",
+      "categorySlug": "youth",
+      "durationMinutes": 120,
+      "minGuests": 1,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Youth group lock-in for two hours.",
+      "prices": [
+        {
+          "strategy": "FIXED_RENTAL",
+          "amountCents": 350000,
+          "unitLabel": "package"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "full-facility",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 120,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "full-facility-additional-hour",
+      "name": "Full-Facility Additional Hours",
+      "kind": "ADD_ON",
+      "audience": "ALL",
+      "categorySlug": "add-on-hours",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Additional full-facility hour. Source listed 1995 without a dollar sign.",
+      "prices": [
+        {
+          "strategy": "FIXED_RENTAL",
+          "amountCents": 199500,
+          "unitLabel": "hour"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "full-facility",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "mezzanine-additional-hour",
+      "name": "Mezzanine Additional Hours",
+      "kind": "ADD_ON",
+      "audience": "ADULTS",
+      "categorySlug": "add-on-hours",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": "mezzanine",
+      "shortDescription": "Additional mezzanine hour prorated from the 3-hour minimum.",
+      "prices": [
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 92500,
+          "daysOfWeek": [
+            "sun",
+            "mon",
+            "tue",
+            "wed",
+            "thu"
+          ],
+          "unitLabel": "hour"
+        },
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 158500,
+          "daysOfWeek": [
+            "fri"
+          ],
+          "unitLabel": "hour"
+        },
+        {
+          "strategy": "DAY_SPECIFIC_RENTAL",
+          "amountCents": 183500,
+          "daysOfWeek": [
+            "sat"
+          ],
+          "unitLabel": "hour"
+        }
+      ],
+      "requirements": [
+        {
+          "resourceTypeSlug": "mezzanine",
+          "quantityRule": "ALL_OF_TYPE",
+          "quantity": null,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": true
+        }
+      ]
+    },
+    {
+      "slug": "fajita-bar",
+      "name": "Fajita Bar",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Catering Bar: Fajita Bar.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PERSON",
+          "amountCents": 2500,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "slider-bar",
+      "name": "Slider Bar",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Catering Bar: Slider Bar.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PERSON",
+          "amountCents": 3000,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "pizza-pitcher-combo",
+      "name": "Pizza & Pitcher Combination",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Combination: Pizza & Pitcher Combination.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_COMBO",
+          "amountCents": 2000,
+          "unitLabel": "combo"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 4,
+        "servesMax": 5,
+        "unitCount": null
+      }
+    },
+    {
+      "slug": "smokehouse-bbq",
+      "name": "Smokehouse BBQ",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Catering Bar: Smokehouse BBQ.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PERSON",
+          "amountCents": 3500,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "breakfast-bar",
+      "name": "Breakfast Bar",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Catering Bar: Breakfast Bar.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PERSON",
+          "amountCents": 2000,
+          "unitLabel": "person"
+        }
+      ],
+      "requirements": []
+    },
+    {
+      "slug": "boneless-wings-36",
+      "name": "Boneless Wings \u2013 36 pc",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Party Platter: Boneless Wings \u2013 36 pc.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PLATTER",
+          "amountCents": 3699,
+          "unitLabel": "platter"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 9,
+        "servesMax": 10,
+        "unitCount": null
+      }
+    },
+    {
+      "slug": "traditional-wings-36",
+      "name": "Traditional Wings \u2013 36 pc",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Party Platter: Traditional Wings \u2013 36 pc.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PLATTER",
+          "amountCents": 3849,
+          "unitLabel": "platter"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 9,
+        "servesMax": 10,
+        "unitCount": null
+      }
+    },
+    {
+      "slug": "pretzel-bite-platter",
+      "name": "Pretzel Bite \u2013 45 pc Platter",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Party Platter: Pretzel Bite \u2013 45 pc Platter.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PLATTER",
+          "amountCents": 2699,
+          "unitLabel": "platter"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 10,
+        "servesMax": 11,
+        "unitCount": null
+      }
+    },
+    {
+      "slug": "chicken-strip-platter",
+      "name": "Chicken Strip Platter",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Party Platter: Chicken Strip Platter.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PLATTER",
+          "amountCents": 4999,
+          "unitLabel": "platter"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 10,
+        "servesMax": 12,
+        "unitCount": null
+      }
+    },
+    {
+      "slug": "salad-pan",
+      "name": "Salad Pan",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Party Platter: Salad Pan.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PLATTER",
+          "amountCents": 1999,
+          "unitLabel": "platter"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 8,
+        "servesMax": 12,
+        "unitCount": null
+      }
+    },
+    {
+      "slug": "charcuterie-boards",
+      "name": "Seasonal Veggie, Fresh Fruit & Cheese Charcuterie Boards",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Charcuterie: Seasonal Veggie, Fresh Fruit & Cheese Charcuterie Boards.",
+      "prices": [
+        {
+          "strategy": "FOOD_FIXED_SET",
+          "amountCents": 18113,
+          "unitLabel": "set"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 30,
+        "servesMax": 30,
+        "unitCount": 3
+      }
+    },
+    {
+      "slug": "brownie-tray",
+      "name": "Brownie Tray",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Dessert: Brownie Tray.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PLATTER",
+          "amountCents": 4554,
+          "unitLabel": "tray"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 40,
+        "servesMax": 45,
+        "unitCount": null
+      }
+    },
+    {
+      "slug": "cookie-tray",
+      "name": "Assorted Cookie Tray",
+      "kind": "FOOD",
+      "audience": "ALL",
+      "categorySlug": "food",
+      "durationMinutes": 60,
+      "minGuests": null,
+      "maxGuests": null,
+      "weekendOnly": false,
+      "fulfillmentGroup": null,
+      "shortDescription": "Dessert: Assorted Cookie Tray.",
+      "prices": [
+        {
+          "strategy": "FOOD_PER_PLATTER",
+          "amountCents": 2070,
+          "unitLabel": "tray"
+        }
+      ],
+      "requirements": [],
+      "serving": {
+        "servesMin": 20,
+        "servesMax": 20,
+        "unitCount": null
+      }
+    }
+  ],
+  "recommendationProfiles": [
+    {
+      "audience": "KIDS_YOUTH",
+      "payload": {
+        "defaultPackageSlugs": {
+          "good": "have-a-ball-bowling",
+          "better": "have-a-blast",
+          "best": "have-it-all"
+        },
+        "defaultAttractionSlugs": [],
+        "fulfillmentGroups": {
+          "have-a-ball": {
+            "default": "have-a-ball-bowling",
+            "options": {
+              "bowling": "have-a-ball-bowling",
+              "mini-golf": "have-a-ball-mini-golf",
+              "mini golf": "have-a-ball-mini-golf"
+            }
+          }
+        },
+        "defaultFoodSlug": "pizza-pitcher-combo",
+        "diningPreferenceMap": {
+          "pizza_light": "pizza-pitcher-combo",
+          "catered_slider": "slider-bar",
+          "catered_fajita": "fajita-bar"
+        },
+        "foodFirst": false,
+        "goodAddOnSlugs": [],
+        "betterAddOnSlugs": [
+          "cookie-tray"
+        ],
+        "bestAddOnSlugs": [
+          "cookie-tray",
+          "brownie-tray"
+        ],
+        "premiumSpaceSlug": "lower-event-room"
+      }
+    },
+    {
+      "audience": "ADULTS",
+      "payload": {
+        "defaultPackageSlugs": {
+          "good": "axe-throwing-60",
+          "better": "axe-treme",
+          "best": "all-access"
+        },
+        "defaultAttractionSlugs": [
+          "axe-throwing-60"
+        ],
+        "defaultFoodSlug": "slider-bar",
+        "diningPreferenceMap": {
+          "pizza_light": "pizza-pitcher-combo",
+          "catered_slider": "slider-bar",
+          "catered_fajita": "fajita-bar"
+        },
+        "foodFirst": true,
+        "goodAddOnSlugs": [],
+        "betterAddOnSlugs": [
+          "unlimited-arcade-1h"
+        ],
+        "bestAddOnSlugs": [
+          "unlimited-arcade-1h",
+          "laser-plex-card"
+        ],
+        "premiumSpaceSlug": "skybox"
+      }
+    },
+    {
+      "audience": "MIXED",
+      "payload": {
+        "defaultPackageSlugs": {
+          "good": "bowling-1h",
+          "better": "laser-plex-package",
+          "best": "play-axtion"
+        },
+        "defaultAttractionSlugs": [
+          "bowling-1h"
+        ],
+        "defaultFoodSlug": "pizza-pitcher-combo",
+        "diningPreferenceMap": {
+          "pizza_light": "pizza-pitcher-combo",
+          "catered_slider": "slider-bar",
+          "catered_fajita": "fajita-bar"
+        },
+        "foodFirst": true,
+        "goodAddOnSlugs": [],
+        "betterAddOnSlugs": [
+          "laser-plex-card"
+        ],
+        "bestAddOnSlugs": [
+          "axe-throwing-30"
+        ],
+        "premiumSpaceSlug": "lower-event-room"
+      }
+    }
+  ]
+}

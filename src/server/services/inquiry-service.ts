@@ -20,10 +20,13 @@ import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
 import { attractionInterestIdsFromJson } from "@/server/event-planner/build-event-plans";
+import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
+import { resolvePrimaryLocationId } from "@/server/locations/primary-location";
 import { generateEventPlansForInquiry } from "@/server/services/event-plan-service";
 import { runSalesAgentTurn, type SalesAgentRuntime } from "@/server/services/sales-agent-service";
 import {
   CONVERSATION_CHANNELS,
+  INQUIRY_SALES_STAGES,
   INQUIRY_SOURCES,
   INQUIRY_STATUSES,
   MESSAGE_DIRECTIONS,
@@ -53,6 +56,7 @@ export type PublicIntakeInput = {
   diningPreference?: string;
   spacePreference?: string;
   attractionInterestIds?: string[];
+  attractionMode?: string;
   notes?: string;
   companyWebsite?: string;
   submissionId: string;
@@ -120,6 +124,7 @@ export async function createPublicInquiry(
   }
 
   const organization = await resolvePublicInquiryOrganization(database, input.organizationSlug);
+  const locationId = await resolvePrimaryLocationId(database, organization.id);
   const emailNormalized = normalizePublicEmail(parsed.data.email);
   const { token, hash } = createPublicConversationToken();
   const desiredDate = parsed.data.preferredDate
@@ -130,6 +135,7 @@ export async function createPublicInquiry(
     const inquiry = await tx.inquiry.create({
       data: {
         organizationId: organization.id,
+        locationId,
         status: INQUIRY_STATUSES.NEW,
         source: INQUIRY_SOURCES.WEB,
         customerFirstName: parsed.data.firstName,
@@ -153,6 +159,12 @@ export async function createPublicInquiry(
         attractionInterestIds: parsed.data.attractionInterestIds,
         customerNotes: parsed.data.notes?.trim() || null,
         aiHandlingEnabled: false,
+        salesStage: INQUIRY_SALES_STAGES.INQUIRY,
+        audience: audienceFromGuestMix(parsed.data.guestMix),
+        attractionMode: attractionModeFromIntake({
+          attractionMode: parsed.data.attractionMode,
+          attractionInterestIds: parsed.data.attractionInterestIds,
+        }),
       },
     });
 

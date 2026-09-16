@@ -6,6 +6,8 @@ alwaysApply: true
 # MagicCRM architecture
 
 - Design as a multi-tenant SaaS from inception. Never special-case a tenant (including Generations Adventureplex) in application architecture.
+- MagicCRM owns reusable engines. Organizations and locations own the configuration and data that drive those engines.
+- Generations Adventureplex is tenant #1 and a development/reference dataset, not a global default. No runtime behavior may branch on Generations identity (name, slug, or equivalent).
 - `src/app` contains Next.js routes and layouts only. Keep business logic out of route components.
 - `src/modules` holds feature/domain modules. Do not leak domain logic into shared folders.
 - `src/server/services` orchestrates business logic; `repositories` own data access; `policies` own authorization.

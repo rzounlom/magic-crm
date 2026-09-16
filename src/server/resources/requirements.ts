@@ -85,6 +85,9 @@ export function resolveRequirementQuantity(input: {
   if (input.quantityRule === RESOURCE_QUANTITY_RULES.FIXED) {
     return Math.max(1, input.activityQuantity ?? 1);
   }
+  if (input.quantityRule === RESOURCE_QUANTITY_RULES.ALL_OF_TYPE) {
+    return input.activityQuantity != null ? Math.max(1, input.activityQuantity) : null;
+  }
   if (input.guestsPerUnit && input.guestsPerUnit > 0) {
     return Math.max(1, Math.ceil(input.guestCount / input.guestsPerUnit));
   }

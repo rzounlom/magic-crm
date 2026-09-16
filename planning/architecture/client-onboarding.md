@@ -38,6 +38,16 @@ Orchestration:
 
 When the admin accepts and visits `/app`, queued Administrators membership is applied and status becomes `ACTIVE`. If Clerk accepts the invitation but the admin has not completed `/app` provisioning, Team invitation administration may reconcile the local row to `ACCEPTED` without applying Administrators. Groups still apply only on the trusted first-sign-in path.
 
+Catalog, resources, and recommendation profiles are **not** copied from Generations (or any other tenant) during this flow. A future onboarding UI should let the new organization:
+
+1. Configure locations
+2. Import or configure its catalog and prices
+3. Configure numbered resources and capacities
+4. Configure recommendation profiles and itinerary preferences
+5. Activate booking/sales capabilities
+
+Do not treat the Generations booking-catalog dataset as a platform default.
+
 ## CLI
 
 ```bash

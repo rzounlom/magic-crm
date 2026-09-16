@@ -9,6 +9,7 @@ export type ResourceSchedulingMode =
 export const RESOURCE_QUANTITY_RULES = {
   FIXED: "FIXED",
   PER_GUESTS: "PER_GUESTS",
+  ALL_OF_TYPE: "ALL_OF_TYPE",
   UNKNOWN: "UNKNOWN",
 } as const;
 
@@ -35,6 +36,7 @@ export type ResourceReservationSource =
 export const PLAN_AVAILABILITY_STATUSES = {
   NOT_VALIDATED: "NOT_VALIDATED",
   AVAILABLE: "AVAILABLE",
+  UNAVAILABLE: "UNAVAILABLE",
   NEEDS_ADJUSTMENT: "NEEDS_ADJUSTMENT",
   AVAILABILITY_CHANGED: "AVAILABILITY_CHANGED",
 } as const;
@@ -45,6 +47,7 @@ export type PlanAvailabilityStatus =
 export const PLAN_AVAILABILITY_STATUS_LABELS: Record<PlanAvailabilityStatus, string> = {
   [PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED]: "Not validated",
   [PLAN_AVAILABILITY_STATUSES.AVAILABLE]: "Available",
+  [PLAN_AVAILABILITY_STATUSES.UNAVAILABLE]: "Unavailable",
   [PLAN_AVAILABILITY_STATUSES.NEEDS_ADJUSTMENT]: "Needs adjustment",
   [PLAN_AVAILABILITY_STATUSES.AVAILABILITY_CHANGED]: "Availability changed",
 };
@@ -58,6 +61,7 @@ export const SCHEDULE_SLOT_MINUTES = 30;
 export type PlanResourceRequirement = {
   knowledgeItemId: string;
   knowledgeItemName: string;
+  productId?: string;
   resourceTypeId: string | null;
   resourceTypeSlug: string;
   resourceTypeName: string;
@@ -76,6 +80,7 @@ export type PlanResourceRequirement = {
 
 export type ResourceAvailabilityRequest = {
   organizationId: string;
+  locationId?: string | null;
   date: string | null;
   startTime: string | null;
   durationMinutes: number;

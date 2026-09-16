@@ -1,5 +1,5 @@
 import { INQUIRY_STATUSES } from "@/types/inquiry";
-import { EVENT_PLAN_TIER_TITLES, EVENT_PLAN_TIERS, type EventPlanTier } from "@/types/event-planner";
+import { EVENT_PLAN_TIER_TITLES, type EventPlanTier } from "@/types/event-planner";
 
 export type InquiryFunnelStage = {
   id: string;
@@ -45,9 +45,6 @@ export function inquiryFunnelStages(inquiry: {
 }
 
 function selectedPlanFunnelLabel(tier?: string | null, title?: string | null): string {
-  if (tier === EVENT_PLAN_TIERS.BEST_FIT) {
-    return "Best Fit selected";
-  }
   if (tier && tier in EVENT_PLAN_TIER_TITLES) {
     return `${EVENT_PLAN_TIER_TITLES[tier as EventPlanTier]} selected`;
   }

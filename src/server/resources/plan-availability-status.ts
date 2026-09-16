@@ -25,6 +25,12 @@ export function planAvailabilityStatusFromCheck(input: {
   if (incomplete && !configuredConflict) {
     return PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED;
   }
+  if (configuredConflict && !incomplete) {
+    if (input.previouslyValidated) {
+      return PLAN_AVAILABILITY_STATUSES.AVAILABILITY_CHANGED;
+    }
+    return PLAN_AVAILABILITY_STATUSES.UNAVAILABLE;
+  }
   if (input.previouslyValidated) {
     return PLAN_AVAILABILITY_STATUSES.AVAILABILITY_CHANGED;
   }
@@ -42,6 +48,9 @@ export function formatRequirementRule(input: {
   }
   if (input.quantityRule === "PER_GUESTS" && input.guestsPerUnit) {
     return `1 per ${input.guestsPerUnit} guests`;
+  }
+  if (input.quantityRule === "ALL_OF_TYPE") {
+    return "All units of this type";
   }
   if (input.quantityRule === "FIXED") {
     return `${input.quantity ?? 1} required`;

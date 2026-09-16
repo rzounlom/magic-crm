@@ -12,11 +12,11 @@ Public customer routes (`/inquire/*`, `/plan/*`, `/conversation/*`) each wrap `P
 
 Customer-facing title is `{organizationName} Personal Event Planner`. Do not special-case a tenant name in application code.
 
-The slug is resolved server-side. Only organizations with `onboardingStatus = ACTIVE` accept inquiries. Invalid or inactive slugs return 404. The form never accepts a browser-supplied `organizationId`. Attractions and dining options on the form come from that tenant’s active `SalesKnowledgeItem` rows. If the tenant has no food items, the form uses generic dining preference categories.
+The slug is resolved server-side. Only organizations with `onboardingStatus = ACTIVE` accept inquiries. Invalid or inactive slugs return 404. The form never accepts a browser-supplied `organizationId`. Attractions and dining options on the form come from that tenant’s active `SalesKnowledgeItem` rows. If the tenant has no food items, the form uses generic dining preference categories. Mapping those intake keys to catalog food products is tenant `RecommendationProfile.diningPreferenceMap` data, not a global Generations menu.
 
 After a valid submit:
 
-1. Create `Inquiry` (`NEW`, `source = WEB`) with planner fields (guest mix, duration, budget range in cents, goal, dining, space, attraction interest ids)
+1. Create `Inquiry` (`NEW`, `source = WEB`) with planner fields (guest mix, duration, budget range in cents, goal, dining, space, attraction interest ids) and the tenant's primary `locationId` (resolved from the public slug, never from a browser `organizationId`)
 2. Create `Conversation` (`channel = WEB`) with a hashed public token (opaque continuation; not a customer chat UI)
 3. Persist the intake as an inbound customer message for staff history
 4. Run the recommendation engine against tenant sales knowledge (`generateRecommendations` → `buildEventPlans`)
@@ -28,15 +28,15 @@ No customer account is created. Recommendation email is deferred until a communi
 
 ## Recommendation engine
 
-`generateRecommendations({ inquiry, knowledge, availabilityProvider?, resourceCatalog?, storedRequirements? })` is the injection point for live availability. Production passes `createResourceScheduleAvailabilityProvider`, which calls `checkResourceAvailability` — the same service live agents and future booking must use.
+`generateRecommendations({ inquiry, knowledge, availabilityProvider?, resourceCatalog?, storedRequirements? })` is the injection point for live availability on the knowledge path. When the tenant has a catalog, `buildCatalogEventPlans` prices from `Product` / `ProductPrice` instead of `priceText`. Production always passes `createResourceScheduleAvailabilityProvider`, which calls `checkResourceAvailability` — the same service live agents and booking must use.
 
 `availabilityValidated` is true only when every finite resource required by that plan has configured numbered inventory and no HOLD/BOOKED conflict. Until an Admin configures inventory (or if ratios are unknown), it stays `false`. Static published limits still apply in `buildEventPlans`. Recommendation generation and customer selection do not insert schedule rows.
 
-The engine tries to produce three *useful* choices, not three packages for their own sake:
+The engine tries to produce three *useful* choices, not three packages for their own sake. Internal tiers stay `budget` / `best_fit` / `premium`. **Public labels** are Good / Recommended / Premium:
 
-- **Budget Friendly** — lower-cost event that still covers the core goal
-- **Best Fit** — strongest overall close (budget midpoint, selected attractions, dining/space fit); visually **RECOMMENDED**
-- **Premium Experience** — additional activity, dining, space, or duration value from tenant knowledge
+- **Good** — lower-cost event that still covers the core goal
+- **Recommended** — strongest overall close (budget midpoint, selected attractions, dining/space fit); visually **RECOMMENDED**
+- **Premium** — additional activity, dining, space, or duration value from tenant knowledge or catalog
 
 Hard facts come from `SalesKnowledgeItem` (names, `priceText`, min/max guests, published age notes). The engine does not invent prices, hours, lane counts, food products, or availability. Guest-count and published age/capacity notes skip or penalize impractical combinations; unknown capacity is not fabricated. Internal `payload.ranking` scores stay off the customer UI.
 
@@ -65,7 +65,7 @@ Front Desk does not receive inquiry permissions. Event Sales can view/manage inq
 
 Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK**. Staff should start from the chosen package rather than repeating discovery. Selection is not a reservation. **Confirm Booking** creates the Booking record from the Current Agent Version and converts HOLDs to BOOKED.
 
-Workflow stays on `Inquiry.status = READY_FOR_HUMAN` until confirmation. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → `HOLD_PLACED` → `READY_TO_FINALIZE`. After confirmation, `Inquiry.status = BOOKED` and the Inquiry is sales history linked to Booking (`@@unique([organizationId, inquiryId])`).
+Workflow stays on `Inquiry.status = READY_FOR_HUMAN` until confirmation. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → `HOLD_PLACED` → `READY_TO_FINALIZE`. Commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (customer chose a plan) → `HOLD_PLACED` → `BOOKED`. After confirmation, `Inquiry.status = BOOKED` and the Inquiry is sales history linked to Booking (`@@unique([organizationId, inquiryId])`).
 
 ## Status workflow
 
@@ -103,7 +103,7 @@ The Current Agent Version is the source for Confirm Booking (inquiry, date/time,
 
 ## Next
 
-Catalog, proposals, deposits, booking edits/reschedule, cancellation, and email delivery remain later phases.
+See [`catalog.md`](./catalog.md) and [`proposal-engine.md`](./proposal-engine.md) for Phase 3A catalog-backed proposals. Phase 3B is customer 24-hour holds, hold expiry jobs, email, collecting the 30% deposit, and Stripe. Staff HOLDs, Confirm Booking, and the Master Schedule already exist.
 
 Related employee-shell follow-up (not this inbox): sticky authenticated header. See `ui-conventions.md`.
 

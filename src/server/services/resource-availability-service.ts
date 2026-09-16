@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
 import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-window";
+import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import type { PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import { recordAuditEvent } from "@/server/services/audit";
 import {
@@ -136,7 +137,7 @@ export async function checkResourceAvailability(
       where: {
         organizationId: input.organizationId,
         resourceTypeId,
-        active: true,
+        ...resourcesInLocationWhere(input.locationId),
       },
       select: { id: true },
       orderBy: { displayOrder: "asc" },
@@ -319,12 +320,14 @@ export function isReservationOverlapError(error: unknown): boolean {
 export function createResourceScheduleAvailabilityProvider(
   database: ScheduleDb,
   organizationId: string,
+  locationId?: string | null,
 ): PlanAvailabilityProvider {
   return {
     async check(input) {
       const requirements = input.resourceRequirements ?? [];
       const result = await checkResourceAvailability(database, {
         organizationId,
+        locationId,
         date: input.eventDate,
         startTime: input.startTime,
         durationMinutes: input.durationMinutes,

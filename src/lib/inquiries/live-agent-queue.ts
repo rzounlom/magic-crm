@@ -36,6 +36,7 @@ export function liveAgentQueuePriority(inquiry: LiveAgentQueueInquiry, now = new
   }
   const availabilityIssue =
     inquiry.selectedAvailabilityStatus === PLAN_AVAILABILITY_STATUSES.NEEDS_ADJUSTMENT ||
+    inquiry.selectedAvailabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE ||
     inquiry.selectedAvailabilityStatus === PLAN_AVAILABILITY_STATUSES.AVAILABILITY_CHANGED;
   if (selected && availabilityIssue) {
     return 1;

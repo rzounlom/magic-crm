@@ -748,22 +748,30 @@ GO LIVE
 
 # 17. Generations Adventureplex Rule
 
+**Generations is tenant #1, not a global default.**
+
+MagicCRM owns reusable engines (pricing, recommendation, itinerary, availability, proposals). Organizations own the catalog, resources, recommendation profiles, and operating configuration that drive those engines.
+
 Never write:
 
 ```text
 if company === "Generations" ...
+if organization.slug === "generations..." ...
 ```
+
+or any equivalent hidden tenant branch.
 
 Generations-specific setup belongs in:
 
-- seed data
-- tenant configuration
+- explicit tenant seed/import data (`scripts/data/generations-*`)
+- tenant configuration rows
 - catalog records
 - resource records
+- recommendation profiles
 - policies
 - integrations
 
-Anything Generations needs that another fun center could reasonably need should be implemented as a configurable product capability.
+Anything Generations needs that another fun center could reasonably need should be implemented as a configurable product capability. A future tenant must be able to have different attractions, prices, capacities, recommendation mixes, and itinerary sequencing without application-code changes.
 
 ---
 

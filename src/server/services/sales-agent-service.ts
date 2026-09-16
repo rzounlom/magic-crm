@@ -9,12 +9,15 @@ import {
 import { logSalesAgentEvent } from "@/server/logging";
 import { salesAgentInstructions } from "@/server/ai/sales-agent-instructions";
 import {
+  lookupAvailabilityArgsSchema,
+  omitUntrustedTenantContext,
   requestHumanHandoffArgsSchema,
   searchSalesKnowledgeArgsSchema,
   SALES_AGENT_TOOL_DEFINITIONS,
   updateInquiryDetailsArgsSchema,
 } from "@/server/ai/sales-agent-tools";
 import { recordAuditEvent } from "@/server/services/audit";
+import { lookupAvailabilityForAgent, recommendProposalsForAgent } from "@/server/services/catalog-ai-ports";
 import { searchActiveSalesKnowledge } from "@/server/services/sales-knowledge-service";
 import {
   AI_CUSTOMER_FALLBACK_MESSAGE,
@@ -260,8 +263,9 @@ async function executeAgentToolUnchecked(
   rawArgs: string,
   lastCustomerMessage: string,
 ): Promise<{ payload: unknown; handoff?: boolean; handoffReason?: string | null }> {
+  const parsedArgs = omitUntrustedTenantContext(safeJson(rawArgs));
   if (name === "search_sales_knowledge") {
-    const args = searchSalesKnowledgeArgsSchema.parse(safeJson(rawArgs));
+    const args = searchSalesKnowledgeArgsSchema.parse(parsedArgs);
     const items = await searchActiveSalesKnowledge(database, input.organizationId, args);
     return {
       payload: items.map((item) => ({
@@ -310,7 +314,7 @@ async function executeAgentToolUnchecked(
   }
 
   if (name === "update_inquiry_details") {
-    const args = updateInquiryDetailsArgsSchema.parse(safeJson(rawArgs));
+    const args = updateInquiryDetailsArgsSchema.parse(parsedArgs);
     const data: Prisma.InquiryUncheckedUpdateManyInput = {};
     if (args.eventType !== undefined) data.eventType = args.eventType;
     if (args.desiredDate !== undefined) {
@@ -336,7 +340,7 @@ async function executeAgentToolUnchecked(
   }
 
   if (name === "request_human_handoff") {
-    const args = requestHumanHandoffArgsSchema.parse(safeJson(rawArgs));
+    const args = requestHumanHandoffArgsSchema.parse(parsedArgs);
     const decision = evaluateSalesAgentHandoff({ lastCustomerMessage });
     if (!decision.allow) {
       logSalesAgentEvent("sales_agent_handoff_declined", {
@@ -366,6 +370,25 @@ async function executeAgentToolUnchecked(
       metadata: { urgency: args.urgency ?? "normal" },
     });
     return { payload: { handedOff: true }, handoff: true, handoffReason: args.reason };
+  }
+
+  if (name === "recommend_proposals") {
+    const proposals = await recommendProposalsForAgent(database, {
+      organizationId: input.organizationId,
+      inquiryId: input.inquiryId,
+    });
+    return { payload: { proposals } };
+  }
+
+  if (name === "lookup_availability") {
+    const args = lookupAvailabilityArgsSchema.parse(parsedArgs);
+    const result = await lookupAvailabilityForAgent(database, {
+      organizationId: input.organizationId,
+      inquiryId: input.inquiryId,
+      date: args.date,
+      startTime: args.startTime,
+    });
+    return { payload: result };
   }
 
   return { payload: { error: "Unknown tool" } };

@@ -165,7 +165,7 @@ describe("buildEventPlans", () => {
 
     expect(drafts).toHaveLength(3);
     const [budget, bestFit, premium] = drafts;
-    expect(bestFit.title).toBe("Best Fit");
+    expect(bestFit.title).toBe("Recommended");
     expect(budget.payload.activities.length).toBeLessThanOrEqual(2);
     expect(premium.payload.activities.length).toBeGreaterThan(budget.payload.activities.length);
     expect(bestFit.payload.dining.label).toMatch(/slider/i);

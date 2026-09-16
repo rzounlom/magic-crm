@@ -1,9 +1,11 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
 import { ResourceError } from "@/server/errors";
+import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
+import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { applyRotationWindows } from "@/server/resources/rotation-windows";
 import { localEventWindow, minutesToClock, parseClockToMinutes } from "@/server/resources/time-window";
 import { recordAuditEvent } from "@/server/services/audit";
@@ -14,7 +16,7 @@ import {
   releaseExpiredHolds,
   reserveResourcesInTransaction,
 } from "@/server/services/resource-availability-service";
-import { EVENT_PLAN_KINDS, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
+import { EVENT_PLAN_KINDS, INQUIRY_SALES_STAGES, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
 import type { EventPlanPayload } from "@/types/event-planner";
 import { PERMISSIONS } from "@/types/permissions";
 import {
@@ -51,6 +53,7 @@ async function assignResourcesForRequirements(
   database: HoldDb,
   input: {
     organizationId: string;
+    locationId?: string | null;
     window: { slotDate: string; startMinute: number; endMinute: number };
     requirements: PlanResourceRequirement[];
     excludeInquiryId?: string | null;
@@ -77,7 +80,7 @@ async function assignResourcesForRequirements(
       where: {
         organizationId: input.organizationId,
         resourceTypeId: requirement.resourceTypeId,
-        active: true,
+        ...resourcesInLocationWhere(input.locationId),
       },
       select: { id: true },
       orderBy: { displayOrder: "asc" },
@@ -114,6 +117,7 @@ export async function getInquiryPlanAvailabilitySnapshot(
   inquiry: {
     id: string;
     organizationId: string;
+    locationId: string | null;
     desiredDate: Date | null;
     desiredStartTime: string | null;
     selectedEventPlanId: string | null;
@@ -127,9 +131,10 @@ export async function getInquiryPlanAvailabilitySnapshot(
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
   await releaseExpiredHolds(database, ctx.organizationId);
   const payload = plan.payload as EventPlanPayload;
+  const locationId = await resolveInquiryLocationId(database, inquiry);
   const inventory = await database.resourceType.findMany({
     where: { organizationId: ctx.organizationId },
-    select: { id: true, _count: { select: { resources: { where: { active: true } } } } },
+    select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
   });
   const requirements = applyRotationWindows(
     applyInventoryFeasibility(
@@ -143,6 +148,7 @@ export async function getInquiryPlanAvailabilitySnapshot(
   );
   const result = await checkResourceAvailability(database, {
     organizationId: ctx.organizationId,
+    locationId,
     date: payload.eventDate ?? (inquiry.desiredDate ? inquiry.desiredDate.toISOString().slice(0, 10) : null),
     startTime: payload.startTime ?? inquiry.desiredStartTime,
     durationMinutes: plan.durationMinutes ?? payload.durationMinutes,
@@ -301,9 +307,10 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
   if (!window || !date || !startTime) {
     throw new ResourceError("INVALID_RESOURCE", "A date and start time are required before placing a hold.");
   }
+  const locationId = await resolveInquiryLocationId(database, inquiry);
   const inventory = await database.resourceType.findMany({
     where: { organizationId: ctx.organizationId },
-    select: { id: true, _count: { select: { resources: { where: { active: true } } } } },
+    select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
   });
   const requirements = applyRotationWindows(
     applyInventoryFeasibility(payload.resourceRequirements ?? [], inventory.map((row) => ({
@@ -317,6 +324,7 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
   }
   const availability = await checkResourceAvailability(database, {
     organizationId: ctx.organizationId,
+    locationId,
     date,
     startTime,
     durationMinutes,
@@ -332,6 +340,7 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
     await database.$transaction(async (tx) => {
       const assignments = await assignResourcesForRequirements(tx as HoldDb, {
         organizationId: ctx.organizationId,
+        locationId,
         window,
         requirements,
         excludeInquiryId: inquiry.id,
@@ -385,7 +394,7 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
   });
   await database.inquiry.update({
     where: { id: inquiry.id },
-    data: { workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED },
+    data: { workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED, salesStage: INQUIRY_SALES_STAGES.HOLD_PLACED },
   });
   return {
     resourceCount,
@@ -432,9 +441,10 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
   if (existing.length === 0) {
     throw new ResourceError("HOLD_NOT_FOUND");
   }
+  const locationId = await resolveInquiryLocationId(database, inquiry);
   const inventory = await database.resourceType.findMany({
     where: { organizationId: ctx.organizationId },
-    select: { id: true, _count: { select: { resources: { where: { active: true } } } } },
+    select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
   });
   const requirements = applyRotationWindows(
     applyInventoryFeasibility(
@@ -445,6 +455,7 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
   );
   const availability = await checkResourceAvailability(database, {
     organizationId: ctx.organizationId,
+    locationId,
     date: payload.eventDate,
     startTime: payload.startTime,
     durationMinutes: plan.durationMinutes ?? payload.durationMinutes,
@@ -459,6 +470,7 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
     await database.$transaction(async (tx) => {
       const assignments = await assignResourcesForRequirements(tx as HoldDb, {
         organizationId: ctx.organizationId,
+        locationId,
         window,
         requirements,
         excludeInquiryId: inquiry.id,
@@ -535,7 +547,7 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
   });
   await database.inquiry.update({
     where: { id: inquiry.id },
-    data: { workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED },
+    data: { workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED, salesStage: INQUIRY_SALES_STAGES.HOLD_PLACED },
   });
 }
 

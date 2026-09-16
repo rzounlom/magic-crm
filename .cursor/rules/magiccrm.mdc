@@ -28,6 +28,8 @@ For every task:
 
 Assume eventual multi-organization/multi-location operation.
 
+- MagicCRM owns engines; organizations own configuration.
+- Generations Adventureplex is tenant #1, not a global default. Never branch runtime behavior on Generations identity.
 - Organization-scoped data includes `organizationId`.
 - Location-scoped data includes `locationId` where appropriate.
 - Never fetch unbounded collections for normal UI.
@@ -90,6 +92,8 @@ Rules:
 ## Database
 
 - Review every Prisma migration.
+- `pnpm db:migrate` and `pnpm db:deploy` must apply committed migrations to the isolated test database as well as development. Do not leave the test schema behind.
+- Never reset the development or test database unless the user explicitly asks.
 - Use database constraints for important invariants where practical.
 - Use transactions for multi-record state transitions.
 - Financial records are auditable.

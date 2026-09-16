@@ -14,6 +14,7 @@ import { notify } from "@/lib/ui/notify";
 import { yieldToPaint } from "@/lib/ui/yield-to-paint";
 import { selectPublicEventPlanAction } from "@/server/actions/public-inquiry";
 import { CUSTOMER_AVAILABILITY_NOTE, EVENT_PLAN_TIERS } from "@/types/event-planner";
+import { DEPOSIT_PREVIEW_NOTE } from "@/types/catalog";
 
 type PlanCard = {
   id: string;
@@ -216,7 +217,7 @@ function PlanOptionCard({
         <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">RECOMMENDED</p>
       ) : (
         <p className="text-xs font-semibold tracking-[0.16em] text-foreground/55 uppercase">
-          {plan.tier === EVENT_PLAN_TIERS.BUDGET ? "Lower cost" : "Upgrade"}
+          {plan.tier === EVENT_PLAN_TIERS.BUDGET ? "Good" : "Premium"}
         </p>
       )}
       <h2 className="mt-2 text-xl font-semibold">{plan.title}</h2>
@@ -231,8 +232,14 @@ function PlanOptionCard({
           ? ` · ${formatMoneyFromCents(perPerson, displayCurrency)} per person`
           : ""}
       </p>
+      {payload.depositPreviewCents != null && payload.pricingComplete ? (
+        <p className="mt-1 text-xs text-foreground/60">
+          Deposit preview {formatMoneyFromCents(payload.depositPreviewCents, displayCurrency)} ·{" "}
+          {payload.depositPreviewNote ?? DEPOSIT_PREVIEW_NOTE}
+        </p>
+      ) : null}
 
-      <PlanSection title="Activities">
+      <PlanSection title="Attractions">
         {payload.activities.length > 0 ? (
           <ul className="list-disc space-y-1 pl-5">
             {payload.activities.map((activity) => (
@@ -251,6 +258,26 @@ function PlanOptionCard({
 
       <PlanSection title="Dining">{payload.dining.label}</PlanSection>
 
+      <PlanSection title="Itinerary">
+        {payload.itinerary && payload.itinerary.length > 0 ? (
+          <ul className="list-disc space-y-1 pl-5">
+            {payload.itinerary.map((segment) => (
+              <li key={`${segment.startTime}-${segment.label}`}>
+                {segment.startTime}–{segment.endTime} {segment.label}
+              </li>
+            ))}
+          </ul>
+        ) : payload.schedule.length > 0 ? (
+          <ul className="list-disc space-y-1 pl-5">
+            {payload.schedule.map((row) => (
+              <li key={row}>{row}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>To be confirmed with our event team</p>
+        )}
+      </PlanSection>
+
       <PlanSection title="Space">
         {payload.spaces.length > 0
           ? payload.spaces.map((space) => space.name).join(", ")
@@ -262,6 +289,12 @@ function PlanOptionCard({
       <PlanSection title="Why We Recommend This">
         <p>{plan.customerFacingReason}</p>
         <p className="mt-2 text-xs text-foreground/55">{availabilityNote}</p>
+        {payload.suggestedStartTimes && payload.suggestedStartTimes.length > 0 ? (
+          <p className="mt-2 text-xs text-foreground/70">
+            Nearby times to consider: {payload.suggestedStartTimes.join(", ")}. Choosing a plan does not hold or
+            book those times.
+          </p>
+        ) : null}
       </PlanSection>
 
       <div className="mt-auto pt-5">

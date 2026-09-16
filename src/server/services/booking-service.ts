@@ -20,7 +20,7 @@ import {
   releaseExpiredHolds,
 } from "@/server/services/resource-availability-service";
 import { BOOKING_LINE_ITEM_KINDS, BOOKING_LIST_FILTERS, BOOKING_STATUSES } from "@/types/booking";
-import { EVENT_PLAN_KINDS, INQUIRY_STATUSES } from "@/types/inquiry";
+import { EVENT_PLAN_KINDS, INQUIRY_SALES_STAGES, INQUIRY_STATUSES } from "@/types/inquiry";
 import { PERMISSIONS } from "@/types/permissions";
 import {
   RESOURCE_RESERVATION_SOURCES,
@@ -228,6 +228,7 @@ export async function confirmInquiryBooking(
 
   const availability = await checkResourceAvailability(database, {
     organizationId: ctx.organizationId,
+    locationId: inquiry.locationId,
     date: payload.eventDate,
     startTime: payload.startTime,
     durationMinutes: working.durationMinutes ?? payload.durationMinutes,
@@ -348,6 +349,7 @@ export async function confirmInquiryBooking(
         where: { id: inquiry.id },
         data: {
           status: INQUIRY_STATUSES.BOOKED,
+          salesStage: INQUIRY_SALES_STAGES.BOOKED,
           aiHandlingEnabled: false,
           workflowStage: null,
         },

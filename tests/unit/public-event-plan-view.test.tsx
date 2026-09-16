@@ -82,7 +82,7 @@ describe("public event plan view", () => {
     expect(html).toContain("RECOMMENDED");
     expect(html).toContain("Why We Recommend This");
     expect(html).toContain("Choose This Event Plan");
-    expect(html).toContain("Activities");
+    expect(html).toContain("Attractions");
     expect(html).toContain("Dining");
     expect(html).toContain("Event Length");
     expect(html).toContain("Final availability will be confirmed by our event team.");

@@ -24,13 +24,15 @@ Prisma 7 no longer puts `url` / `directUrl` in `schema.prisma`. Connections are 
 
 `DIRECT_URL` is required for any Prisma command that can connect to or change a database, including:
 
-- `pnpm db:migrate` (`prisma migrate dev`)
-- `pnpm db:deploy` (`prisma migrate deploy`)
+- `pnpm db:migrate` (creates/applies development migrations, then `prisma migrate deploy` on the isolated test database)
+- `pnpm db:deploy` (applies committed migrations to development, then to the isolated test database)
 - `pnpm db:studio`
 - `prisma migrate status`
 - introspection (`prisma db pull`) and other administrative CLI work
 
 Those commands **fail closed** if `DIRECT_URL` is missing or is the config-parse placeholder. They never silently fall back to localhost.
+
+`pnpm db:migrate` and `pnpm db:deploy` also apply committed migrations to the isolated Neon TEST database from `.env.test`. That keeps development and integration-test schemas in sync. They never reset either database. `pnpm test:db:prepare` remains available when you only need to catch the test database up (migrations + permission catalog).
 
 `pnpm db:validate` and `pnpm db:generate` do not connect. Prisma 7 still requires `datasource.url` while loading `prisma.config.ts`, so those schema-only commands may use an explicit unused placeholder (`postgresql://127.0.0.1:5432/magiccrm_prisma_config_placeholder`). That value is rejected for every connecting command.
 
@@ -131,7 +133,7 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `TeamInvitation` unique on `clerkOrganizationInvitationId`; pending unique on `(organizationId, emailNormalized)` via a partial SQL index
 - `TeamInvitationSecurityGroup` unique on `(teamInvitationId, securityGroupId)` with same-tenant composite FKs
 - `Organization.onboardingStatus` indexed for platform recovery
-- `Inquiry` unique on `(organizationId, id)`; indexes `(organizationId, status, createdAt)`, `(organizationId, customerEmailNormalized)`, `(organizationId, selectedEventPlanId)`, `(organizationId, customerSelectedAt)`, `(organizationId, workflowStage)`
+- `Inquiry` unique on `(organizationId, id)`; indexes `(organizationId, status, createdAt)`, `(organizationId, customerEmailNormalized)`, `(organizationId, selectedEventPlanId)`, `(organizationId, customerSelectedAt)`, `(organizationId, workflowStage)`, `(organizationId, salesStage)`
 - `Booking` unique on `(organizationId, id)`, `(organizationId, inquiryId)`, `(organizationId, bookingNumber)`; indexes `(organizationId, eventDate)`, `(organizationId, status, eventDate)`
 - `OrganizationBookingSequence` primary key `(organizationId, year)`
 - `EventPlanRecommendation` unique on `(organizationId, id)` and `(organizationId, inquiryId, kind, tier)`; index `(organizationId, inquiryId)`. `kind` is `RECOMMENDATION` or `AGENT_WORKING`
@@ -141,6 +143,12 @@ That service is not implemented in this foundation. There is no `db:reset` scrip
 - `ResourceType` unique on `(organizationId, id)` and `(organizationId, slug)`
 - `Resource` unique on `(organizationId, id)` and `(organizationId, resourceTypeId, displayOrder)`
 - `KnowledgeResourceRequirement` unique on `(organizationId, salesKnowledgeItemId, resourceTypeId)`
+- `ProductCategory` unique on `(organizationId, id)` and `(organizationId, slug)`
+- `Product` unique on `(organizationId, id)` and `(organizationId, slug)`
+- `ProductPrice` unique on `(organizationId, id)`; index `(organizationId, productId)`
+- `ProductResourceRequirement` unique on `(organizationId, productId, resourceTypeId)`
+- `ProductServing` unique on `(organizationId, productId)`
+- `RecommendationProfile` unique on `(organizationId, audience)`
 - `ResourceReservation` unique on `(organizationId, id)`; indexes `(organizationId, resourceId, slotDate)`, `(organizationId, inquiryId)`, `(organizationId, bookingId)`, `(organizationId, status, releasedAt)`; SQL exclusion `resource_reservations_no_overlap` on `(resourceId, slotDate, int4range(startMinute,endMinute))` for unreleased HOLD/BOOKED
 - `CommunicationEvent` indexes `(organizationId, createdAt)`, `(organizationId, inquiryId)`, `(organizationId, bookingId)`, `(organizationId, kind, status)`
 - `AiUsage` indexed on `(organizationId, createdAt)`
@@ -178,6 +186,7 @@ Committed migrations:
 - `20260909160000_resource_management_schedule` — Admin resource configuration and Master Schedule occupancy
 - `20260909180000_live_agent_workspace` — Inquiry workflowStage/assignment timestamps, EventPlanRecommendation.kind, unique `(organizationId, inquiryId, kind, tier)`
 - `20260909200000_confirmed_bookings` — Booking, BookingLineItem, OrganizationBookingSequence; ResourceReservation/CommunicationEvent booking FKs
+- `20260916120000_booking_catalog` — ProductCategory, Product, ProductPrice, ProductResourceRequirement, ProductServing, RecommendationProfile; Inquiry salesStage/audience/attractionMode
 
 ## Seed / reference data
 
@@ -193,6 +202,8 @@ There is no generic seed that creates a special-cased tenant. Production startup
 
 `pnpm tenant:import-sales-knowledge -- --slug <slug> --confirm IMPORT` is a development-only, idempotent helper for the named tenant. It does not run during provisioning and does not hardcode Generations into application defaults. After import it syncs finite **resource types** and knowledge requirement links; it does not create numbered lanes or rooms.
 
+`npm run tenant:import-booking-catalog -- --slug <slug> --confirm IMPORT` is the same class of tool for catalog/products/resources/recommendation profiles. It attaches numbered resources to the tenant primary location. It does not run for every new organization.
+
 `pnpm tenant:sync-resource-types -- --slug <slug> --confirm SYNC` repeats that type/link sync without re-importing knowledge.
 
 Future development seeds should use generic names such as “MagicCRM Development Organization” / “Main Location”. Generations Adventureplex configuration belongs in tenant data, not in application code.
@@ -201,7 +212,7 @@ Future development seeds should use generic names such as “MagicCRM Developmen
 
 Unit tests cover environment validation, feature keys, request-context mapping, and tenant-scoped repository query behavior.
 
-Integration tests run only against the dedicated Neon TEST database (`pnpm test:db:prepare` then `pnpm test:integration`). See [`../testing/database-integration-strategy.md`](../testing/database-integration-strategy.md). Never point automated tests at production or a developer’s normal Neon branch.
+Integration tests run only against the dedicated Neon TEST database (`pnpm db:deploy` or `pnpm test:db:prepare`, then `pnpm test:integration`). See [`../testing/database-integration-strategy.md`](../testing/database-integration-strategy.md). Never point automated tests at production or a developer’s normal Neon branch.
 
 ## Future scaling
 

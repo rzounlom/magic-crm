@@ -14,6 +14,12 @@ export async function deleteTestOrganizations(
   await database.resourceReservation.deleteMany({ where: { organizationId: { in: ids } } });
   await database.booking.deleteMany({ where: { organizationId: { in: ids } } });
   await database.organizationBookingSequence.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.productResourceRequirement.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.productServing.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.productPrice.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.product.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.productCategory.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.recommendationProfile.deleteMany({ where: { organizationId: { in: ids } } });
   await database.knowledgeResourceRequirement.deleteMany({ where: { organizationId: { in: ids } } });
   await database.resource.deleteMany({ where: { organizationId: { in: ids } } });
   await database.resourceType.deleteMany({ where: { organizationId: { in: ids } } });
@@ -21,6 +27,7 @@ export async function deleteTestOrganizations(
   await database.aiUsage.deleteMany({ where: { organizationId: { in: ids } } });
   await database.eventPlanRecommendation.deleteMany({ where: { organizationId: { in: ids } } });
   await database.conversation.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.eventPlanRecommendation.deleteMany({ where: { organizationId: { in: ids } } });
   await database.inquiry.deleteMany({ where: { organizationId: { in: ids } } });
   await database.salesKnowledgeItem.deleteMany({ where: { organizationId: { in: ids } } });
   await database.teamInvitation.deleteMany({ where: { organizationId: { in: ids } } });
