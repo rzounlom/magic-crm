@@ -10,7 +10,9 @@ import {
   isTenantContextError,
 } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
+import { requirePermission } from "@/server/policies/require-permission";
 import { revalidateScheduleAndInquiry } from "@/server/actions/revalidate-resources";
+import { expireInquiryHoldsNow } from "@/server/services/proposal-hold-service";
 import {
   extendInquiryHolds,
   placeInquiryPlanHold,
@@ -20,6 +22,7 @@ import {
   updateInquiryPlanHold,
 } from "@/server/services/resource-hold-service";
 import type { SecurityActionResult } from "@/types/security-action";
+import { PERMISSIONS } from "@/types/permissions";
 
 function toResult(error: unknown, title: string): SecurityActionResult {
   if (isAuthorizationError(error) || isTenantContextError(error) || isResourceError(error)) {
@@ -121,5 +124,30 @@ export async function extendInquiryHoldAction(formData: FormData): Promise<Secur
   } catch (error) {
     unstable_rethrow(error);
     return toResult(error, "Unable to extend hold");
+  }
+}
+
+export async function expireInquiryHoldNowAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = z.string().trim().min(1).parse(String(formData.get("inquiryId") ?? ""));
+    const ctx = await getRequestContext();
+    await requirePermission(ctx, PERMISSIONS.EVENTS_EDIT, db);
+    await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, db);
+    const result = await expireInquiryHoldsNow(db, {
+      organizationId: ctx.organizationId,
+      inquiryId,
+    });
+    await revalidateScheduleAndInquiry(inquiryId);
+    return {
+      ok: true,
+      title: "Hold expired",
+      message:
+        result.expiredCount > 0
+          ? "The 24-hour hold was expired and resources are available again. This is the same path automatic expiry uses."
+          : "No active hold was due to expire.",
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to expire hold");
   }
 }

@@ -49,7 +49,7 @@ describe("booking confirmation blockers", () => {
     expect(bookingConfirmationBlockers(input(), new Date("2026-09-09T16:00:00.000Z"))).toEqual([]);
   });
 
-  it("blocks confirmation when Ready to Finalize is missing", () => {
+  it("allows confirmation from an active hold without Ready to Finalize", () => {
     const reasons = bookingConfirmationBlockers(
       input({
         workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED,
@@ -57,7 +57,21 @@ describe("booking confirmation blockers", () => {
       }),
       new Date("2026-09-09T16:00:00.000Z"),
     );
-    expect(reasons[0]).toMatch(/Ready to Finalize/i);
+    expect(reasons).toEqual([]);
+  });
+
+  it("requires a hold for finite inventory instead of Ready to Finalize", () => {
+    const reasons = bookingConfirmationBlockers(
+      input({
+        workflowStage: INQUIRY_WORKFLOW_STAGES.AGENT_WORKING,
+        readyToFinalizeAt: null,
+        holds: [],
+        hasFiniteRequirements: true,
+      }),
+      new Date("2026-09-09T16:00:00.000Z"),
+    );
+    expect(reasons).toContain("Place a resource hold before confirming a booking.");
+    expect(reasons.some((row) => row.includes("Ready to Finalize"))).toBe(false);
   });
 
   it("names an expired hold so the agent can recheck", () => {

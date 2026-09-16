@@ -2,7 +2,7 @@ import { formatEventDuration } from "@/lib/event-planner/labels";
 import { formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import { CUSTOMER_SELECTED_PLAN_BANNER } from "@/lib/inquiries/ready-for-human-reason";
-import { formatEventLocalDateTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { formatEventLocalDateTime, formatItineraryLine, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { EVENT_PLAN_TIER_TITLES, type EventPlanTier } from "@/types/event-planner";
 import { PLAN_AVAILABILITY_STATUS_LABELS, PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 
@@ -26,12 +26,22 @@ export function EmployeeSelectedEventPlan({
   desiredStartTime,
   selectedAt,
   timeZone,
+  salesStage,
+  holdExpiresAt,
+  heldResources,
+  depositRequiredCents,
+  currency,
 }: {
   plan: PlanRecord;
   desiredDate: Date | null;
   desiredStartTime: string | null;
   selectedAt?: Date | null;
   timeZone?: string;
+  salesStage?: string | null;
+  holdExpiresAt?: Date | null;
+  heldResources?: string[];
+  depositRequiredCents?: number | null;
+  currency?: string;
 }) {
   const payload = readEventPlanPayload(plan.payload);
   const total = plan.estimatedTotalCents ?? 0;
@@ -136,16 +146,27 @@ export function EmployeeSelectedEventPlan({
         <div>
           <dt className="text-foreground/60">Selection timestamp</dt>
           <dd className="mt-1">
-            {selectedAt && timeZone ? formatOrganizationTimestamp(selectedAt, timeZone) : selectedAt ? selectedAt.toISOString() : "—"}
+            {selectedAt ? formatOrganizationTimestamp(selectedAt, timeZone || "UTC") : "—"}
           </dd>
         </div>
       </dl>
-      {payload.schedule.length > 0 ? (
+      {payload.itinerary && payload.itinerary.length > 0 ? (
+        <div className="mt-4 text-sm">
+          <p className="text-foreground/60">Proposed schedule</p>
+          <ul className="mt-1 list-disc pl-5 text-foreground/80">
+            {payload.itinerary.map((segment) => (
+              <li key={`${segment.startTime}-${segment.label}`}>
+                {formatItineraryLine(`${segment.startTime}–${segment.endTime} ${segment.label}`)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : payload.schedule.length > 0 ? (
         <div className="mt-4 text-sm">
           <p className="text-foreground/60">Proposed schedule</p>
           <ul className="mt-1 list-disc pl-5 text-foreground/80">
             {payload.schedule.map((line) => (
-              <li key={line}>{line}</li>
+              <li key={line}>{formatItineraryLine(line)}</li>
             ))}
           </ul>
         </div>
@@ -155,9 +176,22 @@ export function EmployeeSelectedEventPlan({
         <p className="mt-3 text-sm text-foreground/70">{plan.availabilityNote}</p>
       ) : null}
       <p className="mt-4 text-xs text-foreground/55">
-        Selection is customer intent only. Inventory is not reserved. Hold resources, then confirm the
-        booking from the bar at the top of this page.
+        {salesStage === "HOLD_PLACED"
+          ? "A 24-hour hold is on the exact resources below. Confirm Booking converts those holds in place. Payment is not collected yet."
+          : "The customer asked for live-agent follow-up. Inventory is not held. Confirm availability on the Resource Schedule before booking."}
       </p>
+      {salesStage === "HOLD_PLACED" && holdExpiresAt && timeZone ? (
+        <p className="mt-2 text-sm">
+          Held until {formatOrganizationTimestamp(holdExpiresAt, timeZone)}
+          {heldResources && heldResources.length > 0 ? ` · ${heldResources.join(", ")}` : ""}
+        </p>
+      ) : null}
+      {depositRequiredCents != null && depositRequiredCents > 0 ? (
+        <p className="mt-2 text-sm text-foreground/70">
+          Deposit required (preview): {formatMoneyFromCents(depositRequiredCents, currency || plan.currency)} — not
+          collected yet.
+        </p>
+      ) : null}
     </details>
   );
 }

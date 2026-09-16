@@ -43,3 +43,22 @@ label:has(input[type="radio"]:not(:disabled)) {
 label:has(:disabled) {
   cursor: not-allowed;
 }
+
+@keyframes magiccrm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.magiccrm-spinner {
+  animation: magiccrm-spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .magiccrm-spinner {
+    animation: none;
+    border-top-color: currentColor;
+    opacity: 0.7;
+  }
+}
+

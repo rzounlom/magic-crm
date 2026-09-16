@@ -1,6 +1,6 @@
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
 import { buildItinerary } from "@/server/catalog/itinerary";
-import { percentOfCents, priceProduct, weekdayKeyFromIsoDate, isWeekendKey } from "@/server/catalog/pricing";
+import { percentOfCents, priceProduct, weekdayKeyFromIsoDate, isWeekendKey, depositPercentFromTenant, depositPreviewNote } from "@/server/catalog/pricing";
 import {
   deriveCatalogResourceRequirements,
   type CatalogResourceRequirementRow,
@@ -11,8 +11,6 @@ import { planAvailabilityStatusFromCheck } from "@/server/resources/plan-availab
 import { findNearbyAvailableStarts } from "@/server/services/nearby-availability";
 import {
   ATTRACTION_MODES,
-  DEPOSIT_PREVIEW_NOTE,
-  DEPOSIT_PREVIEW_PERCENT,
   type CatalogProductInput,
   type InquiryAudience,
   type PricedLineItem,
@@ -184,6 +182,7 @@ export async function buildCatalogEventPlans(input: {
   profiles: LoadedRecommendationProfile[];
   resourceRequirements: CatalogResourceRequirementRow[];
   currency: string;
+  depositPercent?: number;
   availabilityProvider?: PlanAvailabilityProvider;
   excludeInquiryId?: string | null;
 }): Promise<EventPlanDraft[]> {
@@ -308,7 +307,8 @@ export async function buildCatalogEventPlans(input: {
       previouslyValidated: false,
       result,
     });
-    const depositPreviewCents = pricingComplete ? percentOfCents(totalCents, DEPOSIT_PREVIEW_PERCENT) : null;
+    const depositPercent = depositPercentFromTenant(input.depositPercent);
+    const depositPreviewCents = pricingComplete ? percentOfCents(totalCents, depositPercent) : null;
     const names = selected.map((row) => row.name).join(", ");
 
     drafts.push({
@@ -365,7 +365,8 @@ export async function buildCatalogEventPlans(input: {
         itinerary,
         lineItems,
         depositPreviewCents,
-        depositPreviewNote: DEPOSIT_PREVIEW_NOTE,
+        depositPreviewPercent: depositPercent,
+        depositPreviewNote: depositPreviewNote(depositPercent),
         suggestedStartTimes,
         catalogBacked: true,
         pricingComplete,

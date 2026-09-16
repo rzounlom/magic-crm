@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { percentOfCents, priceProduct } from "@/server/catalog/pricing";
+import { percentOfCents, priceProduct, depositRequiredCents, depositPercentFromTenant } from "@/server/catalog/pricing";
 import { PRODUCT_KINDS, PRODUCT_PRICE_STRATEGIES, type CatalogProductInput } from "@/types/catalog";
 
 function product(overrides: Partial<CatalogProductInput> & Pick<CatalogProductInput, "slug" | "name" | "prices">): CatalogProductInput {
@@ -154,6 +154,13 @@ describe("catalog pricing", () => {
 
   it("stores food cents exactly, including fractional-dollar source prices", () => {
     expect(percentOfCents(33097, 30)).toBe(9929);
+  });
+
+  it("applies tenant deposit percent in integer cents", () => {
+    expect(depositRequiredCents(100_000, 30)).toBe(30_000);
+    expect(depositRequiredCents(100_000, 20)).toBe(20_000);
+    expect(depositPercentFromTenant(50)).toBe(50);
+    expect(depositPercentFromTenant(101)).toBe(30);
   });
 
   it("does not invent guests-per-unit or combo size when tenant config is missing", () => {

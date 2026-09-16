@@ -169,6 +169,14 @@ describe("personal event planner inquiries (postgres)", () => {
       where: { id: b.organizationId },
       data: { timezone: "America/Los_Angeles" },
     });
+    await db.location.updateMany({
+      where: { organizationId: a.organizationId },
+      data: { timezone: "America/New_York" },
+    });
+    await db.location.updateMany({
+      where: { organizationId: b.organizationId },
+      data: { timezone: "America/Los_Angeles" },
+    });
     expect(await getCurrentTenantTimezone(a.ctx, db)).toBe("America/New_York");
     expect(await getCurrentTenantTimezone(b.ctx, db)).toBe("America/Los_Angeles");
     const listB = await listInquiries(b.ctx, db);

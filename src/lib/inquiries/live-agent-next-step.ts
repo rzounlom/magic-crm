@@ -1,11 +1,34 @@
 export const LIVE_AGENT_BOOKING_STEPS = [
   { id: "review", label: "Review" },
-  { id: "hold", label: "Hold" },
-  { id: "finalize", label: "Finalize" },
-  { id: "confirm", label: "Confirm" },
+  { id: "hold", label: "Place Hold" },
+  { id: "confirm", label: "Confirm Booking" },
 ] as const;
 
 export type LiveAgentBookingStepId = (typeof LIVE_AGENT_BOOKING_STEPS)[number]["id"];
+
+export function liveAgentBookingSteps(input: { needsHold: boolean; hasHold: boolean }): Array<{
+  id: LiveAgentBookingStepId;
+  label: string;
+}> {
+  if (!input.needsHold) {
+    return [
+      { id: "review", label: "Review" },
+      { id: "confirm", label: "Confirm Booking" },
+    ];
+  }
+  if (input.hasHold) {
+    return [
+      { id: "review", label: "Review" },
+      { id: "hold", label: "Resources Held" },
+      { id: "confirm", label: "Confirm Booking" },
+    ];
+  }
+  return [
+    { id: "review", label: "Review" },
+    { id: "hold", label: "Place Hold" },
+    { id: "confirm", label: "Confirm Booking" },
+  ];
+}
 
 export function liveAgentHoldReadiness(input: {
   requirements: Array<{
@@ -41,7 +64,6 @@ export function liveAgentBookingGuide(input: {
   hasHold: boolean;
   canPlaceHold?: boolean;
   needsInventory?: boolean;
-  readyToFinalize: boolean;
   confirmBlockers: string[];
 }): {
   currentStepId: LiveAgentBookingStepId;
@@ -75,20 +97,13 @@ export function liveAgentBookingGuide(input: {
       return {
         currentStepId: "hold",
         nextTitle: "Hold rooms and lanes",
-        nextDetail: "Reserve them now. Next you will mark ready to finalize, then confirm.",
+        nextDetail: "Reserve the required resources, then confirm the booking.",
       };
     }
     return {
       currentStepId: "hold",
       nextTitle: "Hold rooms and lanes",
       nextDetail: "These rooms or lanes are not free at this time. Change the plan or pick another slot.",
-    };
-  }
-  if (!input.readyToFinalize) {
-    return {
-      currentStepId: "finalize",
-      nextTitle: "Mark ready to finalize",
-      nextDetail: "Resources are set. Mark ready, then confirm the booking.",
     };
   }
   if (input.confirmBlockers.length > 0) {
@@ -98,9 +113,17 @@ export function liveAgentBookingGuide(input: {
       nextDetail: input.confirmBlockers[0] ?? "",
     };
   }
+  if (input.hasHold) {
+    return {
+      currentStepId: "confirm",
+      nextTitle: "Confirm this booking",
+      nextDetail:
+        "Resources are currently held. Review the event details below, then confirm the booking when you're ready.",
+    };
+  }
   return {
     currentStepId: "confirm",
     nextTitle: "Confirm this booking",
-    nextDetail: "Creates the booking and converts holds to booked. No payment or email is sent.",
+    nextDetail: "Review the event details below, then confirm the booking when you're ready. Payment is not collected yet.",
   };
 }

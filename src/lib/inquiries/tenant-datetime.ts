@@ -1,5 +1,10 @@
 const EVENT_TIME_PATTERN = /^(\d{1,2}):(\d{2})(?::\d{2})?$/;
+const ITINERARY_RANGE_PATTERN =
+  /^(\d{1,2}:\d{2}(?::\d{2})?)\s*[–-]\s*(\d{1,2}:\d{2}(?::\d{2})?)\s*(.*)$/;
 const MISSING_EVENT_LOCAL_LABEL = "Not specified";
+/** Explicit fallback when stored timezone is missing or not a valid IANA identifier. */
+export const FALLBACK_TIME_ZONE = "UTC";
+const warnedInvalidTimeZones = new Set<string>();
 
 export function formatEventLocalDate(value: Date | string | null | undefined): string | null {
   const parts = readEventCalendarDate(value);
@@ -47,29 +52,217 @@ export function formatEventLocalDateTime(input: {
   return MISSING_EVENT_LOCAL_LABEL;
 }
 
+export function isValidIanaTimeZone(timeZone: string | null | undefined): boolean {
+  const zone = timeZone?.trim();
+  if (!zone) {
+    return false;
+  }
+  return isSupportedTimeZone(zone);
+}
+
+function warnInvalidTimeZone(timeZone: string) {
+  if (warnedInvalidTimeZones.has(timeZone)) {
+    return;
+  }
+  warnedInvalidTimeZones.add(timeZone);
+  console.warn(
+    JSON.stringify({
+      scope: "magiccrm.config",
+      event: "invalid_timezone",
+      timeZone,
+      fallback: FALLBACK_TIME_ZONE,
+    }),
+  );
+}
+
 export function resolveOrganizationTimeZone(timeZone: string | null | undefined): string {
-  const zone = timeZone?.trim() || "UTC";
-  return isSupportedTimeZone(zone) ? zone : "UTC";
+  const zone = timeZone?.trim();
+  if (!zone) {
+    return FALLBACK_TIME_ZONE;
+  }
+  if (isSupportedTimeZone(zone)) {
+    return zone;
+  }
+  warnInvalidTimeZone(zone);
+  return FALLBACK_TIME_ZONE;
+}
+
+/**
+ * Location override if it is a valid IANA zone, else organization timezone,
+ * else UTC. The literal string "IANA" is invalid configuration.
+ */
+export function resolveTenantTimezone(input: {
+  organizationTimezone?: string | null;
+  locationTimezone?: string | null;
+}): string {
+  const location = input.locationTimezone?.trim();
+  if (location) {
+    if (isSupportedTimeZone(location)) {
+      return location;
+    }
+    warnInvalidTimeZone(location);
+  }
+  return resolveOrganizationTimeZone(input.organizationTimezone);
+}
+
+export function resolveSchedulingTimeZone(input: {
+  locationTimeZone?: string | null;
+  organizationTimeZone?: string | null;
+}): string {
+  return resolveTenantTimezone({
+    organizationTimezone: input.organizationTimeZone,
+    locationTimezone: input.locationTimeZone,
+  });
+}
+
+/** Tenant/location calendar date for `now` (YYYY-MM-DD). Not the UTC date. */
+export function calendarDateInTimeZone(now: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: resolveOrganizationTimeZone(timeZone),
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+/**
+ * Convert event-local wall-clock minutes on a calendar date into a UTC instant
+ * using the location or organization IANA timezone.
+ */
+export function eventLocalToUtc(input: {
+  date: string;
+  minuteOfDay: number;
+  timeZone: string;
+}): Date {
+  const zone = resolveOrganizationTimeZone(input.timeZone);
+  const extraDays = Math.floor(input.minuteOfDay / 1440);
+  const minutes = input.minuteOfDay - extraDays * 1440;
+  const [year, month, day] = input.date.split("-").map(Number);
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  const utcGuess = Date.UTC((year ?? 1970), (month ?? 1) - 1, (day ?? 1) + extraDays, hour, minute, 0);
+  const guess = new Date(utcGuess);
+  const offset = timezoneOffsetMs(guess, zone);
+  const first = new Date(utcGuess - offset);
+  const offset2 = timezoneOffsetMs(first, zone);
+  if (offset2 !== offset) {
+    return new Date(utcGuess - offset2);
+  }
+  return first;
+}
+
+export function occupancyInstants(input: {
+  slotDate: string;
+  startMinute: number;
+  endMinute: number;
+  timeZone: string;
+}): { startsAt: Date; endsAt: Date } {
+  return {
+    startsAt: eventLocalToUtc({
+      date: input.slotDate,
+      minuteOfDay: input.startMinute,
+      timeZone: input.timeZone,
+    }),
+    endsAt: eventLocalToUtc({
+      date: input.slotDate,
+      minuteOfDay: input.endMinute,
+      timeZone: input.timeZone,
+    }),
+  };
+}
+
+function timezoneOffsetMs(date: Date, timeZone: string): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(date)
+      .map((part) => [part.type, part.value]),
+  );
+  const asUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  return asUtc - date.getTime();
 }
 
 export function formatOrganizationTimestamp(
   value: Date,
   timeZone: string,
 ): string {
-  const zone = resolveOrganizationTimeZone(timeZone);
-  const datePart = new Intl.DateTimeFormat("en-US", {
+  return `${formatTenantDate(value, timeZone)} at ${formatTenantTime(value, timeZone)}`;
+}
+
+/** Real timestamp → tenant-local calendar date. */
+export function formatTenantDate(value: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-    timeZone: zone,
+    timeZone: resolveOrganizationTimeZone(timeZone),
   }).format(value);
-  const timePart = new Intl.DateTimeFormat("en-US", {
+}
+
+/** Real timestamp → tenant-local 12-hour time. */
+export function formatTenantTime(value: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-    timeZone: zone,
+    timeZone: resolveOrganizationTimeZone(timeZone),
   }).format(value);
-  return `${datePart} at ${timePart}`;
+}
+
+export const formatTenantTimestamp = formatOrganizationTimestamp;
+export const formatItineraryTime = formatEventLocalTime;
+
+export function formatItineraryRange(start: string | null | undefined, end: string | null | undefined): string {
+  const startLabel = formatEventLocalTime(start) ?? (start?.trim() || "");
+  const endLabel = formatEventLocalTime(end) ?? (end?.trim() || "");
+  if (startLabel && endLabel) {
+    return `${startLabel}–${endLabel}`;
+  }
+  return startLabel || endLabel;
+}
+
+/** Display a stored itinerary line such as `17:30–18:30 Fajita Bar` in 12-hour time. */
+export function formatItineraryLine(line: string): string {
+  const match = ITINERARY_RANGE_PATTERN.exec(line.trim());
+  if (!match) {
+    return line;
+  }
+  const range = formatItineraryRange(match[1], match[2]);
+  const label = match[3]?.trim() ?? "";
+  return label ? `${range} ${label}` : range;
+}
+
+/**
+ * Occupancy DATE key for an event-local calendar day (YYYY-MM-DD).
+ * Stored as that civil date at UTC midnight — not "UTC's September 17."
+ */
+export function eventLocalSlotDate(date: string): Date {
+  return new Date(`${date}T00:00:00.000Z`);
+}
+
+/** UTC instants for the start of a tenant-local calendar day and the next day. */
+export function tenantLocalDayBounds(date: string, timeZone: string): { start: Date; nextStart: Date } {
+  const [year, month, day] = date.split("-").map(Number);
+  const next = new Date(Date.UTC(year ?? 2026, (month ?? 1) - 1, (day ?? 1) + 1)).toISOString().slice(0, 10);
+  return {
+    start: eventLocalToUtc({ date, minuteOfDay: 0, timeZone }),
+    nextStart: eventLocalToUtc({ date: next, minuteOfDay: 0, timeZone }),
+  };
 }
 
 function readEventCalendarDate(value: Date | string | null | undefined): {

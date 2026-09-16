@@ -10,6 +10,7 @@ type ConfirmDialogProps = {
   cancelLabel?: string;
   confirmLabel: string;
   confirmPending?: boolean;
+  confirmPendingLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -22,6 +23,7 @@ export function ConfirmDialog({
   cancelLabel = "Cancel",
   confirmLabel,
   confirmPending = false,
+  confirmPendingLabel = "Working…",
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
@@ -96,7 +98,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={confirmPending}
           >
-            {confirmPending ? "Working…" : confirmLabel}
+            {confirmPending ? confirmPendingLabel : confirmLabel}
           </button>
         </div>
       </div>

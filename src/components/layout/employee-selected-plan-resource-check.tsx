@@ -4,6 +4,7 @@ import { formatEventLocalTime, formatOrganizationTimestamp } from "@/lib/inquiri
 import { minutesToClock } from "@/server/resources/time-window";
 import { formatHoldTimeRemaining, holdExpiresSoon } from "@/lib/inquiries/workflow-stage";
 import {
+  expireInquiryHoldNowAction,
   extendInquiryHoldAction,
   placeInquiryHoldAction,
   releaseInquiryHoldsAction,
@@ -201,6 +202,24 @@ export function EmployeeSelectedPlanResourceCheck({
               </PendingSubmitButton>
             </SecurityActionForm>
           ) : null}
+          {canRelease ? (
+            <SecurityActionForm
+              action={expireInquiryHoldNowAction}
+              notice={{ successTitle: "Hold expired", errorTitle: "Unable to expire hold" }}
+              confirm={{
+                title: "Expire this hold now?",
+                description:
+                  "This runs the same expiry path used after 24 hours. Resources become available immediately. A booked reservation cannot be expired.",
+                confirmLabel: "Expire hold now",
+                confirmPendingLabel: "Expiring…",
+              }}
+            >
+              <input type="hidden" name="inquiryId" value={inquiryId} />
+              <PendingSubmitButton pendingLabel="Expiring…" className="rounded-md border border-border px-4 py-2 text-sm font-medium">
+                Expire hold now
+              </PendingSubmitButton>
+            </SecurityActionForm>
+          ) : null}
           </div>
         </div>
       ) : canHold && allAvailable ? (
@@ -212,11 +231,12 @@ export function EmployeeSelectedPlanResourceCheck({
             title: "Place a temporary resource hold?",
             description: "This holds the required resources for this inquiry. It does not confirm a booking.",
             confirmLabel: "Place resource hold",
+            confirmPendingLabel: "Placing hold…",
           }}
         >
           <input type="hidden" name="inquiryId" value={inquiryId} />
           <PendingSubmitButton
-            pendingLabel="Holding…"
+            pendingLabel="Placing hold…"
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
           >
             Place Resource Hold

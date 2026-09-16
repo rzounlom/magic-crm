@@ -20,6 +20,8 @@ model Organization {
   timezone            String
   /// ISO 4217 currency code. Monetary amounts must never use floating-point types.
   currency            String   @db.VarChar(3)
+  /// Required deposit as an integer percent of proposal total (0–100). Tenant policy, not a MagicCRM constant.
+  depositPercent      Int      @default(30)
   /// PROVISIONING | AWAITING_ADMIN | ACTIVE | FAILED. Session-provisioned tenants stay ACTIVE.
   onboardingStatus    String   @default("ACTIVE") @db.VarChar(32)
   createdAt           DateTime @default(now())
@@ -74,6 +76,7 @@ model Location {
   resources              Resource[]
   products               Product[]
   bookings               Booking[]
+  resourceReservations   ResourceReservation[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
@@ -667,21 +670,27 @@ model RecommendationProfile {
 }
 
 /// Occupies a finite resource. AVAILABLE is the absence of an active HOLD or BOOKED row — not a stored status.
+/// Overlapping active HOLD/BOOKED rows for the same resourceId+slotDate are rejected by PostgreSQL exclusion `resource_reservations_no_overlap`.
 model ResourceReservation {
   id                    String    @id @default(cuid(2))
   organizationId        String
+  locationId            String?
   resourceId            String
   /// HOLD | BOOKED
   status                String    @db.VarChar(16)
-  /// Event-local calendar date.
+  /// Event-local calendar date. Occupancy and the gist exclusion use this plus startMinute/endMinute.
   slotDate              DateTime  @db.Date
   /// Minutes from local midnight; endMinute may exceed 1440 if the window crosses midnight.
   startMinute           Int
   endMinute             Int
+  /// Authoritative UTC instants converted from event-local date/time using location or organization timezone.
+  startsAt              DateTime?
+  endsAt                DateTime?
   inquiryId             String?
   bookingId             String?
   /// INQUIRY | BOOKING | MANUAL
   sourceType            String    @db.VarChar(24)
+  /// HOLD expiry instant. BOOKED rows must keep this null.
   expiresAt             DateTime?
   reason                String?   @db.VarChar(240)
   createdByUserProfileId String?
@@ -690,6 +699,7 @@ model ResourceReservation {
   updatedAt             DateTime  @updatedAt
 
   organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location?     @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
   resource     Resource      @relation(fields: [organizationId, resourceId], references: [organizationId, id], onDelete: Restrict)
   inquiry      Inquiry?      @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
   booking      Booking?      @relation(fields: [organizationId, bookingId], references: [organizationId, id], onDelete: Restrict)
@@ -699,6 +709,7 @@ model ResourceReservation {
   @@index([organizationId, resourceId, slotDate])
   @@index([organizationId, inquiryId])
   @@index([organizationId, bookingId])
+  @@index([organizationId, locationId, slotDate])
   @@index([organizationId, status, releasedAt])
   @@map("resource_reservations")
 }
@@ -758,6 +769,9 @@ model Booking {
   endTime                  String    @db.VarChar(16)
   startMinute              Int
   endMinute                Int
+  /// Authoritative UTC instants converted from event-local date/time using location or organization timezone.
+  startsAt                 DateTime?
+  endsAt                   DateTime?
   guestCount               Int
   eventType                String?   @db.VarChar(80)
   eventGoal                String?   @db.VarChar(80)
@@ -765,6 +779,9 @@ model Booking {
   subtotalCents            Int
   taxCents                 Int       @default(0)
   totalCents               Int
+  /// Tenant deposit policy applied at confirmation. Collection is Phase 3C.
+  depositRequiredCents     Int       @default(0)
+  depositPaidCents         Int       @default(0)
   currency                 String    @db.VarChar(3)
   customerGroupName        String?   @db.VarChar(160)
   customerFirstName        String?   @db.VarChar(80)

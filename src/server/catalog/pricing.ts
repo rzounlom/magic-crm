@@ -71,6 +71,23 @@ export function percentOfCents(cents: number, percent: number): number {
   return Math.trunc((cents * percent + 50) / 100);
 }
 
+export const DEFAULT_DEPOSIT_PERCENT = 30;
+
+export function depositPercentFromTenant(value: number | null | undefined): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 100) {
+    return DEFAULT_DEPOSIT_PERCENT;
+  }
+  return value;
+}
+
+export function depositRequiredCents(totalCents: number, percent: number): number {
+  return percentOfCents(Math.max(0, totalCents), depositPercentFromTenant(percent));
+}
+
+export function depositPreviewNote(percent: number): string {
+  return `${depositPercentFromTenant(percent)}% deposit preview for planning only. Payment is not collected yet.`;
+}
+
 function asDays(value: CatalogPriceInput["daysOfWeek"]): WeekdayKey[] | null {
   if (!value || value.length === 0) {
     return null;

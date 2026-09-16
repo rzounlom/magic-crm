@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
-import { formatEventLocalTime } from "@/lib/inquiries/tenant-datetime";
+import { formatEventLocalTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { minutesToClock } from "@/server/resources/time-window";
 import { placeManualHoldAction, releaseHoldAction } from "@/server/actions/resource-schedule";
 import { scheduleDisplayName } from "@/server/services/resource-schedule-service";
@@ -15,6 +15,7 @@ type ScheduleReservation = {
   startMinute: number;
   endMinute: number;
   inquiryId: string | null;
+  expiresAt?: Date | null;
   bookingId?: string | null;
   inquiry: {
     id: string;
@@ -33,7 +34,6 @@ type ScheduleReservation = {
 
 export function MasterScheduleGrid({
   date,
-  resourceTypeId,
   resources,
   reservations,
   slotMinutes,
@@ -41,6 +41,7 @@ export function MasterScheduleGrid({
   endMinute,
   canHold,
   canRelease,
+  timeZone,
   prefillResourceId,
   prefillStart,
 }: {
@@ -53,6 +54,7 @@ export function MasterScheduleGrid({
   endMinute: number;
   canHold: boolean;
   canRelease: boolean;
+  timeZone: string;
   prefillResourceId?: string;
   prefillStart?: string;
 }) {
@@ -92,16 +94,9 @@ export function MasterScheduleGrid({
               {resources.map((resource) => {
                 const reservation = covering(resource.id, slot);
                 if (!reservation) {
-                  const href = `/app/schedule?date=${date}&type=${resourceTypeId}&resource=${resource.id}&start=${minutesToClock(slot)}`;
                   return (
                     <td key={resource.id} className="px-1 py-1">
-                      {canHold ? (
-                        <Link href={href} className="block rounded-sm bg-muted/70 px-2 py-2 text-foreground/70 hover:bg-muted">
-                          Available
-                        </Link>
-                      ) : (
-                        <span className="block rounded-sm bg-muted/70 px-2 py-2 text-foreground/70">Available</span>
-                      )}
+                      <span className="block rounded-sm bg-muted/70 px-2 py-2 text-foreground/70">Available</span>
                     </td>
                   );
                 }
@@ -127,6 +122,11 @@ export function MasterScheduleGrid({
                             <p className="text-foreground/60">{reservation.booking.bookingNumber}</p>
                           ) : null}
                           <p className="text-foreground/60">{range}</p>
+                          {isHold && reservation.expiresAt ? (
+                            <p className="text-foreground/60">
+                              Held until {formatOrganizationTimestamp(reservation.expiresAt, timeZone)}
+                            </p>
+                          ) : null}
                           {bookingHref ? (
                             <Link href={bookingHref} className="text-primary">
                               Open booking
@@ -239,7 +239,7 @@ export function MasterScheduleGrid({
             />
           </label>
           <PendingSubmitButton
-            pendingLabel="Holding…"
+            pendingLabel="Placing hold…"
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
           >
             Place hold

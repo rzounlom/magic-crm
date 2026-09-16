@@ -56,7 +56,8 @@ The token is the existing 32-byte public conversation token. Only the SHA-256 ha
 - `/app/inquiries/[id]` — same view permission. Customer-selected inquiries open the **Live Agent Booking Workspace** (original snapshot + Current Agent Version). After conversion the workspace shows **Converted to Booking** with a link to `/app/bookings/{id}`.
 - `/app/bookings` and `/app/bookings/[id]` — `events.view`. Operational list and read-only detail for confirmed Bookings.
 - Start Working records `assignedUserProfileId` / `assignedAt` and copies the selected plan into an `EventPlanRecommendation` row with `kind = AGENT_WORKING`. The customer-selected row is never overwritten.
-- **Confirm Booking** requires `events.confirm` plus `crm.inquiries.manage`, Ready to Finalize, a Current Agent Version, and active unexpired HOLDs covering finite requirements. It is atomic: Booking + line items + HOLD→BOOKED + Inquiry `BOOKED` + audit, then `booking.confirmed`.
+- **Confirm Booking** requires `events.confirm` plus `crm.inquiries.manage`, a Current Agent Version, and an active unexpired HOLD covering finite requirements. It is atomic: Booking + line items + HOLD→BOOKED + Inquiry `BOOKED` + audit, then `booking.confirmed`. Ready to Finalize is not required on the held-proposal path.
+- Inquiry list (`listInquiries` and the Ready for Live Agent queue) is newest `createdAt` first, with `id` DESC as a tie-break. Customer-selected plans stay grouped above other ready-for-human rows.
 - Contact customer (mailto / copy phone and email) is available now. Proposal, deposit, and booking edits are not built.
 - Internal notes use `Inquiry.employeeInternalNotes` and are never shown on `/plan/{token}`
 - Take over / leftover conversation notes — `crm.inquiries.manage`
@@ -65,7 +66,14 @@ Front Desk does not receive inquiry permissions. Event Sales can view/manage inq
 
 Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK**. Staff should start from the chosen package rather than repeating discovery. Selection is not a reservation. **Confirm Booking** creates the Booking record from the Current Agent Version and converts HOLDs to BOOKED.
 
-Workflow stays on `Inquiry.status = READY_FOR_HUMAN` until confirmation. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → `HOLD_PLACED` → `READY_TO_FINALIZE`. Commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (customer chose a plan) → `HOLD_PLACED` → `BOOKED`. After confirmation, `Inquiry.status = BOOKED` and the Inquiry is sales history linked to Booking (`@@unique([organizationId, inquiryId])`).
+Workflow stays on `Inquiry.status = READY_FOR_HUMAN` until confirmation. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → `HOLD_PLACED` → optional legacy `READY_TO_FINALIZE`. Commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (customer chose a plan) → `HOLD_PLACED` → `BOOKED`.
+
+Employee booking UI:
+
+- Held proposal: Start Working → Review → Confirm Booking
+- No-hold live-agent path: Start Working → Review → Place Hold → Confirm Booking
+
+`READY_TO_FINALIZE` remains persisted for older rows. It is not a required gate before Confirm Booking.
 
 ## Status workflow
 
@@ -89,7 +97,7 @@ Persisted status enums stay as stored. Employee UI uses `formatInquiryStatus` / 
 
 `desiredDate` (`@db.Date`) and `desiredStartTime` (wall-clock `HH:mm`) are **event-local** values. Format them with `formatEventLocalDateTime` without converting them as UTC instants. A customer who chose September 11 at 7:00 PM must stay September 11 at 7:00 PM for employees.
 
-`createdAt` / `updatedAt` (and planner timestamps) are UTC timestamps. Convert those with `formatOrganizationTimestamp` into `Organization.timezone` loaded from `RequestContext.organizationId`. Tenant A’s timezone must not format Tenant B’s inquiries.
+`createdAt` / `updatedAt` (and planner timestamps) are UTC timestamps. Convert those with `formatOrganizationTimestamp` using `resolveTenantTimezone`: a valid Location timezone first, else `Organization.timezone`, else UTC. Location.timezone is required on the schema, so a valid location zone wins over a later organization-only update. Invalid values such as the literal `IANA` log a config warning and fall back. Do not use the browser timezone. Tenant A’s timezone must not format Tenant B’s inquiries.
 
 Phone is stored as normalized 10-digit digits. Display with `formatPhoneDisplay` as `(555) 654-3333`. Malformed legacy values stay unchanged.
 
@@ -103,7 +111,7 @@ The Current Agent Version is the source for Confirm Booking (inquiry, date/time,
 
 ## Next
 
-See [`catalog.md`](./catalog.md) and [`proposal-engine.md`](./proposal-engine.md) for Phase 3A catalog-backed proposals. Phase 3B is customer 24-hour holds, hold expiry jobs, email, collecting the 30% deposit, and Stripe. Staff HOLDs, Confirm Booking, and the Master Schedule already exist.
+See [`catalog.md`](./catalog.md), [`proposal-engine.md`](./proposal-engine.md), [`resource-schedule.md`](./resource-schedule.md), and [`booking.md`](./booking.md). Phase 3A catalog-backed proposals are complete. Phase 3A.5 location/tenant hardening is complete. Phase 3B is 24-hour exact-resource holds, hold expiry, Master Schedule, and manual Confirm Booking. Phase 3C is email and Stripe.
 
 Related employee-shell follow-up (not this inbox): sticky authenticated header. See `ui-conventions.md`.
 

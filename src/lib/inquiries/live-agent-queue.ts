@@ -53,14 +53,14 @@ export function liveAgentQueuePriority(inquiry: LiveAgentQueueInquiry, now = new
   return 5;
 }
 
-export function sortLiveAgentQueue<T extends LiveAgentQueueInquiry>(inquiries: T[], now = new Date()): T[] {
+export function sortLiveAgentQueue<T extends LiveAgentQueueInquiry>(inquiries: T[]): T[] {
   return [...inquiries].sort((left, right) => {
-    const priorityDelta = liveAgentQueuePriority(left, now) - liveAgentQueuePriority(right, now);
-    if (priorityDelta !== 0) {
-      return priorityDelta;
+    const createdDelta = right.createdAt.getTime() - left.createdAt.getTime();
+    if (createdDelta !== 0) {
+      return createdDelta;
     }
-    const leftWait = left.customerSelectedAt ?? left.createdAt;
-    const rightWait = right.customerSelectedAt ?? right.createdAt;
-    return leftWait.getTime() - rightWait.getTime();
+    return right.id.localeCompare(left.id);
   });
 }
+
+export const sortInquiriesNewestFirst = sortLiveAgentQueue;

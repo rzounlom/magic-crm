@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { liveAgentBookingGuide, liveAgentHoldReadiness } from "@/lib/inquiries/live-agent-next-step";
+import {
+  liveAgentBookingGuide,
+  liveAgentBookingSteps,
+  liveAgentHoldReadiness,
+} from "@/lib/inquiries/live-agent-next-step";
 
 describe("live agent booking guide", () => {
   it("asks an unassigned agent to start working", () => {
@@ -9,8 +13,7 @@ describe("live agent booking guide", () => {
         booked: false,
         assigned: false,
         hasHold: false,
-        readyToFinalize: false,
-        confirmBlockers: ["Mark this inquiry Ready to Finalize before confirming a booking."],
+        confirmBlockers: ["Place a resource hold before confirming a booking."],
       }),
     ).toMatchObject({
       currentStepId: "review",
@@ -26,7 +29,6 @@ describe("live agent booking guide", () => {
       hasHold: false,
       needsInventory: true,
       canPlaceHold: false,
-      readyToFinalize: false,
       confirmBlockers: ["Bowling Lane still needs resource configuration before booking."],
     });
     expect(guide.currentStepId).toBe("hold");
@@ -43,7 +45,6 @@ describe("live agent booking guide", () => {
         hasHold: false,
         needsInventory: false,
         canPlaceHold: true,
-        readyToFinalize: false,
         confirmBlockers: [],
       }),
     ).toMatchObject({
@@ -52,19 +53,19 @@ describe("live agent booking guide", () => {
     });
   });
 
-  it("moves to finalize after a hold is placed", () => {
+  it("moves to confirm after a hold is placed without Ready to Finalize", () => {
     expect(
       liveAgentBookingGuide({
         booked: false,
         assigned: true,
         needsHold: true,
         hasHold: true,
-        readyToFinalize: false,
-        confirmBlockers: ["Mark this inquiry Ready to Finalize before confirming a booking."],
+        confirmBlockers: [],
       }),
     ).toMatchObject({
-      currentStepId: "finalize",
-      nextTitle: "Mark ready to finalize",
+      currentStepId: "confirm",
+      nextTitle: "Confirm this booking",
+      nextDetail: expect.stringContaining("Resources are currently held"),
     });
   });
 
@@ -74,13 +75,25 @@ describe("live agent booking guide", () => {
         booked: false,
         assigned: true,
         hasHold: true,
-        readyToFinalize: true,
         confirmBlockers: [],
       }),
     ).toMatchObject({
       currentStepId: "confirm",
       nextTitle: "Confirm this booking",
     });
+  });
+
+  it("labels the held path Resources Held and the no-hold path Place Hold", () => {
+    expect(liveAgentBookingSteps({ needsHold: true, hasHold: true }).map((row) => row.label)).toEqual([
+      "Review",
+      "Resources Held",
+      "Confirm Booking",
+    ]);
+    expect(liveAgentBookingSteps({ needsHold: true, hasHold: false }).map((row) => row.label)).toEqual([
+      "Review",
+      "Place Hold",
+      "Confirm Booking",
+    ]);
   });
 
   it("treats missing numbered inventory as a hold blocker", () => {

@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 import { liveAgentQueuePriority, sortLiveAgentQueue } from "@/lib/inquiries/live-agent-queue";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
@@ -55,9 +57,19 @@ describe("live agent queue priority", () => {
     expect(liveAgentQueuePriority(inquiry("booked", { status: INQUIRY_STATUSES.BOOKED }), now)).toBe(99);
   });
 
-  it("orders oldest waiting customer first within the same priority", () => {
-    const newer = inquiry("newer", { customerSelectedAt: new Date("2026-09-09T14:00:00.000Z") });
-    const older = inquiry("older", { customerSelectedAt: new Date("2026-09-09T10:00:00.000Z") });
-    expect(sortLiveAgentQueue([newer, older], now).map((row) => row.id)).toEqual(["older", "newer"]);
+  it("orders newest createdAt first with a stable id tie-break", () => {
+    const newer = inquiry("newer", { createdAt: new Date("2026-09-09T14:00:00.000Z") });
+    const older = inquiry("older", { createdAt: new Date("2026-09-09T10:00:00.000Z") });
+    expect(sortLiveAgentQueue([older, newer]).map((row) => row.id)).toEqual(["newer", "older"]);
+    const sameTimeA = inquiry("aaa", { createdAt: new Date("2026-09-09T14:00:00.000Z") });
+    const sameTimeB = inquiry("zzz", { createdAt: new Date("2026-09-09T14:00:00.000Z") });
+    expect(sortLiveAgentQueue([sameTimeA, sameTimeB]).map((row) => row.id)).toEqual(["zzz", "aaa"]);
+  });
+});
+
+describe("inquiry list query order", () => {
+  it("orders listInquiries by createdAt desc then id desc", () => {
+    const source = readFileSync(path.join(process.cwd(), "src/server/services/inquiry-service.ts"), "utf8");
+    expect(source).toContain('orderBy: [{ createdAt: "desc" }, { id: "desc" }]');
   });
 });

@@ -8,13 +8,14 @@ import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pend
 import { formatEventDuration, personalEventPlannerTitle } from "@/lib/event-planner/labels";
 import { formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { isBestFitTier, readEventPlanPayload } from "@/lib/event-planner/payload";
-import { formatEventLocalDateTime, formatEventLocalTime } from "@/lib/inquiries/tenant-datetime";
+import { formatEventLocalDateTime, formatEventLocalTime, formatItineraryLine, formatItineraryRange, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { onSafeSubmitAttempt } from "@/lib/ui/confirm-gate";
 import { notify } from "@/lib/ui/notify";
 import { yieldToPaint } from "@/lib/ui/yield-to-paint";
-import { selectPublicEventPlanAction } from "@/server/actions/public-inquiry";
+import { selectPublicEventPlanAction, reservePublicEventPlanAction } from "@/server/actions/public-inquiry";
 import { CUSTOMER_AVAILABILITY_NOTE, EVENT_PLAN_TIERS } from "@/types/event-planner";
 import { DEPOSIT_PREVIEW_NOTE } from "@/types/catalog";
+import { INQUIRY_SALES_STAGES } from "@/types/inquiry";
 
 type PlanCard = {
   id: string;
@@ -35,6 +36,8 @@ export function PublicEventPlanView({
   plans,
   token,
   booking = null,
+  hold = null,
+  timeZone,
 }: {
   organizationName: string;
   currency: string;
@@ -44,6 +47,7 @@ export function PublicEventPlanView({
     eventGoal: string | null;
     selectedEventPlanId: string | null;
     status?: string | null;
+    salesStage?: string | null;
   };
   plans: PlanCard[];
   token: string;
@@ -54,12 +58,18 @@ export function PublicEventPlanView({
     endTime: string;
     guestCount: number;
   } | null;
+  hold?: {
+    expiresAt: Date | null;
+    resources: string[];
+  } | null;
+  timeZone?: string;
 }) {
   const selectedId = inquiry.selectedEventPlanId;
   const firstName = inquiry.customerFirstName || "there";
   const selectedPlan = plans.find((plan) => plan.id === selectedId);
   const confirmed = Boolean(booking);
   const finalized = confirmed || inquiry.status === "BOOKED";
+  const reserved = Boolean(hold) || inquiry.salesStage === INQUIRY_SALES_STAGES.HOLD_PLACED;
 
   return (
     <section className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
@@ -78,11 +88,20 @@ export function PublicEventPlanView({
           </p>
         </div>
       ) : selectedPlan ? (
+        reserved ? (
+          <HoldConfirmationPanel
+            organizationName={organizationName}
+            planTitle={selectedPlan.title}
+            hold={hold}
+            timeZone={timeZone}
+          />
+        ) : (
         <ConfirmationPanel
           organizationName={organizationName}
           planTitle={selectedPlan.title}
           availabilityChanged={selectedPlan.availabilityStatus === "AVAILABILITY_CHANGED"}
         />
+        )
       ) : (
         <>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
@@ -91,8 +110,8 @@ export function PublicEventPlanView({
           <p className="mt-4 max-w-2xl text-sm text-foreground/70">
             {personalEventPlannerTitle(organizationName)} prepared options for {firstName}
             {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
-            {inquiry.eventGoal ? ` · ${inquiry.eventGoal}` : ""}. {CUSTOMER_AVAILABILITY_NOTE} Selecting
-            a plan saves your preference; it does not reserve the date.
+            {inquiry.eventGoal ? ` · ${inquiry.eventGoal}` : ""}. {CUSTOMER_AVAILABILITY_NOTE} You can reserve an
+            option for 24 hours, or ask an agent to follow up without holding inventory.
           </p>
         </>
       )}
@@ -154,6 +173,41 @@ function ConfirmedBookingPanel({
   );
 }
 
+function HoldConfirmationPanel({
+  organizationName,
+  planTitle,
+  hold,
+  timeZone,
+}: {
+  organizationName: string;
+  planTitle: string;
+  hold: { expiresAt: Date | null; resources: string[] } | null;
+  timeZone?: string;
+}) {
+  return (
+    <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-5 py-6">
+      <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">24-hour hold</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
+        Your event time is being held for 24 hours.
+      </h1>
+      <p className="mt-3 max-w-2xl text-sm text-foreground/80">
+        {organizationName} has reserved the required event resources for {planTitle} while you complete the
+        next step. Your reservation will be finalized after the required deposit is received.
+      </p>
+      <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-foreground/70">
+        <li>This is not a final booking. Payment is not collected yet.</li>
+        <li>Payment will be enabled in the next release. No deposit link is available yet.</li>
+        {hold?.expiresAt && timeZone ? (
+          <li>Held until {formatOrganizationTimestamp(hold.expiresAt, timeZone)}.</li>
+        ) : (
+          <li>The hold expires 24 hours from when it was placed.</li>
+        )}
+        {hold && hold.resources.length > 0 ? <li>Reserved: {hold.resources.join(", ")}.</li> : null}
+      </ul>
+    </div>
+  );
+}
+
 function ConfirmationPanel({
   organizationName,
   planTitle,
@@ -168,18 +222,18 @@ function ConfirmationPanel({
       <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">Preference saved</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
         {availabilityChanged
-          ? "We’ve saved your preferred event plan."
-          : "Great choice — we saved your event plan."}
+          ? "We’ve saved the package you’re interested in."
+          : "Thanks — we’ve saved the package you’re interested in."}
       </h1>
       <p className="mt-3 max-w-2xl text-sm text-foreground/80">
         {availabilityChanged
-          ? `Our event team will confirm the final schedule and availability with you. Your preferred plan (${planTitle}) is saved.`
-          : `Our team now has your event details and preferred plan (${planTitle}). A ${organizationName} event specialist will review the details and reach out soon.`}
+          ? `A member of the events team will follow up to confirm the final details and availability. Your preferred plan (${planTitle}) is saved. The time is not reserved.`
+          : `A member of the ${organizationName} events team will follow up with you to confirm the final details and availability.`}
       </p>
       <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-foreground/70">
         <li>Your preference is saved — you do not need to fill everything out again.</li>
-        <li>A team member will contact you to confirm the details.</li>
-        <li>The event is not reserved yet. {CUSTOMER_AVAILABILITY_NOTE}</li>
+        <li>Inventory is not held. The time is not reserved.</li>
+        <li>{CUSTOMER_AVAILABILITY_NOTE}</li>
       </ul>
     </div>
   );
@@ -263,14 +317,14 @@ function PlanOptionCard({
           <ul className="list-disc space-y-1 pl-5">
             {payload.itinerary.map((segment) => (
               <li key={`${segment.startTime}-${segment.label}`}>
-                {segment.startTime}–{segment.endTime} {segment.label}
+                {formatItineraryRange(segment.startTime, segment.endTime)} {segment.label}
               </li>
             ))}
           </ul>
         ) : payload.schedule.length > 0 ? (
           <ul className="list-disc space-y-1 pl-5">
             {payload.schedule.map((row) => (
-              <li key={row}>{row}</li>
+              <li key={row}>{formatItineraryLine(row)}</li>
             ))}
           </ul>
         ) : (
@@ -291,8 +345,8 @@ function PlanOptionCard({
         <p className="mt-2 text-xs text-foreground/55">{availabilityNote}</p>
         {payload.suggestedStartTimes && payload.suggestedStartTimes.length > 0 ? (
           <p className="mt-2 text-xs text-foreground/70">
-            Nearby times to consider: {payload.suggestedStartTimes.join(", ")}. Choosing a plan does not hold or
-            book those times.
+            Nearby times to consider:{" "}
+            {payload.suggestedStartTimes.map((time) => formatEventLocalTime(time) ?? time).join(", ")}.
           </p>
         ) : null}
       </PlanSection>
@@ -330,7 +384,11 @@ function ChoosePlanButton({
   const pendingRef = useRef(false);
   const [pending, setPending] = useState(false);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function submit(
+    event: FormEvent<HTMLFormElement>,
+    action: typeof reservePublicEventPlanAction | typeof selectPublicEventPlanAction,
+    errorTitle: string,
+  ) {
     event.preventDefault();
     if (onSafeSubmitAttempt(pendingRef.current) === "block") {
       return;
@@ -340,15 +398,15 @@ function ChoosePlanButton({
     setPending(true);
     await yieldToPaint();
     try {
-      const result = await selectPublicEventPlanAction(formData);
+      const result = await action(formData);
       if (!result.ok) {
-        notify.error({ title: result.title ?? "Unable to save that plan", description: result.message });
+        notify.error({ title: result.title ?? errorTitle, description: result.message });
         return;
       }
       router.refresh();
     } catch (error) {
       unstable_rethrow(error);
-      notify.error({ title: "Unable to save that plan", description: "Something went wrong. Try again." });
+      notify.error({ title: errorTitle, description: "Something went wrong. Try again." });
     } finally {
       pendingRef.current = false;
       setPending(false);
@@ -357,20 +415,32 @@ function ChoosePlanButton({
 
   return (
     <PendingActionProvider pending={pending}>
-      <form onSubmit={onSubmit}>
-        <input type="hidden" name="token" value={token} />
-        <input type="hidden" name="planId" value={planId} />
-        <PendingSubmitButton
-          pendingLabel="Saving…"
-          className={
-            emphasized
-              ? "w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-              : "w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
-          }
-        >
-          Choose This Event Plan
-        </PendingSubmitButton>
-      </form>
+      <div className="space-y-2">
+        <form onSubmit={(event) => submit(event, reservePublicEventPlanAction, "Unable to reserve that plan")}>
+          <input type="hidden" name="token" value={token} />
+          <input type="hidden" name="planId" value={planId} />
+          <PendingSubmitButton
+            pendingLabel="Reserving…"
+            className={
+              emphasized
+                ? "w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                : "w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
+            }
+          >
+            Reserve this option
+          </PendingSubmitButton>
+        </form>
+        <form onSubmit={(event) => submit(event, selectPublicEventPlanAction, "Unable to save that plan")}>
+          <input type="hidden" name="token" value={token} />
+          <input type="hidden" name="planId" value={planId} />
+          <PendingSubmitButton
+            pendingLabel="Saving…"
+            className="w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
+          >
+            Have an agent contact me
+          </PendingSubmitButton>
+        </form>
+      </div>
     </PendingActionProvider>
   );
 }

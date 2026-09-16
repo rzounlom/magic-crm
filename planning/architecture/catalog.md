@@ -26,7 +26,7 @@ Sales knowledge (`SalesKnowledgeItem`) stays policies, FAQs, hours, and sales co
 - `ProductServing` — food `servesMin` / `servesMax` / optional `unitCount`. Do not invent quantities beyond the source range
 - `RecommendationProfile` — per organization + audience JSON (default package slugs, food-first sequencing, add-on slugs)
 
-Inquiry commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` → `HOLD_PLACED` → `DEPOSIT_PENDING` (unused until 3B) → `BOOKED`. `Inquiry.status` remains handling/pipeline. `workflowStage` remains the staff booking workspace substatus. `audience` is `KIDS_YOUTH` | `ADULTS` | `MIXED`. `attractionMode` is `KNOWN` | `RECOMMEND`.
+Inquiry commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (follow-up, no hold) → `HOLD_PLACED` (24h exact-resource hold) → `DEPOSIT_PENDING` (unused until 3C) → `BOOKED`. `Inquiry.status` remains handling/pipeline. `workflowStage` remains the staff booking workspace substatus. `audience` is `KIDS_YOUTH` | `ADULTS` | `MIXED`. `attractionMode` is `KNOWN` | `RECOMMEND`.
 
 ## Import
 
@@ -56,8 +56,8 @@ Admin onboarding UI is not built yet. Entitlements (whether the tenant has `EVEN
 
 ## Money
 
-All amounts are integer cents. Use `priceProduct` in `src/server/catalog/pricing.ts`. A 30% deposit on a proposal is a **display-only** preview (`depositPreviewCents`). Collection, Stripe, and payment links are Phase 3B.
+All amounts are integer cents. Use `priceProduct` in `src/server/catalog/pricing.ts`. Deposit preview uses `Organization.depositPercent` (default 30). Collection, Stripe, and payment links are Phase 3C.
 
-## Phase 3B (not this phase)
+## Phase 3C (not this phase)
 
-Customer 24-hour auto-holds, hold expiry jobs, transactional email, collecting the 30% deposit, and Stripe webhooks. Staff HOLDs, Confirm Booking, and the Master Schedule already exist and must not be duplicated.
+Transactional email, collecting the configured deposit via Stripe, payment webhooks, and automatic HOLD → BOOKED after a valid deposit. Customer 24-hour holds, hold expiry, Confirm Booking, and the Master Schedule exist and must not be duplicated.

@@ -791,8 +791,17 @@ Permission definitions, security groups, group membership, authorization service
 ### Phase 2
 Tenant-scoped catalog/admin.
 
-### Phase 3
-Tenant/location-scoped resource inventory.
+### Phase 3A
+Catalog-backed proposals. Complete.
+
+### Phase 3A.5
+Multi-tenant / location catalog and availability hardening. Complete.
+
+### Phase 3B
+Master Schedule, transaction-safe 24-hour holds, manual live-agent booking. Current.
+
+### Phase 3C
+Transactional email and Stripe deposit checkout. Not started.
 
 All following phases MUST be tenant scoped.
 

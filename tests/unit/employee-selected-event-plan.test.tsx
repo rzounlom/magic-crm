@@ -35,7 +35,7 @@ describe("employee selected event plan", () => {
             ],
             dining: { label: "Catered Slider Bar", priceCents: 120000 },
             spaces: [{ knowledgeItemId: "room", name: "Private Event Room", priceCents: 40000 }],
-            schedule: ["Go-Karts first."],
+            schedule: ["17:30–18:30 Go-Karts first."],
             pricingComplete: true,
             resourceRequirements: [
               {
@@ -63,12 +63,13 @@ describe("employee selected event plan", () => {
     expect(html).toContain("Catered Slider Bar");
     expect(html).toContain("Private Event Room");
     expect(html).toContain("No — confirm before booking");
-    expect(html).toContain("Inventory is not reserved");
+    expect(html).toContain("Inventory is not held");
     expect(html).toContain("Finite resources needed");
     expect(html).toContain("inventory not configured");
     expect(html).toContain("original snapshot");
     expect(html).not.toContain("booking tools are not available yet");
     expect(html).not.toContain("ranking");
-    expect(html).not.toContain("Reserve inventory");
+    expect(html).toContain("5:30 PM–6:30 PM Go-Karts first.");
+    expect(html).not.toContain("17:30–18:30");
   });
 });

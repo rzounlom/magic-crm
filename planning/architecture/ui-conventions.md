@@ -28,9 +28,29 @@ The dialog is not authorization. Server actions still run `getRequestContext()` 
 
 Cancel is the default/safe action. Focus Cancel first so Enter does not confirm a destructive action by accident. Escape cancels.
 
+## Date and time display
+
+Two kinds of values exist. Do not mix them.
+
+**Event-local wall-clock** (inquiry preferred date/time, itinerary `HH:mm`, occupancy `slotDate` + minutes): display with `formatEventLocalDate` / `formatEventLocalTime` / `formatItineraryRange`. Never UTC-convert these for display. `17:30` is 5:30 PM.
+
+**Real timestamps** (`createdAt`, `holdExpiresAt`, `startsAt`/`endsAt`): display with `formatOrganizationTimestamp` / `formatTenantTimestamp` using `resolveTenantTimezone({ organizationTimezone, locationTimezone })`. Location wins only when it is a valid IANA identifier. Invalid values such as the literal `IANA` log a config warning and fall back to `UTC`. Do not use the browser timezone as booking truth.
+
+A Master Schedule date such as `2026-09-17` is that tenant-local civil day (`eventLocalSlotDate`), not UTC’s September 17.
+
 ## Pending actions
 
 Disable the submitting control and use wording such as Adding…, Saving…, or Removing…. Ignore a second submit while pending.
+
+Demo-critical booking/schedule copy:
+
+- Reserve this option → Reserving…
+- Have an agent contact me → Saving…
+- Start Working → Starting…
+- Place Hold → Placing hold…
+- Confirm Booking → Confirming…
+- Expire Hold → Expiring…
+- Master Schedule Previous / Today / Next / Go → Loading…; conflicting date and type controls disable until navigation completes. Keep the current grid visible.
 
 ## Follow-up: Employee shell polish / sticky authenticated header
 

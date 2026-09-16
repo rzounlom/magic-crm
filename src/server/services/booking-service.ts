@@ -5,18 +5,22 @@ import { bookingNumberPrefix, formatBookingNumber } from "@/lib/bookings/booking
 import { holdCoverageErrors } from "@/lib/bookings/hold-coverage";
 import { planPayloadTotal } from "@/lib/inquiries/plan-diff";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
-import { resolveOrganizationTimeZone } from "@/lib/inquiries/tenant-datetime";
-import { BookingError, InquiryError } from "@/server/errors";
+import { occupancyInstants, resolveOrganizationTimeZone, resolveSchedulingTimeZone } from "@/lib/inquiries/tenant-datetime";
+import { BookingError, InquiryError, ResourceError } from "@/server/errors";
 import { emitDomainEvent } from "@/server/domain-events/emit";
 import { DOMAIN_EVENT_TYPES } from "@/server/domain-events/types";
+import { depositPercentFromTenant, depositRequiredCents } from "@/server/catalog/pricing";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
+import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { applyRotationWindows } from "@/server/resources/rotation-windows";
 import { localEventWindow, minutesToClock } from "@/server/resources/time-window";
 import { recordAuditEvent } from "@/server/services/audit";
+import { assignExactResourcesForRequirements } from "@/server/services/proposal-hold-service";
 import {
   checkResourceAvailability,
+  isReservationOverlapError,
   releaseExpiredHolds,
 } from "@/server/services/resource-availability-service";
 import { BOOKING_LINE_ITEM_KINDS, BOOKING_LIST_FILTERS, BOOKING_STATUSES } from "@/types/booking";
@@ -126,6 +130,19 @@ async function nextBookingNumber(
   return formatBookingNumber(bookingNumberPrefix(slug), year, sequence.lastValue);
 }
 
+/**
+ * Converts an active HOLD to a confirmed Booking, or allocates BOOKED rows when no hold exists.
+ * Phase 3C payment webhooks must call this same function — do not add a Stripe-specific pathway.
+ */
+export async function confirmHeldBooking(
+  ctx: RequestContext,
+  database: BookingDb,
+  inquiryId: string,
+  expectedUpdatedAt?: string | null,
+) {
+  return confirmInquiryBooking(ctx, database, inquiryId, expectedUpdatedAt);
+}
+
 export async function confirmInquiryBooking(
   ctx: RequestContext,
   database: BookingDb,
@@ -145,7 +162,8 @@ export async function confirmInquiryBooking(
   const inquiry = await database.inquiry.findFirst({
     where: { id: inquiryId, organizationId: ctx.organizationId },
     include: {
-      organization: { select: { id: true, slug: true, name: true, currency: true } },
+      organization: { select: { id: true, slug: true, name: true, currency: true, timezone: true, depositPercent: true } },
+      location: { select: { id: true, name: true, timezone: true } },
       eventPlanRecommendations: true,
       resourceReservations: {
         where: { releasedAt: null },
@@ -188,7 +206,7 @@ export async function confirmInquiryBooking(
   const payload = readEventPlanPayload(working.payload);
   const inventory = await database.resourceType.findMany({
     where: { organizationId: ctx.organizationId },
-    select: { id: true, _count: { select: { resources: { where: { active: true } } } } },
+    select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(inquiry.locationId) } } } },
   });
   const requirements = applyRotationWindows(
     applyInventoryFeasibility(
@@ -216,7 +234,16 @@ export async function confirmInquiryBooking(
     throw new BookingError(expired ? "HOLD_EXPIRED" : "NOT_READY_TO_FINALIZE", blockers[0]);
   }
 
-  const coverage = holdCoverageErrors(payload, requirements, inquiry.resourceReservations);
+  const holdIds = inquiry.resourceReservations
+    .filter(
+      (row) =>
+        row.status === RESOURCE_RESERVATION_STATUSES.HOLD &&
+        !row.releasedAt &&
+        (!row.expiresAt || row.expiresAt.getTime() > Date.now()),
+    )
+    .map((row) => row.id);
+  const coverage =
+    holdIds.length > 0 ? holdCoverageErrors(payload, requirements, inquiry.resourceReservations) : [];
   if (coverage.length > 0) {
     const expired = inquiry.resourceReservations.some(
       (row) => row.expiresAt && row.expiresAt.getTime() <= Date.now() && !row.releasedAt,
@@ -252,18 +279,15 @@ export async function confirmInquiryBooking(
   }
   const eventDate = payload.eventDate;
   const startTime = payload.startTime;
-
-  const holdIds = inquiry.resourceReservations
-    .filter(
-      (row) =>
-        row.status === RESOURCE_RESERVATION_STATUSES.HOLD &&
-        !row.releasedAt &&
-        (!row.expiresAt || row.expiresAt.getTime() > Date.now()),
-    )
-    .map((row) => row.id);
   const totalCents = working.estimatedTotalCents ?? planPayloadTotal(payload);
   const items = lineItemsFromPayload(payload);
   const year = Number(eventDate.slice(0, 4));
+  const depositPercent = depositPercentFromTenant(inquiry.organization.depositPercent);
+  const timeZone = resolveSchedulingTimeZone({
+    locationTimeZone: inquiry.location?.timezone,
+    organizationTimeZone: inquiry.organization.timezone,
+  });
+  const instants = occupancyInstants({ ...window, timeZone });
 
   let created = false;
   let booking;
@@ -288,6 +312,8 @@ export async function confirmInquiryBooking(
           endTime: minutesToClock(window.endMinute),
           startMinute: window.startMinute,
           endMinute: window.endMinute,
+          startsAt: instants.startsAt,
+          endsAt: instants.endsAt,
           guestCount: payload.guestCount,
           eventType: inquiry.eventType,
           eventGoal: inquiry.eventGoal,
@@ -295,6 +321,8 @@ export async function confirmInquiryBooking(
           subtotalCents: totalCents,
           taxCents: 0,
           totalCents,
+          depositRequiredCents: depositRequiredCents(totalCents, depositPercent),
+          depositPaidCents: 0,
           currency: working.currency || inquiry.organization.currency,
           customerGroupName: inquiry.customerGroupName,
           customerFirstName: inquiry.customerFirstName,
@@ -335,15 +363,88 @@ export async function confirmInquiryBooking(
             bookingId: createdBooking.id,
             sourceType: RESOURCE_RESERVATION_SOURCES.BOOKING,
             expiresAt: null,
+            startsAt: instants.startsAt,
+            endsAt: instants.endsAt,
             reason: `Booked ${bookingNumber}`,
           },
         });
-        if (converted.count !== holdIds.length) {
+        if (converted.count > 0 && converted.count !== holdIds.length) {
           throw new BookingError(
             "HOLD_MISMATCH",
             "A resource hold changed during confirmation. No booking was created.",
           );
         }
+        if (converted.count === 0 && requirements.some((row) => row.quantity != null && row.quantity > 0)) {
+          const assignments = await assignExactResourcesForRequirements(tx as BookingDb, {
+            organizationId: ctx.organizationId,
+            locationId: inquiry.locationId,
+            window,
+            requirements,
+            excludeInquiryId: inquiry.id,
+          });
+          await tx.resourceReservation.createMany({
+            data: assignments.map((assignment) => {
+              const rowInstants = occupancyInstants({
+                slotDate: window.slotDate,
+                startMinute: assignment.startMinute,
+                endMinute: assignment.endMinute,
+                timeZone,
+              });
+              return {
+                organizationId: ctx.organizationId,
+                locationId: inquiry.locationId,
+                resourceId: assignment.resourceId,
+                status: RESOURCE_RESERVATION_STATUSES.BOOKED,
+                slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
+                startMinute: assignment.startMinute,
+                endMinute: assignment.endMinute,
+                startsAt: rowInstants.startsAt,
+                endsAt: rowInstants.endsAt,
+                inquiryId: inquiry.id,
+                bookingId: createdBooking.id,
+                sourceType: RESOURCE_RESERVATION_SOURCES.BOOKING,
+                expiresAt: null,
+                reason: `Booked ${bookingNumber}`,
+                createdByUserProfileId: ctx.userId,
+              };
+            }),
+          });
+        }
+      } else if (requirements.some((row) => row.quantity != null && row.quantity > 0)) {
+        const assignments = await assignExactResourcesForRequirements(tx as BookingDb, {
+          organizationId: ctx.organizationId,
+          locationId: inquiry.locationId,
+          window,
+          requirements,
+          excludeInquiryId: inquiry.id,
+        });
+        await tx.resourceReservation.createMany({
+          data: assignments.map((assignment) => {
+            const rowInstants = occupancyInstants({
+              slotDate: window.slotDate,
+              startMinute: assignment.startMinute,
+              endMinute: assignment.endMinute,
+              timeZone,
+            });
+            return {
+              organizationId: ctx.organizationId,
+              locationId: inquiry.locationId,
+              resourceId: assignment.resourceId,
+              status: RESOURCE_RESERVATION_STATUSES.BOOKED,
+              slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
+              startMinute: assignment.startMinute,
+              endMinute: assignment.endMinute,
+              startsAt: rowInstants.startsAt,
+              endsAt: rowInstants.endsAt,
+              inquiryId: inquiry.id,
+              bookingId: createdBooking.id,
+              sourceType: RESOURCE_RESERVATION_SOURCES.BOOKING,
+              expiresAt: null,
+              reason: `Booked ${bookingNumber}`,
+              createdByUserProfileId: ctx.userId,
+            };
+          }),
+        });
       }
       await tx.inquiry.update({
         where: { id: inquiry.id },
@@ -353,6 +454,14 @@ export async function confirmInquiryBooking(
           aiHandlingEnabled: false,
           workflowStage: null,
         },
+      });
+      await recordAuditEvent(tx, {
+        organizationId: ctx.organizationId,
+        actorUserProfileId: ctx.userId,
+        action: "booking.created",
+        resourceType: "booking",
+        resourceId: createdBooking.id,
+        metadata: { inquiryId: inquiry.id, bookingNumber },
       });
       await recordAuditEvent(tx, {
         organizationId: ctx.organizationId,
@@ -390,6 +499,18 @@ export async function confirmInquiryBooking(
       if (winner) {
         return { booking: winner, created: false };
       }
+    }
+    if (isReservationOverlapError(error)) {
+      throw new BookingError(
+        "AVAILABILITY_CONFLICT",
+        "Required resources are no longer available. Recheck the Master Schedule.",
+      );
+    }
+    if (error instanceof ResourceError && error.code === "RESOURCE_CONFLICT") {
+      throw new BookingError(
+        "AVAILABILITY_CONFLICT",
+        error.userMessage,
+      );
     }
     throw error;
   }

@@ -3,6 +3,7 @@ export type DestructiveConfirmCopy = {
   description: string;
   warning?: string;
   confirmLabel: string;
+  confirmPendingLabel?: string;
   cancelLabel?: string;
 };
 

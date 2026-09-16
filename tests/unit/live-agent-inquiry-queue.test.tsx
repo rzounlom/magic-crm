@@ -31,6 +31,7 @@ describe("live agent inquiry queue", () => {
             customerEmail: "ada@example.com",
             eventType: "Corporate Event",
             desiredDate: new Date("2026-10-15T00:00:00.000Z"),
+            desiredStartTime: "17:30",
             guestCount: 75,
             assignedUser: null,
             eventPlanRecommendations: [
@@ -81,9 +82,84 @@ describe("live agent inquiry queue", () => {
     expect(html.indexOf("Apex Robotics")).toBeLessThan(html.indexOf("Grace Hopper"));
     expect(html).toContain("Best Fit");
     expect(html).toContain("75 guests");
+    expect(html).toContain("Oct 15, 2026 at 5:30 PM");
     expect(html).toContain("Unassigned");
     expect(html).toContain("Assigned to Jane Smith");
     expect(html).not.toContain("BOOKED");
+  });
+
+  it("lists the newest selected inquiry first within Ready for Live Agent", () => {
+    const html = renderToStaticMarkup(
+      <LiveAgentInquiryQueue
+        timeZone="UTC"
+        inquiries={[
+          {
+            id: "inq_old",
+            status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+            selectedEventPlanId: "plan_old",
+            humanHandoffReason: "CUSTOMER_SELECTED_PLAN",
+            assignedUserProfileId: null,
+            customerSelectedAt: new Date("2026-09-08T12:00:00.000Z"),
+            createdAt: new Date("2026-09-08T11:00:00.000Z"),
+            humanHandoffRequestedAt: new Date("2026-09-08T12:00:00.000Z"),
+            workflowStage: "READY_FOR_LIVE_AGENT",
+            aiHandlingEnabled: false,
+            customerGroupName: "Older Party",
+            customerFirstName: "Old",
+            customerLastName: "Lead",
+            customerEmail: "old@example.com",
+            eventType: "Birthday Party",
+            desiredDate: new Date("2026-10-01T00:00:00.000Z"),
+            guestCount: 10,
+            assignedUser: null,
+            eventPlanRecommendations: [
+              {
+                id: "plan_old",
+                kind: EVENT_PLAN_KINDS.RECOMMENDATION,
+                title: "Older plan",
+                estimatedTotalCents: 100000,
+                currency: "USD",
+                availabilityStatus: PLAN_AVAILABILITY_STATUSES.AVAILABLE,
+              },
+            ],
+            resourceReservations: [],
+          },
+          {
+            id: "inq_new",
+            status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+            selectedEventPlanId: "plan_new",
+            humanHandoffReason: "CUSTOMER_SELECTED_PLAN",
+            assignedUserProfileId: null,
+            customerSelectedAt: new Date("2026-09-09T12:00:00.000Z"),
+            createdAt: new Date("2026-09-09T11:00:00.000Z"),
+            humanHandoffRequestedAt: new Date("2026-09-09T12:00:00.000Z"),
+            workflowStage: "READY_FOR_LIVE_AGENT",
+            aiHandlingEnabled: false,
+            customerGroupName: "Newer Party",
+            customerFirstName: "New",
+            customerLastName: "Lead",
+            customerEmail: "new@example.com",
+            eventType: "Birthday Party",
+            desiredDate: new Date("2026-10-02T00:00:00.000Z"),
+            guestCount: 12,
+            assignedUser: null,
+            eventPlanRecommendations: [
+              {
+                id: "plan_new",
+                kind: EVENT_PLAN_KINDS.RECOMMENDATION,
+                title: "Newer plan",
+                estimatedTotalCents: 120000,
+                currency: "USD",
+                availabilityStatus: PLAN_AVAILABILITY_STATUSES.AVAILABLE,
+              },
+            ],
+            resourceReservations: [],
+          },
+        ]}
+      />,
+    );
+
+    expect(html.indexOf("Newer Party")).toBeLessThan(html.indexOf("Older Party"));
   });
 
   it("keeps converted inquiries out of Ready for Live Agent", () => {

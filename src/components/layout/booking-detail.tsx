@@ -3,7 +3,7 @@ import Link from "next/link";
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
 import { formatEventDuration } from "@/lib/event-planner/labels";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
-import { formatEventLocalDateTime, formatEventLocalTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { formatEventLocalDateTime, formatEventLocalTime, formatItineraryLine, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { employeeDisplayName } from "@/lib/inquiries/workflow-stage";
 import { minutesToClock } from "@/server/resources/time-window";
 import { BOOKING_STATUS_LABELS, type BookingStatus } from "@/types/booking";
@@ -164,12 +164,12 @@ export function BookingDetail({
           <dt className="text-foreground/60">Schedule / rotations</dt>
           <dd className="mt-1 whitespace-pre-wrap">
             {payload.schedule.length > 0
-              ? payload.schedule.join("\n")
+              ? payload.schedule.map(formatItineraryLine).join("\n")
               : payload.rotations && payload.rotations.length > 0
                 ? payload.rotations
                     .map(
                       (row) =>
-                        `${row.startTime}–${row.endTime}: ${row.assignments.map((item) => item.activityName).join(", ")}`,
+                        `${formatItineraryLine(`${row.startTime}–${row.endTime} ${row.assignments.map((item) => item.activityName).join(", ")}`)}`,
                     )
                     .join("\n")
                 : "—"}

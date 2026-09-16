@@ -1,7 +1,9 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
+import { eventLocalSlotDate } from "@/lib/inquiries/tenant-datetime";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
+import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { releaseExpiredHolds } from "@/server/services/resource-availability-service";
 import {
   SCHEDULE_DAY_END_MINUTE,
@@ -50,7 +52,7 @@ export async function getMasterScheduleDay(
     where: {
       organizationId: ctx.organizationId,
       resourceTypeId: resourceType.id,
-      active: true,
+      ...resourcesInLocationWhere(ctx.locationId),
     },
     orderBy: { displayOrder: "asc" },
     select: { id: true, name: true, displayOrder: true, capacity: true },
@@ -59,7 +61,7 @@ export async function getMasterScheduleDay(
     where: {
       organizationId: ctx.organizationId,
       resourceId: { in: resources.map((row) => row.id) },
-      slotDate: new Date(`${input.date}T00:00:00.000Z`),
+      slotDate: eventLocalSlotDate(input.date),
       releasedAt: null,
       status: {
         in: [RESOURCE_RESERVATION_STATUSES.HOLD, RESOURCE_RESERVATION_STATUSES.BOOKED],
@@ -77,6 +79,7 @@ export async function getMasterScheduleDay(
           customerGroupName: true,
           customerFirstName: true,
           customerLastName: true,
+          salesStage: true,
         },
       },
       booking: {

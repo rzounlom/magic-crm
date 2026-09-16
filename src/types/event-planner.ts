@@ -223,6 +223,7 @@ export type EventPlanPayload = {
   resourceRequirements?: PlanResourceRequirement[];
   lineItems?: EventPlanLineItem[];
   depositPreviewCents?: number | null;
+  depositPreviewPercent?: number | null;
   depositPreviewNote?: string;
   itinerary?: EventPlanItinerarySegment[];
   suggestedStartTimes?: string[];

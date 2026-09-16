@@ -58,7 +58,7 @@ Foundational models use Prisma `cuid(2)` string IDs. They are not sequential and
 
 `Inquiry.desiredDate` is a calendar date (`@db.Date`). `Inquiry.desiredStartTime` is a wall-clock string. Together they are event-local, not UTC instants. Employee UI must format them without timezone-shifting the chosen day or hour.
 
-`createdAt` / `updatedAt` (and similar audit timestamps) are UTC instants and should be shown in `Organization.timezone`.
+`createdAt` / `updatedAt` (and similar audit timestamps) are UTC instants. Display them with `resolveTenantTimezone`: valid Location timezone override, else `Organization.timezone`, else UTC. `Organization.timezone` must be a real IANA identifier (for example `America/Indiana/Indianapolis`). The literal string `IANA` is invalid and must not be treated as a zone.
 
 ## Currency
 
@@ -187,6 +187,7 @@ Committed migrations:
 - `20260909180000_live_agent_workspace` — Inquiry workflowStage/assignment timestamps, EventPlanRecommendation.kind, unique `(organizationId, inquiryId, kind, tier)`
 - `20260909200000_confirmed_bookings` — Booking, BookingLineItem, OrganizationBookingSequence; ResourceReservation/CommunicationEvent booking FKs
 - `20260916120000_booking_catalog` — ProductCategory, Product, ProductPrice, ProductResourceRequirement, ProductServing, RecommendationProfile; Inquiry salesStage/audience/attractionMode
+- `20260916180000_phase_3b_holds_booking` — Organization.depositPercent; ResourceReservation locationId/startsAt/endsAt; Booking deposit cents and UTC instants
 
 ## Seed / reference data
 

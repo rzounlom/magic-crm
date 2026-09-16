@@ -17,6 +17,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/server/actions/public-inquiry", () => ({
   selectPublicEventPlanAction: vi.fn(),
+  reservePublicEventPlanAction: vi.fn(),
 }));
 
 describe("public event plan view", () => {
@@ -50,6 +51,10 @@ describe("public event plan view", () => {
               dining: { label: "Pizza & Light Fare", priceCents: 0 },
               spaces: [],
               schedule: ["Bowling first."],
+              itinerary: [
+                { startTime: "17:30", endTime: "18:30", label: "Fajita Bar" },
+                { startTime: "18:30", endTime: "19:00", label: "Axe Throwing" },
+              ],
               pricingComplete: true,
             },
           },
@@ -81,7 +86,8 @@ describe("public event plan view", () => {
     expect(html).toContain("Riverside Fun Center Personal Event Planner");
     expect(html).toContain("RECOMMENDED");
     expect(html).toContain("Why We Recommend This");
-    expect(html).toContain("Choose This Event Plan");
+    expect(html).toContain("Reserve this option");
+    expect(html).toContain("Have an agent contact me");
     expect(html).toContain("Attractions");
     expect(html).toContain("Dining");
     expect(html).toContain("Event Length");
@@ -92,7 +98,9 @@ describe("public event plan view", () => {
     expect(html).not.toContain("chat");
     expect(html).not.toContain("recommendation engine");
     expect(html).not.toContain("model confidence");
-    expect(html).toContain("does not reserve the date");
+    expect(html).toContain("5:30 PM–6:30 PM Fajita Bar");
+    expect(html).toContain("6:30 PM–7:00 PM Axe Throwing");
+    expect(html).not.toContain("17:30–18:30");
   });
 
   it("shows a confirmation screen after a plan is saved", () => {
@@ -132,10 +140,10 @@ describe("public event plan view", () => {
       />,
     );
 
-    expect(html).toContain("Great choice — we saved your event plan.");
-    expect(html).toContain("Riverside Fun Center event specialist");
-    expect(html).toContain("not reserved yet");
-    expect(html).not.toContain("Choose This Event Plan");
+    expect(html).toContain("Thanks — we’ve saved the package you’re interested in.");
+    expect(html).toContain("events team will follow up");
+    expect(html).toContain("Inventory is not held");
+    expect(html).not.toContain("Reserve this option");
   });
 
   it("keeps a reassuring confirmation when availability changed after selection", () => {
@@ -176,9 +184,9 @@ describe("public event plan view", () => {
       />,
     );
 
-    expect(html).toContain("We’ve saved your preferred event plan.");
-    expect(html).toContain("confirm the final schedule and availability");
-    expect(html).not.toContain("no longer available");
+    expect(html).toContain("We’ve saved the package you’re interested in.");
+    expect(html).toContain("confirm the final details and availability");
+    expect(html).toContain("The time is not reserved");
   });
 
   it("shows a confirmed event summary and blocks further selection", () => {
@@ -229,7 +237,7 @@ describe("public event plan view", () => {
     expect(html).toContain("Your Event Is Confirmed");
     expect(html).toContain("RIV-2026-00001");
     expect(html).toContain("24 guests");
-    expect(html).not.toContain("Choose This Event Plan");
+    expect(html).not.toContain("Reserve this option");
     expect(html).not.toContain("not reserved yet");
   });
 
@@ -243,5 +251,8 @@ describe("public event plan view", () => {
     expect(formDataAt).toBeGreaterThan(-1);
     expect(yieldAt).toBeGreaterThan(-1);
     expect(formDataAt).toBeLessThan(yieldAt);
+    expect(source).toContain('pendingLabel="Reserving…"');
+    expect(source).toContain('pendingLabel="Saving…"');
+    expect(source).toContain("onSafeSubmitAttempt");
   });
 });

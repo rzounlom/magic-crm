@@ -14,6 +14,7 @@ import {
 import type { DestructiveConfirmCopy } from "@/lib/ui/destructive-confirm";
 import { mutationNotice, type MutationNoticeCopy } from "@/lib/ui/mutation-notice";
 import { notify } from "@/lib/ui/notify";
+import { yieldToPaint } from "@/lib/ui/yield-to-paint";
 import type { SecurityActionResult } from "@/types/security-action";
 
 type SecurityActionFormProps = {
@@ -44,6 +45,7 @@ export function SecurityActionForm({
 
     pendingRef.current = true;
     setPending(true);
+    await yieldToPaint();
 
     let keepPending = false;
     try {
@@ -106,6 +108,7 @@ export function SecurityActionForm({
           cancelLabel={confirm.cancelLabel}
           confirmLabel={confirm.confirmLabel}
           confirmPending={pending}
+          confirmPendingLabel={confirm.confirmPendingLabel}
           onCancel={() => {
             if (onConfirmDialogChoice(pendingRef.current, "cancel") === "abort") {
               setConfirmOpen(false);

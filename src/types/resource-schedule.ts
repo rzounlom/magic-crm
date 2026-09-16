@@ -88,6 +88,7 @@ export type ResourceAvailabilityRequest = {
   excludeInquiryId?: string | null;
   excludeBookingId?: string | null;
   excludeReservationId?: string | null;
+  now?: Date;
 };
 
 export type ResourceTypeAvailability = {
@@ -106,4 +107,42 @@ export type ResourceAvailabilityResult = {
   available: boolean;
   note: string;
   types: ResourceTypeAvailability[];
+};
+
+export type ProposalHoldResource = {
+  resourceId: string;
+  resourceName: string;
+  resourceTypeName: string;
+  startMinute: number;
+  endMinute: number;
+};
+
+export type ProposalHoldResult = {
+  reused: boolean;
+  inquiryId: string;
+  proposalId: string;
+  organizationId: string;
+  locationId: string | null;
+  locationName: string | null;
+  holdExpiresAt: Date;
+  eventDate: string;
+  startTime: string;
+  endTime: string;
+  startsAt: Date;
+  endsAt: Date;
+  resourceCount: number;
+  resources: ProposalHoldResource[];
+  packageTitle: string;
+  subtotalCents: number;
+  depositRequiredCents: number;
+  depositPercent: number;
+  currency: string;
+  itinerary: string[];
+  lineItemNames: string[];
+  customer: {
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    groupName: string | null;
+  };
 };

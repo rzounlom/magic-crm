@@ -136,6 +136,8 @@ export const INQUIRY_ERROR_CODES = [
   "WORKING_PLAN_INVALID",
   "STALE_INQUIRY",
   "INQUIRY_ALREADY_BOOKED",
+  "AVAILABILITY_CHANGED",
+  "PLAN_ALREADY_CONSUMED",
 ] as const;
 
 export type InquiryErrorCode = (typeof INQUIRY_ERROR_CODES)[number];
@@ -152,6 +154,9 @@ const INQUIRY_USER_MESSAGES: Record<InquiryErrorCode, string> = {
   WORKING_PLAN_INVALID: "Check the working event plan and try again.",
   STALE_INQUIRY: "This inquiry was updated by someone else. Refresh and try again.",
   INQUIRY_ALREADY_BOOKED: "This event plan has already been finalized.",
+  AVAILABILITY_CHANGED:
+    "That exact time was just taken, but we found nearby options. Choose another time or plan.",
+  PLAN_ALREADY_CONSUMED: "This event plan is already reserved or waiting for an agent to follow up.",
 };
 
 export class InquiryError extends Error {

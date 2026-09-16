@@ -1,21 +1,19 @@
 import Link from "next/link";
 
 import { MasterScheduleGrid } from "@/components/layout/master-schedule-grid";
+import { ScheduleDayNav } from "@/components/layout/schedule-day-nav";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
+import { calendarDateInTimeZone } from "@/lib/inquiries/tenant-datetime";
 import { isAuthorizationError, isResourceError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
+import { getCurrentTenantTimezone } from "@/server/services/inquiry-service";
 import {
   getMasterScheduleDay,
   listScheduleResourceTypes,
 } from "@/server/services/resource-schedule-service";
 import { PERMISSIONS } from "@/types/permissions";
-
-function todayStamp() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
 
 function shiftDate(value: string, days: number) {
   const [year, month, day] = value.split("-").map(Number);
@@ -33,6 +31,7 @@ type View =
       day: Awaited<ReturnType<typeof getMasterScheduleDay>>;
       canHold: boolean;
       canRelease: boolean;
+      timeZone: string;
       prefillResourceId?: string;
       prefillStart?: string;
     };
@@ -45,7 +44,8 @@ async function loadView(search: {
 }): Promise<View> {
   try {
     const ctx = await getRequestContext();
-    const date = /^\d{4}-\d{2}-\d{2}$/.test(search.date ?? "") ? search.date! : todayStamp();
+    const timeZone = await getCurrentTenantTimezone(ctx, db);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(search.date ?? "") ? search.date! : calendarDateInTimeZone(new Date(), timeZone);
     const [types, canHold, canRelease] = await Promise.all([
       listScheduleResourceTypes(ctx, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CREATE, db),
@@ -63,6 +63,7 @@ async function loadView(search: {
       day,
       canHold,
       canRelease,
+      timeZone,
       prefillResourceId: search.resource,
       prefillStart: search.start,
     };
@@ -87,7 +88,6 @@ export default async function MasterSchedulePage({
 
   const prev = shiftDate(view.date, -1);
   const next = shiftDate(view.date, 1);
-  const typeQuery = view.selectedTypeId ? `&type=${view.selectedTypeId}` : "";
 
   return (
     <section className="w-full max-w-none">
@@ -97,54 +97,19 @@ export default async function MasterSchedulePage({
         Live occupancy from HOLD and BOOKED reservations. BOOKED cells open the Booking record. Available is
         the absence of an active reservation. This is not a payment tool.
       </p>
-      <div className="mt-6 flex flex-wrap items-end gap-3">
-        <Link href={`/app/schedule?date=${prev}${typeQuery}`} className="rounded-md border border-border px-3 py-2 text-sm">
-          Previous day
-        </Link>
-        <Link href={`/app/schedule?date=${todayStamp()}${typeQuery}`} className="rounded-md border border-border px-3 py-2 text-sm">
-          Today
-        </Link>
-        <Link href={`/app/schedule?date=${next}${typeQuery}`} className="rounded-md border border-border px-3 py-2 text-sm">
-          Next day
-        </Link>
-        <form className="flex items-end gap-2" action="/app/schedule">
-          {view.selectedTypeId ? <input type="hidden" name="type" value={view.selectedTypeId} /> : null}
-          <label className="text-sm">
-            <span className="sr-only">Date</span>
-            <input
-              type="date"
-              name="date"
-              defaultValue={view.date}
-              className="rounded-md border border-border bg-background px-3 py-2"
-            />
-          </label>
-          <button type="submit" className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
-            Go
-          </button>
-        </form>
-      </div>
+      <ScheduleDayNav
+        date={view.date}
+        prev={prev}
+        next={next}
+        today={calendarDateInTimeZone(new Date(), view.timeZone)}
+        selectedTypeId={view.selectedTypeId}
+        types={view.types}
+      />
       {view.types.length === 0 ? (
         <p className="mt-8 text-sm text-foreground/70">
           No resource types are configured. An administrator can add them under Resources.
         </p>
-      ) : (
-        <>
-          <nav className="mt-6 flex flex-wrap gap-2" aria-label="Resource types">
-            {view.types.map((type) => (
-              <Link
-                key={type.id}
-                href={`/app/schedule?date=${view.date}&type=${type.id}`}
-                className={`rounded-md px-3 py-1.5 text-sm ${
-                  type.id === view.selectedTypeId
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border"
-                }`}
-              >
-                {type.name}
-              </Link>
-            ))}
-          </nav>
-          {view.day && view.day.resources.length > 0 ? (
+      ) : view.day && view.day.resources.length > 0 ? (
             <MasterScheduleGrid
               date={view.date}
               resourceTypeId={view.day.resourceType.id}
@@ -155,6 +120,7 @@ export default async function MasterSchedulePage({
               endMinute={view.day.endMinute}
               canHold={view.canHold}
               canRelease={view.canRelease}
+              timeZone={view.timeZone}
               prefillResourceId={view.prefillResourceId}
               prefillStart={view.prefillStart}
             />
@@ -168,8 +134,6 @@ export default async function MasterSchedulePage({
               ) : null}
             </p>
           )}
-        </>
-      )}
     </section>
   );
 }

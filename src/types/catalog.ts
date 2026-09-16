@@ -68,6 +68,10 @@ export const DEPOSIT_PREVIEW_PERCENT = 30;
 export const DEPOSIT_PREVIEW_NOTE =
   "30% deposit preview for planning only. Payment is not collected yet.";
 
+export function depositPreviewNoteForPercent(percent: number): string {
+  return `${percent}% deposit preview for planning only. Payment is not collected yet.`;
+}
+
 export type CatalogPriceInput = {
   strategy: string;
   amountCents: number;

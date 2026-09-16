@@ -3,11 +3,11 @@ import Link from "next/link";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
-  LIVE_AGENT_BOOKING_STEPS,
   liveAgentBookingGuide,
+  liveAgentBookingSteps,
 } from "@/lib/inquiries/live-agent-next-step";
 import { confirmBookingAction } from "@/server/actions/bookings";
-import { markReadyToFinalizeAction, startWorkingInquiryAction } from "@/server/actions/live-agent";
+import { startWorkingInquiryAction } from "@/server/actions/live-agent";
 import { placeInquiryHoldAction } from "@/server/actions/resource-schedule";
 
 const PRIMARY_BUTTON =
@@ -37,7 +37,6 @@ export function LiveAgentBookingActions({
   hasHold,
   canPlaceHold,
   needsInventory,
-  readyToFinalize,
   confirmBlockers,
   resourcesHref = "/app/admin/resources",
 }: {
@@ -54,7 +53,6 @@ export function LiveAgentBookingActions({
   hasHold: boolean;
   canPlaceHold: boolean;
   needsInventory: boolean;
-  readyToFinalize: boolean;
   confirmBlockers: string[];
   resourcesHref?: string;
 }) {
@@ -65,14 +63,13 @@ export function LiveAgentBookingActions({
     hasHold,
     canPlaceHold,
     needsInventory,
-    readyToFinalize,
     confirmBlockers,
   });
+  const steps = liveAgentBookingSteps({ needsHold, hasHold });
   const canSubmitConfirm = canConfirm && !booked && confirmBlockers.length === 0;
   const showStartWorking = canManage && !booked && !assigned;
   const showPlaceHold = canHold && canManage && !booked && assigned && needsHold && !hasHold && canPlaceHold;
   const showSetupInventory = canManage && !booked && assigned && needsHold && !hasHold && needsInventory;
-  const showReadyToFinalize = canManage && !booked && assigned && (!needsHold || hasHold) && !readyToFinalize;
 
   return (
     <section
@@ -80,12 +77,12 @@ export function LiveAgentBookingActions({
       className="sticky top-0 z-20 mt-6 rounded-md border border-primary/40 bg-background px-4 py-4 shadow-sm"
     >
       <ol className="flex flex-wrap gap-2 text-xs font-medium">
-        {LIVE_AGENT_BOOKING_STEPS.map((step, index) => {
+        {steps.map((step, index) => {
           const current = step.id === guide.currentStepId;
           return (
             <li key={step.id} className={current ? "text-primary" : "text-foreground/45"}>
               {index + 1}. {step.label}
-              {index < LIVE_AGENT_BOOKING_STEPS.length - 1 ? (
+              {index < steps.length - 1 ? (
                 <span className="ml-2 text-foreground/30" aria-hidden>
                   →
                 </span>
@@ -132,37 +129,16 @@ export function LiveAgentBookingActions({
                   title: "Place a temporary resource hold?",
                   description: "This holds the required resources for this inquiry. It does not confirm a booking.",
                   confirmLabel: "Place resource hold",
+                  confirmPendingLabel: "Placing hold…",
                 }}
               >
                 <input type="hidden" name="inquiryId" value={inquiryId} />
-                <PendingSubmitButton pendingLabel="Holding…" className={PRIMARY_BUTTON}>
+                <PendingSubmitButton pendingLabel="Placing hold…" className={PRIMARY_BUTTON}>
                   Place Resource Hold
                 </PendingSubmitButton>
               </SecurityActionForm>
             ) : !hasHold && needsHold ? (
               <DisabledStatusButton>Place Resource Hold</DisabledStatusButton>
-            ) : null}
-            {showReadyToFinalize ? (
-              <SecurityActionForm
-                action={markReadyToFinalizeAction}
-                notice={{ successTitle: "Ready to finalize", errorTitle: "Unable to mark ready to finalize" }}
-                confirm={{
-                  title: "Mark ready to finalize?",
-                  description: "This does not create a booking, collect payment, or send customer confirmation.",
-                  confirmLabel: "Ready to finalize",
-                }}
-              >
-                <input type="hidden" name="inquiryId" value={inquiryId} />
-                <input type="hidden" name="expectedUpdatedAt" value={expectedUpdatedAt} />
-                <PendingSubmitButton
-                  pendingLabel="Saving…"
-                  className={guide.currentStepId === "finalize" ? PRIMARY_BUTTON : `w-full rounded-md border border-border px-4 py-2 text-sm font-medium`}
-                >
-                  Mark Ready to Finalize
-                </PendingSubmitButton>
-              </SecurityActionForm>
-            ) : !readyToFinalize ? (
-              <DisabledStatusButton>Mark Ready to Finalize</DisabledStatusButton>
             ) : null}
             {canSubmitConfirm ? (
               <SecurityActionForm
@@ -171,8 +147,9 @@ export function LiveAgentBookingActions({
                 confirm={{
                   title: "Confirm this booking?",
                   description:
-                    "This creates a Booking record and converts resource HOLDs to BOOKED. The customer-selected plan stays as history. No email is sent.",
+                    "This will convert the held resources into a confirmed booking on the Master Schedule. Payment collection is not enabled yet.",
                   confirmLabel: "Confirm Booking",
+                  confirmPendingLabel: "Confirming…",
                 }}
               >
                 <input type="hidden" name="inquiryId" value={inquiryId} />

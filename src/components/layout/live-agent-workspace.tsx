@@ -59,6 +59,7 @@ type WorkspaceInquiry = {
   customerNotes: string | null;
   selectedEventPlanId: string | null;
   customerSelectedAt: Date | null;
+  salesStage: string | null;
   createdAt: Date;
   recommendationsGeneratedAt: Date | null;
   recommendationsViewedAt: Date | null;
@@ -168,7 +169,7 @@ export function LiveAgentWorkspace({
         ...bookingConfirmationBlockers({
           inquiryStatus: inquiry.status,
           workflowStage: inquiry.workflowStage,
-          readyToFinalizeAt: inquiry.readyToFinalizeAt,
+        readyToFinalizeAt: inquiry.readyToFinalizeAt,
           selectedEventPlanId: inquiry.selectedEventPlanId,
           assignedUserProfileId: inquiry.assignedUserProfileId,
           workingPlan: workingPlan
@@ -195,7 +196,7 @@ export function LiveAgentWorkspace({
             resourceCheck?.requirements.some((row) => row.quantity != null && row.quantity > 0),
           ),
         }),
-        ...(workingPlan && resourceCheck
+        ...(workingPlan && resourceCheck && inquiry.resourceReservations.length > 0
           ? holdCoverageErrors(workingPayload, resourceCheck.requirements, inquiry.resourceReservations.map((row) => ({
               id: row.id,
               status: row.status ?? "HOLD",
@@ -248,7 +249,6 @@ export function LiveAgentWorkspace({
         hasHold={inquiry.resourceReservations.length > 0}
         canPlaceHold={holdReadiness.canPlaceHold}
         needsInventory={holdReadiness.needsInventory}
-        readyToFinalize={Boolean(inquiry.readyToFinalizeAt)}
         confirmBlockers={confirmBlockers}
       />
 
@@ -295,6 +295,11 @@ export function LiveAgentWorkspace({
             desiredStartTime={inquiry.desiredStartTime}
             selectedAt={inquiry.customerSelectedAt}
             timeZone={timeZone}
+            salesStage={inquiry.salesStage}
+            holdExpiresAt={inquiry.resourceReservations[0]?.expiresAt ?? null}
+            heldResources={inquiry.resourceReservations.map((row) => row.resource.name)}
+            depositRequiredCents={workingPayload.depositPreviewCents ?? null}
+            currency={selectedPlan.currency}
           />
         </div>
 

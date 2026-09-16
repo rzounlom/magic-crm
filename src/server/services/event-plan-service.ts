@@ -6,7 +6,8 @@ import {
 import { getPublicRateLimiter, type RateLimiter } from "@/lib/ai/rate-limiter";
 import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
-import { InquiryError } from "@/server/errors";
+import { resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
+import { InquiryError, isResourceError } from "@/server/errors";
 import type { PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import {
   attractionInterestIdsFromJson,
@@ -16,12 +17,15 @@ import {
 import { generateRecommendations } from "@/server/event-planner/generate-recommendations";
 import { loadCatalogForProposal } from "@/server/catalog/load-for-proposal";
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
+import { depositPercentFromTenant } from "@/server/catalog/pricing";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { planAvailabilityStatusFromCheck } from "@/server/resources/plan-availability-status";
 import { buildCatalogEventPlans } from "@/server/services/proposal-engine";
 import { checkResourceAvailability, createResourceScheduleAvailabilityProvider } from "@/server/services/resource-availability-service";
+import { findNearbyAvailableStarts } from "@/server/services/nearby-availability";
+import { placeProposalHold } from "@/server/services/proposal-hold-service";
 import { emitDomainEvent } from "@/server/domain-events/emit";
 import { DOMAIN_EVENT_TYPES } from "@/server/domain-events/types";
 import { recordAuditEvent } from "@/server/services/audit";
@@ -218,7 +222,7 @@ export async function generateEventPlansForInquiry(
   const [organization, knowledge, resourceCatalog, storedRequirementRows] = await Promise.all([
     database.organization.findFirstOrThrow({
       where: { id: input.organizationId },
-      select: { currency: true },
+      select: { currency: true, depositPercent: true },
     }),
     database.salesKnowledgeItem.findMany({
       where: { organizationId: input.organizationId, active: true },
@@ -284,6 +288,7 @@ export async function generateEventPlansForInquiry(
       profiles: catalog.profiles,
       resourceRequirements: catalog.resourceRequirements,
       currency: organization.currency,
+      depositPercent: depositPercentFromTenant(organization.depositPercent),
       availabilityProvider,
       excludeInquiryId: inquiry.id,
     });
@@ -399,9 +404,21 @@ export async function getPublicEventPlanByToken(database: PlannerDb, token: stri
               guestCount: true,
             },
           },
+          resourceReservations: {
+            where: {
+              releasedAt: null,
+              status: "HOLD",
+              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+            },
+            include: {
+              resource: { select: { name: true, resourceType: { select: { name: true } } } },
+            },
+            orderBy: [{ startMinute: "asc" }, { createdAt: "asc" }],
+          },
+          location: { select: { timezone: true } },
         },
       },
-      organization: { select: { name: true, slug: true, currency: true } },
+      organization: { select: { name: true, slug: true, currency: true, timezone: true, depositPercent: true } },
     },
   });
   if (!conversation) {
@@ -422,17 +439,29 @@ export async function getPublicEventPlanByToken(database: PlannerDb, token: stri
     });
   }
 
-  const { bookings, ...inquiryFields } = conversation.inquiry;
+  const { bookings, resourceReservations, location, ...inquiryFields } = conversation.inquiry;
+  const activeHold = resourceReservations[0] ?? null;
 
   return {
     organizationName: conversation.organization.name,
     organizationSlug: conversation.organization.slug,
     currency: conversation.organization.currency,
+    timeZone: resolveTenantTimezone({
+      organizationTimezone: conversation.organization.timezone,
+      locationTimezone: location?.timezone,
+    }),
+    depositPercent: depositPercentFromTenant(conversation.organization.depositPercent),
     inquiry: {
       ...inquiryFields,
       employeeInternalNotes: null,
     },
     booking: bookings[0] ?? null,
+    hold: activeHold
+      ? {
+          expiresAt: activeHold.expiresAt,
+          resources: resourceReservations.map((row) => row.resource.name),
+        }
+      : null,
     plans: conversation.inquiry.eventPlanRecommendations,
   };
 }
@@ -463,6 +492,9 @@ export async function selectPublicEventPlan(
   }
   if (conversation.inquiry.status === INQUIRY_STATUSES.BOOKED) {
     throw new InquiryError("INQUIRY_ALREADY_BOOKED");
+  }
+  if (conversation.inquiry.salesStage === INQUIRY_SALES_STAGES.HOLD_PLACED) {
+    throw new InquiryError("PLAN_ALREADY_CONSUMED");
   }
 
   const plan = await database.eventPlanRecommendation.findFirst({
@@ -526,7 +558,7 @@ export async function selectPublicEventPlan(
         aiHandlingEnabled: false,
         humanHandoffRequestedAt: conversation.inquiry.humanHandoffRequestedAt ?? new Date(),
         humanHandoffReason: READY_FOR_HUMAN_REASONS.CUSTOMER_SELECTED_PLAN,
-        internalSummary: `Customer selected ${plan.title} (${plan.tier}). Estimated total is stored on the selected plan. Selection is intent only — inventory is not reserved.`,
+        internalSummary: `Customer asked an agent to follow up on ${plan.title} (${plan.tier}). Inventory is not held.`,
       },
     }),
     database.eventPlanRecommendation.update({
@@ -543,10 +575,17 @@ export async function selectPublicEventPlan(
 
   await recordAuditEvent(database, {
     organizationId: conversation.organizationId,
-    action: "inquiry.plan_selected",
+    action: "inquiry.plan_followup_requested",
     resourceType: "inquiry",
     resourceId: conversation.inquiryId,
     metadata: { planId: plan.id, tier: plan.tier, availabilityStatus },
+  });
+  await recordAuditEvent(database, {
+    organizationId: conversation.organizationId,
+    action: "inquiry.plan_selected",
+    resourceType: "inquiry",
+    resourceId: conversation.inquiryId,
+    metadata: { planId: plan.id, tier: plan.tier, availabilityStatus, hold: false },
   });
   try {
     await emitDomainEvent(database, {
@@ -581,4 +620,111 @@ export async function selectPublicEventPlan(
   }
 
   return { inquiry: updated, plan: updatedPlan, availabilityStatus };
+}
+
+export async function reservePublicEventPlan(
+  database: PlannerDb,
+  input: { token: string; planId: string; rateLimitKey: string; now?: Date },
+  rateLimiter: RateLimiter = getPublicRateLimiter(),
+) {
+  if (!isPlausiblePublicConversationToken(input.token)) {
+    throw new InquiryError("CONVERSATION_NOT_FOUND");
+  }
+  const limited = await rateLimiter.consume(`plan-reserve:${input.rateLimitKey}`, 10, 10 * 60_000);
+  if (!limited.ok) {
+    throw new InquiryError("RATE_LIMITED");
+  }
+
+  const hash = hashPublicConversationToken(input.token);
+  const conversation = await database.conversation.findFirst({
+    where: { publicTokenHash: hash, channel: CONVERSATION_CHANNELS.WEB },
+    include: {
+      inquiry: true,
+      organization: { select: { name: true } },
+    },
+  });
+  if (!conversation) {
+    throw new InquiryError("CONVERSATION_NOT_FOUND");
+  }
+  if (conversation.inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    throw new InquiryError("INQUIRY_ALREADY_BOOKED");
+  }
+
+  const plan = await database.eventPlanRecommendation.findFirst({
+    where: {
+      id: input.planId,
+      organizationId: conversation.organizationId,
+      inquiryId: conversation.inquiryId,
+      kind: EVENT_PLAN_KINDS.RECOMMENDATION,
+    },
+  });
+  if (!plan) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+
+  try {
+    const hold = await placeProposalHold(database, {
+      organizationId: conversation.organizationId,
+      inquiryId: conversation.inquiryId,
+      planId: plan.id,
+      selectPlan: true,
+      now: input.now,
+    });
+    return { hold, availabilityStatus: "AVAILABLE" as const, nearbyStartTimes: [] as string[] };
+  } catch (error) {
+    if (error instanceof InquiryError) {
+      throw error;
+    }
+    if (!isResourceError(error) || error.code !== "RESOURCE_CONFLICT") {
+      throw error;
+    }
+    const planPayload = plan.payload as EventPlanPayload;
+    const locationId = await resolveInquiryLocationId(database, conversation.inquiry);
+    const inventory = await database.resourceType.findMany({
+      where: { organizationId: conversation.organizationId },
+      select: {
+        id: true,
+        _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } },
+      },
+    });
+    const requirements = applyInventoryFeasibility(
+      planPayload.resourceRequirements ?? [],
+      inventory.map((row) => ({ id: row.id, activeCount: row._count.resources })),
+    );
+    const nearby = await findNearbyAvailableStarts({
+      startTime: planPayload.startTime ?? conversation.inquiry.desiredStartTime,
+      check: (startTime) =>
+        checkResourceAvailability(database, {
+          organizationId: conversation.organizationId,
+          locationId,
+          date: planPayload.eventDate ?? isoDate(conversation.inquiry.desiredDate),
+          startTime,
+          durationMinutes: plan.durationMinutes ?? planPayload.durationMinutes,
+          resourceRequirements: requirements,
+          excludeInquiryId: conversation.inquiryId,
+        }),
+    });
+    const nearbyTimes = nearby.map((row) => row.startTime);
+    await database.eventPlanRecommendation.update({
+      where: { id: plan.id },
+      data: {
+        availabilityStatus: "AVAILABILITY_CHANGED",
+        availabilityNote:
+          nearbyTimes.length > 0
+            ? `That exact time was just taken. Nearby times currently open: ${nearbyTimes.join(", ")}.`
+            : "That exact time was just taken. Nearby options were not available.",
+        availabilityCheckedAt: new Date(),
+        payload: {
+          ...planPayload,
+          suggestedStartTimes: nearbyTimes,
+        } as Prisma.InputJsonValue,
+      },
+    });
+    throw new InquiryError(
+      "AVAILABILITY_CHANGED",
+      nearbyTimes.length > 0
+        ? `That exact time was just taken, but we found nearby options: ${nearbyTimes.join(", ")}.`
+        : "That exact time was just taken. Please choose another plan or ask an agent to follow up.",
+    );
+  }
 }

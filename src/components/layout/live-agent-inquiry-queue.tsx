@@ -6,7 +6,7 @@ import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display"
 import { isLiveAgentQueueCandidate, sortLiveAgentQueue } from "@/lib/inquiries/live-agent-queue";
 import { INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGE_LABELS, EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { PLAN_AVAILABILITY_STATUS_LABELS, PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
-import { formatEventLocalDate, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { formatEventLocalDateTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import {
   deriveInquiryWorkflowStage,
   employeeDisplayName,
@@ -31,6 +31,7 @@ type InquiryListItem = {
   customerEmail: string;
   eventType: string | null;
   desiredDate: Date | null;
+  desiredStartTime?: string | null;
   guestCount: number | null;
   assignedUser: {
     firstName: string | null;
@@ -69,15 +70,25 @@ export function LiveAgentInquiryQueue({
         !isLiveAgentQueueCandidate(inquiry),
     )
     .sort((left, right) => {
-      const leftWait = left.humanHandoffRequestedAt ?? left.createdAt;
-      const rightWait = right.humanHandoffRequestedAt ?? right.createdAt;
-      return leftWait.getTime() - rightWait.getTime();
+      const createdDelta = right.createdAt.getTime() - left.createdAt.getTime();
+      if (createdDelta !== 0) {
+        return createdDelta;
+      }
+      return right.id.localeCompare(left.id);
     });
-  const rest = inquiries.filter(
-    (inquiry) =>
-      !isLiveAgentQueueCandidate(inquiry) &&
-      inquiry.status !== INQUIRY_STATUSES.READY_FOR_HUMAN,
-  );
+  const rest = inquiries
+    .filter(
+      (inquiry) =>
+        !isLiveAgentQueueCandidate(inquiry) &&
+        inquiry.status !== INQUIRY_STATUSES.READY_FOR_HUMAN,
+    )
+    .sort((left, right) => {
+      const createdDelta = right.createdAt.getTime() - left.createdAt.getTime();
+      if (createdDelta !== 0) {
+        return createdDelta;
+      }
+      return right.id.localeCompare(left.id);
+    });
 
   return (
     <div className="mt-8 space-y-10">
@@ -85,8 +96,7 @@ export function LiveAgentInquiryQueue({
         <section>
           <h2 className="text-lg font-semibold">Ready for Live Agent</h2>
           <p className="mt-1 text-sm text-foreground/70">
-            Customer-selected plans are listed first. Unassigned leads, availability issues, and expiring holds
-            stay at the top of that group.
+            Customer-selected plans are grouped first. Newest inquiries appear at the top of each section.
           </p>
           {selected.length > 0 ? (
             <ul className="mt-4 space-y-3">
@@ -176,7 +186,9 @@ function InquiryRow({
             </p>
             <p className="mt-1 text-sm text-foreground/70">
               {inquiry.eventType || "Event"}
-              {inquiry.desiredDate ? ` · ${formatEventLocalDate(inquiry.desiredDate)}` : ""}
+              {inquiry.desiredDate || inquiry.desiredStartTime
+                ? ` · ${formatEventLocalDateTime({ date: inquiry.desiredDate, time: inquiry.desiredStartTime })}`
+                : ""}
               {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
             </p>
           </div>

@@ -2,6 +2,8 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 
+import { LoadingIndicator } from "@/components/ui/loading-indicator";
+
 const PendingActionContext = createContext(false);
 
 export function PendingActionProvider({
@@ -32,7 +34,7 @@ export function PendingSubmitButton({
       className={`cursor-pointer disabled:cursor-not-allowed ${className ?? ""}`}
       aria-busy={pending}
     >
-      {pending ? pendingLabel : children}
+      {pending ? <LoadingIndicator label={pendingLabel} /> : children}
     </button>
   );
 }

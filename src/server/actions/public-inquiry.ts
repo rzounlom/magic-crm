@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { isInquiryError } from "@/server/errors";
 import { readPublicIntakeFields } from "@/server/inquiries/intake-validation";
-import { selectPublicEventPlan } from "@/server/services/event-plan-service";
+import { reservePublicEventPlan, selectPublicEventPlan } from "@/server/services/event-plan-service";
 import { createPublicInquiry, submitPublicConversationMessage } from "@/server/services/inquiry-service";
 import { readSalesAgentRuntime } from "@/server/ai/sales-agent-runtime";
 import type { SecurityActionResult } from "@/types/security-action";
@@ -87,13 +87,42 @@ export async function selectPublicEventPlanAction(formData: FormData): Promise<S
     });
     return {
       ok: true,
-      title: "Event plan saved",
-      message: "Your preferred event plan is saved. A team member will confirm availability before booking.",
+      title: "Follow-up requested",
+      message: "We've saved the package you're interested in. A member of the events team will follow up. The time is not reserved.",
     };
   } catch (error) {
     unstable_rethrow(error);
     if (isInquiryError(error)) {
       return { ok: false, code: error.code, title: "Unable to save that plan", message: error.userMessage };
+    }
+    throw error;
+  }
+}
+
+export async function reservePublicEventPlanAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const token = String(formData.get("token") ?? "");
+    const planId = String(formData.get("planId") ?? "");
+    await reservePublicEventPlan(db, {
+      token,
+      planId,
+      rateLimitKey: await rateLimitIdentity(clientKey("plan-reserve", token)),
+    });
+    return {
+      ok: true,
+      title: "Time held for 24 hours",
+      message:
+        "Your event time is being held for 24 hours while you complete the next step. Payment will be enabled in a later release. This is not a final booking.",
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    if (isInquiryError(error)) {
+      return {
+        ok: false,
+        code: error.code,
+        title: error.code === "AVAILABILITY_CHANGED" ? "That time was just taken" : "Unable to reserve that plan",
+        message: error.userMessage,
+      };
     }
     throw error;
   }

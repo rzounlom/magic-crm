@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
+import { occupancyInstants, resolveSchedulingTimeZone } from "@/lib/inquiries/tenant-datetime";
 import { ResourceError } from "@/server/errors";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { requirePermission } from "@/server/policies/require-permission";
@@ -7,8 +8,12 @@ import type { RequestContext } from "@/server/request-context";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { applyRotationWindows } from "@/server/resources/rotation-windows";
-import { localEventWindow, minutesToClock, parseClockToMinutes } from "@/server/resources/time-window";
+import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-window";
 import { recordAuditEvent } from "@/server/services/audit";
+import {
+  assignExactResourcesForRequirements,
+  placeProposalHold,
+} from "@/server/services/proposal-hold-service";
 import {
   checkResourceAvailability,
   isReservationOverlapError,
@@ -23,93 +28,9 @@ import {
   DEFAULT_HOLD_HOURS,
   RESOURCE_RESERVATION_SOURCES,
   RESOURCE_RESERVATION_STATUSES,
-  type PlanResourceRequirement,
 } from "@/types/resource-schedule";
 
 type HoldDb = PrismaClient;
-
-type HoldAssignment = {
-  resourceId: string;
-  startMinute: number;
-  endMinute: number;
-};
-
-function requirementWindow(
-  requirement: PlanResourceRequirement,
-  fallback: { slotDate: string; startMinute: number; endMinute: number },
-) {
-  if (!requirement.windowStartTime || !requirement.windowEndTime) {
-    return fallback;
-  }
-  const startMinute = parseClockToMinutes(requirement.windowStartTime);
-  const endMinute = parseClockToMinutes(requirement.windowEndTime);
-  if (startMinute == null || endMinute == null || endMinute <= startMinute) {
-    return fallback;
-  }
-  return { slotDate: fallback.slotDate, startMinute, endMinute };
-}
-
-async function assignResourcesForRequirements(
-  database: HoldDb,
-  input: {
-    organizationId: string;
-    locationId?: string | null;
-    window: { slotDate: string; startMinute: number; endMinute: number };
-    requirements: PlanResourceRequirement[];
-    excludeInquiryId?: string | null;
-    preferredResourceIds?: string[];
-  },
-): Promise<HoldAssignment[]> {
-  const assigned: HoldAssignment[] = [];
-  const preferred = new Set(input.preferredResourceIds ?? []);
-  for (const requirement of input.requirements) {
-    if (!requirement.resourceTypeId || requirement.quantity == null || requirement.quantity < 1) {
-      throw new ResourceError(
-        "INVALID_RESOURCE",
-        `${requirement.resourceTypeName} still needs resource configuration before a hold can be placed.`,
-      );
-    }
-    if (!requirement.inventoryConfigured || requirement.requiresStaffConfiguration) {
-      throw new ResourceError(
-        "INVALID_RESOURCE",
-        `${requirement.resourceTypeName} inventory is not configured.`,
-      );
-    }
-    const window = requirementWindow(requirement, input.window);
-    const units = await database.resource.findMany({
-      where: {
-        organizationId: input.organizationId,
-        resourceTypeId: requirement.resourceTypeId,
-        ...resourcesInLocationWhere(input.locationId),
-      },
-      select: { id: true },
-      orderBy: { displayOrder: "asc" },
-    });
-    const available = await listAvailableResourceIds(database, {
-      organizationId: input.organizationId,
-      resourceIds: units.map((row) => row.id),
-      window,
-      excludeInquiryId: input.excludeInquiryId,
-    });
-    const preferredAvailable = available.filter((id) => preferred.has(id));
-    const rest = available.filter((id) => !preferred.has(id));
-    const chosen = [...preferredAvailable, ...rest].slice(0, requirement.quantity);
-    if (chosen.length < requirement.quantity) {
-      throw new ResourceError(
-        "RESOURCE_CONFLICT",
-        `Only ${available.length} ${requirement.resourceTypeName}${available.length === 1 ? "" : "s"} are available for ${requirement.windowStartTime ?? minutesToClock(window.startMinute)}–${requirement.windowEndTime ?? minutesToClock(window.endMinute)}; this plan requires ${requirement.quantity}.`,
-      );
-    }
-    assigned.push(
-      ...chosen.map((resourceId) => ({
-        resourceId,
-        startMinute: window.startMinute,
-        endMinute: window.endMinute,
-      })),
-    );
-  }
-  return assigned;
-}
 
 export async function getInquiryPlanAvailabilitySnapshot(
   ctx: RequestContext,
@@ -200,6 +121,26 @@ export async function placeManualHold(
   }
   const hours = input.holdHours && input.holdHours > 0 ? input.holdHours : DEFAULT_HOLD_HOURS;
   const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+  const organization = await database.organization.findFirst({
+    where: { id: ctx.organizationId },
+    select: { timezone: true },
+  });
+  const location = resource.locationId
+    ? await database.location.findFirst({
+        where: { id: resource.locationId, organizationId: ctx.organizationId },
+        select: { timezone: true },
+      })
+    : null;
+  const timeZone = resolveSchedulingTimeZone({
+    locationTimeZone: location?.timezone,
+    organizationTimeZone: organization?.timezone,
+  });
+  const instants = occupancyInstants({
+    slotDate: input.date,
+    startMinute,
+    endMinute,
+    timeZone,
+  });
   await releaseExpiredHolds(database, ctx.organizationId);
   const available = await listAvailableResourceIds(database, {
     organizationId: ctx.organizationId,
@@ -221,11 +162,14 @@ export async function placeManualHold(
   try {
     await reserveResourcesInTransaction(database, {
       organizationId: ctx.organizationId,
+      locationId: resource.locationId,
       status: RESOURCE_RESERVATION_STATUSES.HOLD,
       sourceType: inquiryId ? RESOURCE_RESERVATION_SOURCES.INQUIRY : RESOURCE_RESERVATION_SOURCES.MANUAL,
       slotDate: input.date,
       startMinute,
       endMinute,
+      startsAt: instants.startsAt,
+      endsAt: instants.endsAt,
       resourceIds: [resource.id],
       inquiryId,
       expiresAt,
@@ -283,124 +227,17 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
   if (!plan) {
     throw new ResourceError("INVALID_RESOURCE", "The selected event plan could not be found.");
   }
-  const existingHold = await database.resourceReservation.findFirst({
-    where: {
-      organizationId: ctx.organizationId,
-      inquiryId: inquiry.id,
-      status: RESOURCE_RESERVATION_STATUSES.HOLD,
-      releasedAt: null,
-      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-    },
-    select: { id: true },
-  });
-  if (existingHold) {
-    throw new ResourceError(
-      "INVALID_RESOURCE",
-      "A resource hold is already in place for this inquiry. Release it before placing a new one.",
-    );
-  }
-  const payload = plan.payload as EventPlanPayload;
-  const date = payload.eventDate;
-  const startTime = payload.startTime;
-  const durationMinutes = plan.durationMinutes ?? payload.durationMinutes;
-  const window = localEventWindow({ date, startTime, durationMinutes });
-  if (!window || !date || !startTime) {
-    throw new ResourceError("INVALID_RESOURCE", "A date and start time are required before placing a hold.");
-  }
-  const locationId = await resolveInquiryLocationId(database, inquiry);
-  const inventory = await database.resourceType.findMany({
-    where: { organizationId: ctx.organizationId },
-    select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
-  });
-  const requirements = applyRotationWindows(
-    applyInventoryFeasibility(payload.resourceRequirements ?? [], inventory.map((row) => ({
-      id: row.id,
-      activeCount: row._count.resources,
-    }))),
-    payload,
-  );
-  if (requirements.length === 0) {
-    throw new ResourceError("INVALID_RESOURCE", "This plan has no finite resources to hold.");
-  }
-  const availability = await checkResourceAvailability(database, {
+  const hold = await placeProposalHold(database, {
     organizationId: ctx.organizationId,
-    locationId,
-    date,
-    startTime,
-    durationMinutes,
-    resourceRequirements: requirements,
-    excludeInquiryId: inquiry.id,
-  });
-  if (!availability.validated || !availability.available) {
-    throw new ResourceError("RESOURCE_CONFLICT");
-  }
-  const expiresAt = new Date(Date.now() + DEFAULT_HOLD_HOURS * 60 * 60 * 1000);
-  let resourceCount = 0;
-  try {
-    await database.$transaction(async (tx) => {
-      const assignments = await assignResourcesForRequirements(tx as HoldDb, {
-        organizationId: ctx.organizationId,
-        locationId,
-        window,
-        requirements,
-        excludeInquiryId: inquiry.id,
-      });
-      if (assignments.length === 0) {
-        throw new ResourceError("RESOURCE_CONFLICT");
-      }
-      resourceCount = assignments.length;
-      await tx.resourceReservation.createMany({
-        data: assignments.map((assignment) => ({
-          organizationId: ctx.organizationId,
-          resourceId: assignment.resourceId,
-          status: RESOURCE_RESERVATION_STATUSES.HOLD,
-          slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
-          startMinute: assignment.startMinute,
-          endMinute: assignment.endMinute,
-          inquiryId: inquiry.id,
-          sourceType: RESOURCE_RESERVATION_SOURCES.INQUIRY,
-          expiresAt,
-          reason: `Hold for ${plan.title}`,
-          createdByUserProfileId: ctx.userId,
-        })),
-      });
-    });
-  } catch (error) {
-    if (!(error instanceof ResourceError) || error.code === "RESOURCE_CONFLICT") {
-      await recordAuditEvent(database, {
-        organizationId: ctx.organizationId,
-        actorUserProfileId: ctx.userId,
-        action: "resource.hold_conflict_rejected",
-        resourceType: "inquiry",
-        resourceId: inquiry.id,
-        metadata: { planId: plan.id },
-      });
-    }
-    if (error instanceof ResourceError) {
-      throw error;
-    }
-    if (isReservationOverlapError(error)) {
-      throw new ResourceError("RESOURCE_CONFLICT");
-    }
-    throw error;
-  }
-  await recordAuditEvent(database, {
-    organizationId: ctx.organizationId,
+    inquiryId: inquiry.id,
+    planId: plan.id,
     actorUserProfileId: ctx.userId,
-    action: "resource.hold_created",
-    resourceType: "inquiry",
-    resourceId: inquiry.id,
-    metadata: { planId: plan.id, resourceCount },
-  });
-  await database.inquiry.update({
-    where: { id: inquiry.id },
-    data: { workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED, salesStage: INQUIRY_SALES_STAGES.HOLD_PLACED },
   });
   return {
-    resourceCount,
-    startTime,
-    endTime: minutesToClock(window.endMinute),
-    expiresAt,
+    resourceCount: hold.resourceCount,
+    startTime: hold.startTime,
+    endTime: hold.endTime,
+    expiresAt: hold.holdExpiresAt,
   };
 }
 
@@ -466,9 +303,23 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
     throw new ResourceError("RESOURCE_CONFLICT");
   }
   const expiresAt = existing[0]?.expiresAt ?? new Date(Date.now() + DEFAULT_HOLD_HOURS * 60 * 60 * 1000);
+  const organization = await database.organization.findFirst({
+    where: { id: ctx.organizationId },
+    select: { timezone: true },
+  });
+  const location = locationId
+    ? await database.location.findFirst({
+        where: { id: locationId, organizationId: ctx.organizationId },
+        select: { timezone: true },
+      })
+    : null;
+  const timeZone = resolveSchedulingTimeZone({
+    locationTimeZone: location?.timezone,
+    organizationTimeZone: organization?.timezone,
+  });
   try {
     await database.$transaction(async (tx) => {
-      const assignments = await assignResourcesForRequirements(tx as HoldDb, {
+      const assignments = await assignExactResourcesForRequirements(tx as HoldDb, {
         organizationId: ctx.organizationId,
         locationId,
         window,
@@ -481,19 +332,30 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
       const toCreate = assignments.filter((row) => !existingByResource.has(row.resourceId));
       if (toCreate.length > 0) {
         await tx.resourceReservation.createMany({
-          data: toCreate.map((assignment) => ({
-            organizationId: ctx.organizationId,
-            resourceId: assignment.resourceId,
-            status: RESOURCE_RESERVATION_STATUSES.HOLD,
-            slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
-            startMinute: assignment.startMinute,
-            endMinute: assignment.endMinute,
-            inquiryId: inquiry.id,
-            sourceType: RESOURCE_RESERVATION_SOURCES.INQUIRY,
-            expiresAt,
-            reason: `Updated hold for ${plan.title}`,
-            createdByUserProfileId: ctx.userId,
-          })),
+          data: toCreate.map((assignment) => {
+            const instants = occupancyInstants({
+              slotDate: window.slotDate,
+              startMinute: assignment.startMinute,
+              endMinute: assignment.endMinute,
+              timeZone,
+            });
+            return {
+              organizationId: ctx.organizationId,
+              locationId,
+              resourceId: assignment.resourceId,
+              status: RESOURCE_RESERVATION_STATUSES.HOLD,
+              slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
+              startMinute: assignment.startMinute,
+              endMinute: assignment.endMinute,
+              startsAt: instants.startsAt,
+              endsAt: instants.endsAt,
+              inquiryId: inquiry.id,
+              sourceType: RESOURCE_RESERVATION_SOURCES.INQUIRY,
+              expiresAt,
+              reason: `Updated hold for ${plan.title}`,
+              createdByUserProfileId: ctx.userId,
+            };
+          }),
         });
       }
       for (const assignment of assignments) {
@@ -502,12 +364,20 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
           continue;
         }
         if (current.startMinute !== assignment.startMinute || current.endMinute !== assignment.endMinute) {
+          const instants = occupancyInstants({
+            slotDate: window.slotDate,
+            startMinute: assignment.startMinute,
+            endMinute: assignment.endMinute,
+            timeZone,
+          });
           await tx.resourceReservation.update({
             where: { id: current.id },
             data: {
               startMinute: assignment.startMinute,
               endMinute: assignment.endMinute,
               slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
+              startsAt: instants.startsAt,
+              endsAt: instants.endsAt,
             },
           });
         }

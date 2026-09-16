@@ -8,7 +8,7 @@ import { getPublicRateLimiter, type RateLimiter } from "@/lib/ai/rate-limiter";
 import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
 import { publicInquiryPathForActiveOrganization } from "@/lib/inquiries/organization-display-name";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
-import { resolveOrganizationTimeZone } from "@/lib/inquiries/tenant-datetime";
+import { resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
 import { AuthorizationError, InquiryError } from "@/server/errors";
 import {
   isHoneypotFilled,
@@ -83,11 +83,22 @@ export async function getCurrentTenantTimezone(
   database: InquiryDb,
 ): Promise<string> {
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
-  const organization = await database.organization.findFirst({
-    where: { id: ctx.organizationId },
-    select: { timezone: true },
+  const [organization, location] = await Promise.all([
+    database.organization.findFirst({
+      where: { id: ctx.organizationId },
+      select: { timezone: true },
+    }),
+    ctx.locationId
+      ? database.location.findFirst({
+          where: { id: ctx.locationId, organizationId: ctx.organizationId },
+          select: { timezone: true },
+        })
+      : Promise.resolve(null),
+  ]);
+  return resolveTenantTimezone({
+    organizationTimezone: organization?.timezone,
+    locationTimezone: location?.timezone,
   });
-  return resolveOrganizationTimeZone(organization?.timezone);
 }
 
 export async function resolvePublicInquiryOrganization(
@@ -361,7 +372,7 @@ export async function listInquiries(ctx: RequestContext, database: InquiryDb) {
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
   return database.inquiry.findMany({
     where: { organizationId: ctx.organizationId },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: 100,
     include: {
       assignedUser: {

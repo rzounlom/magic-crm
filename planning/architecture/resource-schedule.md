@@ -2,7 +2,7 @@
 
 The Resource Schedule is the future **single source of truth** for finite event inventory. Personal Event Planner recommendations, live agents, inquiries, proposals, booking, and staff scheduling must all ask the same availability service. Features must not independently calculate or store occupancy.
 
-This pass adds the data model, Admin resource configuration, the staff Master Schedule, live-agent holds, and Confirm Booking conversion of HOLD→BOOKED. It does **not** implement automatic customer holds, payments, or outbound email delivery.
+This pass adds the data model, Admin resource configuration, the staff Master Schedule, live-agent holds, customer 24-hour proposal holds, hold expiry, and Confirm Booking conversion of HOLD→BOOKED. It does **not** implement payments or outbound email delivery.
 
 ## Status model
 
@@ -27,7 +27,7 @@ Finite inventory is data, not application code.
 - `Resource` — one numbered unit (`Bowling Lane 1`). Optional `capacity`. Do not invent a count. Resources are location-specific.
 - `KnowledgeResourceRequirement` — how a `SalesKnowledgeItem` consumes a resource type (`FIXED`, `PER_GUESTS`, `UNKNOWN`)
 - `ProductResourceRequirement` — how a catalog `Product` consumes a resource type (`FIXED`, `PER_GUESTS`, `ALL_OF_TYPE`). `guestsPerUnit` is tenant configuration.
-- `ResourceReservation` — HOLD/BOOKED occupancy with event-local `slotDate` + `startMinute`/`endMinute`
+- `ResourceReservation` — HOLD/BOOKED occupancy with event-local `slotDate` + `startMinute`/`endMinute`, optional `locationId`, and UTC `startsAt`/`endsAt`
 
 Admin UI (`/app/admin/resources`) lets an organization administrator create resource types, bulk-create numbered units, deactivate inventory, and link sales-knowledge offerings. Counts are tenant data. Re-running knowledge sync upserts types and requirement **links**; it must not fabricate lane/room counts. Prototype demos are **not** production data and are not MagicCRM defaults.
 
@@ -47,7 +47,7 @@ Admin UI (`/app/admin/resources`) lets an organization administrator create reso
 
 Otherwise keep `availabilityValidated = false` and do not claim resources are free. Configured inventory that is fully occupied is `UNAVAILABLE`, with deterministic nearby start times when the checker can validate an alternate window. Static published limits (age, max guests per lane) still apply in `buildEventPlans`.
 
-Recommendation generation **must not** insert HOLD or BOOKED rows. Customer plan selection re-checks availability, saves the selected plan on the same Inquiry, and sets `READY_FOR_HUMAN` / `CUSTOMER_SELECTED_PLAN`. It does **not** reserve inventory. If the window is no longer free, the plan is kept and marked `AVAILABILITY_CHANGED` (a plan-level status, not an Inquiry status).
+Recommendation generation **must not** insert HOLD or BOOKED rows. Customer **Reserve this option** re-checks availability, assigns exact numbered resources, and inserts HOLD rows in one transaction (`placeProposalHold`). Customer **Have an agent contact me** saves the selected plan as `READY_TO_BOOK` and does **not** reserve inventory. If the reserved window is no longer free, no hold is written; the customer sees `AVAILABILITY_CHANGED` plus deterministic nearby start times from `findNearbyAvailableStarts`.
 
 ## Staff holds
 
@@ -56,19 +56,19 @@ Authorized staff (Events create/edit, typically Event Sales or Administrators) c
 - Place a temporary HOLD from the Master Schedule or from a selected-plan Inquiry (`Place Resource Hold`)
 - Release a HOLD (not BOOKED)
 
-Inquiry plan holds assign specific `Resource` rows in one transaction with a 24-hour `expiresAt`. If any required unit cannot be assigned, no partial holds remain. Holds do **not** emit `event_plan.selected` or `booking.confirmed`. Confirm Booking converts those HOLD rows in place to BOOKED and sets `bookingId`.
+Inquiry plan holds assign specific `Resource` rows in one transaction with a 24-hour `expiresAt`. Public `placeProposalHold` and staff Place Hold share that service. If any required unit cannot be assigned, no partial holds remain. Holds do **not** emit booking-confirmed communications. Confirm Booking converts those HOLD rows in place to BOOKED and sets `bookingId`.
 
-Expired HOLDs are opportunistically marked `releasedAt` so the PostgreSQL exclusion constraint no longer blocks that window. History rows are kept.
+Expired HOLDs are opportunistically marked `releasedAt` so the PostgreSQL exclusion constraint no longer blocks that window. History rows are kept. Availability treats `expiresAt <= now` as non-blocking even if the sweeper is delayed. QStash is not used. Staff **Expire hold now** runs the same `expireInquiryHoldsNow` path tests use (no waiting 24 hours, no manual SQL).
 
 ## Concurrency
 
-Do not trust a prior UI check. `reserveResourcesInTransaction` inserts HOLD/BOOKED rows in one transaction. PostgreSQL `btree_gist` exclusion `resource_reservations_no_overlap` rejects overlapping active HOLD/BOOKED ranges on the same `resourceId` + `slotDate`. Two agents who both saw “available” cannot both commit overlapping occupancy.
+Do not trust a prior UI check. Inserts of HOLD/BOOKED rows happen in one transaction. PostgreSQL `btree_gist` exclusion `resource_reservations_no_overlap` rejects overlapping active HOLD/BOOKED ranges on the same `resourceId` + `slotDate`. Same-inquiry double-clicks lock the Inquiry row (`SELECT … FOR UPDATE`) and reuse the existing hold. Two agents or customers who both saw “available” cannot both commit overlapping occupancy. See [`ADR-006`](../decisions/ADR-006-resource-occupancy-concurrency.md).
 
 Overnight windows that cross local midnight are a known limitation (`slotDate` is the start date). Split or timestamptz occupancy can be added later.
 
 ## Staff UI
 
-`/app/schedule` is the Master Schedule: date previous/today/next/picker, resource-type tabs from configured `ResourceType` rows, numbered resource columns, 30-minute rows, Available / HOLD / BOOKED from live `ResourceReservation` records. HOLD cells link to the associated Inquiry. BOOKED cells open `/app/bookings/{id}` (with a link back to the originating Inquiry). Staff can place and release HOLDs there; BOOKED rows are not released from this UI.
+`/app/schedule` is the Master Schedule: tenant-local date previous/today/next/picker, resource-type tabs from configured `ResourceType` rows at the current location, numbered resource columns, 30-minute rows, Available / HOLD / BOOKED from live `ResourceReservation` records. A requested date is that civil day in the tenant timezone (`eventLocalSlotDate`), not the UTC calendar day. HOLD cells show **Held until** in tenant-local time (not raw UTC) and link to the Inquiry. BOOKED cells open `/app/bookings/{id}`. Available cells are display-only in this phase (no click-to-create). Expired holds are excluded from the active view. Day navigation shows a pending state and disables conflicting controls until the destination date loads.
 
 Ready-for-Live-Agent inquiries open the Live Agent Booking Workspace. Resource checks, Place / Update / Extend / Release Hold, and Master Schedule deep links all use this same availability service. Confirm Booking rechecks availability, verifies unexpired HOLDs, then converts them to BOOKED in the same transaction as the Booking insert. The PostgreSQL overlap exclusion still applies to BOOKED vs HOLD/BOOKED.
 

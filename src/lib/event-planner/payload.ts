@@ -21,6 +21,7 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     resourceRequirements: Array.isArray(payload.resourceRequirements) ? payload.resourceRequirements : [],
     lineItems: Array.isArray(payload.lineItems) ? payload.lineItems : [],
     depositPreviewCents: payload.depositPreviewCents ?? null,
+    depositPreviewPercent: payload.depositPreviewPercent ?? null,
     depositPreviewNote: payload.depositPreviewNote,
     itinerary: Array.isArray(payload.itinerary) ? payload.itinerary : [],
     suggestedStartTimes: Array.isArray(payload.suggestedStartTimes) ? payload.suggestedStartTimes : [],

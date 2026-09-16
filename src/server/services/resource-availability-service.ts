@@ -4,6 +4,7 @@ import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-w
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import type { PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import { recordAuditEvent } from "@/server/services/audit";
+import { INQUIRY_SALES_STAGES, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
 import {
   RESOURCE_RESERVATION_STATUSES,
   type ResourceAvailabilityRequest,
@@ -34,6 +35,7 @@ function occupancyWhere(
     excludeBookingId?: string | null;
     excludeReservationId?: string | null;
   },
+  now = new Date(),
 ): Prisma.ResourceReservationWhereInput {
   const and: Prisma.ResourceReservationWhereInput[] = [];
   if (exclude?.excludeInquiryId) {
@@ -60,7 +62,7 @@ function occupancyWhere(
     OR: [
       { status: RESOURCE_RESERVATION_STATUSES.BOOKED },
       { expiresAt: null },
-      { expiresAt: { gt: new Date() } },
+      { expiresAt: { gt: now } },
     ],
     ...(and.length > 0 ? { AND: and } : {}),
   };
@@ -68,12 +70,29 @@ function occupancyWhere(
 
 /**
  * Sets releasedAt on expired HOLDs so the gist exclusion no longer blocks new occupancy.
- * History rows are kept.
+ * History rows are kept. BOOKED rows are never expired. Availability also ignores
+ * holdExpiresAt <= now even if this sweeper has not run yet.
  */
-export async function releaseExpiredHolds(database: ScheduleDb, organizationId: string) {
-  const now = new Date();
-  const result = await database.resourceReservation.updateMany({
+export async function releaseExpiredHolds(
+  database: ScheduleDb,
+  organizationId: string,
+  now = new Date(),
+) {
+  const expired = await database.resourceReservation.findMany({
     where: {
+      organizationId,
+      status: RESOURCE_RESERVATION_STATUSES.HOLD,
+      releasedAt: null,
+      expiresAt: { lte: now },
+    },
+    select: { id: true, inquiryId: true },
+  });
+  if (expired.length === 0) {
+    return 0;
+  }
+  await database.resourceReservation.updateMany({
+    where: {
+      id: { in: expired.map((row) => row.id) },
       organizationId,
       status: RESOURCE_RESERVATION_STATUSES.HOLD,
       releasedAt: null,
@@ -81,22 +100,48 @@ export async function releaseExpiredHolds(database: ScheduleDb, organizationId: 
     },
     data: { releasedAt: now },
   });
-  if (result.count > 0) {
-    await recordAuditEvent(database, {
-      organizationId,
-      action: "resource.hold_expired",
-      resourceType: "resource_reservation",
-      metadata: { expiredCount: result.count },
+  const inquiryIds = [...new Set(expired.map((row) => row.inquiryId).filter((id): id is string => Boolean(id)))];
+  for (const inquiryId of inquiryIds) {
+    const remaining = await database.resourceReservation.findFirst({
+      where: {
+        organizationId,
+        inquiryId,
+        status: RESOURCE_RESERVATION_STATUSES.HOLD,
+        releasedAt: null,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      },
+      select: { id: true },
     });
+    if (!remaining) {
+      await database.inquiry.updateMany({
+        where: {
+          id: inquiryId,
+          organizationId,
+          salesStage: INQUIRY_SALES_STAGES.HOLD_PLACED,
+          status: { not: INQUIRY_STATUSES.BOOKED },
+        },
+        data: {
+          salesStage: INQUIRY_SALES_STAGES.READY_TO_BOOK,
+          workflowStage: INQUIRY_WORKFLOW_STAGES.READY_FOR_LIVE_AGENT,
+        },
+      });
+    }
   }
-  return result.count;
+  await recordAuditEvent(database, {
+    organizationId,
+    action: "resource.hold_expired",
+    resourceType: "resource_reservation",
+    metadata: { expiredCount: expired.length },
+  });
+  return expired.length;
 }
 
 export async function checkResourceAvailability(
   database: ScheduleDb,
   input: ResourceAvailabilityRequest,
 ): Promise<ResourceAvailabilityResult> {
-  await releaseExpiredHolds(database, input.organizationId);
+  const now = input.now ?? new Date();
+  await releaseExpiredHolds(database, input.organizationId, now);
   const window = localEventWindow({
     date: input.date,
     startTime: input.startTime,
@@ -181,6 +226,7 @@ export async function checkResourceAvailability(
       excludeInquiryId: input.excludeInquiryId,
       excludeBookingId: input.excludeBookingId,
       excludeReservationId: input.excludeReservationId,
+      now,
     });
     const availableQuantity = availableIds.length;
     const conflict = availableQuantity < requirement.quantity;
@@ -221,13 +267,15 @@ export async function listAvailableResourceIds(
     excludeInquiryId?: string | null;
     excludeBookingId?: string | null;
     excludeReservationId?: string | null;
+    now?: Date;
   },
 ): Promise<string[]> {
   if (input.resourceIds.length === 0) {
     return [];
   }
+  const now = input.now ?? new Date();
   const busy = await database.resourceReservation.findMany({
-    where: occupancyWhere(input.organizationId, input.resourceIds, input.window, input),
+    where: occupancyWhere(input.organizationId, input.resourceIds, input.window, input, now),
     select: { resourceId: true, startMinute: true, endMinute: true },
   });
   const occupied = new Set(
@@ -268,32 +316,39 @@ export async function reserveResourcesInTransaction(
   database: ScheduleDb,
   input: {
     organizationId: string;
+    locationId?: string | null;
     status: (typeof RESOURCE_RESERVATION_STATUSES)[keyof typeof RESOURCE_RESERVATION_STATUSES];
     sourceType: string;
     slotDate: string;
     startMinute: number;
     endMinute: number;
+    startsAt?: Date | null;
+    endsAt?: Date | null;
     resourceIds: string[];
     inquiryId?: string | null;
     bookingId?: string | null;
     expiresAt?: Date | null;
     reason?: string | null;
     createdByUserProfileId?: string | null;
+    now?: Date;
   },
 ) {
   if (input.endMinute <= input.startMinute) {
     throw new Error("Resource reservation windows must have endMinute greater than startMinute.");
   }
-  await releaseExpiredHolds(database, input.organizationId);
+  await releaseExpiredHolds(database, input.organizationId, input.now ?? new Date());
   return database.$transaction(async (tx) => {
     await tx.resourceReservation.createMany({
       data: input.resourceIds.map((resourceId) => ({
         organizationId: input.organizationId,
+        locationId: input.locationId ?? null,
         resourceId,
         status: input.status,
         slotDate: new Date(`${input.slotDate}T00:00:00.000Z`),
         startMinute: input.startMinute,
         endMinute: input.endMinute,
+        startsAt: input.startsAt ?? null,
+        endsAt: input.endsAt ?? null,
         inquiryId: input.inquiryId ?? null,
         bookingId: input.bookingId ?? null,
         sourceType: input.sourceType,
