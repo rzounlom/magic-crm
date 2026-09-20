@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 import type { BookingCatalogDataset } from "@/server/catalog/dataset";
+import { validateCatalogProductRequirements } from "@/server/catalog/requirement-validation";
 import { resolvePrimaryLocationId } from "@/server/locations/primary-location";
 import { RESOURCE_SCHEDULING_MODES } from "@/types/resource-schedule";
 
@@ -274,6 +275,20 @@ export async function importBookingCatalog(
 
   const products = await database.product.findMany({ where: { organizationId } });
   const productIds = new Map(products.map((row) => [row.slug, row.id]));
+  const inventoryRows = await database.resource.findMany({
+    where: { organizationId, active: true },
+    select: { id: true, name: true, locationId: true, resourceTypeId: true },
+  });
+  const inventoryBySlug = new Map(
+    [...resourceTypeIds.entries()].map(([slug, id]) => [
+      slug,
+      {
+        slug,
+        activeCount: inventoryRows.filter((row) => row.resourceTypeId === id).length,
+        resources: inventoryRows.filter((row) => row.resourceTypeId === id),
+      },
+    ]),
+  );
   const productIdList = products.map((row) => row.id);
   if (productIdList.length > 0) {
     await database.productPrice.deleteMany({ where: { organizationId, productId: { in: productIdList } } });
@@ -311,11 +326,18 @@ export async function importBookingCatalog(
         unitLabel: price.unitLabel ?? null,
       });
     }
+    const resolved = validateCatalogProductRequirements({
+      productSlug: product.slug,
+      requirements: product.requirements ?? [],
+      inventoryBySlug,
+      locationId,
+    });
     for (const requirement of product.requirements ?? []) {
       const resourceTypeId = resourceTypeIds.get(requirement.resourceTypeSlug);
       if (!resourceTypeId) {
         throw new Error(`Unknown resource type slug "${requirement.resourceTypeSlug}".`);
       }
+      const specific = resolved.find((row) => row.resourceTypeSlug === requirement.resourceTypeSlug);
       requirementRows.push({
         organizationId,
         productId,
@@ -325,6 +347,7 @@ export async function importBookingCatalog(
         guestsPerUnit: requirement.guestsPerUnit ?? null,
         durationMinutes: requirement.durationMinutes ?? null,
         exclusive: requirement.exclusive ?? false,
+        resourceId: specific?.resourceId ?? null,
       });
     }
     if (product.serving) {

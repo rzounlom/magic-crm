@@ -50,7 +50,13 @@ export function formatRequirementRule(input: {
     return `1 per ${input.guestsPerUnit} guests`;
   }
   if (input.quantityRule === "ALL_OF_TYPE") {
-    return "All units of this type";
+    return "All active units of this type";
+  }
+  if (input.quantityRule === "SPECIFIC_RESOURCE") {
+    return "Specific resource required";
+  }
+  if (input.quantityRule === "LOCATION_EXCLUSIVE") {
+    return "Private use of the full facility";
   }
   if (input.quantityRule === "FIXED") {
     return `${input.quantity ?? 1} required`;

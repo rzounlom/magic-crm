@@ -120,7 +120,9 @@ export function EmployeeSelectedEventPlan({
         <div>
           <dt className="text-foreground/60">Finite resources needed</dt>
           <dd className="mt-1">
-            {payload.resourceRequirements && payload.resourceRequirements.length > 0
+            {payload.locationExclusive
+              ? "Private use of the full facility"
+              : payload.resourceRequirements && payload.resourceRequirements.length > 0
               ? payload.resourceRequirements
                   .map((row) => {
                     const qty = row.quantity != null ? `${row.quantity} ` : "";

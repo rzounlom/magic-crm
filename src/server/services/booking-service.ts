@@ -13,6 +13,7 @@ import { depositPercentFromTenant, depositRequiredCents } from "@/server/catalog
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
+import { lockLocationForScheduling } from "@/server/resources/location-exclusivity";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { applyRotationWindows } from "@/server/resources/rotation-windows";
 import { localEventWindow, minutesToClock } from "@/server/resources/time-window";
@@ -293,6 +294,7 @@ export async function confirmInquiryBooking(
   let booking;
   try {
     const result = await database.$transaction(async (tx) => {
+      await lockLocationForScheduling(tx, ctx.organizationId, inquiry.locationId);
       const raced = await tx.booking.findFirst({
         where: { organizationId: ctx.organizationId, inquiryId: inquiry.id },
       });

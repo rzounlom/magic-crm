@@ -68,6 +68,36 @@ describe("catalog quantity rules", () => {
         20,
       ),
     ).toBe(8);
+    expect(
+      quantityForRequirement(
+        { quantityRule: PRODUCT_QUANTITY_RULES.ALL_OF_TYPE, quantity: null, guestsPerUnit: null, activeCount: 12 },
+        20,
+      ),
+    ).toBe(12);
+    expect(
+      quantityForRequirement(
+        { quantityRule: PRODUCT_QUANTITY_RULES.ALL_OF_TYPE, quantity: null, guestsPerUnit: null, activeCount: 0 },
+        20,
+      ),
+    ).toBeNull();
+    expect(
+      quantityForRequirement(
+        { quantityRule: PRODUCT_QUANTITY_RULES.FIXED, quantity: 7, guestsPerUnit: null, activeCount: 8 },
+        40,
+      ),
+    ).toBe(7);
+    expect(
+      quantityForRequirement(
+        { quantityRule: PRODUCT_QUANTITY_RULES.SPECIFIC_RESOURCE, quantity: 1, guestsPerUnit: null, activeCount: 1 },
+        40,
+      ),
+    ).toBe(1);
+    expect(
+      quantityForRequirement(
+        { quantityRule: PRODUCT_QUANTITY_RULES.LOCATION_EXCLUSIVE, quantity: null, guestsPerUnit: null, activeCount: 23 },
+        40,
+      ),
+    ).toBe(1);
   });
 });
 

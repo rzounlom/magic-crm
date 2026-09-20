@@ -1,4 +1,6 @@
 import type { PlanResourceRequirement } from "@/types/resource-schedule";
+import { RESOURCE_QUANTITY_RULES } from "@/types/resource-schedule";
+import { isExactAllocationRule } from "@/server/resources/composite-requirements";
 
 export type InventoryCount = {
   id: string;
@@ -12,6 +14,12 @@ export function applyInventoryFeasibility(
   const counts = new Map(inventory.map((row) => [row.id, row.activeCount]));
   return requirements.map((requirement) => {
     if (!requirement.resourceTypeId || requirement.quantity == null) {
+      return requirement;
+    }
+    if (
+      requirement.quantityRule !== RESOURCE_QUANTITY_RULES.PER_GUESTS
+      || isExactAllocationRule(requirement)
+    ) {
       return requirement;
     }
     const activeCount = counts.get(requirement.resourceTypeId);

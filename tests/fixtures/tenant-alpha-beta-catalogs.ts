@@ -228,6 +228,9 @@ function datasetProduct(
     resourceTypeSlug: string;
     quantityRule: string;
     guestsPerUnit?: number | null;
+    quantity?: number | null;
+    resourceName?: string | null;
+    exclusive?: boolean;
   }> = [],
 ): BookingCatalogDataset["products"][number] {
   return {
@@ -246,10 +249,11 @@ function datasetProduct(
     requirements: requirements.map((row) => ({
       resourceTypeSlug: row.resourceTypeSlug,
       quantityRule: row.quantityRule,
-      quantity: null,
+      quantity: row.quantity ?? null,
       guestsPerUnit: row.guestsPerUnit ?? null,
       durationMinutes: 60,
-      exclusive: false,
+      exclusive: row.exclusive ?? false,
+      resourceName: row.resourceName ?? null,
     })),
     serving: product.serving,
   };
@@ -270,6 +274,7 @@ export const TENANT_ALPHA_DATASET: BookingCatalogDataset = {
   resourceTypes: [
     { slug: "bowling-lane", name: "Bowling Lane", count: 8, capacity: 6, schedulingMode: "SLOTTED" },
     { slug: "axe-bay", name: "Axe Bay", count: 8, capacity: 8, schedulingMode: "SLOTTED" },
+    { slug: "private-lounge", name: "Private Lounge", count: 1, capacity: 20, schedulingMode: "SLOTTED" },
   ],
   products: [
     datasetProduct(TENANT_ALPHA_PRODUCTS[0]!, "attractions", [
@@ -281,6 +286,23 @@ export const TENANT_ALPHA_DATASET: BookingCatalogDataset = {
     datasetProduct(TENANT_ALPHA_PRODUCTS[2]!, "attractions"),
     datasetProduct(TENANT_ALPHA_PRODUCTS[3]!, "attractions"),
     datasetProduct(TENANT_ALPHA_PRODUCTS[4]!, "food"),
+    datasetProduct(
+      attractionProduct("upstairs-buyout", "Upstairs Buyout", [
+        centsPrice(PRODUCT_PRICE_STRATEGIES.FIXED_RENTAL, 120000, { unitLabel: "rental" }),
+      ], { kind: PRODUCT_KINDS.RENTAL, durationMinutes: 120, maxGuests: 80 }),
+      "attractions",
+      [
+        { resourceTypeSlug: "bowling-lane", quantityRule: PRODUCT_QUANTITY_RULES.ALL_OF_TYPE, exclusive: true },
+        { resourceTypeSlug: "axe-bay", quantityRule: PRODUCT_QUANTITY_RULES.FIXED, quantity: 4 },
+        {
+          resourceTypeSlug: "private-lounge",
+          quantityRule: PRODUCT_QUANTITY_RULES.SPECIFIC_RESOURCE,
+          quantity: 1,
+          resourceName: "Private Lounge",
+          exclusive: true,
+        },
+      ],
+    ),
   ],
   recommendationProfiles: [
     profileRow(INQUIRY_AUDIENCES.KIDS_YOUTH, TENANT_ALPHA_KIDS_PROFILE),
@@ -300,16 +322,30 @@ export const TENANT_BETA_DATASET: BookingCatalogDataset = {
   resourceTypes: [
     { slug: "bowling-lane", name: "Bowling Lane", count: 2, capacity: 5, schedulingMode: "SLOTTED" },
     { slug: "trampoline-court", name: "Trampoline Court", count: 1, capacity: 20, schedulingMode: "SLOTTED" },
+    { slug: "full-venue", name: "Full Venue", count: 1, capacity: 200, schedulingMode: "SLOTTED" },
   ],
   products: [
     datasetProduct(TENANT_BETA_PRODUCTS[0]!, "attractions", [
       { resourceTypeSlug: "bowling-lane", quantityRule: PRODUCT_QUANTITY_RULES.PER_GUESTS, guestsPerUnit: 5 },
     ]),
     datasetProduct(TENANT_BETA_PRODUCTS[1]!, "attractions", [
-      { resourceTypeSlug: "trampoline-court", quantityRule: PRODUCT_QUANTITY_RULES.FIXED, guestsPerUnit: null },
+      { resourceTypeSlug: "trampoline-court", quantityRule: PRODUCT_QUANTITY_RULES.FIXED, quantity: 1 },
     ]),
     datasetProduct(TENANT_BETA_PRODUCTS[2]!, "attractions"),
     datasetProduct(TENANT_BETA_PRODUCTS[3]!, "food"),
+    datasetProduct(
+      attractionProduct("full-venue", "Full Venue", [
+        centsPrice(PRODUCT_PRICE_STRATEGIES.FIXED_RENTAL, 250000, { unitLabel: "rental" }),
+      ], { kind: PRODUCT_KINDS.RENTAL, durationMinutes: 180, maxGuests: 200 }),
+      "attractions",
+      [
+        {
+          resourceTypeSlug: "full-venue",
+          quantityRule: PRODUCT_QUANTITY_RULES.LOCATION_EXCLUSIVE,
+          exclusive: true,
+        },
+      ],
+    ),
   ],
   recommendationProfiles: [
     profileRow(INQUIRY_AUDIENCES.KIDS_YOUTH, TENANT_BETA_KIDS_PROFILE),

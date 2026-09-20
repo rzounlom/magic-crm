@@ -26,7 +26,7 @@ Finite inventory is data, not application code.
 - `ResourceType` — bowling lanes, axe lanes, party rooms, meeting rooms, etc. Tenant-scoped `slug`, 30-minute slotted scheduling by default, buffers, `inventoryConfigured`
 - `Resource` — one numbered unit (`Bowling Lane 1`). Optional `capacity`. Do not invent a count. Resources are location-specific.
 - `KnowledgeResourceRequirement` — how a `SalesKnowledgeItem` consumes a resource type (`FIXED`, `PER_GUESTS`, `UNKNOWN`)
-- `ProductResourceRequirement` — how a catalog `Product` consumes a resource type (`FIXED`, `PER_GUESTS`, `ALL_OF_TYPE`). `guestsPerUnit` is tenant configuration.
+- `ProductResourceRequirement` — how a catalog `Product` consumes a resource type (`FIXED`, `PER_GUESTS`, `ALL_OF_TYPE`, `SPECIFIC_RESOURCE`, `LOCATION_EXCLUSIVE`). Optional `resourceId` pins `SPECIFIC_RESOURCE` to one unit. `guestsPerUnit` is tenant configuration. Composite packages are multiple requirement rows on one product.
 - `ResourceReservation` — HOLD/BOOKED occupancy with event-local `slotDate` + `startMinute`/`endMinute`, optional `locationId`, and UTC `startsAt`/`endsAt`
 
 Admin UI (`/app/admin/resources`) lets an organization administrator create resource types, bulk-create numbered units, deactivate inventory, and link sales-knowledge offerings. Counts are tenant data. Re-running knowledge sync upserts types and requirement **links**; it must not fabricate lane/room counts. Prototype demos are **not** production data and are not MagicCRM defaults.
@@ -45,6 +45,10 @@ Admin UI (`/app/admin/resources`) lets an organization administrator create reso
 2. has configured numbered inventory,
 3. has no HOLD/BOOKED conflict in that window.
 
+A composite product is available only when **all** of its requirement rows are satisfiable for the same window. Never partially satisfy a package (for example 6 of 7 required axe units). `ALL_OF_TYPE` means all **active** units of that type at this location; an intentionally inactive/maintenance unit is omitted from the count. `SPECIFIC_RESOURCE` fails closed if the unit is missing, inactive, or belongs to another location. `LOCATION_EXCLUSIVE` is unavailable if **any** active blocking reservation exists at that location for the window; while it is active, every product that needs physical resources at that location is unavailable. Location 1 exclusive does not block Location 2. Tenant A exclusive does not block Tenant B.
+
+**Invariant:** Composite packages are configuration. Runtime code must not branch on tenant, product, or resource names to determine resource allocation.
+
 Otherwise keep `availabilityValidated = false` and do not claim resources are free. Configured inventory that is fully occupied is `UNAVAILABLE`, with deterministic nearby start times when the checker can validate an alternate window. Static published limits (age, max guests per lane) still apply in `buildEventPlans`.
 
 Recommendation generation **must not** insert HOLD or BOOKED rows. Customer **Reserve this option** re-checks availability, assigns exact numbered resources, and inserts HOLD rows in one transaction (`placeProposalHold`). Customer **Have an agent contact me** saves the selected plan as `READY_TO_BOOK` and does **not** reserve inventory. If the reserved window is no longer free, no hold is written; the customer sees `AVAILABILITY_CHANGED` plus deterministic nearby start times from `findNearbyAvailableStarts`.
@@ -62,7 +66,7 @@ Expired HOLDs are opportunistically marked `releasedAt` so the PostgreSQL exclus
 
 ## Concurrency
 
-Do not trust a prior UI check. Inserts of HOLD/BOOKED rows happen in one transaction. PostgreSQL `btree_gist` exclusion `resource_reservations_no_overlap` rejects overlapping active HOLD/BOOKED ranges on the same `resourceId` + `slotDate`. Same-inquiry double-clicks lock the Inquiry row (`SELECT … FOR UPDATE`) and reuse the existing hold. Two agents or customers who both saw “available” cannot both commit overlapping occupancy. See [`ADR-006`](../decisions/ADR-006-resource-occupancy-concurrency.md).
+Do not trust a prior UI check. Inserts of HOLD/BOOKED rows happen in one transaction. PostgreSQL `btree_gist` exclusion `resource_reservations_no_overlap` rejects overlapping active HOLD/BOOKED ranges on the same `resourceId` + `slotDate`. Same-inquiry double-clicks lock the Inquiry row (`SELECT … FOR UPDATE`) and reuse the existing hold. Two agents or customers who both saw “available” cannot both commit overlapping occupancy. Location-exclusive allocation also `SELECT … FOR UPDATE` the Location row so Full Facility vs an ordinary lane cannot both commit because they raced the availability precheck. Exclusive bookings persist exact reservations on every active bookable resource at that location (Master Schedule occupancy is real, not painted on) plus marker occupancy on the `LOCATION_EXCLUSIVE` resource type so a unit added after the exclusive booking still conflicts. See [`ADR-006`](../decisions/ADR-006-resource-occupancy-concurrency.md).
 
 Overnight windows that cross local midnight are a known limitation (`slotDate` is the start date). Split or timestamptz occupancy can be added later.
 

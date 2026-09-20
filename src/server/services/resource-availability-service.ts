@@ -1,7 +1,19 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
+import { ResourceError } from "@/server/errors";
 import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-window";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
+import {
+  isAllOfTypeRule,
+  isLocationExclusiveRule,
+  isSpecificResourceRule,
+} from "@/server/resources/composite-requirements";
+import {
+  listActiveLocationResourceIds,
+  locationHasBlockingOccupancy,
+  locationHasExclusiveOccupancy,
+  lockLocationForScheduling,
+} from "@/server/resources/location-exclusivity";
 import type { PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import { recordAuditEvent } from "@/server/services/audit";
 import { INQUIRY_SALES_STAGES, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
@@ -171,6 +183,50 @@ export async function checkResourceAvailability(
       continue;
     }
 
+    if (isLocationExclusiveRule(requirement.quantityRule) || requirement.locationExclusive) {
+      if (!input.locationId) {
+        allConfigured = false;
+        types.push(unconfiguredType(requirement));
+        continue;
+      }
+      const occupied = await locationHasBlockingOccupancy(database, {
+        organizationId: input.organizationId,
+        locationId: input.locationId,
+        window,
+        excludeInquiryId: input.excludeInquiryId,
+        excludeBookingId: input.excludeBookingId,
+        excludeReservationId: input.excludeReservationId,
+        now,
+      });
+      const activeIds = await listActiveLocationResourceIds(database, input.organizationId, input.locationId);
+      if (activeIds.length === 0) {
+        allConfigured = false;
+        types.push({
+          resourceTypeSlug: requirement.resourceTypeSlug,
+          resourceTypeName: requirement.resourceTypeName,
+          requestedQuantity: requirement.quantity,
+          availableQuantity: null,
+          inventoryConfigured: false,
+          conflict: false,
+          requiresStaffConfiguration: true,
+        });
+        continue;
+      }
+      if (occupied) {
+        anyConflict = true;
+      }
+      types.push({
+        resourceTypeSlug: requirement.resourceTypeSlug,
+        resourceTypeName: requirement.resourceTypeName,
+        requestedQuantity: activeIds.length,
+        availableQuantity: occupied ? 0 : activeIds.length,
+        inventoryConfigured: true,
+        conflict: occupied,
+        requiresStaffConfiguration: false,
+      });
+      continue;
+    }
+
     const resourceTypeId = requirement.resourceTypeId;
     if (!resourceTypeId) {
       allConfigured = false;
@@ -187,7 +243,27 @@ export async function checkResourceAvailability(
       select: { id: true },
       orderBy: { displayOrder: "asc" },
     });
-    if (units.length === 0) {
+    const scopedUnits =
+      isSpecificResourceRule(requirement.quantityRule) || requirement.specificResourceId
+        ? units.filter((row) => row.id === requirement.specificResourceId)
+        : units;
+    if (
+      (isSpecificResourceRule(requirement.quantityRule) || requirement.specificResourceId)
+      && scopedUnits.length !== 1
+    ) {
+      anyConflict = true;
+      types.push({
+        resourceTypeSlug: requirement.resourceTypeSlug,
+        resourceTypeName: requirement.resourceTypeName,
+        requestedQuantity: 1,
+        availableQuantity: 0,
+        inventoryConfigured: true,
+        conflict: true,
+        requiresStaffConfiguration: false,
+      });
+      continue;
+    }
+    if (scopedUnits.length === 0) {
       allConfigured = false;
       types.push({
         resourceTypeSlug: requirement.resourceTypeSlug,
@@ -221,23 +297,40 @@ export async function checkResourceAvailability(
 
     const availableIds = await listAvailableResourceIds(database, {
       organizationId: input.organizationId,
-      resourceIds: units.map((row) => row.id),
+      resourceIds: scopedUnits.map((row) => row.id),
       window: requirementWindow,
       excludeInquiryId: input.excludeInquiryId,
       excludeBookingId: input.excludeBookingId,
       excludeReservationId: input.excludeReservationId,
       now,
     });
-    const availableQuantity = availableIds.length;
-    const conflict = availableQuantity < requirement.quantity;
+    const requestedQuantity = isAllOfTypeRule(requirement.quantityRule)
+      ? scopedUnits.length
+      : requirement.quantity;
+    let conflict = availableIds.length < requestedQuantity;
+    if (
+      !conflict
+      && input.locationId
+      && (await locationHasExclusiveOccupancy(database, {
+        organizationId: input.organizationId,
+        locationId: input.locationId,
+        window: requirementWindow,
+        excludeInquiryId: input.excludeInquiryId,
+        excludeBookingId: input.excludeBookingId,
+        excludeReservationId: input.excludeReservationId,
+        now,
+      }))
+    ) {
+      conflict = true;
+    }
     if (conflict) {
       anyConflict = true;
     }
     types.push({
       resourceTypeSlug: requirement.resourceTypeSlug,
       resourceTypeName: requirement.resourceTypeName,
-      requestedQuantity: requirement.quantity,
-      availableQuantity,
+      requestedQuantity,
+      availableQuantity: conflict && availableIds.length >= requestedQuantity ? 0 : availableIds.length,
       inventoryConfigured: true,
       conflict,
       requiresStaffConfiguration: false,
@@ -331,6 +424,7 @@ export async function reserveResourcesInTransaction(
     reason?: string | null;
     createdByUserProfileId?: string | null;
     now?: Date;
+    locationExclusive?: boolean;
   },
 ) {
   if (input.endMinute <= input.startMinute) {
@@ -338,6 +432,43 @@ export async function reserveResourcesInTransaction(
   }
   await releaseExpiredHolds(database, input.organizationId, input.now ?? new Date());
   return database.$transaction(async (tx) => {
+    await lockLocationForScheduling(tx, input.organizationId, input.locationId);
+    if (input.locationId) {
+      const exclusive = input.locationExclusive === true;
+      if (exclusive) {
+        const blocked = await locationHasBlockingOccupancy(tx, {
+          organizationId: input.organizationId,
+          locationId: input.locationId,
+          window: {
+            slotDate: input.slotDate,
+            startMinute: input.startMinute,
+            endMinute: input.endMinute,
+          },
+          excludeInquiryId: input.inquiryId,
+          excludeBookingId: input.bookingId,
+          now: input.now,
+        });
+        if (blocked) {
+          throw new ResourceError("RESOURCE_CONFLICT");
+        }
+      } else {
+        const blocked = await locationHasExclusiveOccupancy(tx, {
+          organizationId: input.organizationId,
+          locationId: input.locationId,
+          window: {
+            slotDate: input.slotDate,
+            startMinute: input.startMinute,
+            endMinute: input.endMinute,
+          },
+          excludeInquiryId: input.inquiryId,
+          excludeBookingId: input.bookingId,
+          now: input.now,
+        });
+        if (blocked) {
+          throw new ResourceError("RESOURCE_CONFLICT");
+        }
+      }
+    }
     await tx.resourceReservation.createMany({
       data: input.resourceIds.map((resourceId) => ({
         organizationId: input.organizationId,

@@ -36,6 +36,10 @@ A Booking must never reference another tenant's Inquiry, proposal, or resources.
 5. If a hold expired before convert (`updateMany` count 0), allocate fresh availability rather than revive the stale HOLD
 6. Partial convert rolls back. Conflict = cannot book. No force-double-book.
 
+Composite packages assign **exact** physical units (Bowling Lane 1…n, specific axe bays, Skybox, Mezzanine). Location-exclusive bookings assign every active bookable resource at that Location. If any required unit cannot be allocated, zero reservations from that attempt survive. The PostgreSQL overlap exclusion remains authoritative under concurrent Full Facility vs bowling (or Mezzanine vs an individual axe) races.
+
+**Invariant:** Composite packages are configuration. Runtime code must not branch on tenant, product, or resource names to determine resource allocation.
+
 Inquiry `salesStage` / `status` become `BOOKED`.
 
 Held proposal employee path: Start Working → review → Confirm Booking. Live-agent / no-hold path: Start Working → Place Hold → Confirm Booking. `READY_TO_FINALIZE` is not required.

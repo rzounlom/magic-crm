@@ -486,6 +486,7 @@ model Resource {
   resourceType ResourceType @relation(fields: [organizationId, resourceTypeId], references: [organizationId, id], onDelete: Restrict)
   location     Location?    @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
   reservations ResourceReservation[]
+  specificRequirements ProductResourceRequirement[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, resourceTypeId, displayOrder])
@@ -608,13 +609,15 @@ model ProductPrice {
   @@map("product_prices")
 }
 
-/// How a catalog product consumes a finite resource type.
+/// How a catalog product consumes finite inventory. Composite packages are extra rows, not runtime name checks.
 model ProductResourceRequirement {
   id              String   @id @default(cuid(2))
   organizationId  String
   productId       String
   resourceTypeId  String
-  /// FIXED | PER_GUESTS | ALL_OF_TYPE
+  /// Optional exact unit for SPECIFIC_RESOURCE. Must belong to the same organization, location, and type.
+  resourceId      String?
+  /// FIXED | PER_GUESTS | ALL_OF_TYPE | SPECIFIC_RESOURCE | LOCATION_EXCLUSIVE
   quantityRule    String   @db.VarChar(24)
   quantity        Int?
   guestsPerUnit   Int?
@@ -626,10 +629,12 @@ model ProductResourceRequirement {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   product      Product      @relation(fields: [organizationId, productId], references: [organizationId, id], onDelete: Restrict)
   resourceType ResourceType @relation(fields: [organizationId, resourceTypeId], references: [organizationId, id], onDelete: Restrict)
+  resource     Resource?    @relation(fields: [organizationId, resourceId], references: [organizationId, id], onDelete: Restrict)
 
   @@unique([organizationId, id])
   @@unique([organizationId, productId, resourceTypeId])
   @@index([organizationId, resourceTypeId])
+  @@index([organizationId, resourceId])
   @@map("product_resource_requirements")
 }
 

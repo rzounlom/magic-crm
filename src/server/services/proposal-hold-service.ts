@@ -7,6 +7,17 @@ import { depositPercentFromTenant, depositRequiredCents } from "@/server/catalog
 import { InquiryError, ResourceError } from "@/server/errors";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
+import {
+  isAllOfTypeRule,
+  isLocationExclusiveRule,
+  isSpecificResourceRule,
+} from "@/server/resources/composite-requirements";
+import {
+  listActiveLocationResourceIds,
+  locationHasBlockingOccupancy,
+  locationHasExclusiveOccupancy,
+  lockLocationForScheduling,
+} from "@/server/resources/location-exclusivity";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { applyRotationWindows } from "@/server/resources/rotation-windows";
 import { localEventWindow, minutesToClock, parseClockToMinutes } from "@/server/resources/time-window";
@@ -74,7 +85,66 @@ export async function assignExactResourcesForRequirements(
 ): Promise<HoldAssignment[]> {
   const assigned: HoldAssignment[] = [];
   const preferred = new Set(input.preferredResourceIds ?? []);
+  const claimed = new Set<string>();
+  await lockLocationForScheduling(database, input.organizationId, input.locationId);
+  const exclusive = input.requirements.some(
+    (row) => isLocationExclusiveRule(row.quantityRule) || row.locationExclusive,
+  );
+  if (exclusive && input.locationId) {
+    const blocked = await locationHasBlockingOccupancy(database, {
+      organizationId: input.organizationId,
+      locationId: input.locationId,
+      window: input.window,
+      excludeInquiryId: input.excludeInquiryId,
+      now: input.now,
+    });
+    if (blocked) {
+      throw new ResourceError("RESOURCE_CONFLICT", "The location is already reserved for that window.");
+    }
+  } else if (input.locationId) {
+    const blocked = await locationHasExclusiveOccupancy(database, {
+      organizationId: input.organizationId,
+      locationId: input.locationId,
+      window: input.window,
+      excludeInquiryId: input.excludeInquiryId,
+      now: input.now,
+    });
+    if (blocked) {
+      throw new ResourceError("RESOURCE_CONFLICT", "The location is exclusively reserved for that window.");
+    }
+  }
   for (const requirement of input.requirements) {
+    const window = requirementWindow(requirement, input.window);
+    if (isLocationExclusiveRule(requirement.quantityRule) || requirement.locationExclusive) {
+      const resourceIds = await listActiveLocationResourceIds(database, input.organizationId, input.locationId);
+      if (resourceIds.length === 0) {
+        throw new ResourceError(
+          "INVALID_RESOURCE",
+          "Location-exclusive inventory is not configured.",
+        );
+      }
+      const available = await listAvailableResourceIds(database, {
+        organizationId: input.organizationId,
+        resourceIds,
+        window,
+        excludeInquiryId: input.excludeInquiryId,
+        now: input.now,
+      });
+      if (available.length < resourceIds.length) {
+        throw new ResourceError(
+          "RESOURCE_CONFLICT",
+          "The location is already reserved for that window.",
+        );
+      }
+      for (const resourceId of resourceIds) {
+        if (claimed.has(resourceId)) {
+          continue;
+        }
+        claimed.add(resourceId);
+        assigned.push({ resourceId, startMinute: window.startMinute, endMinute: window.endMinute });
+      }
+      continue;
+    }
     if (!requirement.resourceTypeId || requirement.quantity == null || requirement.quantity < 1) {
       throw new ResourceError(
         "INVALID_RESOURCE",
@@ -87,7 +157,6 @@ export async function assignExactResourcesForRequirements(
         `${requirement.resourceTypeName} inventory is not configured.`,
       );
     }
-    const window = requirementWindow(requirement, input.window);
     const units = await database.resource.findMany({
       where: {
         organizationId: input.organizationId,
@@ -97,29 +166,44 @@ export async function assignExactResourcesForRequirements(
       select: { id: true },
       orderBy: { displayOrder: "asc" },
     });
+    const scoped =
+      isSpecificResourceRule(requirement.quantityRule) || requirement.specificResourceId
+        ? units.filter((row) => row.id === requirement.specificResourceId)
+        : units;
+    if (
+      (isSpecificResourceRule(requirement.quantityRule) || requirement.specificResourceId)
+      && scoped.length !== 1
+    ) {
+      throw new ResourceError(
+        "INVALID_RESOURCE",
+        `${requirement.resourceTypeName} specific resource is missing or belongs to another location.`,
+      );
+    }
     const available = await listAvailableResourceIds(database, {
       organizationId: input.organizationId,
-      resourceIds: units.map((row) => row.id),
+      resourceIds: scoped.map((row) => row.id),
       window,
       excludeInquiryId: input.excludeInquiryId,
       now: input.now,
     });
-    const preferredAvailable = available.filter((id) => preferred.has(id));
-    const rest = available.filter((id) => !preferred.has(id));
-    const chosen = [...preferredAvailable, ...rest].slice(0, requirement.quantity);
-    if (chosen.length < requirement.quantity) {
+    const preferredAvailable = available.filter((id) => preferred.has(id) && !claimed.has(id));
+    const rest = available.filter((id) => !preferred.has(id) && !claimed.has(id));
+    const needed = isAllOfTypeRule(requirement.quantityRule) ? scoped.length : requirement.quantity;
+    const chosen = [...preferredAvailable, ...rest].slice(0, needed);
+    if (chosen.length < needed) {
       throw new ResourceError(
         "RESOURCE_CONFLICT",
-        `Only ${available.length} ${requirement.resourceTypeName}${available.length === 1 ? "" : "s"} are available for ${requirement.windowStartTime ?? minutesToClock(window.startMinute)}–${requirement.windowEndTime ?? minutesToClock(window.endMinute)}; this plan requires ${requirement.quantity}.`,
+        `Only ${available.length} ${requirement.resourceTypeName}${available.length === 1 ? "" : "s"} are available for ${requirement.windowStartTime ?? minutesToClock(window.startMinute)}–${requirement.windowEndTime ?? minutesToClock(window.endMinute)}; this plan requires ${needed}.`,
       );
     }
-    assigned.push(
-      ...chosen.map((resourceId) => ({
+    for (const resourceId of chosen) {
+      claimed.add(resourceId);
+      assigned.push({
         resourceId,
         startMinute: window.startMinute,
         endMinute: window.endMinute,
-      })),
-    );
+      });
+    }
   }
   return assigned;
 }
@@ -319,6 +403,7 @@ export async function placeProposalHold(
         WHERE id = ${inquiry.id} AND "organizationId" = ${input.organizationId}
         FOR UPDATE
       `;
+      await lockLocationForScheduling(tx, input.organizationId, locationId);
       const lockedHolds = await tx.resourceReservation.findMany({
         where: activeHoldWhere(input.organizationId, inquiry.id, now),
         select: { id: true },

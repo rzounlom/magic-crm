@@ -310,6 +310,8 @@ export async function buildCatalogEventPlans(input: {
     const depositPercent = depositPercentFromTenant(input.depositPercent);
     const depositPreviewCents = pricingComplete ? percentOfCents(totalCents, depositPercent) : null;
     const names = selected.map((row) => row.name).join(", ");
+    const locationExclusive = resourceRequirements.some((row) => row.locationExclusive);
+    const exclusiveNote = locationExclusive ? " Private use of the full facility." : "";
 
     drafts.push({
       tier: config.tier,
@@ -320,9 +322,9 @@ export async function buildCatalogEventPlans(input: {
       guestCount: input.inquiry.guestCount,
       durationMinutes,
       customerFacingReason:
-        config.tier === EVENT_PLAN_TIERS.BEST_FIT
+        (config.tier === EVENT_PLAN_TIERS.BEST_FIT
           ? `Recommended mix for this group: ${names}.`
-          : `Includes ${names}.`,
+          : `Includes ${names}.`) + exclusiveNote,
       availabilityValidated: result.validated && result.available,
       availabilityNote:
         suggestedStartTimes.length > 0
@@ -369,6 +371,7 @@ export async function buildCatalogEventPlans(input: {
         depositPreviewNote: depositPreviewNote(depositPercent),
         suggestedStartTimes,
         catalogBacked: true,
+        locationExclusive,
         pricingComplete,
         customerAvailabilityNote: CUSTOMER_AVAILABILITY_NOTE,
         resourceRequirements,

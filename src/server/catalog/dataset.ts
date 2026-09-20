@@ -34,6 +34,7 @@ const requirementSchema = z.object({
   guestsPerUnit: z.number().int().positive().optional().nullable(),
   durationMinutes: z.number().int().positive().optional().nullable(),
   exclusive: z.boolean().optional().default(false),
+  resourceName: z.string().trim().min(1).max(120).optional().nullable(),
 });
 
 const servingSchema = z.object({

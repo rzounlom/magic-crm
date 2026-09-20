@@ -105,6 +105,8 @@ export async function loadCatalogForProposal(
         guestsPerUnit: row.guestsPerUnit,
         durationMinutes: row.durationMinutes,
         exclusive: row.exclusive,
+        specificResourceId: row.resourceId,
+        locationExclusive: row.quantityRule === PRODUCT_QUANTITY_RULES.LOCATION_EXCLUSIVE,
       },
     ];
   });

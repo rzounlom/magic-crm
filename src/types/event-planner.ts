@@ -228,6 +228,7 @@ export type EventPlanPayload = {
   itinerary?: EventPlanItinerarySegment[];
   suggestedStartTimes?: string[];
   catalogBacked?: boolean;
+  locationExclusive?: boolean;
   selectionAvailability?: {
     status: string;
     checkedAt: string;

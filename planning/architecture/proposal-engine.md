@@ -24,7 +24,9 @@ Intake → catalog (or knowledge) engine → `checkResourceAvailability` → per
 
 ## Availability
 
-`ProductResourceRequirement` quantities feed the same `checkResourceAvailability` used by live agents and Confirm Booking. Required units use `ceil(guestCount / guestsPerUnit)` when the tenant configures `PER_GUESTS`. Capacities such as 6 guests per bowling lane are **tenant resource/product data**, not MagicCRM constants. Exclusive rentals use `ALL_OF_TYPE`. Recommendation generation and customer selection never insert reservations.
+`ProductResourceRequirement` quantities feed the same `checkResourceAvailability` used by live agents and Confirm Booking. Required units use `ceil(guestCount / guestsPerUnit)` when the tenant configures `PER_GUESTS`. Capacities such as 6 guests per bowling lane are **tenant resource/product data**, not MagicCRM constants. Composite packages (exact count, all-of-type, specific unit, location-exclusive) are also tenant data. Recommendation generation and customer selection never insert reservations. Location-exclusive proposals add generic customer-facing copy such as “Private use of the full facility” and must not expose internal resource ids.
+
+**Invariant:** Composite packages are configuration. Runtime code must not branch on tenant, product, or resource names to determine resource allocation.
 
 Availability always runs with trusted `organizationId` and `locationId`. Location A1 resources cannot satisfy Location A2. Tenant A reservations cannot block Tenant B.
 

@@ -6,6 +6,7 @@ import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
+import { lockLocationForScheduling } from "@/server/resources/location-exclusivity";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { applyRotationWindows } from "@/server/resources/rotation-windows";
 import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-window";
@@ -319,6 +320,7 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
   });
   try {
     await database.$transaction(async (tx) => {
+      await lockLocationForScheduling(tx, ctx.organizationId, locationId);
       const assignments = await assignExactResourcesForRequirements(tx as HoldDb, {
         organizationId: ctx.organizationId,
         locationId,

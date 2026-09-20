@@ -893,7 +893,7 @@
       "maxGuests": 150,
       "weekendOnly": false,
       "fulfillmentGroup": "mezzanine",
-      "shortDescription": "Mezzanine exclusive rental Sunday through Thursday.",
+      "shortDescription": "Mezzanine exclusive rental Sunday through Thursday, including all bowling lanes, 7 axe bays, and the Skybox.",
       "prices": [
         {
           "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
@@ -913,11 +913,37 @@
       "requirements": [
         {
           "resourceTypeSlug": "mezzanine",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true,
+          "resourceName": "Mezzanine"
+        },
+        {
+          "resourceTypeSlug": "bowling-lane",
           "quantityRule": "ALL_OF_TYPE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": 180,
           "exclusive": true
+        },
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "FIXED",
+          "quantity": 7,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": false
+        },
+        {
+          "resourceTypeSlug": "skybox",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true,
+          "resourceName": "Skybox"
         }
       ]
     },
@@ -932,7 +958,7 @@
       "maxGuests": 150,
       "weekendOnly": false,
       "fulfillmentGroup": "mezzanine",
-      "shortDescription": "Mezzanine exclusive rental on Friday.",
+      "shortDescription": "Mezzanine exclusive rental on Friday, including all bowling lanes, 7 axe bays, and the Skybox.",
       "prices": [
         {
           "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
@@ -948,11 +974,37 @@
       "requirements": [
         {
           "resourceTypeSlug": "mezzanine",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true,
+          "resourceName": "Mezzanine"
+        },
+        {
+          "resourceTypeSlug": "bowling-lane",
           "quantityRule": "ALL_OF_TYPE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": 180,
           "exclusive": true
+        },
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "FIXED",
+          "quantity": 7,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": false
+        },
+        {
+          "resourceTypeSlug": "skybox",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true,
+          "resourceName": "Skybox"
         }
       ]
     },
@@ -967,7 +1019,7 @@
       "maxGuests": 150,
       "weekendOnly": false,
       "fulfillmentGroup": "mezzanine",
-      "shortDescription": "Mezzanine exclusive rental on Saturday.",
+      "shortDescription": "Mezzanine exclusive rental on Saturday, including all bowling lanes, 7 axe bays, and the Skybox.",
       "prices": [
         {
           "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
@@ -983,11 +1035,37 @@
       "requirements": [
         {
           "resourceTypeSlug": "mezzanine",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true,
+          "resourceName": "Mezzanine"
+        },
+        {
+          "resourceTypeSlug": "bowling-lane",
           "quantityRule": "ALL_OF_TYPE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": 180,
           "exclusive": true
+        },
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "FIXED",
+          "quantity": 7,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": false
+        },
+        {
+          "resourceTypeSlug": "skybox",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 180,
+          "exclusive": true,
+          "resourceName": "Skybox"
         }
       ]
     },
@@ -1002,7 +1080,7 @@
       "maxGuests": 150,
       "weekendOnly": false,
       "fulfillmentGroup": "mezzanine",
-      "shortDescription": "Two-hour mezzanine rental Friday or Saturday.",
+      "shortDescription": "Two-hour mezzanine rental Friday or Saturday, including all bowling lanes, 7 axe bays, and the Skybox.",
       "prices": [
         {
           "strategy": "FIXED_RENTAL",
@@ -1017,11 +1095,37 @@
       "requirements": [
         {
           "resourceTypeSlug": "mezzanine",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 120,
+          "exclusive": true,
+          "resourceName": "Mezzanine"
+        },
+        {
+          "resourceTypeSlug": "bowling-lane",
           "quantityRule": "ALL_OF_TYPE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": 120,
           "exclusive": true
+        },
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "FIXED",
+          "quantity": 7,
+          "guestsPerUnit": null,
+          "durationMinutes": 120,
+          "exclusive": false
+        },
+        {
+          "resourceTypeSlug": "skybox",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 120,
+          "exclusive": true,
+          "resourceName": "Skybox"
         }
       ]
     },
@@ -1036,7 +1140,7 @@
       "maxGuests": 999,
       "weekendOnly": false,
       "fulfillmentGroup": "full-facility",
-      "shortDescription": "Full facility rental before 4 PM Sunday through Friday.",
+      "shortDescription": "Private use of the full facility before 4 PM Sunday through Friday.",
       "prices": [
         {
           "strategy": "TIME_WINDOW_RENTAL",
@@ -1055,7 +1159,7 @@
       "requirements": [
         {
           "resourceTypeSlug": "full-facility",
-          "quantityRule": "ALL_OF_TYPE",
+          "quantityRule": "LOCATION_EXCLUSIVE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": null,
@@ -1074,7 +1178,7 @@
       "maxGuests": 999,
       "weekendOnly": false,
       "fulfillmentGroup": "full-facility",
-      "shortDescription": "Full facility rental Saturday after 4 PM.",
+      "shortDescription": "Private use of the full facility Saturday after 4 PM.",
       "prices": [
         {
           "strategy": "TIME_WINDOW_RENTAL",
@@ -1090,7 +1194,7 @@
       "requirements": [
         {
           "resourceTypeSlug": "full-facility",
-          "quantityRule": "ALL_OF_TYPE",
+          "quantityRule": "LOCATION_EXCLUSIVE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": null,
@@ -1109,7 +1213,7 @@
       "maxGuests": 999,
       "weekendOnly": false,
       "fulfillmentGroup": "full-facility",
-      "shortDescription": "Full facility rental after 4 PM Monday through Thursday.",
+      "shortDescription": "Private use of the full facility after 4 PM Monday through Thursday.",
       "prices": [
         {
           "strategy": "TIME_WINDOW_RENTAL",
@@ -1128,7 +1232,7 @@
       "requirements": [
         {
           "resourceTypeSlug": "full-facility",
-          "quantityRule": "ALL_OF_TYPE",
+          "quantityRule": "LOCATION_EXCLUSIVE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": null,
@@ -1147,7 +1251,7 @@
       "maxGuests": 999,
       "weekendOnly": false,
       "fulfillmentGroup": "full-facility",
-      "shortDescription": "Full facility rental after 4 PM Friday. Source listed 5995 without a dollar sign.",
+      "shortDescription": "Private use of the full facility after 4 PM Friday. Source listed 5995 without a dollar sign.",
       "prices": [
         {
           "strategy": "TIME_WINDOW_RENTAL",
@@ -1163,7 +1267,7 @@
       "requirements": [
         {
           "resourceTypeSlug": "full-facility",
-          "quantityRule": "ALL_OF_TYPE",
+          "quantityRule": "LOCATION_EXCLUSIVE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": null,
@@ -1182,7 +1286,7 @@
       "maxGuests": 999,
       "weekendOnly": false,
       "fulfillmentGroup": "full-facility",
-      "shortDescription": "Full facility rental after 4 PM Saturday. Source listed 5995 without a dollar sign.",
+      "shortDescription": "Private use of the full facility after 4 PM Saturday. Source listed 5995 without a dollar sign.",
       "prices": [
         {
           "strategy": "TIME_WINDOW_RENTAL",
@@ -1198,7 +1302,7 @@
       "requirements": [
         {
           "resourceTypeSlug": "full-facility",
-          "quantityRule": "ALL_OF_TYPE",
+          "quantityRule": "LOCATION_EXCLUSIVE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": null,
@@ -1347,7 +1451,7 @@
       "requirements": [
         {
           "resourceTypeSlug": "full-facility",
-          "quantityRule": "ALL_OF_TYPE",
+          "quantityRule": "LOCATION_EXCLUSIVE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": 120,
@@ -1366,7 +1470,7 @@
       "maxGuests": null,
       "weekendOnly": false,
       "fulfillmentGroup": null,
-      "shortDescription": "Additional full-facility hour. Source listed 1995 without a dollar sign.",
+      "shortDescription": "Additional hour of private use of the full facility. Source listed 1995 without a dollar sign.",
       "prices": [
         {
           "strategy": "FIXED_RENTAL",
@@ -1377,7 +1481,7 @@
       "requirements": [
         {
           "resourceTypeSlug": "full-facility",
-          "quantityRule": "ALL_OF_TYPE",
+          "quantityRule": "LOCATION_EXCLUSIVE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": 60,
@@ -1396,7 +1500,7 @@
       "maxGuests": null,
       "weekendOnly": false,
       "fulfillmentGroup": "mezzanine",
-      "shortDescription": "Additional mezzanine hour prorated from the 3-hour minimum.",
+      "shortDescription": "Additional mezzanine hour, including all bowling lanes, 7 axe bays, and the Skybox.",
       "prices": [
         {
           "strategy": "DAY_SPECIFIC_RENTAL",
@@ -1430,11 +1534,37 @@
       "requirements": [
         {
           "resourceTypeSlug": "mezzanine",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": true,
+          "resourceName": "Mezzanine"
+        },
+        {
+          "resourceTypeSlug": "bowling-lane",
           "quantityRule": "ALL_OF_TYPE",
           "quantity": null,
           "guestsPerUnit": null,
           "durationMinutes": 60,
           "exclusive": true
+        },
+        {
+          "resourceTypeSlug": "axe-throwing-lane",
+          "quantityRule": "FIXED",
+          "quantity": 7,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": false
+        },
+        {
+          "resourceTypeSlug": "skybox",
+          "quantityRule": "SPECIFIC_RESOURCE",
+          "quantity": 1,
+          "guestsPerUnit": null,
+          "durationMinutes": 60,
+          "exclusive": true,
+          "resourceName": "Skybox"
         }
       ]
     },

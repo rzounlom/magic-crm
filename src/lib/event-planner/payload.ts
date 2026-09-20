@@ -26,6 +26,7 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     itinerary: Array.isArray(payload.itinerary) ? payload.itinerary : [],
     suggestedStartTimes: Array.isArray(payload.suggestedStartTimes) ? payload.suggestedStartTimes : [],
     catalogBacked: payload.catalogBacked === true,
+    locationExclusive: payload.locationExclusive === true,
     selectionAvailability: payload.selectionAvailability,
   };
 }

@@ -122,6 +122,9 @@ export function EmployeeSelectedPlanResourceCheck({
                     {requirement.windowStartTime}–{requirement.windowEndTime}
                   </p>
                 ) : null}
+                {requirement.locationExclusive || requirement.quantityRule === "LOCATION_EXCLUSIVE" ? (
+                  <p className="text-foreground/60">Private use of the full facility</p>
+                ) : null}
                 {requirement.rotationNote ? (
                   <p className="mt-1 text-foreground/60">{requirement.rotationNote}</p>
                 ) : null}

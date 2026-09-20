@@ -10,6 +10,8 @@ export const RESOURCE_QUANTITY_RULES = {
   FIXED: "FIXED",
   PER_GUESTS: "PER_GUESTS",
   ALL_OF_TYPE: "ALL_OF_TYPE",
+  SPECIFIC_RESOURCE: "SPECIFIC_RESOURCE",
+  LOCATION_EXCLUSIVE: "LOCATION_EXCLUSIVE",
   UNKNOWN: "UNKNOWN",
 } as const;
 
@@ -76,6 +78,8 @@ export type PlanResourceRequirement = {
   rotationNote?: string | null;
   windowStartTime?: string | null;
   windowEndTime?: string | null;
+  specificResourceId?: string | null;
+  locationExclusive?: boolean;
 };
 
 export type ResourceAvailabilityRequest = {

@@ -41,6 +41,64 @@ describe("inventory feasibility", () => {
     expect(next[0]?.rotationWaves).toBe(2);
     expect(next[0]?.rotationNote).toContain("rotations");
   });
+
+  it("does not rotate exact composite allocation rules into partial quantities", () => {
+    const next = applyInventoryFeasibility(
+      [
+        {
+          knowledgeItemId: "buyout",
+          knowledgeItemName: "Buyout",
+          resourceTypeId: "type_axe",
+          resourceTypeSlug: "axe-bay",
+          resourceTypeName: "Axe Bay",
+          quantityRule: RESOURCE_QUANTITY_RULES.FIXED,
+          quantity: 7,
+          guestsPerUnit: null,
+          durationMinutes: 180,
+          inventoryConfigured: true,
+          requiresStaffConfiguration: false,
+        },
+        {
+          knowledgeItemId: "buyout",
+          knowledgeItemName: "Buyout",
+          resourceTypeId: "type_bowl",
+          resourceTypeSlug: "bowling-lane",
+          resourceTypeName: "Bowling Lane",
+          quantityRule: RESOURCE_QUANTITY_RULES.ALL_OF_TYPE,
+          quantity: 8,
+          guestsPerUnit: null,
+          durationMinutes: 180,
+          inventoryConfigured: true,
+          requiresStaffConfiguration: false,
+        },
+        {
+          knowledgeItemId: "venue",
+          knowledgeItemName: "Venue",
+          resourceTypeId: "type_venue",
+          resourceTypeSlug: "full-venue",
+          resourceTypeName: "Full Venue",
+          quantityRule: RESOURCE_QUANTITY_RULES.LOCATION_EXCLUSIVE,
+          quantity: 1,
+          guestsPerUnit: null,
+          durationMinutes: 180,
+          inventoryConfigured: true,
+          requiresStaffConfiguration: false,
+          locationExclusive: true,
+        },
+      ],
+      [
+        { id: "type_axe", activeCount: 5 },
+        { id: "type_bowl", activeCount: 6 },
+        { id: "type_venue", activeCount: 1 },
+      ],
+    );
+    expect(next[0]?.quantity).toBe(7);
+    expect(next[0]?.rotationWaves).toBeUndefined();
+    expect(next[1]?.quantity).toBe(8);
+    expect(next[1]?.rotationWaves).toBeUndefined();
+    expect(next[2]?.quantity).toBe(1);
+    expect(next[2]?.locationExclusive).toBe(true);
+  });
 });
 
 describe("plan availability status", () => {
