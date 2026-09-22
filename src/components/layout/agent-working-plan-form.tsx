@@ -1,5 +1,6 @@
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { formatActivityDetails } from "@/lib/event-planner/activity-display";
 import { formatEventDuration } from "@/lib/event-planner/labels";
 import { formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
@@ -25,7 +26,7 @@ export function AgentWorkingPlanForm({
     durationMinutes: number | null;
     payload: unknown;
   };
-  knowledge: Array<{ id: string; name: string; type: string; maxGuests: number | null }>;
+  knowledge: Array<{ id: string; name: string; type: string; maxGuests: number | null; durationMinutes?: number | null }>;
   currency: string;
   guestMix: string | null;
 }) {
@@ -44,10 +45,10 @@ export function AgentWorkingPlanForm({
 
   return (
     <section className="rounded-md border border-border px-5 py-5">
-      <h2 className="text-lg font-semibold">Plan you&apos;ll book</h2>
+      <h2 className="text-lg font-semibold">Working booking plan</h2>
       <p className="mt-1 text-sm text-foreground/70">
-        Edit date, guests, and activities. Saving updates price and availability. The customer snapshot stays
-        unchanged.
+        Edit date, guests, and activities. Saving recalculates price, itinerary, and resource requirements from
+        the catalog. The original customer selection stays unchanged.
       </p>
       <p className="mt-3 text-2xl font-semibold">
         {total > 0 ? formatMoneyFromCents(total, working.currency || currency) : "Pricing to confirm"}
@@ -57,7 +58,7 @@ export function AgentWorkingPlanForm({
       ) : null}
       {changes.length > 0 ? (
         <div className="mt-4 rounded-md bg-muted/60 px-3 py-3 text-sm">
-          <p className="font-medium">Changes from customer selection</p>
+          <p className="font-medium">Modified from customer selection</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {changes.map((change) => (
               <li key={`${change.label}-${change.detail}`}>
@@ -67,7 +68,7 @@ export function AgentWorkingPlanForm({
           </ul>
         </div>
       ) : (
-        <p className="mt-3 text-sm text-foreground/60">Matches the customer-selected plan until you edit it.</p>
+        <p className="mt-3 text-sm text-foreground/60">Matches the customer&apos;s selection.</p>
       )}
 
       <SecurityActionForm
@@ -127,19 +128,32 @@ export function AgentWorkingPlanForm({
 
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium">Activities</legend>
+          <p className="text-xs text-foreground/55">
+            Selected activities show catalog quantities. Resource counts are calculated on save.
+          </p>
           {attractions.map((item) => {
             const current = payload.activities.find((row) => row.knowledgeItemId === item.id);
+            const selected = selectedActivityIds.has(item.id);
+            const details = current
+              ? formatActivityDetails(current, {
+                  guestCount: payload.guestCount,
+                  durationMinutes: item.durationMinutes,
+                  itinerary: payload.itinerary,
+                })
+              : null;
             return (
-              <label key={item.id} className="flex flex-wrap items-center gap-3 text-sm">
-                <input type="checkbox" name="activityIds" value={item.id} defaultChecked={selectedActivityIds.has(item.id)} />
-                <span className="flex-1">{item.name}</span>
+              <label key={item.id} className="flex flex-wrap items-start gap-3 text-sm">
                 <input
-                  type="number"
-                  name={`quantity_${item.id}`}
-                  min={1}
-                  defaultValue={current?.quantity ?? 1}
-                  className="w-20 rounded-md border border-border bg-background px-2 py-1"
+                  type="checkbox"
+                  name="activityIds"
+                  value={item.id}
+                  defaultChecked={selected}
+                  className="mt-1"
                 />
+                <span className="flex-1">
+                  <span className="block">{item.name}</span>
+                  {selected && details ? <span className="block text-xs text-foreground/60">{details}</span> : null}
+                </span>
               </label>
             );
           })}
@@ -179,7 +193,7 @@ export function AgentWorkingPlanForm({
         </label>
 
         <label className="block text-sm">
-          <span className="text-foreground/70">Proposed schedule</span>
+          <span className="text-foreground/70">Sample Itinerary</span>
           <textarea
             name="schedule"
             rows={4}
@@ -236,7 +250,7 @@ export function AgentWorkingPlanForm({
           pendingLabel="Saving…"
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
-          Save working version
+          Save working plan
         </PendingSubmitButton>
       </SecurityActionForm>
 

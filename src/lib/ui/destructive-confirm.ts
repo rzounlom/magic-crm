@@ -56,3 +56,48 @@ export function sendNewInvitationConfirm(email: string): DestructiveConfirmCopy 
     confirmLabel: "Send new invitation",
   };
 }
+
+export function cancelConfirmedBookingConfirm(): DestructiveConfirmCopy {
+  return {
+    title: "Cancel this booking?",
+    description:
+      "This will cancel the booking and release its future reserved resources on the Master Schedule. Historical booking information will be kept.",
+    confirmLabel: "Cancel booking",
+    confirmPendingLabel: "Cancelling…",
+  };
+}
+
+export function cancelPendingBookingConfirm(): DestructiveConfirmCopy {
+  return {
+    title: "Cancel this booking request?",
+    description: "This booking is not confirmed and does not currently reserve resources.",
+    confirmLabel: "Cancel booking",
+    confirmPendingLabel: "Cancelling…",
+  };
+}
+
+export function archiveInquiryConfirm(input: {
+  bookingNumber?: string | null;
+  bookingStatus?: string | null;
+}): DestructiveConfirmCopy {
+  const activeBooking =
+    input.bookingStatus === "PENDING_PAYMENT" || input.bookingStatus === "CONFIRMED";
+  return {
+    title: "Archive this inquiry?",
+    description: "It will be removed from the active inquiry queue but its history will be kept.",
+    warning: activeBooking
+      ? `Booking ${input.bookingNumber ?? "on this inquiry"} remains ${input.bookingStatus === "CONFIRMED" ? "confirmed" : "pending"} and is not cancelled.`
+      : undefined,
+    confirmLabel: "Archive inquiry",
+    confirmPendingLabel: "Archiving…",
+  };
+}
+
+export function unarchiveInquiryConfirm(): DestructiveConfirmCopy {
+  return {
+    title: "Restore this inquiry?",
+    description: "It will return to the active inquiry queue based on its current status.",
+    confirmLabel: "Restore inquiry",
+    confirmPendingLabel: "Restoring…",
+  };
+}

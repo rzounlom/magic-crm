@@ -25,7 +25,6 @@ import { BOOKING_STATUSES } from "@/types/booking";
 import {
   EVENT_PLAN_KINDS,
   INQUIRY_STATUSES,
-  INQUIRY_WORKFLOW_STAGES,
   SALES_KNOWLEDGE_TYPES,
 } from "@/types/inquiry";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
@@ -267,7 +266,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
     ).toBe(1);
   });
 
-  it("blocks confirmation when a finite requirement has no active hold", async () => {
+  it("confirms a working version without requiring a resource hold", async () => {
     const tenant = await provisionTenant("bk-hold");
     await seedBowling(tenant, 4);
     const { created } = await submitAndSelect(tenant, "bk-hold@example.com");
@@ -276,37 +275,38 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
       where: { inquiryId: created.inquiryId, kind: EVENT_PLAN_KINDS.AGENT_WORKING },
     });
     await saveAgentWorkingPlan(tenant.ctx, db, created.inquiryId, workingInput(draft.payload as EventPlanPayload));
-    await expect(confirmInquiryBooking(tenant.ctx, db, created.inquiryId)).rejects.toBeInstanceOf(BookingError);
-    expect(await db.booking.count({ where: { organizationId: tenant.organizationId } })).toBe(0);
+    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    expect(confirmed.created).toBe(true);
+    expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
+    expect(
+      await db.resourceReservation.count({
+        where: { organizationId: tenant.organizationId, status: RESOURCE_RESERVATION_STATUSES.HOLD, releasedAt: null },
+      }),
+    ).toBe(0);
     expect(
       await db.resourceReservation.count({
         where: { organizationId: tenant.organizationId, status: RESOURCE_RESERVATION_STATUSES.BOOKED },
       }),
-    ).toBe(0);
+    ).toBeGreaterThan(0);
   });
 
-  it("blocks expired holds without converting anything", async () => {
+  it("allocates fresh BOOKED rows when a leftover hold has expired", async () => {
     const tenant = await provisionTenant("bk-exp");
     const { created } = await prepareReadyToFinalize(tenant, "bk-exp@example.com");
     await db.resourceReservation.updateMany({
       where: { organizationId: tenant.organizationId, inquiryId: created.inquiryId },
       data: { expiresAt: new Date("2000-01-01T00:00:00.000Z") },
     });
-    await expect(confirmInquiryBooking(tenant.ctx, db, created.inquiryId)).rejects.toMatchObject({
-      code: "HOLD_EXPIRED",
-    });
-    expect(await db.booking.count({ where: { organizationId: tenant.organizationId } })).toBe(0);
-    expect(
-      await db.inquiry.findFirstOrThrow({ where: { id: created.inquiryId } }),
-    ).toMatchObject({ status: INQUIRY_STATUSES.READY_FOR_HUMAN, workflowStage: INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE });
+    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     expect(
       await db.resourceReservation.count({
         where: { inquiryId: created.inquiryId, status: RESOURCE_RESERVATION_STATUSES.BOOKED },
       }),
-    ).toBe(0);
+    ).toBeGreaterThan(0);
   });
 
-  it("blocks an availability conflict without creating a booking", async () => {
+  it("keeps a pending booking when confirmation hits an availability conflict", async () => {
     const tenant = await provisionTenant("bk-av");
     const { created } = await prepareReadyToFinalize(tenant, "bk-av@example.com");
     await db.resource.updateMany({
@@ -316,10 +316,20 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
     await expect(confirmInquiryBooking(tenant.ctx, db, created.inquiryId)).rejects.toMatchObject({
       code: "AVAILABILITY_CONFLICT",
     });
-    expect(await db.booking.count({ where: { organizationId: tenant.organizationId } })).toBe(0);
+    const pending = await db.booking.findFirstOrThrow({
+      where: { organizationId: tenant.organizationId, inquiryId: created.inquiryId },
+    });
+    expect(pending.status).toBe(BOOKING_STATUSES.PENDING_PAYMENT);
+    expect(pending.availabilityConflictAt).toBeTruthy();
+    expect(pending.paymentConfirmedExternallyAt).toBeTruthy();
     expect(
       await db.inquiry.findFirstOrThrow({ where: { id: created.inquiryId } }),
     ).toMatchObject({ status: INQUIRY_STATUSES.READY_FOR_HUMAN });
+    expect(
+      await db.resourceReservation.count({
+        where: { inquiryId: created.inquiryId, status: RESOURCE_RESERVATION_STATUSES.BOOKED },
+      }),
+    ).toBe(0);
   });
 
   it("rolls back when reservation conversion fails", async () => {
@@ -389,6 +399,10 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
     await seedBowling(tenant, 4);
     const { created } = await submitAndSelect(tenant, "bk-skip@example.com");
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
+    await db.resource.updateMany({
+      where: { organizationId: tenant.organizationId },
+      data: { active: false },
+    });
     await expect(confirmInquiryBooking(tenant.ctx, db, created.inquiryId)).rejects.toBeInstanceOf(BookingError);
     expect(
       await db.communicationEvent.count({

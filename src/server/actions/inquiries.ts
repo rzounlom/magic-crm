@@ -13,8 +13,10 @@ import {
 import { getRequestContext } from "@/server/get-request-context";
 import {
   addEmployeeConversationMessage,
+  archiveInquiry,
   resumeInquiryAi,
   takeOverInquiry,
+  unarchiveInquiry,
 } from "@/server/services/inquiry-service";
 import type { SecurityActionResult } from "@/types/security-action";
 
@@ -79,3 +81,42 @@ export async function sendEmployeeInquiryMessageAction(
     return toResult(error, "Unable to send reply");
   }
 }
+
+export async function archiveInquiryAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
+    const ctx = await getRequestContext();
+    const result = await archiveInquiry(ctx, db, inquiryId);
+    revalidatePath("/app/inquiries");
+    revalidatePath(`/app/inquiries/${inquiryId}`);
+    return {
+      ok: true,
+      title: result.alreadyArchived ? "Already archived" : "Inquiry archived",
+      message: result.alreadyArchived
+        ? "This inquiry is already in the archived list."
+        : "Removed from the active inquiry queue. History is kept.",
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to archive inquiry");
+  }
+}
+
+export async function unarchiveInquiryAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
+    const ctx = await getRequestContext();
+    await unarchiveInquiry(ctx, db, inquiryId);
+    revalidatePath("/app/inquiries");
+    revalidatePath(`/app/inquiries/${inquiryId}`);
+    return {
+      ok: true,
+      title: "Inquiry restored",
+      message: "This inquiry is back in the active queue.",
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to restore inquiry");
+  }
+}
+

@@ -1,7 +1,7 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
 import { ResourceError } from "@/server/errors";
-import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-window";
+import { localEventWindow, requirementOccupancyWindow } from "@/server/resources/time-window";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import {
   isAllOfTypeRule,
@@ -189,10 +189,11 @@ export async function checkResourceAvailability(
         types.push(unconfiguredType(requirement));
         continue;
       }
+      const exclusiveWindow = requirementOccupancyWindow(requirement, window);
       const occupied = await locationHasBlockingOccupancy(database, {
         organizationId: input.organizationId,
         locationId: input.locationId,
-        window,
+        window: exclusiveWindow,
         excludeInquiryId: input.excludeInquiryId,
         excludeBookingId: input.excludeBookingId,
         excludeReservationId: input.excludeReservationId,
@@ -277,23 +278,7 @@ export async function checkResourceAvailability(
       continue;
     }
 
-    const requirementWindow =
-      requirement.windowStartTime && requirement.windowEndTime
-        ? localEventWindow({
-            date: input.date,
-            startTime: requirement.windowStartTime,
-            durationMinutes: Math.max(
-              1,
-              (parseClockFromRequirement(requirement.windowEndTime) ?? 0) -
-                (parseClockFromRequirement(requirement.windowStartTime) ?? 0),
-            ),
-          })
-        : window;
-    if (!requirementWindow) {
-      allConfigured = false;
-      types.push(unconfiguredType(requirement));
-      continue;
-    }
+    const requirementWindow = requirementOccupancyWindow(requirement, window);
 
     const availableIds = await listAvailableResourceIds(database, {
       organizationId: input.organizationId,
@@ -377,10 +362,6 @@ export async function listAvailableResourceIds(
       .map((row) => row.resourceId),
   );
   return input.resourceIds.filter((id) => !occupied.has(id));
-}
-
-function parseClockFromRequirement(value: string | null | undefined): number | null {
-  return parseClockToMinutes(value);
 }
 
 function unconfiguredType(requirement: {

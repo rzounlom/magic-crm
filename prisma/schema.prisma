@@ -109,8 +109,11 @@ model UserProfile {
   securityGroupMembers SecurityGroupMember[]
   invitationsSent      TeamInvitation[]      @relation("TeamInvitationsSent")
   assignedInquiries    Inquiry[]             @relation("InquiryAssignee")
-  confirmedBookings    Booking[]             @relation("BookingConfirmedBy")
-  resourceReservations ResourceReservation[] @relation("ResourceReservationCreatedBy")
+  archivedInquiries           Inquiry[]             @relation("InquiryArchivedBy")
+  confirmedBookings           Booking[]             @relation("BookingConfirmedBy")
+  paymentAttestedBookings     Booking[]             @relation("BookingPaymentAttestedBy")
+  cancelledBookings           Booking[]             @relation("BookingCancelledBy")
+  resourceReservations        ResourceReservation[] @relation("ResourceReservationCreatedBy")
 
   @@unique([organizationId, id])
   @@unique([organizationId, clerkUserId])
@@ -297,9 +300,9 @@ model Inquiry {
   recommendationsViewedAt  DateTime?
   selectedEventPlanId      String?
   customerSelectedAt       DateTime?
-  /// READY_FOR_LIVE_AGENT | AGENT_WORKING | HOLD_PLACED | READY_TO_FINALIZE. Inquiry.status stays READY_FOR_HUMAN.
+  /// READY_FOR_LIVE_AGENT | AGENT_WORKING | HOLD_PLACED (legacy) | READY_TO_FINALIZE. Inquiry.status stays READY_FOR_HUMAN.
   workflowStage            String?   @db.VarChar(32)
-  /// INQUIRY | PROPOSAL_READY | READY_TO_BOOK | HOLD_PLACED | DEPOSIT_PENDING | BOOKED | CLOSED | LOST
+  /// INQUIRY | PROPOSAL_READY | READY_TO_BOOK | HOLD_PLACED (legacy) | DEPOSIT_PENDING | BOOKED | CLOSED | LOST
   salesStage               String?   @db.VarChar(32)
   /// KIDS_YOUTH | ADULTS | MIXED
   audience                 String?   @db.VarChar(24)
@@ -309,12 +312,16 @@ model Inquiry {
   customerContactedAt      DateTime?
   agentWorkingPlanId       String?
   readyToFinalizeAt        DateTime?
+  /// Operational hide from the default inquiry queue. Does not cancel bookings or delete history.
+  archivedAt               DateTime?
+  archivedByUserProfileId  String?
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
   organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   location      Location?       @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
   assignedUser  UserProfile?    @relation("InquiryAssignee", fields: [organizationId, assignedUserProfileId], references: [organizationId, id], onDelete: Restrict)
+  archivedBy    UserProfile?    @relation("InquiryArchivedBy", fields: [archivedByUserProfileId], references: [id], onDelete: Restrict)
   conversations Conversation[]
   eventPlanRecommendations EventPlanRecommendation[]
   resourceReservations ResourceReservation[]
@@ -329,6 +336,8 @@ model Inquiry {
   @@index([organizationId, customerSelectedAt])
   @@index([organizationId, workflowStage])
   @@index([organizationId, salesStage])
+  @@index([organizationId, archivedAt])
+  @@index([archivedByUserProfileId])
   @@map("inquiries")
 }
 
@@ -760,14 +769,14 @@ model OrganizationBookingSequence {
   @@map("organization_booking_sequences")
 }
 
-/// Confirmed event. Authoritative after Confirm Booking. Inquiry remains sales history.
+/// Commercial event intent. PENDING_PAYMENT does not occupy inventory. CONFIRMED does.
 model Booking {
   id                       String    @id @default(cuid(2))
   organizationId           String
   inquiryId                String
   locationId               String?
   bookingNumber            String    @db.VarChar(32)
-  /// CONFIRMED | CANCELLED | COMPLETED. This pass uses CONFIRMED.
+  /// PENDING_PAYMENT | CONFIRMED | CANCELLED | COMPLETED
   status                   String    @db.VarChar(24)
   eventDate                DateTime  @db.Date
   startTime                String    @db.VarChar(16)
@@ -784,7 +793,7 @@ model Booking {
   subtotalCents            Int
   taxCents                 Int       @default(0)
   totalCents               Int
-  /// Tenant deposit policy applied at confirmation. Collection is Phase 3C.
+  /// Tenant deposit policy snapshot. Collection is Phase 3C.
   depositRequiredCents     Int       @default(0)
   depositPaidCents         Int       @default(0)
   currency                 String    @db.VarChar(3)
@@ -795,11 +804,18 @@ model Booking {
   customerPhone            String?   @db.VarChar(32)
   customerNotes            String?   @db.VarChar(2000)
   internalNotes            String?   @db.VarChar(4000)
-  confirmedByUserProfileId String
-  confirmedAt              DateTime
+  confirmedByUserProfileId String?
+  confirmedAt              DateTime?
+  cancelledAt              DateTime?
+  cancelledByUserProfileId String?
+  /// Employee attested that required payment was received outside MagicCRM. Not a processor ledger. Phase 3C replaces this.
+  paymentConfirmedExternallyAt DateTime?
+  paymentConfirmedExternallyByUserProfileId String?
+  /// Set when confirmation failed because inventory was taken. Booking stays pending. Phase 3C payment recovery.
+  availabilityConflictAt   DateTime?
   selectedEventPlanId      String?
   agentWorkingPlanId       String?
-  /// Snapshot of the Current Agent Version payload at confirmation.
+  /// Snapshot of the selected/working proposal payload. Enough to finalize without parsing chat.
   payload                  Json
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
@@ -807,7 +823,9 @@ model Booking {
   organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   inquiry      Inquiry          @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
   location     Location?        @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
-  confirmedBy  UserProfile      @relation("BookingConfirmedBy", fields: [organizationId, confirmedByUserProfileId], references: [organizationId, id], onDelete: Restrict)
+  confirmedBy  UserProfile?     @relation("BookingConfirmedBy", fields: [confirmedByUserProfileId], references: [id], onDelete: Restrict)
+  cancelledBy  UserProfile?     @relation("BookingCancelledBy", fields: [cancelledByUserProfileId], references: [id], onDelete: Restrict)
+  paymentConfirmedExternallyBy UserProfile? @relation("BookingPaymentAttestedBy", fields: [paymentConfirmedExternallyByUserProfileId], references: [id], onDelete: Restrict)
   lineItems    BookingLineItem[]
   reservations ResourceReservation[]
   communicationEvents CommunicationEvent[]
@@ -817,6 +835,9 @@ model Booking {
   @@unique([organizationId, bookingNumber])
   @@index([organizationId, eventDate])
   @@index([organizationId, status, eventDate])
+  @@index([confirmedByUserProfileId])
+  @@index([cancelledByUserProfileId])
+  @@index([paymentConfirmedExternallyByUserProfileId])
   @@map("bookings")
 }
 

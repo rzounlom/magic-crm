@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { isInquiryError } from "@/server/errors";
 import { readPublicIntakeFields } from "@/server/inquiries/intake-validation";
-import { reservePublicEventPlan, selectPublicEventPlan } from "@/server/services/event-plan-service";
+import { bookPublicEventPlan, selectPublicEventPlan } from "@/server/services/event-plan-service";
 import { createPublicInquiry, submitPublicConversationMessage } from "@/server/services/inquiry-service";
 import { readSalesAgentRuntime } from "@/server/ai/sales-agent-runtime";
 import type { SecurityActionResult } from "@/types/security-action";
@@ -87,8 +87,8 @@ export async function selectPublicEventPlanAction(formData: FormData): Promise<S
     });
     return {
       ok: true,
-      title: "Follow-up requested",
-      message: "We've saved the package you're interested in. A member of the events team will follow up. The time is not reserved.",
+      title: "Inquiry submitted",
+      message: "Thanks — your inquiry has been submitted. A member of the events team will follow up with you to review the details and help finalize your event.",
     };
   } catch (error) {
     unstable_rethrow(error);
@@ -103,16 +103,16 @@ export async function reservePublicEventPlanAction(formData: FormData): Promise<
   try {
     const token = String(formData.get("token") ?? "");
     const planId = String(formData.get("planId") ?? "");
-    await reservePublicEventPlan(db, {
+    await bookPublicEventPlan(db, {
       token,
       planId,
       rateLimitKey: await rateLimitIdentity(clientKey("plan-reserve", token)),
     });
     return {
       ok: true,
-      title: "Time held for 24 hours",
+      title: "Booking request received",
       message:
-        "Your event time is being held for 24 hours while you complete the next step. Payment will be enabled in a later release. This is not a final booking.",
+        "Your booking request has been saved. The next step is the required deposit. Your booking is not yet confirmed and inventory is not reserved until payment is received.",
     };
   } catch (error) {
     unstable_rethrow(error);
@@ -120,7 +120,7 @@ export async function reservePublicEventPlanAction(formData: FormData): Promise<
       return {
         ok: false,
         code: error.code,
-        title: error.code === "AVAILABILITY_CHANGED" ? "That time was just taken" : "Unable to reserve that plan",
+        title: "Unable to save that booking request",
         message: error.userMessage,
       };
     }

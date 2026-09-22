@@ -36,6 +36,7 @@ export default async function PublicEventPlanPage({
       plans={view.plans}
       token={token}
       booking={view.booking}
+      pendingBooking={view.pendingBooking}
       hold={view.hold}
       timeZone={view.timeZone}
     />

@@ -191,4 +191,65 @@ describe("generateRecommendations", () => {
     expect(drafts.length).toBeGreaterThan(0);
     expect(drafts.every((row) => row.availabilityValidated === true)).toBe(true);
   });
+
+  it("shifts a knowledge itinerary to the closest nearby start when the requested window conflicts", async () => {
+    const drafts = await generateRecommendations({
+      inquiry: {
+        eventType: "Birthday Party",
+        eventGoal: "Celebration",
+        guestCount: 12,
+        guestMix: "mostly_adults",
+        desiredDurationMinutes: 120,
+        desiredDate: "2026-10-15",
+        desiredStartTime: "14:00",
+        budgetMin: 150_000,
+        budgetMax: 300_000,
+        diningPreference: "none",
+        spacePreference: "no_preference",
+        attractionInterestIds: [],
+        customerNotes: null,
+      },
+      currency: "USD",
+      knowledge: [
+        {
+          id: "laser",
+          type: KNOWLEDGE.ATTRACTION,
+          name: "Laser Tag",
+          shortDescription: "Laser Tag",
+          details: "Laser Tag",
+          priceText: "$8/person",
+          durationMinutes: 60,
+          minGuests: 1,
+          maxGuests: null,
+          customerFacingNotes: null,
+          salesNotes: null,
+        },
+      ],
+      availabilityProvider: {
+        check: (input) => ({
+          validated: true,
+          available: input.startTime === "14:30",
+          note: input.startTime === "14:30" ? "Available" : "Conflict",
+          types:
+            input.startTime === "14:30"
+              ? []
+              : [
+                  {
+                    resourceTypeSlug: "laser-tag-arena",
+                    resourceTypeName: "Laser Tag",
+                    requestedQuantity: 1,
+                    availableQuantity: 0,
+                    inventoryConfigured: true,
+                    conflict: true,
+                    requiresStaffConfiguration: false,
+                  },
+                ],
+        }),
+      },
+    });
+    expect(drafts.length).toBeGreaterThan(0);
+    expect(drafts.every((row) => row.payload.startTime === "14:30")).toBe(true);
+    expect(drafts.every((row) => row.payload.itineraryAdjusted === true)).toBe(true);
+    expect(drafts.every((row) => row.availabilityValidated === true)).toBe(true);
+  });
 });

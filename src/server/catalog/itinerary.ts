@@ -1,18 +1,8 @@
 import type { ItinerarySegment } from "@/types/catalog";
+import { minutesToClock, parseClockToMinutes } from "@/server/resources/time-window";
 
 function parseMinutes(startTime: string | null): number {
-  if (!startTime) {
-    return 12 * 60;
-  }
-  const [hour, minute] = startTime.split(":").map(Number);
-  return (hour ?? 12) * 60 + (minute ?? 0);
-}
-
-function clock(totalMinutes: number): string {
-  const wrapped = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
-  const hour = Math.floor(wrapped / 60);
-  const minute = wrapped % 60;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  return parseClockToMinutes(startTime) ?? 12 * 60;
 }
 
 export type ItineraryProduct = {
@@ -27,23 +17,31 @@ export function buildItinerary(input: {
   durationMinutes: number;
   foodFirst: boolean;
   products: ItineraryProduct[];
+  preserveOrder?: boolean;
 }): ItinerarySegment[] {
   const remaining = Math.max(30, input.durationMinutes);
   const start = parseMinutes(input.startTime);
   const food = input.products.filter((row) => row.kind === "FOOD");
   const rest = input.products.filter((row) => row.kind !== "FOOD");
-  const ordered = input.foodFirst ? [...food, ...rest] : [...rest, ...food];
+  const ordered = input.preserveOrder
+    ? input.products
+    : input.foodFirst
+      ? [...food, ...rest]
+      : [...rest, ...food];
   if (ordered.length === 0) {
     return [
       {
-        startTime: clock(start),
-        endTime: clock(start + remaining),
+        id: "seg-event-window",
+        startTime: minutesToClock(start),
+        endTime: minutesToClock(start + remaining),
         label: "Event window",
+        startOffsetMinutes: 0,
+        durationMinutes: remaining,
+        consumesInventory: false,
       },
     ];
   }
 
-  const explicit = ordered.reduce((sum, row) => sum + (row.durationMinutes ?? 0), 0);
   const fallbackShare = Math.max(30, Math.floor(remaining / ordered.length));
   let cursor = start;
   const segments: ItinerarySegment[] = [];
@@ -57,15 +55,20 @@ export function buildItinerary(input: {
           : fallbackShare;
     const next = cursor + duration;
     segments.push({
-      startTime: clock(cursor),
-      endTime: clock(next),
+      id: `seg-${product.id}-${index}`,
+      startTime: minutesToClock(cursor),
+      endTime: minutesToClock(next),
       label: product.name,
       productId: product.id,
+      startOffsetMinutes: cursor - start,
+      durationMinutes: duration,
+      consumesInventory: product.kind !== "FOOD",
     });
     cursor = next;
   }
-  if (explicit === 0) {
-    return segments;
-  }
   return segments;
+}
+
+export function itineraryProductsFromOrder(products: ItineraryProduct[]): ItineraryProduct[] {
+  return products;
 }

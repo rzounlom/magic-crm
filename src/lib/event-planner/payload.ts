@@ -25,6 +25,12 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     depositPreviewNote: payload.depositPreviewNote,
     itinerary: Array.isArray(payload.itinerary) ? payload.itinerary : [],
     suggestedStartTimes: Array.isArray(payload.suggestedStartTimes) ? payload.suggestedStartTimes : [],
+    requestedStartTime: payload.requestedStartTime ?? payload.startTime ?? null,
+    itineraryAdjusted: payload.itineraryAdjusted === true,
+    adjustmentNote: payload.adjustmentNote,
+    conflictingActivityLabels: Array.isArray(payload.conflictingActivityLabels)
+      ? payload.conflictingActivityLabels
+      : [],
     catalogBacked: payload.catalogBacked === true,
     locationExclusive: payload.locationExclusive === true,
     selectionAvailability: payload.selectionAvailability,

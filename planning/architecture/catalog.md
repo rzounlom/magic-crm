@@ -32,7 +32,7 @@ Sales knowledge (`SalesKnowledgeItem`) stays policies, FAQs, hours, and sales co
 - `ProductServing` — food `servesMin` / `servesMax` / optional `unitCount`. Do not invent quantities beyond the source range
 - `RecommendationProfile` — per organization + audience JSON (default package slugs, food-first sequencing, add-on slugs)
 
-Inquiry commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (follow-up, no hold) → `HOLD_PLACED` (24h exact-resource hold) → `DEPOSIT_PENDING` (unused until 3C) → `BOOKED`. `Inquiry.status` remains handling/pipeline. `workflowStage` remains the staff booking workspace substatus. `audience` is `KIDS_YOUTH` | `ADULTS` | `MIXED`. `attractionMode` is `KNOWN` | `RECOMMEND`.
+Inquiry commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (Submit inquiry, no occupancy) → `DEPOSIT_PENDING` (Book Now pending booking, no occupancy) → `BOOKED`. Legacy `HOLD_PLACED` remains readable. `Inquiry.status` remains handling/pipeline.
 
 ## Import
 

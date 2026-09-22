@@ -78,6 +78,7 @@ export type PlanResourceRequirement = {
   rotationNote?: string | null;
   windowStartTime?: string | null;
   windowEndTime?: string | null;
+  segmentId?: string | null;
   specificResourceId?: string | null;
   locationExclusive?: boolean;
 };

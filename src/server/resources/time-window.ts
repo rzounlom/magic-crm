@@ -45,3 +45,32 @@ export function minutesToClock(total: number): string {
   const minute = normalized % 60;
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
+
+export type OccupancyWindow = {
+  slotDate: string;
+  startMinute: number;
+  endMinute: number;
+};
+
+/**
+ * Prefer the itinerary-segment window on a requirement. Legacy snapshots without
+ * windowStartTime/windowEndTime fall back to the full event window.
+ */
+export function requirementOccupancyWindow(
+  requirement: { windowStartTime?: string | null; windowEndTime?: string | null },
+  fallback: OccupancyWindow,
+): OccupancyWindow {
+  if (!requirement.windowStartTime || !requirement.windowEndTime) {
+    return fallback;
+  }
+  const startMinute = parseClockToMinutes(requirement.windowStartTime);
+  const endMinute = parseClockToMinutes(requirement.windowEndTime);
+  if (startMinute == null || endMinute == null) {
+    return fallback;
+  }
+  const resolvedEnd = endMinute <= startMinute ? endMinute + 24 * 60 : endMinute;
+  if (resolvedEnd <= startMinute) {
+    return fallback;
+  }
+  return { slotDate: fallback.slotDate, startMinute, endMinute: resolvedEnd };
+}

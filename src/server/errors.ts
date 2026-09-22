@@ -133,6 +133,7 @@ export const INQUIRY_ERROR_CODES = [
   "AI_DISABLED",
   "INVALID_KNOWLEDGE",
   "PLAN_NOT_FOUND",
+  "INQUIRY_NOT_FOUND",
   "WORKING_PLAN_INVALID",
   "STALE_INQUIRY",
   "INQUIRY_ALREADY_BOOKED",
@@ -151,12 +152,13 @@ const INQUIRY_USER_MESSAGES: Record<InquiryErrorCode, string> = {
   AI_DISABLED: "A team member will continue this conversation.",
   INVALID_KNOWLEDGE: "Check the knowledge item and try again.",
   PLAN_NOT_FOUND: "We could not find that event plan.",
+  INQUIRY_NOT_FOUND: "That inquiry could not be found.",
   WORKING_PLAN_INVALID: "Check the working event plan and try again.",
   STALE_INQUIRY: "This inquiry was updated by someone else. Refresh and try again.",
   INQUIRY_ALREADY_BOOKED: "This event plan has already been finalized.",
   AVAILABILITY_CHANGED:
-    "That exact time was just taken, but we found nearby options. Choose another time or plan.",
-  PLAN_ALREADY_CONSUMED: "This event plan is already reserved or waiting for an agent to follow up.",
+    "Availability changed while you were reviewing your options. We've refreshed the schedule with the closest available choices.",
+  PLAN_ALREADY_CONSUMED: "This event plan already has a booking request or is waiting for an agent to follow up.",
 };
 
 export class InquiryError extends Error {
@@ -221,6 +223,7 @@ export const BOOKING_ERROR_CODES = [
   "HOLD_MISMATCH",
   "ALREADY_BOOKED",
   "BOOKING_NOT_FOUND",
+  "BOOKING_NOT_CANCELLABLE",
   "AVAILABILITY_CONFLICT",
 ] as const;
 
@@ -233,7 +236,8 @@ const BOOKING_USER_MESSAGES: Record<BookingErrorCode, string> = {
   HOLD_MISMATCH: "The current resource holds do not match the working event plan. Update the hold first.",
   ALREADY_BOOKED: "This inquiry has already been converted to a booking.",
   BOOKING_NOT_FOUND: "That booking could not be found.",
-  AVAILABILITY_CONFLICT: "Required resources are no longer available. Recheck the Master Schedule.",
+  BOOKING_NOT_CANCELLABLE: "This booking cannot be cancelled.",
+  AVAILABILITY_CONFLICT: "Availability changed before this booking could be confirmed.",
 };
 
 export class BookingError extends Error {

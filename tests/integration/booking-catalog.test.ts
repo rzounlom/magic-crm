@@ -157,10 +157,10 @@ describe("booking catalog import and proposals (postgres)", () => {
       status: RESOURCE_RESERVATION_STATUSES.HOLD,
       sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
       slotDate: "2026-10-15",
-      startMinute: 18 * 60,
-      endMinute: 21 * 60,
+      startMinute: 8 * 60,
+      endMinute: 22 * 60,
       resourceIds: typeA.resources.map((row) => row.id),
-      reason: "block all lanes",
+      reason: "block all lanes for the searchable day",
     });
 
     const created = await createPublicInquiry(db, intake(tenantA.slug, { guestCount: 48 }), undefined, unlimitedLimiter);

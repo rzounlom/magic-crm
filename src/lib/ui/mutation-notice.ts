@@ -41,6 +41,6 @@ export function mutationNotice(
     tone: "error",
     title: result.title ?? copy.errorTitle,
     description: result.message,
-    refresh: false,
+    refresh: result.refresh === true || result.code === "AVAILABILITY_CHANGED",
   };
 }

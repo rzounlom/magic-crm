@@ -6,4 +6,5 @@ export type SecurityActionResult =
       title?: string;
       message: string;
       fieldErrors?: Record<string, string>;
+      refresh?: boolean;
     };

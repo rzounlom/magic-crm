@@ -43,9 +43,20 @@ export function formatInquiryQueueLabel(inquiry: {
   selectedEventPlanId?: string | null;
   humanHandoffReason?: string | null;
   bookingNumber?: string | null;
+  bookingStatus?: string | null;
+  salesStage?: string | null;
 }): string {
+  if (inquiry.bookingStatus === "CANCELLED") {
+    return inquiry.bookingNumber ? `Cancelled booking ${inquiry.bookingNumber}` : "Cancelled booking";
+  }
   if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
     return inquiry.bookingNumber ? `Converted to Booking ${inquiry.bookingNumber}` : "Converted to Booking";
+  }
+  if (
+    inquiry.bookingStatus === "PENDING_PAYMENT" ||
+    inquiry.salesStage === "DEPOSIT_PENDING"
+  ) {
+    return "Pending payment";
   }
   if (isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)) {
     return CUSTOMER_SELECTED_PLAN_BANNER;

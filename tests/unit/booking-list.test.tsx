@@ -1,12 +1,23 @@
 /** @vitest-environment jsdom */
 
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { BookingDetail } from "@/components/layout/booking-detail";
 import { BookingList, bookingResourceSummary } from "@/components/layout/booking-list";
 import { BOOKING_LIST_FILTERS, BOOKING_STATUSES } from "@/types/booking";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  unstable_rethrow: (error: unknown) => {
+    throw error;
+  },
+}));
+
+vi.mock("@/server/actions/bookings", () => ({
+  cancelBookingAction: vi.fn(),
+}));
 
 describe("booking list and detail", () => {
   it("summarizes booked resource types", () => {
@@ -59,6 +70,8 @@ describe("booking list and detail", () => {
     expect(html).toContain("Confirmed");
     expect(html).toContain("Jane Smith");
     expect(html).toContain("/app/bookings/bk_1");
+    expect(html).toContain("New Booking");
+    expect(html).toContain("/app/bookings/new");
   });
 
   it("renders a read-only booking from the agent working version", () => {
@@ -143,10 +156,90 @@ describe("booking list and detail", () => {
     expect(html).toContain("Go-Karts");
     expect(html).toContain("Catered Slider Bar");
     expect(html).toContain("Party Room A");
-    expect(html).toContain("BOOKED");
+    expect(html).toContain("1 booked");
     expect(html).toContain("read-only after confirmation");
     expect(html).toContain("No deposit or payment has been recorded");
     expect(html).toContain("/app/inquiries/inq_1");
     expect(html).toContain("80");
+  });
+
+  it("offers confirmed cancellation copy and keeps released rows as history", () => {
+    const html = renderToStaticMarkup(
+      <BookingDetail
+        timeZone="UTC"
+        canCancel
+        booking={{
+          id: "bk_1",
+          bookingNumber: "FUN-2026-00421",
+          status: BOOKING_STATUSES.CONFIRMED,
+          eventDate: new Date("2026-10-15T00:00:00.000Z"),
+          startTime: "18:00",
+          endTime: "21:00",
+          guestCount: 12,
+          eventType: "Birthday Party",
+          eventGoal: null,
+          diningLabel: null,
+          subtotalCents: 100000,
+          taxCents: 0,
+          totalCents: 100000,
+          currency: "USD",
+          customerGroupName: "Apex Robotics",
+          customerFirstName: "Ada",
+          customerLastName: "Lovelace",
+          customerEmail: "ada@example.com",
+          customerPhone: null,
+          customerNotes: null,
+          internalNotes: null,
+          confirmedAt: new Date("2026-09-09T16:00:00.000Z"),
+          payload: {
+            guestCount: 12,
+            eventDate: "2026-10-15",
+            startTime: "18:00",
+            durationMinutes: 180,
+            activities: [],
+            dining: { label: "", priceCents: 0 },
+            spaces: [],
+            schedule: [],
+            pricingComplete: true,
+          },
+          confirmedBy: {
+            firstName: "Jane",
+            lastName: "Smith",
+            displayName: "Jane Smith",
+            email: "jane@example.com",
+          },
+          lineItems: [],
+          reservations: [
+            {
+              id: "res_active",
+              status: RESOURCE_RESERVATION_STATUSES.BOOKED,
+              startMinute: 18 * 60,
+              endMinute: 21 * 60,
+              resource: { name: "Bowling Lane 1", resourceType: { name: "Bowling Lane" } },
+            },
+            {
+              id: "res_released",
+              status: RESOURCE_RESERVATION_STATUSES.BOOKED,
+              startMinute: 18 * 60,
+              endMinute: 21 * 60,
+              releasedAt: new Date("2026-09-22T12:00:00.000Z"),
+              resource: { name: "Bowling Lane 2", resourceType: { name: "Bowling Lane" } },
+            },
+          ],
+          inquiry: {
+            id: "inq_1",
+            selectedEventPlanId: null,
+            agentWorkingPlanId: null,
+            customerSelectedAt: null,
+          },
+        }}
+      />,
+    );
+
+    expect(html).toContain("Cancel this booking?");
+    expect(html).toContain("release its future reserved resources");
+    expect(html).toContain("Cancel Booking");
+    expect(html).toContain("1 booked");
+    expect(html).toContain("1 released");
   });
 });

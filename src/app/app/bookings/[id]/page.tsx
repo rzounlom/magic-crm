@@ -5,8 +5,10 @@ import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
 import { isAuthorizationError, isBookingError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
+import { hasPermission } from "@/server/policies/require-permission";
 import { getBookingDetail } from "@/server/services/booking-service";
 import { getCurrentTenantTimezone } from "@/server/services/inquiry-service";
+import { PERMISSIONS } from "@/types/permissions";
 
 type View =
   | { kind: "status"; title: string; body: string }
@@ -15,19 +17,21 @@ type View =
       kind: "ready";
       booking: NonNullable<Awaited<ReturnType<typeof getBookingDetail>>>;
       timeZone: string;
+      canCancel: boolean;
     };
 
 async function loadView(bookingId: string): Promise<View> {
   try {
     const ctx = await getRequestContext();
-    const [booking, timeZone] = await Promise.all([
+    const [booking, timeZone, canCancel] = await Promise.all([
       getBookingDetail(ctx, db, bookingId),
       getCurrentTenantTimezone(ctx, db),
+      hasPermission(ctx, PERMISSIONS.EVENTS_CANCEL, db),
     ]);
     if (!booking) {
       return { kind: "missing" };
     }
-    return { kind: "ready", booking, timeZone };
+    return { kind: "ready", booking, timeZone, canCancel };
   } catch (error) {
     if (isAuthorizationError(error) || isTenantContextError(error) || isBookingError(error)) {
       return { kind: "status", title: "Booking", body: error.userMessage };
@@ -50,5 +54,5 @@ export default async function BookingDetailPage({
     notFound();
   }
 
-  return <BookingDetail booking={view.booking} timeZone={view.timeZone} />;
+  return <BookingDetail booking={view.booking} timeZone={view.timeZone} canCancel={view.canCancel} />;
 }

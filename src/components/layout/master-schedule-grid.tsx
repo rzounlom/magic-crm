@@ -3,8 +3,9 @@ import Link from "next/link";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatEventLocalTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { reservationCoversSlot, reservationStartsInSlot } from "@/lib/resources/schedule-cells";
 import { minutesToClock } from "@/server/resources/time-window";
-import { placeManualHoldAction, releaseHoldAction } from "@/server/actions/resource-schedule";
+import { releaseHoldAction } from "@/server/actions/resource-schedule";
 import { scheduleDisplayName } from "@/server/services/resource-schedule-service";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 
@@ -58,6 +59,10 @@ export function MasterScheduleGrid({
   prefillResourceId?: string;
   prefillStart?: string;
 }) {
+  void date;
+  void canHold;
+  void prefillResourceId;
+  void prefillStart;
   const slots: number[] = [];
   for (let minute = startMinute; minute < endMinute; minute += slotMinutes) {
     slots.push(minute);
@@ -67,8 +72,12 @@ export function MasterScheduleGrid({
     return reservations.find(
       (row) =>
         row.resourceId === resourceId &&
-        row.startMinute < slotStart + slotMinutes &&
-        slotStart < row.endMinute,
+        reservationCoversSlot({
+          startMinute: row.startMinute,
+          endMinute: row.endMinute,
+          slotStart,
+          slotMinutes,
+        }),
     );
   }
 
@@ -100,7 +109,11 @@ export function MasterScheduleGrid({
                     </td>
                   );
                 }
-                const isStart = reservation.startMinute >= slot && reservation.startMinute < slot + slotMinutes;
+                const isStart = reservationStartsInSlot({
+                  startMinute: reservation.startMinute,
+                  slotStart: slot,
+                  slotMinutes,
+                });
                 const isHold = reservation.status === RESOURCE_RESERVATION_STATUSES.HOLD;
                 const label = scheduleDisplayName(reservation.booking ?? reservation.inquiry);
                 const range = `${formatEventLocalTime(minutesToClock(reservation.startMinute))}–${formatEventLocalTime(minutesToClock(reservation.endMinute))}`;
@@ -116,7 +129,7 @@ export function MasterScheduleGrid({
                     >
                       {isStart ? (
                         <>
-                          <p className="font-medium">{isHold ? "HOLD" : "BOOKED"}</p>
+                          <p className="font-medium">{isHold ? "Legacy Hold" : "Confirmed"}</p>
                           <p>{label}</p>
                           {reservation.booking?.bookingNumber ? (
                             <p className="text-foreground/60">{reservation.booking.bookingNumber}</p>
@@ -166,7 +179,7 @@ export function MasterScheduleGrid({
                           ) : null}
                         </>
                       ) : (
-                        <span className="text-foreground/50">{isHold ? "HOLD" : "BOOKED"}</span>
+                        <span className="text-foreground/50">Continues</span>
                       )}
                     </div>
                   </td>
@@ -176,76 +189,6 @@ export function MasterScheduleGrid({
           ))}
         </tbody>
       </table>
-      {canHold && resources.length > 0 ? (
-        <SecurityActionForm
-          action={placeManualHoldAction}
-          className="mt-8 max-w-lg space-y-3 rounded-md border border-border px-4 py-4"
-          notice={{ successTitle: "Hold placed", errorTitle: "Unable to place hold" }}
-        >
-          <p className="text-sm font-medium">Place a temporary HOLD</p>
-          <input type="hidden" name="date" value={date} />
-          <label className="block text-sm">
-            <span className="text-foreground/70">Resource</span>
-            <select
-              name="resourceId"
-              defaultValue={prefillResourceId ?? resources[0]?.id}
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-            >
-              {resources.map((resource) => (
-                <option key={resource.id} value={resource.id}>
-                  {resource.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm">
-              <span className="text-foreground/70">Start</span>
-              <input
-                name="startTime"
-                type="time"
-                required
-                defaultValue={prefillStart ?? "16:00"}
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="text-foreground/70">End</span>
-              <input
-                name="endTime"
-                type="time"
-                required
-                defaultValue="17:00"
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-              />
-            </label>
-          </div>
-          <label className="block text-sm">
-            <span className="text-foreground/70">Inquiry ID (optional)</span>
-            <input name="inquiryId" className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2" />
-          </label>
-          <label className="block text-sm">
-            <span className="text-foreground/70">Reason</span>
-            <input name="reason" defaultValue="Staff hold" className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2" />
-          </label>
-          <label className="block text-sm">
-            <span className="text-foreground/70">Hold hours</span>
-            <input
-              name="holdHours"
-              type="number"
-              min={1}
-              defaultValue={24}
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-            />
-          </label>
-          <PendingSubmitButton
-            pendingLabel="Placing hold…"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            Place hold
-          </PendingSubmitButton>
-        </SecurityActionForm>
-      ) : null}
     </div>
   );
 }

@@ -17,7 +17,7 @@ QStash is documented as a later optional scheduler. It is not a dependency today
 3. **Same-inquiry double-click uses `SELECT … FOR UPDATE` on the Inquiry row** before assignment, then returns the existing hold DTO if a HOLD already exists.
 4. **Active HOLD** = `status = HOLD AND releasedAt IS NULL AND (expiresAt IS NULL OR expiresAt > now)`. Availability queries ignore expired HOLDs even if the sweeper has not run. BOOKED never expires.
 5. **Expiration is opportunistic + explicit, not QStash.** `releaseExpiredHolds` runs before availability checks and on `expireHold` / `expireInquiryHoldsNow`. No production QStash callback in this phase.
-6. **Customer accept places HOLD, not Booking.** Follow-up (`Have an agent contact me`) writes `salesStage = READY_TO_BOOK` with zero reservations. Staff Confirm Booking and a future Stripe webhook share `confirmHeldBooking`.
+6. **Customer Book Now creates a pending unpaid Booking, not occupancy.** Submit inquiry (`READY_TO_BOOK`) writes zero reservations and no Booking. Staff Confirm Payment & Book and a future Stripe webhook share `confirmPendingBooking`. Legacy HOLD rows remain readable; new customer/employee flows must not create them.
 
 ## Consequences
 

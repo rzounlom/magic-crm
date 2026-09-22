@@ -20,7 +20,7 @@ const payload: EventPlanPayload = {
 function input(overrides: Partial<Parameters<typeof bookingConfirmationBlockers>[0]> = {}) {
   return {
     inquiryStatus: INQUIRY_STATUSES.READY_FOR_HUMAN,
-    workflowStage: INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE,
+    workflowStage: INQUIRY_WORKFLOW_STAGES.AGENT_WORKING,
     readyToFinalizeAt: new Date("2026-09-09T16:00:00.000Z"),
     selectedEventPlanId: "plan_selected",
     assignedUserProfileId: "agent_1",
@@ -45,22 +45,11 @@ function input(overrides: Partial<Parameters<typeof bookingConfirmationBlockers>
 }
 
 describe("booking confirmation blockers", () => {
-  it("returns no blockers for a ready-to-finalize working version with active holds", () => {
-    expect(bookingConfirmationBlockers(input(), new Date("2026-09-09T16:00:00.000Z"))).toEqual([]);
+  it("returns no blockers for a complete working version without a hold", () => {
+    expect(bookingConfirmationBlockers(input({ holds: [] }), new Date("2026-09-09T16:00:00.000Z"))).toEqual([]);
   });
 
-  it("allows confirmation from an active hold without Ready to Finalize", () => {
-    const reasons = bookingConfirmationBlockers(
-      input({
-        workflowStage: INQUIRY_WORKFLOW_STAGES.HOLD_PLACED,
-        readyToFinalizeAt: null,
-      }),
-      new Date("2026-09-09T16:00:00.000Z"),
-    );
-    expect(reasons).toEqual([]);
-  });
-
-  it("requires a hold for finite inventory instead of Ready to Finalize", () => {
+  it("does not require a resource hold before confirmation", () => {
     const reasons = bookingConfirmationBlockers(
       input({
         workflowStage: INQUIRY_WORKFLOW_STAGES.AGENT_WORKING,
@@ -70,26 +59,23 @@ describe("booking confirmation blockers", () => {
       }),
       new Date("2026-09-09T16:00:00.000Z"),
     );
-    expect(reasons).toContain("Place a resource hold before confirming a booking.");
-    expect(reasons.some((row) => row.includes("Ready to Finalize"))).toBe(false);
+    expect(reasons).toEqual([]);
+    expect(reasons.some((row) => row.includes("hold"))).toBe(false);
   });
 
-  it("names an expired hold so the agent can recheck", () => {
+  it("still requires date, time, and guest count", () => {
     const reasons = bookingConfirmationBlockers(
       input({
-        holds: [
-          {
-            status: RESOURCE_RESERVATION_STATUSES.HOLD,
-            expiresAt: new Date("2026-09-09T12:00:00.000Z"),
-            releasedAt: null,
-            startMinute: 18 * 60,
-            endMinute: 21 * 60,
-            resource: { resourceType: { id: "type_lane", name: "Party Room" } },
-          },
-        ],
+        holds: [],
+        workingPlan: {
+          availabilityStatus: PLAN_AVAILABILITY_STATUSES.UNAVAILABLE,
+          estimatedTotalCents: 450000,
+          payload: { ...payload, eventDate: "", startTime: "", guestCount: 0 },
+        },
       }),
-      new Date("2026-09-09T16:00:00.000Z"),
     );
-    expect(reasons.some((row) => row.includes("Party Room hold has expired"))).toBe(true);
+    expect(reasons.some((row) => row.includes("event date"))).toBe(true);
+    expect(reasons.some((row) => row.includes("start time"))).toBe(true);
+    expect(reasons.some((row) => row.includes("guest count"))).toBe(true);
   });
 });

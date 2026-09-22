@@ -135,6 +135,9 @@ export const AVAILABILITY_UNVALIDATED_NOTE =
 export const CUSTOMER_AVAILABILITY_NOTE =
   "Final availability will be confirmed by our event team.";
 
+export const BOOK_NOW_EXPLANATION =
+  "Booking is finalized after the required payment and a final availability check.";
+
 export const CUSTOMER_SELECTED_HANDOFF_REASON = "Customer selected plan — ready to book";
 
 export const NO_FEASIBLE_PLAN_REASON =
@@ -165,10 +168,14 @@ export type EventPlanLineItem = {
 };
 
 export type EventPlanItinerarySegment = {
+  id?: string;
   startTime: string;
   endTime: string;
   label: string;
   productId?: string;
+  startOffsetMinutes?: number;
+  durationMinutes?: number;
+  consumesInventory?: boolean;
 };
 
 export type EventPlanDining = {
@@ -227,6 +234,10 @@ export type EventPlanPayload = {
   depositPreviewNote?: string;
   itinerary?: EventPlanItinerarySegment[];
   suggestedStartTimes?: string[];
+  requestedStartTime?: string | null;
+  itineraryAdjusted?: boolean;
+  adjustmentNote?: string;
+  conflictingActivityLabels?: string[];
   catalogBacked?: boolean;
   locationExclusive?: boolean;
   selectionAvailability?: {

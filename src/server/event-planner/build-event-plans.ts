@@ -157,7 +157,7 @@ function goalKeywords(eventGoal: string | null): string[] {
   return [];
 }
 
-function activityQuantity(
+export function activityQuantityForKnowledge(
   item: PlannerKnowledgeItem,
   guestCount: number,
 ): { quantity: number; unitLabel?: string; rotationNote?: string } {
@@ -411,7 +411,7 @@ function spaceFromItem(room: PlannerKnowledgeItem, inquiry: PlannerInquiryFacts)
 }
 
 function toActivity(item: PlannerKnowledgeItem, inquiry: PlannerInquiryFacts): EventPlanActivity {
-  const sizing = activityQuantity(item, inquiry.guestCount);
+  const sizing = activityQuantityForKnowledge(item, inquiry.guestCount);
   const estimate = estimateKnowledgePriceCents({
     priceText: item.priceText,
     guestCount: inquiry.guestCount,

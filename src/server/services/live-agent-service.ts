@@ -3,7 +3,11 @@ import { planPayloadTotal, summarizePlanChanges, workingPlanAffectsHold } from "
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { deriveInquiryWorkflowStage } from "@/lib/inquiries/workflow-stage";
 import { InquiryError } from "@/server/errors";
-import type { PlannerKnowledgeItem } from "@/server/event-planner/build-event-plans";
+import { buildItinerary } from "@/server/catalog/itinerary";
+import {
+  activityQuantityForKnowledge,
+  type PlannerKnowledgeItem,
+} from "@/server/event-planner/build-event-plans";
 import { repriceWorkingPlan } from "@/server/event-planner/reprice-working-plan";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { requirePermission } from "@/server/policies/require-permission";
@@ -15,12 +19,14 @@ import {
   derivePlanResourceRequirements,
   type StoredKnowledgeResourceRequirement,
 } from "@/server/resources/requirements";
-import { applyRotationWindows } from "@/server/resources/rotation-windows";
+import { stampPlanResourceWindows, shiftItineraryToStart } from "@/server/resources/segment-windows";
 import { recordAuditEvent } from "@/server/services/audit";
 import { findNearbyAvailableStarts } from "@/server/services/nearby-availability";
+import { upsertPendingBookingFromPlan } from "@/server/services/pending-booking-service";
 import { checkResourceAvailability } from "@/server/services/resource-availability-service";
 import type { EventPlanPayload, EventPlanRotation } from "@/types/event-planner";
 import { EVENT_PLAN_KINDS, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES, SALES_KNOWLEDGE_TYPES } from "@/types/inquiry";
+import { BOOKING_STATUSES } from "@/types/booking";
 import { PERMISSIONS } from "@/types/permissions";
 import { RESOURCE_QUANTITY_RULES, type ResourceQuantityRule } from "@/types/resource-schedule";
 
@@ -196,18 +202,25 @@ export async function refreshWorkingPlanAvailability(
     catalog: resourceCatalog,
     storedRequirements,
   });
-  const withRotations = applyRotationWindows(applyInventoryFeasibility(derived, inventory), payload);
+  const sourceRequirements =
+    derived.length > 0 ? derived : (payload.resourceRequirements ?? []);
+  const shiftedItinerary = shiftItineraryToStart(payload.itinerary ?? [], payload.startTime);
+  const withWindows = stampPlanResourceWindows(
+    { ...payload, itinerary: shiftedItinerary },
+    applyInventoryFeasibility(sourceRequirements, inventory),
+  );
   const result = await checkResourceAvailability(database, {
     organizationId,
     locationId,
     date: payload.eventDate,
     startTime: payload.startTime,
     durationMinutes: payload.durationMinutes,
-    resourceRequirements: withRotations,
+    resourceRequirements: withWindows,
     excludeInquiryId,
   });
   return {
-    resourceRequirements: withRotations,
+    resourceRequirements: withWindows,
+    itinerary: shiftedItinerary,
     result,
     status: planAvailabilityStatusFromCheck({ previouslyValidated: false, result }),
     knowledge,
@@ -286,12 +299,14 @@ export async function saveAgentWorkingPlan(
     if (!item) {
       return [];
     }
-    const quantity = Math.max(1, input.activityQuantities[id] ?? 1);
+    const sizing = activityQuantityForKnowledge(item, input.guestCount);
     return [
       {
         knowledgeItemId: item.id,
         name: item.name,
-        quantity,
+        quantity: sizing.quantity,
+        unitLabel: sizing.unitLabel,
+        rotationNote: sizing.rotationNote,
         priceCents: 0,
         priceText: item.priceText,
       },
@@ -320,6 +335,52 @@ export async function saveAgentWorkingPlan(
     guestCount: input.guestCount,
     guestMix: inquiry.guestMix,
   });
+  const itineraryProducts = [
+    ...(diningItem
+      ? [
+          {
+            id: diningItem.id,
+            name: diningItem.name,
+            kind: "FOOD",
+            durationMinutes: diningItem.durationMinutes,
+          },
+        ]
+      : []),
+    ...activities.flatMap((activity) => {
+      const item = byId.get(activity.knowledgeItemId);
+      return item
+        ? [
+            {
+              id: item.id,
+              name: item.name,
+              kind: item.type === SALES_KNOWLEDGE_TYPES.FOOD_BEVERAGE ? "FOOD" : "ATTRACTION",
+              durationMinutes: item.durationMinutes,
+            },
+          ]
+        : [];
+    }),
+    ...(spaceItem
+      ? [
+          {
+            id: spaceItem.id,
+            name: spaceItem.name,
+            kind: "RENTAL",
+            durationMinutes: spaceItem.durationMinutes,
+          },
+        ]
+      : []),
+  ];
+  if (itineraryProducts.length > 0) {
+    nextPayload.itinerary = buildItinerary({
+      startTime: nextPayload.startTime,
+      durationMinutes: nextPayload.durationMinutes,
+      foodFirst: true,
+      products: itineraryProducts,
+    });
+    nextPayload.schedule = nextPayload.itinerary.map(
+      (row) => `${row.startTime}–${row.endTime} ${row.label}`,
+    );
+  }
   const errors = validateWorkingPlanInput(nextPayload, knowledge);
   if (errors.length > 0) {
     throw new InquiryError("WORKING_PLAN_INVALID", errors[0]);
@@ -332,6 +393,7 @@ export async function saveAgentWorkingPlan(
     locationId,
   );
   nextPayload.resourceRequirements = refreshed.resourceRequirements;
+  nextPayload.itinerary = refreshed.itinerary;
   const selectedPayload = selected.payload as EventPlanPayload;
   const changes = summarizePlanChanges(selectedPayload, nextPayload, draft.currency);
   const holdAffected = workingPlanAffectsHold(draft.payload as EventPlanPayload, nextPayload);
@@ -377,6 +439,23 @@ export async function saveAgentWorkingPlan(
       estimatedTotalCents: planPayloadTotal(nextPayload),
     },
   });
+  const pending = await database.booking.findFirst({
+    where: {
+      organizationId: ctx.organizationId,
+      inquiryId: inquiry.id,
+      status: BOOKING_STATUSES.PENDING_PAYMENT,
+    },
+    select: { id: true },
+  });
+  if (pending) {
+    await upsertPendingBookingFromPlan(database, {
+      organizationId: ctx.organizationId,
+      inquiryId: inquiry.id,
+      planId: updated.id,
+      actorUserProfileId: ctx.userId,
+      source: "employee_save",
+    });
+  }
   return { plan: updated, holdAffected, changes, availability: refreshed };
 }
 
@@ -502,6 +581,11 @@ export async function listInquiryActivity(ctx: RequestContext, database: LiveAge
         action: {
           in: [
             "booking.confirmed",
+            "booking.pending_created",
+            "booking.pending_updated",
+            "booking.payment_attested",
+            "booking.confirmation_attempted",
+            "booking.confirmation_conflict",
             "resource.converted_to_booked",
             "communication.booking_confirmation_skipped",
           ],
@@ -537,6 +621,257 @@ export async function listInquiryActivity(ctx: RequestContext, database: LiveAge
     ...row,
     actor: row.actorUserProfileId ? byId.get(row.actorUserProfileId) ?? null : null,
   }));
+}
+
+export async function checkInquiryAvailability(
+  ctx: RequestContext,
+  database: LiveAgentDb,
+  inquiryId: string,
+) {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId: ctx.organizationId },
+    include: { eventPlanRecommendations: true },
+  });
+  if (!inquiry) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+  const working =
+    inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.agentWorkingPlanId) ??
+    inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING);
+  const selected = inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.selectedEventPlanId);
+  const plan = working ?? selected;
+  if (!plan) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+  const payload = plan.payload as EventPlanPayload;
+  const locationId = await resolveInquiryLocationId(database, inquiry);
+  const refreshed = await refreshWorkingPlanAvailability(
+    database,
+    ctx.organizationId,
+    payload,
+    inquiry.id,
+    locationId,
+  );
+  const nextPayload: EventPlanPayload = {
+    ...payload,
+    itinerary: refreshed.itinerary,
+    resourceRequirements: refreshed.resourceRequirements,
+    suggestedStartTimes: undefined,
+  };
+  const nearby = await findNearbyAvailableStarts({
+    startTime: payload.startTime,
+    check: async (startTime) => {
+      const alternate = await refreshWorkingPlanAvailability(
+        database,
+        ctx.organizationId,
+        { ...payload, startTime },
+        inquiry.id,
+        locationId,
+      );
+      return alternate.result;
+    },
+  });
+  nextPayload.suggestedStartTimes = nearby.map((row) => row.startTime);
+  await database.eventPlanRecommendation.update({
+    where: { id: plan.id },
+    data: {
+      availabilityValidated: refreshed.result.validated,
+      availabilityNote: refreshed.result.note,
+      availabilityStatus: refreshed.status,
+      availabilityCheckedAt: new Date(),
+      payload: nextPayload as object,
+    },
+  });
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "inquiry.availability_checked",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: {
+      available: refreshed.result.available,
+      validated: refreshed.result.validated,
+      nearbyStartTimes: nextPayload.suggestedStartTimes?.join(", ") || null,
+    },
+  });
+  return {
+    available: refreshed.result.validated && refreshed.result.available,
+    validated: refreshed.result.validated,
+    note: refreshed.result.note,
+    nearbyStartTimes: nextPayload.suggestedStartTimes,
+    requirements: refreshed.resourceRequirements,
+    result: refreshed.result,
+    conflictLabels: refreshed.result.types.filter((row) => row.conflict).map((row) => row.resourceTypeName),
+  };
+}
+
+export async function applyWorkingPlanStartTime(
+  ctx: RequestContext,
+  database: LiveAgentDb,
+  inquiryId: string,
+  startTime: string,
+) {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId: ctx.organizationId },
+    include: { eventPlanRecommendations: true },
+  });
+  if (!inquiry) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+  const working =
+    inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.agentWorkingPlanId) ??
+    inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING);
+  const selected = inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.selectedEventPlanId);
+  const plan = working ?? selected;
+  if (!plan) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+  const payload = plan.payload as EventPlanPayload;
+  const locationId = await resolveInquiryLocationId(database, inquiry);
+  const nextPayload: EventPlanPayload = {
+    ...payload,
+    startTime,
+    itinerary: shiftItineraryToStart(payload.itinerary ?? [], startTime),
+  };
+  const refreshed = await refreshWorkingPlanAvailability(
+    database,
+    ctx.organizationId,
+    nextPayload,
+    inquiry.id,
+    locationId,
+  );
+  nextPayload.itinerary = refreshed.itinerary;
+  nextPayload.resourceRequirements = refreshed.resourceRequirements;
+  nextPayload.suggestedStartTimes = undefined;
+  nextPayload.itineraryAdjusted = startTime !== payload.startTime;
+  await database.eventPlanRecommendation.update({
+    where: { id: plan.id },
+    data: {
+      availabilityValidated: refreshed.result.validated,
+      availabilityNote: refreshed.result.note,
+      availabilityStatus: refreshed.status,
+      availabilityCheckedAt: new Date(),
+      payload: nextPayload as object,
+    },
+  });
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "inquiry.working_plan_updated",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: { startTime, source: "nearby_alternative" },
+  });
+  return {
+    available: refreshed.result.validated && refreshed.result.available,
+    startTime,
+  };
+}
+
+export async function savePendingEmployeeBooking(
+  ctx: RequestContext,
+  database: LiveAgentDb,
+  inquiryId: string,
+) {
+  await requirePermission(ctx, PERMISSIONS.EVENTS_CREATE, database);
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId: ctx.organizationId },
+    include: { eventPlanRecommendations: true },
+  });
+  if (!inquiry) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+  const working =
+    inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.agentWorkingPlanId) ??
+    inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING);
+  const selected = inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.selectedEventPlanId);
+  const plan = working ?? selected;
+  if (!plan) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+  return upsertPendingBookingFromPlan(database, {
+    organizationId: ctx.organizationId,
+    inquiryId: inquiry.id,
+    planId: plan.id,
+    actorUserProfileId: ctx.userId,
+    source: "employee_save",
+  });
+}
+
+export async function adoptRecommendationAsWorkingPlan(
+  ctx: RequestContext,
+  database: LiveAgentDb,
+  inquiryId: string,
+  planId: string,
+  expectedUpdatedAt?: string | null,
+) {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId: ctx.organizationId },
+    include: { eventPlanRecommendations: true },
+  });
+  if (!inquiry) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    throw new InquiryError("INQUIRY_ALREADY_BOOKED");
+  }
+  if (expectedUpdatedAt && inquiry.updatedAt.toISOString() !== expectedUpdatedAt) {
+    throw new InquiryError("STALE_INQUIRY");
+  }
+  const selected = inquiry.eventPlanRecommendations.find(
+    (row) => row.id === planId && row.kind === EVENT_PLAN_KINDS.RECOMMENDATION,
+  );
+  if (!selected) {
+    throw new InquiryError("PLAN_NOT_FOUND");
+  }
+  await database.inquiry.update({
+    where: { id: inquiry.id },
+    data: { selectedEventPlanId: selected.id },
+  });
+  const existingWorking = inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING);
+  if (existingWorking) {
+    await database.eventPlanRecommendation.update({
+      where: { id: existingWorking.id },
+      data: {
+        tier: selected.tier,
+        title: `${selected.title} (working)`,
+        estimatedTotalCents: selected.estimatedTotalCents,
+        guestCount: selected.guestCount,
+        durationMinutes: selected.durationMinutes,
+        customerFacingReason: selected.customerFacingReason,
+        payload: selected.payload as object,
+      },
+    });
+  } else {
+    await copySelectedPlanToWorkingDraft(database, inquiry.id, ctx.organizationId);
+  }
+  const draft = await copySelectedPlanToWorkingDraft(database, inquiry.id, ctx.organizationId);
+  const payload = readEventPlanPayloadIfNeeded(draft.payload);
+  return saveAgentWorkingPlan(
+    ctx,
+    database,
+    inquiry.id,
+    {
+      eventDate: payload.eventDate,
+      startTime: payload.startTime,
+      durationMinutes: payload.durationMinutes,
+      guestCount: payload.guestCount,
+      activityIds: payload.activities.map((row) => row.knowledgeItemId),
+      activityQuantities: Object.fromEntries(payload.activities.map((row) => [row.knowledgeItemId, row.quantity])),
+      diningKnowledgeItemId: payload.dining.knowledgeItemId ?? null,
+      spaceKnowledgeItemId: payload.spaces[0]?.knowledgeItemId ?? null,
+      scheduleLines: payload.schedule,
+      rotations: payload.rotations ?? [],
+    },
+  );
+}
+
+function readEventPlanPayloadIfNeeded(payload: unknown): EventPlanPayload {
+  return payload as EventPlanPayload;
 }
 
 export async function suggestClosestAvailableAlternatives(
@@ -583,7 +918,7 @@ export async function listWorkspaceKnowledge(ctx: RequestContext, database: Live
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
   return database.salesKnowledgeItem.findMany({
     where: { organizationId: ctx.organizationId, active: true },
-    select: { id: true, name: true, type: true, maxGuests: true, priceText: true },
+    select: { id: true, name: true, type: true, maxGuests: true, priceText: true, durationMinutes: true },
     orderBy: { name: "asc" },
   });
 }

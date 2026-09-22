@@ -17,6 +17,7 @@ import {
 type InquiryListItem = {
   id: string;
   status: string;
+  salesStage?: string | null;
   selectedEventPlanId: string | null;
   humanHandoffReason: string | null;
   assignedUserProfileId: string | null;
@@ -58,16 +59,32 @@ export function LiveAgentInquiryQueue({
   inquiries: InquiryListItem[];
   timeZone: string;
 }) {
+  const pendingPayment = sortLiveAgentQueue(
+    inquiries
+      .filter(
+        (inquiry) =>
+          inquiry.salesStage === "DEPOSIT_PENDING" ||
+          inquiry.bookings?.[0]?.status === "PENDING_PAYMENT",
+      )
+      .map((inquiry) => toQueueItem(inquiry)),
+  );
   const selected = sortLiveAgentQueue(
     inquiries
-      .filter((inquiry) => isLiveAgentQueueCandidate(inquiry))
+      .filter(
+        (inquiry) =>
+          isLiveAgentQueueCandidate(inquiry) &&
+          inquiry.salesStage !== "DEPOSIT_PENDING" &&
+          inquiry.bookings?.[0]?.status !== "PENDING_PAYMENT",
+      )
       .map((inquiry) => toQueueItem(inquiry)),
   );
   const otherReady = inquiries
     .filter(
       (inquiry) =>
         inquiry.status === INQUIRY_STATUSES.READY_FOR_HUMAN &&
-        !isLiveAgentQueueCandidate(inquiry),
+        !isLiveAgentQueueCandidate(inquiry) &&
+        inquiry.salesStage !== "DEPOSIT_PENDING" &&
+        inquiry.bookings?.[0]?.status !== "PENDING_PAYMENT",
     )
     .sort((left, right) => {
       const createdDelta = right.createdAt.getTime() - left.createdAt.getTime();
@@ -80,7 +97,9 @@ export function LiveAgentInquiryQueue({
     .filter(
       (inquiry) =>
         !isLiveAgentQueueCandidate(inquiry) &&
-        inquiry.status !== INQUIRY_STATUSES.READY_FOR_HUMAN,
+        inquiry.status !== INQUIRY_STATUSES.READY_FOR_HUMAN &&
+        inquiry.salesStage !== "DEPOSIT_PENDING" &&
+        inquiry.bookings?.[0]?.status !== "PENDING_PAYMENT",
     )
     .sort((left, right) => {
       const createdDelta = right.createdAt.getTime() - left.createdAt.getTime();
@@ -92,6 +111,19 @@ export function LiveAgentInquiryQueue({
 
   return (
     <div className="mt-8 space-y-10">
+      {pendingPayment.length > 0 ? (
+        <section>
+          <h2 className="text-lg font-semibold">Pending payment</h2>
+          <p className="mt-1 text-sm text-foreground/70">
+            Customers who clicked Book Now. These requests do not occupy the Master Schedule until confirmed.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {pendingPayment.map((inquiry) => (
+              <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} priority />
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {selected.length > 0 || otherReady.length > 0 ? (
         <section>
           <h2 className="text-lg font-semibold">Ready for Live Agent</h2>
@@ -196,6 +228,8 @@ function InquiryRow({
             {formatInquiryQueueLabel({
               ...inquiry,
               bookingNumber: inquiry.bookings?.[0]?.bookingNumber,
+              bookingStatus: inquiry.bookings?.[0]?.status,
+              salesStage: "salesStage" in inquiry ? String(inquiry.salesStage ?? "") : null,
             })}
           </span>
         </div>
@@ -216,7 +250,7 @@ function InquiryRow({
         <p className="mt-2 text-xs text-foreground/55">
           {stage ? INQUIRY_WORKFLOW_STAGE_LABELS[stage] : null}
           {inquiry.assignedUser ? ` · Assigned to ${employeeDisplayName(inquiry.assignedUser)}` : " · Unassigned"}
-          {holdCount > 0 ? " · Hold placed" : ""}
+          {holdCount > 0 ? " · Legacy hold" : ""}
           {soonest && holdExpiresSoon(soonest) ? ` · Hold expires ${formatHoldTimeRemaining(soonest)}` : ""}
         </p>
         {inquiry.customerSelectedAt ? (

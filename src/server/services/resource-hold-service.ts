@@ -8,7 +8,7 @@ import type { RequestContext } from "@/server/request-context";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
 import { lockLocationForScheduling } from "@/server/resources/location-exclusivity";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
-import { applyRotationWindows } from "@/server/resources/rotation-windows";
+import { stampPlanResourceWindows } from "@/server/resources/segment-windows";
 import { localEventWindow, parseClockToMinutes } from "@/server/resources/time-window";
 import { recordAuditEvent } from "@/server/services/audit";
 import {
@@ -58,7 +58,8 @@ export async function getInquiryPlanAvailabilitySnapshot(
     where: { organizationId: ctx.organizationId },
     select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
   });
-  const requirements = applyRotationWindows(
+  const requirements = stampPlanResourceWindows(
+    payload,
     applyInventoryFeasibility(
       payload.resourceRequirements ?? [],
       inventory.map((row) => ({
@@ -66,7 +67,6 @@ export async function getInquiryPlanAvailabilitySnapshot(
         activeCount: row._count.resources,
       })),
     ),
-    payload,
   );
   const result = await checkResourceAvailability(database, {
     organizationId: ctx.organizationId,
@@ -284,12 +284,12 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
     where: { organizationId: ctx.organizationId },
     select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
   });
-  const requirements = applyRotationWindows(
+  const requirements = stampPlanResourceWindows(
+    payload,
     applyInventoryFeasibility(
       payload.resourceRequirements ?? [],
       inventory.map((row) => ({ id: row.id, activeCount: row._count.resources })),
     ),
-    payload,
   );
   const availability = await checkResourceAvailability(database, {
     organizationId: ctx.organizationId,

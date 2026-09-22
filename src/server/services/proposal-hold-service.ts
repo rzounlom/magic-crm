@@ -19,8 +19,8 @@ import {
   lockLocationForScheduling,
 } from "@/server/resources/location-exclusivity";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
-import { applyRotationWindows } from "@/server/resources/rotation-windows";
-import { localEventWindow, minutesToClock, parseClockToMinutes } from "@/server/resources/time-window";
+import { stampPlanResourceWindows } from "@/server/resources/segment-windows";
+import { localEventWindow, minutesToClock, requirementOccupancyWindow } from "@/server/resources/time-window";
 import { recordAuditEvent } from "@/server/services/audit";
 import {
   checkResourceAvailability,
@@ -50,15 +50,7 @@ function requirementWindow(
   requirement: PlanResourceRequirement,
   fallback: { slotDate: string; startMinute: number; endMinute: number },
 ) {
-  if (!requirement.windowStartTime || !requirement.windowEndTime) {
-    return fallback;
-  }
-  const startMinute = parseClockToMinutes(requirement.windowStartTime);
-  const endMinute = parseClockToMinutes(requirement.windowEndTime);
-  if (startMinute == null || endMinute == null || endMinute <= startMinute) {
-    return fallback;
-  }
-  return { slotDate: fallback.slotDate, startMinute, endMinute };
+  return requirementOccupancyWindow(requirement, fallback);
 }
 
 export function activeHoldWhere(organizationId: string, inquiryId: string, now: Date) {
@@ -87,30 +79,36 @@ export async function assignExactResourcesForRequirements(
   const preferred = new Set(input.preferredResourceIds ?? []);
   const claimed = new Set<string>();
   await lockLocationForScheduling(database, input.organizationId, input.locationId);
-  const exclusive = input.requirements.some(
+  const exclusiveRequirements = input.requirements.filter(
     (row) => isLocationExclusiveRule(row.quantityRule) || row.locationExclusive,
   );
-  if (exclusive && input.locationId) {
-    const blocked = await locationHasBlockingOccupancy(database, {
-      organizationId: input.organizationId,
-      locationId: input.locationId,
-      window: input.window,
-      excludeInquiryId: input.excludeInquiryId,
-      now: input.now,
-    });
-    if (blocked) {
-      throw new ResourceError("RESOURCE_CONFLICT", "The location is already reserved for that window.");
+  if (exclusiveRequirements.length > 0 && input.locationId) {
+    for (const requirement of exclusiveRequirements) {
+      const window = requirementWindow(requirement, input.window);
+      const blocked = await locationHasBlockingOccupancy(database, {
+        organizationId: input.organizationId,
+        locationId: input.locationId,
+        window,
+        excludeInquiryId: input.excludeInquiryId,
+        now: input.now,
+      });
+      if (blocked) {
+        throw new ResourceError("RESOURCE_CONFLICT", "The location is already reserved for that window.");
+      }
     }
   } else if (input.locationId) {
-    const blocked = await locationHasExclusiveOccupancy(database, {
-      organizationId: input.organizationId,
-      locationId: input.locationId,
-      window: input.window,
-      excludeInquiryId: input.excludeInquiryId,
-      now: input.now,
-    });
-    if (blocked) {
-      throw new ResourceError("RESOURCE_CONFLICT", "The location is exclusively reserved for that window.");
+    for (const requirement of input.requirements) {
+      const window = requirementWindow(requirement, input.window);
+      const blocked = await locationHasExclusiveOccupancy(database, {
+        organizationId: input.organizationId,
+        locationId: input.locationId,
+        window,
+        excludeInquiryId: input.excludeInquiryId,
+        now: input.now,
+      });
+      if (blocked) {
+        throw new ResourceError("RESOURCE_CONFLICT", "The location is exclusively reserved for that window.");
+      }
     }
   }
   for (const requirement of input.requirements) {
@@ -289,8 +287,9 @@ async function loadHoldResult(
 }
 
 /**
- * Canonical 24-hour HOLD for a persisted proposal snapshot.
- * Public customer acceptance and staff Place Hold both call this.
+ * Legacy 24-hour HOLD for a persisted proposal snapshot.
+ * New Book Now / employee confirmation paths must not call this.
+ * Remaining HOLD rows stay readable, releasable, and convertible.
  * Inserts exact physical Resource rows in one transaction; PostgreSQL gist exclusion
  * rejects overlapping active occupancy. Inquiry selection is committed in the same transaction.
  */
@@ -369,12 +368,12 @@ export async function placeProposalHold(
     where: { organizationId: input.organizationId },
     select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
   });
-  const requirements = applyRotationWindows(
+  const requirements = stampPlanResourceWindows(
+    payload,
     applyInventoryFeasibility(
       payload.resourceRequirements ?? [],
       inventory.map((row) => ({ id: row.id, activeCount: row._count.resources })),
     ),
-    payload,
   );
   if (requirements.length === 0) {
     throw new ResourceError("INVALID_RESOURCE", "This plan has no finite resources to hold.");

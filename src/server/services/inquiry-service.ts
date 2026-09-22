@@ -21,17 +21,24 @@ import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
 import { attractionInterestIdsFromJson } from "@/server/event-planner/build-event-plans";
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
+import { normalizeInvitationEmail } from "@/server/team/invitation-email";
 import { resolvePrimaryLocationId } from "@/server/locations/primary-location";
 import { generateEventPlansForInquiry } from "@/server/services/event-plan-service";
+import { startWorkingInquiry } from "@/server/services/live-agent-service";
 import { runSalesAgentTurn, type SalesAgentRuntime } from "@/server/services/sales-agent-service";
 import {
   CONVERSATION_CHANNELS,
+  EVENT_PLAN_KINDS,
   INQUIRY_SALES_STAGES,
   INQUIRY_SOURCES,
   INQUIRY_STATUSES,
+  INQUIRY_WORKFLOW_STAGES,
+  INQUIRY_LIST_VIEWS,
+  parseInquiryListView,
   MESSAGE_DIRECTIONS,
   MESSAGE_SENDER_TYPES,
 } from "@/types/inquiry";
+import { EVENT_PLAN_TIERS } from "@/types/event-planner";
 import { PERMISSIONS } from "@/types/permissions";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 
@@ -368,10 +375,18 @@ export async function submitPublicConversationMessage(
   return getPublicConversationByToken(database, input.token);
 }
 
-export async function listInquiries(ctx: RequestContext, database: InquiryDb) {
+export async function listInquiries(
+  ctx: RequestContext,
+  database: InquiryDb,
+  input: { view?: string | null } = {},
+) {
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
+  const archived = parseInquiryListView(input.view) === INQUIRY_LIST_VIEWS.ARCHIVED;
   return database.inquiry.findMany({
-    where: { organizationId: ctx.organizationId },
+    where: {
+      organizationId: ctx.organizationId,
+      archivedAt: archived ? { not: null } : null,
+    },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: 100,
     include: {
@@ -411,7 +426,7 @@ export async function listInquiries(ctx: RequestContext, database: InquiryDb) {
         select: { id: true, expiresAt: true },
       },
       bookings: {
-        orderBy: { confirmedAt: "desc" },
+        orderBy: { createdAt: "desc" },
         take: 1,
         select: { id: true, bookingNumber: true, status: true },
       },
@@ -438,16 +453,28 @@ export async function getInquiryDetail(
         select: { id: true, firstName: true, lastName: true, displayName: true, email: true },
       },
       bookings: {
-        orderBy: { confirmedAt: "desc" },
+        orderBy: { createdAt: "desc" },
         take: 1,
-        select: { id: true, bookingNumber: true, status: true, confirmedAt: true },
+        select: {
+          id: true,
+          bookingNumber: true,
+          status: true,
+          confirmedAt: true,
+          availabilityConflictAt: true,
+          paymentConfirmedExternallyAt: true,
+          depositRequiredCents: true,
+          totalCents: true,
+          guestCount: true,
+          diningLabel: true,
+          payload: true,
+        },
       },
       resourceReservations: {
         where: {
-          releasedAt: null,
           OR: [
             {
               status: RESOURCE_RESERVATION_STATUSES.HOLD,
+              releasedAt: null,
               OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
             },
             { status: RESOURCE_RESERVATION_STATUSES.BOOKED },
@@ -458,7 +485,7 @@ export async function getInquiryDetail(
             select: {
               id: true,
               name: true,
-              resourceType: { select: { id: true, name: true } },
+              resourceType: { select: { id: true, name: true, slug: true } },
             },
           },
         },
@@ -486,6 +513,67 @@ export async function getInquiryDetail(
       .map((id) => namesById.get(id))
       .filter((name): name is string => Boolean(name)),
   };
+}
+
+export async function archiveInquiry(ctx: RequestContext, database: InquiryDb, inquiryId: string) {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId: ctx.organizationId },
+    include: {
+      bookings: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { id: true, bookingNumber: true, status: true },
+      },
+    },
+  });
+  if (!inquiry) {
+    throw new InquiryError("INQUIRY_NOT_FOUND");
+  }
+  if (inquiry.archivedAt) {
+    return { inquiry, alreadyArchived: true };
+  }
+  const updated = await database.inquiry.update({
+    where: { id: inquiry.id },
+    data: { archivedAt: new Date(), archivedByUserProfileId: ctx.userId },
+  });
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "inquiry.archived",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: {
+      bookingId: inquiry.bookings[0]?.id ?? null,
+      bookingStatus: inquiry.bookings[0]?.status ?? null,
+    },
+  });
+  return { inquiry: updated, alreadyArchived: false };
+}
+
+export async function unarchiveInquiry(ctx: RequestContext, database: InquiryDb, inquiryId: string) {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId: ctx.organizationId },
+  });
+  if (!inquiry) {
+    throw new InquiryError("INQUIRY_NOT_FOUND");
+  }
+  if (!inquiry.archivedAt) {
+    return { inquiry, alreadyArchived: false };
+  }
+  const updated = await database.inquiry.update({
+    where: { id: inquiry.id },
+    data: { archivedAt: null, archivedByUserProfileId: null },
+  });
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "inquiry.unarchived",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+  });
+  return { inquiry: updated, alreadyArchived: false };
 }
 
 export async function takeOverInquiry(
@@ -599,6 +687,122 @@ export async function addEmployeeConversationMessage(
     where: { id: conversation.id },
     data: { lastMessageAt: new Date() },
   });
+}
+
+export type EmployeeManualBookingInput = {
+  firstName: string;
+  lastName: string;
+  customerGroupName?: string | null;
+  email: string;
+  phone?: string | null;
+  eventType: string;
+  eventGoal?: string | null;
+  preferredDate: string;
+  startTime: string;
+  guestCount: number;
+  guestMix?: string | null;
+  desiredDurationMinutes: number;
+  diningPreference?: string | null;
+  spacePreference?: string | null;
+  attractionInterestIds?: string[];
+  notes?: string | null;
+  locationId?: string | null;
+};
+
+export async function createEmployeeManualInquiry(
+  ctx: RequestContext,
+  database: InquiryDb,
+  input: EmployeeManualBookingInput,
+) {
+  await requirePermission(ctx, PERMISSIONS.EVENTS_CREATE, database);
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const emailNormalized = normalizeInvitationEmail(input.email);
+  const locationId = input.locationId || ctx.locationId || (await resolvePrimaryLocationId(database, ctx.organizationId));
+  if (input.locationId) {
+    const location = await database.location.findFirst({
+      where: { id: input.locationId, organizationId: ctx.organizationId, active: true },
+      select: { id: true },
+    });
+    if (!location) {
+      throw new InquiryError("INVALID_INTAKE", "Choose a location in this organization.");
+    }
+  }
+  const desiredDate = new Date(`${input.preferredDate}T00:00:00.000Z`);
+  const inquiry = await database.inquiry.create({
+    data: {
+      organizationId: ctx.organizationId,
+      locationId,
+      status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+      source: INQUIRY_SOURCES.EMPLOYEE,
+      customerFirstName: input.firstName.trim(),
+      customerLastName: input.lastName.trim(),
+      customerGroupName: input.customerGroupName?.trim() || null,
+      customerEmail: input.email.trim(),
+      customerEmailNormalized: emailNormalized,
+      customerPhone: input.phone?.trim() || null,
+      eventType: input.eventType,
+      occasion: input.eventGoal?.trim() || null,
+      eventGoal: input.eventGoal?.trim() || null,
+      desiredDate,
+      desiredStartTime: input.startTime,
+      guestCount: input.guestCount,
+      guestMix: input.guestMix ?? null,
+      desiredDurationMinutes: input.desiredDurationMinutes,
+      diningPreference: input.diningPreference ?? null,
+      spacePreference: input.spacePreference ?? null,
+      attractionInterestIds: input.attractionInterestIds ?? [],
+      customerNotes: input.notes?.trim() || null,
+      employeeInternalNotes: input.notes?.trim() || null,
+      aiHandlingEnabled: false,
+      salesStage: INQUIRY_SALES_STAGES.INQUIRY,
+      workflowStage: INQUIRY_WORKFLOW_STAGES.AGENT_WORKING,
+      assignedUserProfileId: ctx.userId,
+      assignedAt: new Date(),
+      audience: audienceFromGuestMix(input.guestMix),
+      attractionMode: attractionModeFromIntake({
+        attractionMode: input.attractionInterestIds && input.attractionInterestIds.length > 0 ? "known" : "recommend",
+        attractionInterestIds: input.attractionInterestIds ?? [],
+      }),
+      internalSummary: "Employee-created booking. No public conversation.",
+    },
+  });
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "inquiry.created",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: { source: INQUIRY_SOURCES.EMPLOYEE, publicConversation: false },
+  });
+  await generateEventPlansForInquiry(database, {
+    organizationId: ctx.organizationId,
+    inquiryId: inquiry.id,
+  });
+  const plans = await database.eventPlanRecommendation.findMany({
+    where: {
+      organizationId: ctx.organizationId,
+      inquiryId: inquiry.id,
+      kind: EVENT_PLAN_KINDS.RECOMMENDATION,
+    },
+    orderBy: { sortOrder: "asc" },
+  });
+  const selected =
+    plans.find((row) => row.tier === EVENT_PLAN_TIERS.BEST_FIT) ??
+    plans.find((row) => row.availabilityValidated) ??
+    plans[0] ??
+    null;
+  if (selected) {
+    await database.inquiry.update({
+      where: { id: inquiry.id },
+      data: {
+        selectedEventPlanId: selected.id,
+        customerSelectedAt: new Date(),
+        salesStage: INQUIRY_SALES_STAGES.READY_TO_BOOK,
+      },
+    });
+    await startWorkingInquiry(ctx, database, inquiry.id);
+  }
+  return { inquiryId: inquiry.id };
 }
 
 function formatIntakeMessage(input: {

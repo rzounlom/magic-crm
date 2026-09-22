@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { LiveAgentWorkspace } from "@/components/layout/live-agent-workspace";
 import { EmployeeInquiryConversation } from "@/components/layout/employee-inquiry-conversation";
+import { InquiryArchiveActions } from "@/components/layout/inquiry-archive-actions";
 import { InquiryFunnel } from "@/components/layout/inquiry-funnel";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
@@ -33,6 +34,8 @@ import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
 import { getCurrentTenantTimezone, getInquiryDetail } from "@/server/services/inquiry-service";
 import { getInquiryPlanAvailabilitySnapshot } from "@/server/services/resource-hold-service";
+import { listActiveResourceTypeCounts } from "@/server/services/resource-schedule-service";
+import { BOOKING_STATUSES } from "@/types/booking";
 import { PERMISSIONS } from "@/types/permissions";
 
 type InquiryDetailView =
@@ -45,22 +48,25 @@ type InquiryDetailView =
       canHold: boolean;
       canRelease: boolean;
       canConfirm: boolean;
+      canCancel: boolean;
       timeZone: string;
       resourceCheck: Awaited<ReturnType<typeof getInquiryPlanAvailabilitySnapshot>> | null;
       knowledge: Awaited<ReturnType<typeof listWorkspaceKnowledge>>;
       activity: Awaited<ReturnType<typeof listInquiryActivity>>;
       currentUserId: string;
+      inventoryCounts: Awaited<ReturnType<typeof listActiveResourceTypeCounts>>;
     };
 
 async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
   try {
     const ctx = await getRequestContext();
-    const [inquiry, canManage, canHold, canRelease, canConfirm, timeZone] = await Promise.all([
+    const [inquiry, canManage, canHold, canRelease, canConfirm, canCancel, timeZone] = await Promise.all([
       getInquiryDetail(ctx, db, id),
       hasPermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CREATE, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_EDIT, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CONFIRM, db),
+      hasPermission(ctx, PERMISSIONS.EVENTS_CANCEL, db),
       getCurrentTenantTimezone(ctx, db),
     ]);
     if (!inquiry) {
@@ -71,11 +77,15 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       inquiry.eventPlanRecommendations.find((plan) => plan.id === inquiry.agentWorkingPlanId) ??
       inquiry.eventPlanRecommendations.find((plan) => plan.kind === EVENT_PLAN_KINDS.AGENT_WORKING) ??
       null;
-    const planForCheck = workingPlan ?? selectedPlan;
-    const [resourceCheck, knowledge, activity] = await Promise.all([
+    const bookingStatus = inquiry.bookings[0]?.status;
+    const skipAvailability =
+      bookingStatus === BOOKING_STATUSES.CONFIRMED || bookingStatus === BOOKING_STATUSES.CANCELLED;
+    const planForCheck = skipAvailability ? null : (workingPlan ?? selectedPlan);
+    const [resourceCheck, knowledge, activity, inventoryCounts] = await Promise.all([
       planForCheck ? getInquiryPlanAvailabilitySnapshot(ctx, db, inquiry, planForCheck) : Promise.resolve(null),
       listWorkspaceKnowledge(ctx, db),
       listInquiryActivity(ctx, db, inquiry.id),
+      listActiveResourceTypeCounts(db, ctx.organizationId, inquiry.locationId),
     ]);
     return {
       kind: "ready",
@@ -84,11 +94,13 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       canHold,
       canRelease,
       canConfirm,
+      canCancel,
       timeZone,
       resourceCheck,
       knowledge,
       activity,
       currentUserId: ctx.userId,
+      inventoryCounts,
     };
   } catch (error) {
     if (isAuthorizationError(error) || isTenantContextError(error) || isInquiryError(error)) {
@@ -112,7 +124,7 @@ export default async function InquiryDetailPage({
     notFound();
   }
 
-  const { inquiry, canManage, canHold, canRelease, canConfirm, timeZone, resourceCheck, knowledge, activity, currentUserId } = view;
+  const { inquiry, canManage, canHold, canRelease, canConfirm, canCancel, timeZone, resourceCheck, knowledge, activity, currentUserId, inventoryCounts } = view;
   const conversation = inquiry.conversations[0];
   const selectedPlan = inquiry.eventPlanRecommendations.find(
     (plan) => plan.id === inquiry.selectedEventPlanId,
@@ -146,7 +158,15 @@ export default async function InquiryDetailPage({
         canHold={canHold}
         canRelease={canRelease}
         canConfirm={canConfirm}
+        canCancel={canCancel}
         timeZone={timeZone}
+        recommendations={inquiry.eventPlanRecommendations.map((row) => ({
+          id: row.id,
+          kind: row.kind,
+          title: row.title,
+          tier: row.tier,
+        }))}
+        inventoryCounts={inventoryCounts}
       />
     );
   }
@@ -161,6 +181,8 @@ export default async function InquiryDetailPage({
         {formatInquiryQueueLabel({
           ...inquiry,
           bookingNumber: inquiry.bookings[0]?.bookingNumber,
+          bookingStatus: inquiry.bookings[0]?.status,
+          salesStage: inquiry.salesStage,
         })}
       </p>
       {inquiry.bookings[0] ? (
@@ -175,6 +197,14 @@ export default async function InquiryDetailPage({
           {CUSTOMER_SELECTED_PLAN_BANNER}
         </p>
       ) : null}
+      <InquiryArchiveActions
+        inquiryId={inquiry.id}
+        archived={Boolean(inquiry.archivedAt)}
+        canManage={canManage}
+        bookingId={inquiry.bookings[0]?.id}
+        bookingNumber={inquiry.bookings[0]?.bookingNumber}
+        bookingStatus={inquiry.bookings[0]?.status}
+      />
 
       <div className="mt-8 border-t border-border pt-6">
         <h2 className="text-sm font-medium text-foreground">Customer activity</h2>

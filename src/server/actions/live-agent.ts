@@ -13,10 +13,14 @@ import {
 } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import {
+  adoptRecommendationAsWorkingPlan,
+  applyWorkingPlanStartTime,
+  checkInquiryAvailability,
   markCustomerContacted,
   markInquiryReadyToFinalize,
   saveAgentWorkingPlan,
   saveEmployeeInternalNotes,
+  savePendingEmployeeBooking,
   startWorkingInquiry,
   suggestClosestAvailableAlternatives,
 } from "@/server/services/live-agent-service";
@@ -112,7 +116,7 @@ export async function saveAgentWorkingPlanAction(formData: FormData): Promise<Se
       ok: true,
       title: "Working version saved",
       message: saved.holdAffected
-        ? "This change affects the current resource hold. Update the hold when you are ready."
+        ? "Pricing was recalculated from catalog/sales knowledge. A pending booking snapshot was updated."
         : "Pricing and availability were recalculated from sales knowledge.",
     };
   } catch (error) {
@@ -186,5 +190,118 @@ export async function suggestAlternativesAction(formData: FormData): Promise<Sec
   } catch (error) {
     unstable_rethrow(error);
     return toResult(error, "Unable to suggest alternatives");
+  }
+}
+
+export async function checkInquiryAvailabilityAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
+    const ctx = await getRequestContext();
+    const result = await checkInquiryAvailability(ctx, db, inquiryId);
+    revalidatePath("/app/inquiries");
+    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidatePath("/app/schedule");
+    if (!result.validated) {
+      return {
+        ok: true,
+        title: "Availability not validated",
+        message: result.note || "Numbered inventory still needs configuration before availability can be confirmed.",
+      };
+    }
+    if (result.available) {
+      const start = result.requirements[0]?.windowStartTime;
+      return {
+        ok: true,
+        title: "Available",
+        message: start
+          ? `All required resources are currently available at ${start}. Availability will be rechecked when the booking is confirmed.`
+          : "All required resources are currently available. Availability will be rechecked when the booking is confirmed.",
+      };
+    }
+    const nearby = result.nearbyStartTimes;
+    const conflictNames = result.result.types.filter((row) => row.conflict).map((row) => row.resourceTypeName);
+    const conflictLabel = conflictNames[0] ?? "A required resource";
+    return {
+      ok: false,
+      title: "Unavailable",
+      message:
+        nearby.length > 0
+          ? `${conflictLabel} is unavailable at the selected time. Nearby availability exists at ${nearby.join(" and ")}.`
+          : result.note || `${conflictLabel} is unavailable at the selected time.`,
+      refresh: true,
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to check availability");
+  }
+}
+
+export async function adoptRecommendationAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
+    const planId = idSchema.parse(String(formData.get("planId") ?? ""));
+    const ctx = await getRequestContext();
+    await adoptRecommendationAsWorkingPlan(
+      ctx,
+      db,
+      inquiryId,
+      planId,
+      String(formData.get("expectedUpdatedAt") ?? "") || null,
+    );
+    revalidatePath("/app/inquiries");
+    revalidatePath(`/app/inquiries/${inquiryId}`);
+    return {
+      ok: true,
+      title: "Package updated",
+      message: "The working plan now uses the selected package. Pricing was recalculated on the server.",
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to switch package");
+  }
+}
+
+export async function applyWorkingPlanStartTimeAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
+    const startTime = z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d/)
+      .parse(String(formData.get("startTime") ?? ""));
+    const ctx = await getRequestContext();
+    const result = await applyWorkingPlanStartTime(ctx, db, inquiryId, startTime);
+    revalidatePath("/app/inquiries");
+    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidatePath("/app/schedule");
+    return {
+      ok: true,
+      title: "Schedule updated",
+      message: result.available
+        ? `The plan now starts at ${result.startTime}. Check availability was re-run for this itinerary.`
+        : `The plan now starts at ${result.startTime}. Recheck availability before confirming.`,
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to apply that start time");
+  }
+}
+
+export async function savePendingBookingAction(formData: FormData): Promise<SecurityActionResult> {
+  try {
+    const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
+    const ctx = await getRequestContext();
+    const pending = await savePendingEmployeeBooking(ctx, db, inquiryId);
+    revalidatePath("/app/inquiries");
+    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidatePath("/app/bookings");
+    revalidatePath("/app/schedule");
+    return {
+      ok: true,
+      title: "Pending booking saved",
+      message: `${pending.booking.bookingNumber} is saved as pending payment. Inventory is not reserved.`,
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    return toResult(error, "Unable to save pending booking");
   }
 }

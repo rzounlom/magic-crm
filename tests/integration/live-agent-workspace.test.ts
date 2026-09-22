@@ -219,6 +219,11 @@ describe("live agent booking workspace (postgres)", () => {
     });
     expect(draft.kind).toBe(EVENT_PLAN_KINDS.AGENT_WORKING);
     expect(draft.inquiryId).toBe(created.inquiryId);
+    const draftPayload = draft.payload as EventPlanPayload;
+    const selectedPayload = original.payload as EventPlanPayload;
+    expect(draftPayload.activities.map((row) => row.knowledgeItemId).sort()).toEqual(
+      selectedPayload.activities.map((row) => row.knowledgeItemId).sort(),
+    );
 
     const saved = await saveAgentWorkingPlan(
       tenant.ctx,

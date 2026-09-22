@@ -42,6 +42,18 @@ describe("inquiry status display", () => {
     ).toBe("CUSTOMER SELECTED PLAN — READY TO BOOK");
   });
 
+  it("labels a pending booking request as pending payment", () => {
+    expect(
+      formatInquiryQueueLabel({
+        status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+        aiHandlingEnabled: false,
+        selectedEventPlanId: "plan_1",
+        salesStage: "DEPOSIT_PENDING",
+        bookingStatus: "PENDING_PAYMENT",
+      }),
+    ).toBe("Pending payment");
+  });
+
   it("labels a converted inquiry with the booking reference", () => {
     expect(
       formatInquiryQueueLabel({
@@ -51,5 +63,18 @@ describe("inquiry status display", () => {
         bookingNumber: "FUN-2026-00421",
       }),
     ).toBe("Converted to Booking FUN-2026-00421");
+  });
+
+  it("labels a cancelled booking instead of treating it as converted", () => {
+    expect(
+      formatInquiryQueueLabel({
+        status: INQUIRY_STATUSES.BOOKED,
+        aiHandlingEnabled: false,
+        selectedEventPlanId: "plan_1",
+        bookingNumber: "FUN-2026-00421",
+        bookingStatus: "CANCELLED",
+        salesStage: "CLOSED",
+      }),
+    ).toBe("Cancelled booking FUN-2026-00421");
   });
 });

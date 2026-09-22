@@ -3,12 +3,15 @@ import Link from "next/link";
 import { AgentWorkingPlanForm } from "@/components/layout/agent-working-plan-form";
 import { CopyValueButton } from "@/components/layout/copy-value-button";
 import { EmployeeInquiryConversation } from "@/components/layout/employee-inquiry-conversation";
+import { EmployeePlanSnapshot } from "@/components/layout/employee-plan-snapshot";
 import { EmployeeSelectedEventPlan } from "@/components/layout/employee-selected-event-plan";
 import { EmployeeSelectedPlanResourceCheck } from "@/components/layout/employee-selected-plan-resource-check";
+import { InquiryArchiveActions } from "@/components/layout/inquiry-archive-actions";
 import { InquiryFunnel } from "@/components/layout/inquiry-funnel";
 import { LiveAgentBookingActions } from "@/components/layout/live-agent-booking-actions";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { BOOKING_STATUSES } from "@/types/booking";
 import {
   formatBudgetRange,
   formatDiningPreference,
@@ -17,7 +20,16 @@ import {
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
 import { formatInquiryActivityAction } from "@/lib/inquiries/activity-labels";
-import { workingPlanAffectsExistingHolds } from "@/lib/inquiries/plan-diff";
+import {
+  classifyWorkspaceReservations,
+} from "@/lib/bookings/allocated-resources";
+import type { ResourceTypeInventoryCount } from "@/lib/bookings/allocated-resources";
+import {
+  deriveEmployeeWorkspaceState,
+  displayPlanTitle,
+  EMPLOYEE_WORKSPACE_STATES,
+} from "@/lib/inquiries/employee-workspace-state";
+import { summarizePlanChanges, workingPlanAffectsExistingHolds } from "@/lib/inquiries/plan-diff";
 import { formatPhoneDisplay } from "@/lib/inquiries/public-phone";
 import { formatEventLocalDateTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
@@ -27,7 +39,7 @@ import { holdCoverageErrors } from "@/lib/bookings/hold-coverage";
 import { sendEmployeeInquiryMessageAction } from "@/server/actions/inquiries";
 import { liveAgentHoldReadiness } from "@/lib/inquiries/live-agent-next-step";
 import { employeeDisplayName } from "@/lib/inquiries/workflow-stage";
-import { INQUIRY_STATUSES } from "@/types/inquiry";
+import { INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
 
 type WorkspaceInquiry = {
   id: string;
@@ -39,6 +51,7 @@ type WorkspaceInquiry = {
   customerContactedAt: Date | null;
   readyToFinalizeAt: Date | null;
   employeeInternalNotes: string | null;
+  archivedAt?: Date | null;
   customerGroupName: string | null;
   customerFirstName: string | null;
   customerLastName: string | null;
@@ -89,9 +102,21 @@ type WorkspaceInquiry = {
     startMinute: number;
     endMinute: number;
     expiresAt: Date | null;
-    resource: { name: string; resourceType: { id?: string; name: string } };
+    resource: { name: string; resourceType: { id?: string; name: string; slug?: string | null } };
   }>;
-  bookings?: Array<{ id: string; bookingNumber: string; status: string; confirmedAt: Date }>;
+  bookings?: Array<{
+    id: string;
+    bookingNumber: string;
+    status: string;
+    confirmedAt: Date | null;
+    availabilityConflictAt?: Date | null;
+    paymentConfirmedExternallyAt?: Date | null;
+    depositRequiredCents?: number | null;
+    totalCents?: number | null;
+    guestCount?: number | null;
+    diningLabel?: string | null;
+    payload?: unknown;
+  }>;
 };
 
 export function LiveAgentWorkspace({
@@ -106,7 +131,10 @@ export function LiveAgentWorkspace({
   canHold,
   canRelease,
   canConfirm = false,
+  canCancel = false,
   timeZone,
+  recommendations = [],
+  inventoryCounts = [],
 }: {
   inquiry: WorkspaceInquiry;
   selectedPlan: {
@@ -123,8 +151,8 @@ export function LiveAgentWorkspace({
     payload: unknown;
   };
   workingPlan: typeof selectedPlan | null;
-  resourceCheck: Parameters<typeof EmployeeSelectedPlanResourceCheck>[0]["live"] | null;
-  knowledge: Array<{ id: string; name: string; type: string; maxGuests: number | null }>;
+  resourceCheck: Parameters<typeof EmployeeSelectedPlanResourceCheck>[0]["live"];
+  knowledge: Array<{ id: string; name: string; type: string; maxGuests: number | null; durationMinutes?: number | null }>;
   activity: Array<{
     id: string;
     action: string;
@@ -136,7 +164,10 @@ export function LiveAgentWorkspace({
   canHold: boolean;
   canRelease: boolean;
   canConfirm?: boolean;
+  canCancel?: boolean;
   timeZone: string;
+  recommendations?: Array<{ id: string; kind: string; title: string; tier: string }>;
+  inventoryCounts?: ResourceTypeInventoryCount[];
 }) {
   const displayName =
     inquiry.customerGroupName ||
@@ -144,16 +175,37 @@ export function LiveAgentWorkspace({
     inquiry.customerEmail;
   const phoneDisplay = formatPhoneDisplay(inquiry.customerPhone);
   const booking = inquiry.bookings?.[0] ?? null;
-  const booked = inquiry.status === INQUIRY_STATUSES.BOOKED || Boolean(booking);
+  const booked = booking?.status === BOOKING_STATUSES.CONFIRMED;
+  const cancelled = booking?.status === BOOKING_STATUSES.CANCELLED;
+  const pendingPayment = booking?.status === BOOKING_STATUSES.PENDING_PAYMENT;
+  const paymentConflict = Boolean(booking?.paymentConfirmedExternallyAt && booking?.availabilityConflictAt);
   const assignedName = employeeDisplayName(inquiry.assignedUser);
   const assignedToOther = Boolean(
     inquiry.assignedUserProfileId && inquiry.assignedUserProfileId !== currentUserId,
   );
   const workingPayload = readEventPlanPayload((workingPlan ?? selectedPlan).payload);
+  const selectedPayload = readEventPlanPayload(selectedPlan.payload);
+  const classified = classifyWorkspaceReservations(inquiry.resourceReservations);
+  const workspaceState = deriveEmployeeWorkspaceState({
+    assignedUserProfileId: inquiry.assignedUserProfileId,
+    bookingStatus: booking?.status,
+    paymentConflict,
+    hasLegacyHold: classified.legacyHolds.length > 0,
+  });
   const holdAffected =
     !booked &&
-    inquiry.resourceReservations.length > 0 &&
-    workingPlanAffectsExistingHolds(workingPayload, inquiry.resourceReservations);
+    classified.legacyHolds.length > 0 &&
+    workingPlanAffectsExistingHolds(workingPayload, classified.legacyHolds);
+  const confirmedPayload = booking?.payload ? readEventPlanPayload(booking.payload) : workingPayload;
+  const confirmedDiffers =
+    (booked || cancelled) && summarizePlanChanges(selectedPayload, confirmedPayload, selectedPlan.currency).length > 0;
+  void recommendations;
+  const resourceMode =
+    workspaceState === EMPLOYEE_WORKSPACE_STATES.CONFIRMED_BOOKING
+      ? "confirmed"
+      : workspaceState === EMPLOYEE_WORKSPACE_STATES.CANCELLED_BOOKING
+        ? "cancelled"
+        : "pending";
   const eventDate = workingPayload.eventDate;
   const resourceTypeId = resourceCheck?.requirements.find((row) => row.resourceTypeId)?.resourceTypeId ?? null;
   const scheduleHref = eventDate
@@ -178,8 +230,14 @@ export function LiveAgentWorkspace({
                 estimatedTotalCents: workingPlan.estimatedTotalCents,
                 payload: workingPayload,
               }
-            : null,
-          holds: inquiry.resourceReservations.map((row) => ({
+            : selectedPlan
+              ? {
+                  availabilityStatus: selectedPlan.availabilityStatus ?? null,
+                  estimatedTotalCents: selectedPlan.estimatedTotalCents,
+                  payload: readEventPlanPayload(selectedPlan.payload),
+                }
+              : null,
+          holds: classified.legacyHolds.map((row) => ({
             status: row.status ?? "HOLD",
             expiresAt: row.expiresAt,
             releasedAt: row.releasedAt ?? null,
@@ -196,8 +254,8 @@ export function LiveAgentWorkspace({
             resourceCheck?.requirements.some((row) => row.quantity != null && row.quantity > 0),
           ),
         }),
-        ...(workingPlan && resourceCheck && inquiry.resourceReservations.length > 0
-          ? holdCoverageErrors(workingPayload, resourceCheck.requirements, inquiry.resourceReservations.map((row) => ({
+        ...(workingPlan && resourceCheck && classified.legacyHolds.length > 0
+          ? holdCoverageErrors(workingPayload, resourceCheck.requirements, classified.legacyHolds.map((row) => ({
               id: row.id,
               status: row.status ?? "HOLD",
               expiresAt: row.expiresAt,
@@ -233,6 +291,20 @@ export function LiveAgentWorkspace({
               }`
             : "Unassigned"}
         </p>
+        {inquiry.workflowStage === INQUIRY_WORKFLOW_STAGES.HOLD_PLACED ||
+        inquiry.workflowStage === INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE ? (
+          <p className="mt-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground/70">
+            This inquiry uses a legacy workflow stage. You can still cancel a booking or archive the inquiry.
+          </p>
+        ) : null}
+        <InquiryArchiveActions
+          inquiryId={inquiry.id}
+          archived={Boolean(inquiry.archivedAt)}
+          canManage={canManage}
+          bookingId={booking?.id}
+          bookingNumber={booking?.bookingNumber}
+          bookingStatus={booking?.status}
+        />
       </div>
 
       <LiveAgentBookingActions
@@ -244,17 +316,52 @@ export function LiveAgentWorkspace({
         canManage={canManage}
         canHold={canHold}
         canConfirm={canConfirm}
+        cancelled={cancelled}
+        canCancel={canCancel}
         assigned={Boolean(inquiry.assignedUserProfileId)}
         needsHold={holdReadiness.needsHold}
-        hasHold={inquiry.resourceReservations.length > 0}
+        hasHold={classified.legacyHolds.length > 0}
         canPlaceHold={holdReadiness.canPlaceHold}
         needsInventory={holdReadiness.needsInventory}
         confirmBlockers={confirmBlockers}
+        pendingPayment={pendingPayment}
+        paymentConflict={paymentConflict}
+        availabilityChecked={
+          (workingPlan?.availabilityStatus ?? selectedPlan.availabilityStatus ?? "NOT_VALIDATED") !==
+          "NOT_VALIDATED"
+        }
       />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(16rem,0.7fr)]">
         <div className="space-y-6">
-          {workingPlan && canManage && !assignedToOther && !booked ? (
+          {booked || cancelled ? (
+            <>
+              <section className="rounded-md border border-border px-5 py-5">
+                <h2 className="text-lg font-semibold">{booked ? "Booking confirmed" : "Booking cancelled"}</h2>
+                {booking ? (
+                  <p className="mt-2 text-sm">
+                    <Link href={`/app/bookings/${booking.id}`} className="text-primary">
+                      {booking.bookingNumber}
+                    </Link>
+                    {booked ? " · Open booking" : " · Historical booking"}
+                  </p>
+                ) : null}
+              </section>
+              <EmployeePlanSnapshot
+                title="Booked plan"
+                planTitle={displayPlanTitle(workingPlan?.title ?? selectedPlan.title)}
+                estimatedTotalCents={booking?.totalCents ?? workingPlan?.estimatedTotalCents ?? selectedPlan.estimatedTotalCents}
+                currency={selectedPlan.currency}
+                durationMinutes={workingPlan?.durationMinutes ?? selectedPlan.durationMinutes}
+                payload={booking?.payload ?? workingPlan?.payload ?? selectedPlan.payload}
+                comparisonNote={
+                  confirmedDiffers
+                    ? "This booking was modified from the original customer selection."
+                    : "Matches the original customer selection."
+                }
+              />
+            </>
+          ) : workingPlan && canManage && !assignedToOther ? (
             <AgentWorkingPlanForm
               inquiryId={inquiry.id}
               expectedUpdatedAt={inquiry.updatedAt.toISOString()}
@@ -265,28 +372,44 @@ export function LiveAgentWorkspace({
               guestMix={inquiry.guestMix}
             />
           ) : workingPlan ? (
-            <section className="rounded-md border border-border px-5 py-5">
-              <h2 className="text-lg font-semibold">Plan you&apos;ll book</h2>
-              <p className="mt-2 text-sm text-foreground/70">
-                {workingPlan.title}
-                {assignedToOther ? " · the assigned agent is editing this plan." : " · view only."}
-              </p>
-            </section>
+            <EmployeePlanSnapshot
+              title="Working booking plan"
+              planTitle={displayPlanTitle(workingPlan.title)}
+              estimatedTotalCents={workingPlan.estimatedTotalCents}
+              currency={selectedPlan.currency}
+              durationMinutes={workingPlan.durationMinutes}
+              payload={workingPlan.payload}
+              comparisonNote={
+                assignedToOther
+                  ? "The assigned agent is editing this plan."
+                  : summarizePlanChanges(selectedPayload, workingPayload, selectedPlan.currency).length > 0
+                    ? "Modified from customer selection"
+                    : "Matches the customer's selection."
+              }
+            />
           ) : (
-            <p className="text-sm text-foreground/70">Start working to copy the customer plan into an editable booking version.</p>
+            <p className="text-sm text-foreground/70">
+              Start working to assign this inquiry and unlock working-plan editing. The customer selection is not
+              changed.
+            </p>
           )}
-          {resourceCheck ? (
+          {resourceCheck || classified.allocated.length > 0 || classified.released.length > 0 || classified.legacyHolds.length > 0 || booked || cancelled ? (
             <EmployeeSelectedPlanResourceCheck
               inquiryId={inquiry.id}
               availabilityStatus={workingPlan?.availabilityStatus ?? selectedPlan.availabilityStatus ?? "NOT_VALIDATED"}
               live={resourceCheck}
-              holds={inquiry.resourceReservations}
-              canHold={canHold && canManage && !booked}
-              canRelease={canRelease && canManage && !booked}
+              holds={classified.legacyHolds}
+              allocations={booked ? classified.allocated : cancelled ? classified.released : []}
+              inventoryCounts={inventoryCounts}
+              canHold={canHold && canManage && !booked && !cancelled}
+              canRelease={canRelease && canManage && !booked && !cancelled}
               timeZone={timeZone}
               title="Rooms and lanes"
               scheduleHref={scheduleHref}
               holdAffected={holdAffected}
+              canCheckAvailability={canManage && !booked && !cancelled && !assignedToOther}
+              nearbyStartTimes={workingPayload.suggestedStartTimes ?? []}
+              mode={resourceMode}
             />
           ) : null}
           <EmployeeSelectedEventPlan
@@ -296,8 +419,8 @@ export function LiveAgentWorkspace({
             selectedAt={inquiry.customerSelectedAt}
             timeZone={timeZone}
             salesStage={inquiry.salesStage}
-            holdExpiresAt={inquiry.resourceReservations[0]?.expiresAt ?? null}
-            heldResources={inquiry.resourceReservations.map((row) => row.resource.name)}
+            holdExpiresAt={classified.legacyHolds[0]?.expiresAt ?? null}
+            heldResources={classified.legacyHolds.map((row) => row.resource.name)}
             depositRequiredCents={workingPayload.depositPreviewCents ?? null}
             currency={selectedPlan.currency}
           />

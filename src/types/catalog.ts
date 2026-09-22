@@ -161,8 +161,12 @@ export type RecommendationProfilePayload = {
 };
 
 export type ItinerarySegment = {
+  id?: string;
   startTime: string;
   endTime: string;
   label: string;
   productId?: string;
+  startOffsetMinutes?: number;
+  durationMinutes?: number;
+  consumesInventory?: boolean;
 };

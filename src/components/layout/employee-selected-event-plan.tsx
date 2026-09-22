@@ -1,3 +1,4 @@
+import { formatActivityLine } from "@/lib/event-planner/activity-display";
 import { formatEventDuration } from "@/lib/event-planner/labels";
 import { formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
@@ -54,14 +55,14 @@ export function EmployeeSelectedEventPlan({
   return (
     <details className="rounded-md border border-border px-5 py-4">
       <summary className="cursor-pointer text-sm font-medium">
-        Customer chose {plan.title}
-        {total > 0 ? ` · ${formatMoneyFromCents(total, plan.currency)}` : ""} — original snapshot
+        Original customer selection
+        {total > 0 ? ` · ${plan.title} · ${formatMoneyFromCents(total, plan.currency)}` : ` · ${plan.title}`}
       </summary>
       <p className="mt-3 text-xs font-semibold tracking-[0.18em] text-primary uppercase">
         {CUSTOMER_SELECTED_PLAN_BANNER}
       </p>
-      <h2 className="mt-2 text-lg font-semibold">Customer Selected Plan</h2>
-      <p className="mt-1 text-xs text-foreground/60">Original customer choice. Staff edits do not change this snapshot.</p>
+      <h2 className="mt-2 text-lg font-semibold">Original customer selection</h2>
+      <p className="mt-1 text-xs text-foreground/60">Immutable customer choice. Staff edits do not change this snapshot.</p>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-2xl font-semibold">{plan.title}</h2>
@@ -95,11 +96,12 @@ export function EmployeeSelectedEventPlan({
             {payload.activities.length > 0
               ? payload.activities
                   .map((activity) =>
-                    activity.quantity > 1 && activity.unitLabel
-                      ? `${activity.name} (${activity.quantity} ${activity.unitLabel}s)`
-                      : activity.name,
+                    formatActivityLine(activity, {
+                      guestCount: payload.guestCount,
+                      itinerary: payload.itinerary,
+                    }),
                   )
-                  .join(", ")
+                  .join("; ")
               : "—"}
           </dd>
         </div>
@@ -154,7 +156,7 @@ export function EmployeeSelectedEventPlan({
       </dl>
       {payload.itinerary && payload.itinerary.length > 0 ? (
         <div className="mt-4 text-sm">
-          <p className="text-foreground/60">Proposed schedule</p>
+          <p className="text-foreground/60">Sample Itinerary</p>
           <ul className="mt-1 list-disc pl-5 text-foreground/80">
             {payload.itinerary.map((segment) => (
               <li key={`${segment.startTime}-${segment.label}`}>
@@ -165,7 +167,7 @@ export function EmployeeSelectedEventPlan({
         </div>
       ) : payload.schedule.length > 0 ? (
         <div className="mt-4 text-sm">
-          <p className="text-foreground/60">Proposed schedule</p>
+          <p className="text-foreground/60">Sample Itinerary</p>
           <ul className="mt-1 list-disc pl-5 text-foreground/80">
             {payload.schedule.map((line) => (
               <li key={line}>{formatItineraryLine(line)}</li>
@@ -178,9 +180,11 @@ export function EmployeeSelectedEventPlan({
         <p className="mt-3 text-sm text-foreground/70">{plan.availabilityNote}</p>
       ) : null}
       <p className="mt-4 text-xs text-foreground/55">
-        {salesStage === "HOLD_PLACED"
-          ? "A 24-hour hold is on the exact resources below. Confirm Booking converts those holds in place. Payment is not collected yet."
-          : "The customer asked for live-agent follow-up. Inventory is not held. Confirm availability on the Resource Schedule before booking."}
+        {salesStage === "DEPOSIT_PENDING"
+          ? "The customer requested this booking. Inventory is not reserved until payment is received and the booking is confirmed."
+          : salesStage === "HOLD_PLACED"
+          ? "A legacy 24-hour hold is on the exact resources below. New bookings do not place holds."
+          : "The original customer selection is kept for reference. Inventory is reserved only after a booking is confirmed."}
       </p>
       {salesStage === "HOLD_PLACED" && holdExpiresAt && timeZone ? (
         <p className="mt-2 text-sm">

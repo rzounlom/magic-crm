@@ -1,13 +1,28 @@
 import Link from "next/link";
 
+import { SecurityActionForm } from "@/components/layout/security-action-form";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
+import { formatActivityLine } from "@/lib/event-planner/activity-display";
 import { formatEventDuration } from "@/lib/event-planner/labels";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
+import {
+  formatAllocatedSummary,
+  formatAllocatedWindow,
+  groupAllocatedResources,
+} from "@/lib/bookings/allocated-resources";
 import { formatEventLocalDateTime, formatEventLocalTime, formatItineraryLine, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { employeeDisplayName } from "@/lib/inquiries/workflow-stage";
-import { minutesToClock } from "@/server/resources/time-window";
-import { BOOKING_STATUS_LABELS, type BookingStatus } from "@/types/booking";
-import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
+import { cancelConfirmedBookingConfirm, cancelPendingBookingConfirm } from "@/lib/ui/destructive-confirm";
+import { cancelBookingAction } from "@/server/actions/bookings";
+import {
+  BOOKING_STATUS_LABELS,
+  isCancellableBooking,
+  isCancelledBooking,
+  isConfirmedBooking,
+  isPendingPaymentBooking,
+  type BookingStatus,
+} from "@/types/booking";
 
 type BookingDetailRecord = {
   id: string;
@@ -31,9 +46,16 @@ type BookingDetailRecord = {
   customerPhone: string | null;
   customerNotes: string | null;
   internalNotes: string | null;
-  confirmedAt: Date;
+  confirmedAt: Date | null;
+  cancelledAt?: Date | null;
   payload: unknown;
   confirmedBy: {
+    firstName: string | null;
+    lastName: string | null;
+    displayName: string | null;
+    email: string | null;
+  } | null;
+  cancelledBy?: {
     firstName: string | null;
     lastName: string | null;
     displayName: string | null;
@@ -54,6 +76,7 @@ type BookingDetailRecord = {
     status: string;
     startMinute: number;
     endMinute: number;
+    releasedAt?: Date | null;
     resource: { name: string; resourceType: { name: string } };
   }>;
   inquiry: {
@@ -67,9 +90,11 @@ type BookingDetailRecord = {
 export function BookingDetail({
   booking,
   timeZone,
+  canCancel = false,
 }: {
   booking: BookingDetailRecord;
   timeZone: string;
+  canCancel?: boolean;
 }) {
   const payload = readEventPlanPayload(booking.payload);
   const groupName =
@@ -90,10 +115,49 @@ export function BookingDetail({
       <p className="mt-3 text-sm font-semibold tracking-[0.18em] text-primary uppercase">Booking Summary</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{booking.bookingNumber}</h1>
       <p className="mt-2 text-sm text-foreground/70">
-        {status} · Confirmed {formatOrganizationTimestamp(booking.confirmedAt, timeZone)} by{" "}
-        {employeeDisplayName(booking.confirmedBy)}
+        {status}
+        {booking.confirmedAt
+          ? ` · Confirmed ${formatOrganizationTimestamp(booking.confirmedAt, timeZone)} by ${employeeDisplayName(booking.confirmedBy)}`
+          : isCancelledBooking(booking.status)
+            ? ""
+            : " · Not confirmed yet"}
+        {booking.cancelledAt
+          ? ` · Cancelled ${formatOrganizationTimestamp(booking.cancelledAt, timeZone)} by ${employeeDisplayName(booking.cancelledBy ?? null)}`
+          : ""}
       </p>
-      <p className="mt-2 text-sm text-foreground/60">This record is read-only after confirmation.</p>
+      <p className="mt-2 text-sm text-foreground/60">
+        {isCancelledBooking(booking.status)
+          ? "This booking is cancelled. Released resources are free on the Master Schedule. Historical information is kept."
+          : isConfirmedBooking(booking.status)
+            ? "This record is read-only after confirmation."
+            : isPendingPaymentBooking(booking.status)
+              ? "This pending booking does not occupy inventory until it is confirmed."
+              : "This booking cannot be edited from this page."}
+      </p>
+      {canCancel && isCancellableBooking(booking.status) ? (
+        <div className="mt-4">
+          <SecurityActionForm
+            action={cancelBookingAction}
+            notice={{ successTitle: "Booking cancelled", errorTitle: "Unable to cancel booking" }}
+            confirm={
+              isConfirmedBooking(booking.status)
+                ? cancelConfirmedBookingConfirm()
+                : cancelPendingBookingConfirm()
+            }
+          >
+            <input type="hidden" name="bookingId" value={booking.id} />
+            <PendingSubmitButton
+              pendingLabel="Cancelling…"
+              className="rounded-md border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive"
+            >
+              Cancel Booking
+            </PendingSubmitButton>
+          </SecurityActionForm>
+        </div>
+      ) : null}
+      {!isCancellableBooking(booking.status) && !isCancelledBooking(booking.status) ? (
+        <p className="mt-4 text-sm text-foreground/60">This booking cannot be cancelled.</p>
+      ) : null}
 
       <dl className="mt-8 grid gap-4 border-t border-border pt-6 text-sm sm:grid-cols-2">
         <div>
@@ -132,7 +196,9 @@ export function BookingDetail({
         </div>
         <div>
           <dt className="text-foreground/60">Confirmed timestamp</dt>
-          <dd className="mt-1">{formatOrganizationTimestamp(booking.confirmedAt, timeZone)}</dd>
+          <dd className="mt-1">
+            {booking.confirmedAt ? formatOrganizationTimestamp(booking.confirmedAt, timeZone) : "—"}
+          </dd>
         </div>
       </dl>
 
@@ -143,8 +209,13 @@ export function BookingDetail({
           <dd className="mt-1">
             {payload.activities.length > 0
               ? payload.activities
-                  .map((row) => (row.quantity > 1 ? `${row.name} × ${row.quantity}` : row.name))
-                  .join(", ")
+                  .map((row) =>
+                    formatActivityLine(row, {
+                      guestCount: payload.guestCount,
+                      itinerary: payload.itinerary,
+                    }),
+                  )
+                  .join("; ")
               : "—"}
           </dd>
         </div>
@@ -161,18 +232,22 @@ export function BookingDetail({
           <dd className="mt-1">{formatEventDuration(payload.durationMinutes)}</dd>
         </div>
         <div className="sm:col-span-2">
-          <dt className="text-foreground/60">Schedule / rotations</dt>
+          <dt className="text-foreground/60">Sample Itinerary</dt>
           <dd className="mt-1 whitespace-pre-wrap">
-            {payload.schedule.length > 0
-              ? payload.schedule.map(formatItineraryLine).join("\n")
-              : payload.rotations && payload.rotations.length > 0
-                ? payload.rotations
-                    .map(
-                      (row) =>
-                        `${formatItineraryLine(`${row.startTime}–${row.endTime} ${row.assignments.map((item) => item.activityName).join(", ")}`)}`,
-                    )
-                    .join("\n")
-                : "—"}
+            {payload.itinerary && payload.itinerary.length > 0
+              ? payload.itinerary
+                  .map((segment) => formatItineraryLine(`${segment.startTime}–${segment.endTime} ${segment.label}`))
+                  .join("\n")
+              : payload.schedule.length > 0
+                ? payload.schedule.map(formatItineraryLine).join("\n")
+                : payload.rotations && payload.rotations.length > 0
+                  ? payload.rotations
+                      .map(
+                        (row) =>
+                          `${formatItineraryLine(`${row.startTime}–${row.endTime} ${row.assignments.map((item) => item.activityName).join(", ")}`)}`,
+                      )
+                      .join("\n")
+                  : "—"}
           </dd>
         </div>
         {booking.eventGoal ? (
@@ -227,13 +302,22 @@ export function BookingDetail({
       {booking.reservations.length === 0 ? (
         <p className="mt-4 text-sm text-foreground/70">No finite resources are attached to this booking.</p>
       ) : (
-        <ul className="mt-4 space-y-2 text-sm">
-          {booking.reservations.map((row) => (
-            <li key={row.id}>
-              {row.resource.resourceType.name}: {row.resource.name} ·{" "}
-              {formatEventLocalTime(minutesToClock(row.startMinute))}–
-              {formatEventLocalTime(minutesToClock(row.endMinute))} ·{" "}
-              {row.status === RESOURCE_RESERVATION_STATUSES.BOOKED ? "BOOKED" : row.status}
+        <ul className="mt-4 space-y-3 text-sm">
+          {groupAllocatedResources(booking.reservations).map((group) => (
+            <li key={group.key}>
+              <p className="font-medium">{group.resourceTypeName}</p>
+              <p className="text-foreground/70">{formatAllocatedWindow(group)}</p>
+              <p className="text-foreground/70">
+                {group.released
+                  ? `${group.allocatedQuantity} released`
+                  : `${group.allocatedQuantity} booked`}
+                {group.activeQuantity != null ? ` · ${formatAllocatedSummary(group)}` : ""}
+              </p>
+              <ul className="mt-1 list-disc pl-5">
+                {group.names.map((name) => (
+                  <li key={name}>{name}</li>
+                ))}
+              </ul>
             </li>
           ))}
         </ul>

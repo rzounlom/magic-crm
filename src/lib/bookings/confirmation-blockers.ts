@@ -1,7 +1,5 @@
 import { INQUIRY_STATUSES } from "@/types/inquiry";
-import { PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 import type { EventPlanPayload } from "@/types/event-planner";
-import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 
 export type BookingHoldSnapshot = {
   status: string;
@@ -38,8 +36,8 @@ export function bookingConfirmationBlockers(
   if (!input.selectedEventPlanId) {
     blockers.push("This inquiry does not have a customer-selected plan.");
   }
-  if (!input.workingPlan) {
-    blockers.push("Start working to create a Current Agent Version before confirming.");
+  if (!input.workingPlan && !input.selectedEventPlanId) {
+    blockers.push("Select or save a proposal before confirming.");
   }
   const payload = input.workingPlan?.payload;
   if (payload && !payload.eventDate) {
@@ -57,31 +55,8 @@ export function bookingConfirmationBlockers(
   if (input.workingPlan && (input.workingPlan.estimatedTotalCents == null || input.workingPlan.estimatedTotalCents < 0)) {
     blockers.push("Pricing could not be calculated from sales knowledge.");
   }
-  if (
-    input.workingPlan &&
-    input.workingPlan.availabilityStatus !== PLAN_AVAILABILITY_STATUSES.AVAILABLE
-  ) {
-    blockers.push("Recheck resource availability. The working version is not currently available.");
-  }
-  const expired = input.holds.filter(
-    (row) =>
-      row.status === RESOURCE_RESERVATION_STATUSES.HOLD &&
-      !row.releasedAt &&
-      row.expiresAt &&
-      row.expiresAt.getTime() <= now.getTime(),
-  );
-  const activeHolds = input.holds.filter(
-    (row) =>
-      row.status === RESOURCE_RESERVATION_STATUSES.HOLD &&
-      !row.releasedAt &&
-      (!row.expiresAt || row.expiresAt.getTime() > now.getTime()),
-  );
-  if (expired.length > 0 && activeHolds.length === 0) {
-    const name = expired[0]?.resource.resourceType.name ?? "A resource";
-    blockers.push(`Cannot confirm booking: ${name} hold has expired. Recheck availability and place a new hold.`);
-  }
-  if (activeHolds.length === 0 && input.hasFiniteRequirements && expired.length === 0) {
-    blockers.push("Place a resource hold before confirming a booking.");
-  }
+  void input.hasFiniteRequirements;
+  void input.holds;
+  void now;
   return blockers;
 }

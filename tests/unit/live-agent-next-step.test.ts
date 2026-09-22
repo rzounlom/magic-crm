@@ -13,7 +13,7 @@ describe("live agent booking guide", () => {
         booked: false,
         assigned: false,
         hasHold: false,
-        confirmBlockers: ["Place a resource hold before confirming a booking."],
+        confirmBlockers: [],
       }),
     ).toMatchObject({
       currentStepId: "review",
@@ -25,78 +25,86 @@ describe("live agent booking guide", () => {
     const guide = liveAgentBookingGuide({
       booked: false,
       assigned: true,
-      needsHold: true,
-      hasHold: false,
       needsInventory: true,
-      canPlaceHold: false,
-      confirmBlockers: ["Bowling Lane still needs resource configuration before booking."],
+      confirmBlockers: [],
+      hasHold: false,
     });
-    expect(guide.currentStepId).toBe("hold");
+    expect(guide.currentStepId).toBe("availability");
     expect(guide.nextTitle).toBe("Set up rooms and lanes");
     expect(guide.nextDetail).toContain("Resources");
   });
 
-  it("asks for a hold when inventory is ready", () => {
+  it("asks to check availability after assignment", () => {
     expect(
       liveAgentBookingGuide({
         booked: false,
         assigned: true,
-        needsHold: true,
-        hasHold: false,
         needsInventory: false,
-        canPlaceHold: true,
         confirmBlockers: [],
+        hasHold: false,
+        availabilityChecked: false,
       }),
     ).toMatchObject({
-      currentStepId: "hold",
-      nextTitle: "Hold rooms and lanes",
+      currentStepId: "availability",
+      nextTitle: "Check availability",
     });
   });
 
-  it("moves to confirm after a hold is placed without Ready to Finalize", () => {
+  it("moves to confirm payment after availability is checked", () => {
     expect(
       liveAgentBookingGuide({
         booked: false,
         assigned: true,
-        needsHold: true,
-        hasHold: true,
+        hasHold: false,
         confirmBlockers: [],
+        availabilityChecked: true,
       }),
     ).toMatchObject({
       currentStepId: "confirm",
-      nextTitle: "Confirm this booking",
-      nextDetail: expect.stringContaining("Resources are currently held"),
+      nextTitle: "Confirm payment and booking",
     });
   });
 
-  it("is ready to confirm when blockers are cleared", () => {
+  it("flags a payment received availability conflict", () => {
     expect(
       liveAgentBookingGuide({
         booked: false,
         assigned: true,
-        hasHold: true,
+        hasHold: false,
+        confirmBlockers: [],
+        paymentConflict: true,
+        availabilityChecked: true,
+      }),
+    ).toMatchObject({
+      currentStepId: "confirm",
+      nextTitle: "Payment received — availability conflict",
+    });
+  });
+
+  it("describes a cancelled booking without asking to confirm again", () => {
+    expect(
+      liveAgentBookingGuide({
+        booked: true,
+        cancelled: true,
+        assigned: true,
+        hasHold: false,
         confirmBlockers: [],
       }),
     ).toMatchObject({
       currentStepId: "confirm",
-      nextTitle: "Confirm this booking",
+      nextTitle: "This booking was cancelled",
     });
   });
 
-  it("labels the held path Resources Held and the no-hold path Place Hold", () => {
-    expect(liveAgentBookingSteps({ needsHold: true, hasHold: true }).map((row) => row.label)).toEqual([
+  it("labels the new workflow without Place Hold", () => {
+    expect(liveAgentBookingSteps().map((row) => row.label)).toEqual([
       "Review",
-      "Resources Held",
-      "Confirm Booking",
-    ]);
-    expect(liveAgentBookingSteps({ needsHold: true, hasHold: false }).map((row) => row.label)).toEqual([
-      "Review",
-      "Place Hold",
-      "Confirm Booking",
+      "Check Availability",
+      "Confirm Payment & Book",
     ]);
   });
 
-  it("treats missing numbered inventory as a hold blocker", () => {
+  it("does not treat missing inventory as a hold requirement", () => {
     expect(
       liveAgentHoldReadiness({
         requirements: [
@@ -110,6 +118,6 @@ describe("live agent booking guide", () => {
         validated: false,
         available: false,
       }),
-    ).toEqual({ needsHold: true, canPlaceHold: false, needsInventory: true });
+    ).toEqual({ needsHold: false, canPlaceHold: false, needsInventory: true });
   });
 });

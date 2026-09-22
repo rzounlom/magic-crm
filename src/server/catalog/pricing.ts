@@ -73,6 +73,8 @@ export function percentOfCents(cents: number, percent: number): number {
 
 export const DEFAULT_DEPOSIT_PERCENT = 30;
 
+// TODO(Phase 3C): Confirm Generations deposit policy (public site 25% vs current tenant 30%) before Stripe.
+
 export function depositPercentFromTenant(value: number | null | undefined): number {
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 100) {
     return DEFAULT_DEPOSIT_PERCENT;

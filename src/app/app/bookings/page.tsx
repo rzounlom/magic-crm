@@ -46,8 +46,8 @@ export default async function BookingsPage({
       <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Operations</p>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Bookings</h1>
       <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Confirmed events. Resource occupancy is BOOKED on the Master Schedule. Payment collection is not part of
-        this list.
+        Confirmed events occupy the Master Schedule. Pending payment bookings are listed separately and do
+        not block inventory. Payment collection is not part of this list.
       </p>
       <BookingList bookings={view.bookings} filter={view.filter} search={view.search} />
     </section>

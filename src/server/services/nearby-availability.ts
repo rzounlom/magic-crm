@@ -1,21 +1,13 @@
 import { SCHEDULE_DAY_END_MINUTE, SCHEDULE_DAY_START_MINUTE } from "@/types/resource-schedule";
 import type { ResourceAvailabilityResult } from "@/types/resource-schedule";
+import { minutesToClock, parseClockToMinutes } from "@/server/resources/time-window";
 
-const DEFAULT_OFFSETS_MINUTES = [-90, -60, -30, 30, 60, 90, 120];
-
-function parseClock(startTime: string): number | null {
-  const match = /^([01]\d|2[0-3]):([0-5]\d)/.exec(startTime);
-  if (!match) {
-    return null;
-  }
-  return Number(match[1]) * 60 + Number(match[2]);
-}
-
-function formatClock(totalMinutes: number): string {
-  const hour = Math.floor(totalMinutes / 60);
-  const minute = totalMinutes % 60;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-}
+/**
+ * Closest-first nearby search. Include 0 so callers can reuse the same loop for
+ * the requested time. Tenant operating hours, when configured, should be passed
+ * as dayStartMinute/dayEndMinute — do not hardcode a location's hours here.
+ */
+export const NEARBY_START_OFFSETS_MINUTES = [0, -30, 30, -60, 60, -90, 90, -120, 120];
 
 export type NearbyAvailableStart = {
   startTime: string;
@@ -29,23 +21,27 @@ export async function findNearbyAvailableStarts(input: {
   limit?: number;
   dayStartMinute?: number;
   dayEndMinute?: number;
+  includeRequested?: boolean;
 }): Promise<NearbyAvailableStart[]> {
   if (!input.startTime) {
     return [];
   }
-  const base = parseClock(input.startTime);
+  const base = parseClockToMinutes(input.startTime);
   if (base == null) {
     return [];
   }
   const dayStart = input.dayStartMinute ?? SCHEDULE_DAY_START_MINUTE;
   const dayEnd = input.dayEndMinute ?? SCHEDULE_DAY_END_MINUTE;
   const suggestions: NearbyAvailableStart[] = [];
-  for (const offset of input.offsetsMinutes ?? DEFAULT_OFFSETS_MINUTES) {
+  for (const offset of input.offsetsMinutes ?? NEARBY_START_OFFSETS_MINUTES) {
+    if (offset === 0 && input.includeRequested !== true) {
+      continue;
+    }
     const next = base + offset;
     if (next < dayStart || next > dayEnd - 30) {
       continue;
     }
-    const startTime = formatClock(next);
+    const startTime = minutesToClock(next);
     const result = await input.check(startTime);
     if (result.validated && result.available) {
       suggestions.push({

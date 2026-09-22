@@ -39,6 +39,8 @@ describe("tenant date/time display", () => {
     expect(formatItineraryRange("17:30", "18:30")).toBe("5:30 PM–6:30 PM");
     expect(formatItineraryLine("17:30–18:30 Fajita Bar")).toBe("5:30 PM–6:30 PM Fajita Bar");
     expect(formatItineraryLine("18:30–19:00 Axe Throwing")).toBe("6:30 PM–7:00 PM Axe Throwing");
+    expect(formatItineraryRange("18:30", "19:30")).toBe("6:30 PM–7:30 PM");
+    expect(formatItineraryRange("19:30", "20:30")).toBe("7:30 PM–8:30 PM");
     expect(formatItineraryTime("17:30")).not.toBe("1:30 PM");
   });
 

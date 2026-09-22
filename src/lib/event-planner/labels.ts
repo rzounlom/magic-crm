@@ -32,14 +32,22 @@ export function formatDiningPreference(value: string | null | undefined): string
   return value || "—";
 }
 
-export function formatEventDuration(minutes: number | null | undefined): string {
-  if (minutes && minutes in EVENT_DURATION_LABELS) {
+export function formatDurationMinutes(minutes: number): string {
+  if (minutes in EVENT_DURATION_LABELS) {
     return EVENT_DURATION_LABELS[minutes as EventDurationMinutes];
   }
+  if (minutes < 60 || minutes % 60 !== 0) {
+    return `${minutes} minutes`;
+  }
+  const hours = minutes / 60;
+  return hours === 1 ? "1 hour" : `${hours} hours`;
+}
+
+export function formatEventDuration(minutes: number | null | undefined): string {
   if (!minutes) {
     return "—";
   }
-  return `${Math.round(minutes / 60)} hours`;
+  return formatDurationMinutes(minutes);
 }
 
 export function formatBudgetRange(

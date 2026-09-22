@@ -207,4 +207,51 @@ describe("live agent inquiry queue", () => {
     expect(html).toContain("Converted to Booking FUN-2026-00421");
     expect(html).toContain("Apex Robotics");
   });
+
+  it("keeps Book Now requests in Pending payment instead of Ready for Live Agent", () => {
+    const html = renderToStaticMarkup(
+      <LiveAgentInquiryQueue
+        timeZone="UTC"
+        inquiries={[
+          {
+            id: "inq_pending",
+            status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+            salesStage: "DEPOSIT_PENDING",
+            selectedEventPlanId: "plan_best",
+            humanHandoffReason: "CUSTOMER_SELECTED_PLAN",
+            assignedUserProfileId: null,
+            customerSelectedAt: new Date("2026-09-09T12:00:00.000Z"),
+            createdAt: new Date("2026-09-09T11:00:00.000Z"),
+            humanHandoffRequestedAt: new Date("2026-09-09T12:00:00.000Z"),
+            workflowStage: "READY_FOR_LIVE_AGENT",
+            aiHandlingEnabled: false,
+            customerGroupName: "Pending Party",
+            customerFirstName: "Ada",
+            customerLastName: "Lovelace",
+            customerEmail: "ada@example.com",
+            eventType: "Birthday Party",
+            desiredDate: new Date("2026-10-15T00:00:00.000Z"),
+            guestCount: 12,
+            assignedUser: null,
+            eventPlanRecommendations: [
+              {
+                id: "plan_best",
+                kind: EVENT_PLAN_KINDS.RECOMMENDATION,
+                title: "Best Fit",
+                estimatedTotalCents: 100000,
+                currency: "USD",
+                availabilityStatus: PLAN_AVAILABILITY_STATUSES.AVAILABLE,
+              },
+            ],
+            resourceReservations: [],
+            bookings: [{ id: "bk_pending", bookingNumber: "FUN-2026-00008", status: "PENDING_PAYMENT" }],
+          },
+        ]}
+      />,
+    );
+
+    expect(html).toContain("Pending payment");
+    expect(html).toContain("Pending Party");
+    expect(html).not.toContain("Ready for Live Agent");
+  });
 });

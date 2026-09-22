@@ -31,6 +31,7 @@ type BookingListRow = {
 };
 
 const FILTER_LABELS: Record<BookingListFilter, string> = {
+  [BOOKING_LIST_FILTERS.PENDING]: "Pending payment",
   [BOOKING_LIST_FILTERS.UPCOMING]: "Upcoming",
   [BOOKING_LIST_FILTERS.TODAY]: "Today",
   [BOOKING_LIST_FILTERS.WEEK]: "This Week",
@@ -62,7 +63,8 @@ export function BookingList({
 
   return (
     <div className="mt-8">
-      <form className="flex flex-wrap items-end gap-3" action="/app/bookings">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <form className="flex flex-wrap items-end gap-3" action="/app/bookings">
         <label className="text-sm">
           <span className="text-foreground/70">Search</span>
           <input
@@ -75,7 +77,14 @@ export function BookingList({
         <button type="submit" className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
           Search
         </button>
-      </form>
+        </form>
+        <Link
+          href="/app/bookings/new"
+          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
+        >
+          New Booking
+        </Link>
+      </div>
       <nav className="mt-4 flex flex-wrap gap-2" aria-label="Booking filters">
         {(Object.values(BOOKING_LIST_FILTERS) as BookingListFilter[]).map((value) => {
           const href = `/app/bookings?filter=${value}${search ? `&search=${encodeURIComponent(search)}` : ""}`;
@@ -93,7 +102,7 @@ export function BookingList({
         })}
       </nav>
       {bookings.length === 0 ? (
-        <p className="mt-8 text-sm text-foreground/70">No confirmed bookings in this view.</p>
+        <p className="mt-8 text-sm text-foreground/70">No bookings in this view.</p>
       ) : (
         <ul className="mt-6 space-y-3">
           {bookings.map((booking) => {
@@ -128,7 +137,9 @@ export function BookingList({
                     {` · ${bookingResourceSummary(booking.reservations)}`}
                   </p>
                   <p className="mt-2 text-xs text-foreground/55">
-                    Confirmed by {employeeDisplayName(booking.confirmedBy)}
+                    {booking.confirmedBy
+                      ? `Confirmed by ${employeeDisplayName(booking.confirmedBy)}`
+                      : "Not confirmed yet"}
                   </p>
                 </Link>
               </li>

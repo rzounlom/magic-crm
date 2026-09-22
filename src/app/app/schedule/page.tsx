@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MasterScheduleGrid } from "@/components/layout/master-schedule-grid";
+import { PendingBookingsPanel } from "@/components/layout/pending-bookings-panel";
 import { ScheduleDayNav } from "@/components/layout/schedule-day-nav";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
@@ -13,6 +14,7 @@ import {
   getMasterScheduleDay,
   listScheduleResourceTypes,
 } from "@/server/services/resource-schedule-service";
+import { listPendingBookingsForSchedule } from "@/server/services/booking-service";
 import { PERMISSIONS } from "@/types/permissions";
 
 function shiftDate(value: string, days: number) {
@@ -29,6 +31,7 @@ type View =
       types: Awaited<ReturnType<typeof listScheduleResourceTypes>>;
       selectedTypeId: string | null;
       day: Awaited<ReturnType<typeof getMasterScheduleDay>>;
+      pendingBookings: Awaited<ReturnType<typeof listPendingBookingsForSchedule>>;
       canHold: boolean;
       canRelease: boolean;
       timeZone: string;
@@ -46,10 +49,11 @@ async function loadView(search: {
     const ctx = await getRequestContext();
     const timeZone = await getCurrentTenantTimezone(ctx, db);
     const date = /^\d{4}-\d{2}-\d{2}$/.test(search.date ?? "") ? search.date! : calendarDateInTimeZone(new Date(), timeZone);
-    const [types, canHold, canRelease] = await Promise.all([
+    const [types, canHold, canRelease, pendingBookings] = await Promise.all([
       listScheduleResourceTypes(ctx, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CREATE, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_EDIT, db),
+      listPendingBookingsForSchedule(ctx, db, date),
     ]);
     const selectedTypeId = search.type && types.some((row) => row.id === search.type)
       ? search.type
@@ -61,6 +65,7 @@ async function loadView(search: {
       types,
       selectedTypeId,
       day,
+      pendingBookings,
       canHold,
       canRelease,
       timeZone,
@@ -94,8 +99,9 @@ export default async function MasterSchedulePage({
       <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Operations</p>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Master Schedule</h1>
       <p className="mt-4 max-w-2xl text-sm text-foreground/70">
-        Live occupancy from HOLD and BOOKED reservations. BOOKED cells open the Booking record. Available is
-        the absence of an active reservation. This is not a payment tool.
+        Live occupancy from confirmed reservations (and any leftover legacy holds). Pending unpaid bookings
+        appear in the list below and do not occupy the grid. Available is the absence of an active
+        reservation. This is not a payment tool.
       </p>
       <ScheduleDayNav
         date={view.date}
@@ -105,6 +111,7 @@ export default async function MasterSchedulePage({
         selectedTypeId={view.selectedTypeId}
         types={view.types}
       />
+      <PendingBookingsPanel bookings={view.pendingBookings} />
       {view.types.length === 0 ? (
         <p className="mt-8 text-sm text-foreground/70">
           No resource types are configured. An administrator can add them under Resources.

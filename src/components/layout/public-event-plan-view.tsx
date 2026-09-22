@@ -13,9 +13,11 @@ import { onSafeSubmitAttempt } from "@/lib/ui/confirm-gate";
 import { notify } from "@/lib/ui/notify";
 import { yieldToPaint } from "@/lib/ui/yield-to-paint";
 import { selectPublicEventPlanAction, reservePublicEventPlanAction } from "@/server/actions/public-inquiry";
-import { CUSTOMER_AVAILABILITY_NOTE, EVENT_PLAN_TIERS } from "@/types/event-planner";
+import { BOOK_NOW_EXPLANATION, CUSTOMER_AVAILABILITY_NOTE, EVENT_PLAN_TIERS } from "@/types/event-planner";
 import { DEPOSIT_PREVIEW_NOTE } from "@/types/catalog";
+import { BOOKING_STATUSES } from "@/types/booking";
 import { INQUIRY_SALES_STAGES } from "@/types/inquiry";
+import { PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 
 type PlanCard = {
   id: string;
@@ -36,6 +38,7 @@ export function PublicEventPlanView({
   plans,
   token,
   booking = null,
+  pendingBooking = null,
   hold = null,
   timeZone,
 }: {
@@ -57,6 +60,22 @@ export function PublicEventPlanView({
     startTime: string;
     endTime: string;
     guestCount: number;
+    status?: string | null;
+    totalCents?: number | null;
+    depositRequiredCents?: number | null;
+    currency?: string | null;
+  } | null;
+  pendingBooking?: {
+    bookingNumber: string;
+    eventDate: Date | string;
+    startTime: string;
+    endTime: string;
+    guestCount: number;
+    status?: string | null;
+    totalCents?: number | null;
+    depositRequiredCents?: number | null;
+    currency?: string | null;
+    selectedEventPlanId?: string | null;
   } | null;
   hold?: {
     expiresAt: Date | null;
@@ -67,9 +86,15 @@ export function PublicEventPlanView({
   const selectedId = inquiry.selectedEventPlanId;
   const firstName = inquiry.customerFirstName || "there";
   const selectedPlan = plans.find((plan) => plan.id === selectedId);
-  const confirmed = Boolean(booking);
+  const pendingPlan =
+    plans.find((plan) => plan.id === pendingBooking?.selectedEventPlanId) ?? selectedPlan;
+  const confirmed = Boolean(booking && booking.status !== BOOKING_STATUSES.PENDING_PAYMENT);
   const finalized = confirmed || inquiry.status === "BOOKED";
+  const pending = Boolean(pendingBooking) || inquiry.salesStage === INQUIRY_SALES_STAGES.DEPOSIT_PENDING;
   const reserved = Boolean(hold) || inquiry.salesStage === INQUIRY_SALES_STAGES.HOLD_PLACED;
+  const adjustmentNote = plans
+    .map((plan) => readEventPlanPayload(plan.payload))
+    .find((payload) => payload.itineraryAdjusted && payload.adjustmentNote)?.adjustmentNote;
 
   return (
     <section className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
@@ -78,6 +103,20 @@ export function PublicEventPlanView({
       </p>
       {confirmed && booking ? (
         <ConfirmedBookingPanel organizationName={organizationName} booking={booking} />
+      ) : pending && pendingBooking ? (
+        <PendingBookingPanel
+          organizationName={organizationName}
+          planTitle={pendingPlan?.title ?? "Selected package"}
+          booking={pendingBooking}
+          currency={pendingPlan?.currency || currency}
+        />
+      ) : pending ? (
+        <PendingBookingPanel
+          organizationName={organizationName}
+          planTitle={pendingPlan?.title ?? "Selected package"}
+          booking={null}
+          currency={pendingPlan?.currency || currency}
+        />
       ) : finalized ? (
         <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-5 py-6">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
@@ -110,9 +149,11 @@ export function PublicEventPlanView({
           <p className="mt-4 max-w-2xl text-sm text-foreground/70">
             {personalEventPlannerTitle(organizationName)} prepared options for {firstName}
             {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
-            {inquiry.eventGoal ? ` · ${inquiry.eventGoal}` : ""}. {CUSTOMER_AVAILABILITY_NOTE} You can reserve an
-            option for 24 hours, or ask an agent to follow up without holding inventory.
+            {inquiry.eventGoal ? ` · ${inquiry.eventGoal}` : ""}. {BOOK_NOW_EXPLANATION} You can book now
+            and complete payment next, or submit an inquiry for a team member to follow up. Inventory is
+            not reserved until payment is received.
           </p>
+          <AdjustmentNotice note={adjustmentNote} />
         </>
       )}
       {plans.length === 0 ? (
@@ -132,7 +173,7 @@ export function PublicEventPlanView({
               currency={currency}
               token={token}
               selected={selectedId === plan.id}
-              hideCta={Boolean(selectedId) || finalized}
+              hideCta={Boolean(selectedId) || finalized || pending}
             />
           ))}
         </div>
@@ -208,6 +249,85 @@ function HoldConfirmationPanel({
   );
 }
 
+function PendingBookingPanel({
+  organizationName,
+  planTitle,
+  booking,
+  currency,
+}: {
+  organizationName: string;
+  planTitle: string;
+  booking: {
+    bookingNumber: string;
+    eventDate: Date | string;
+    startTime: string;
+    endTime: string;
+    guestCount: number;
+    totalCents?: number | null;
+    depositRequiredCents?: number | null;
+    currency?: string | null;
+  } | null;
+  currency: string;
+}) {
+  const displayCurrency = booking?.currency || currency;
+  return (
+    <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-5 py-6">
+      <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">Booking request received</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">Booking request received</h1>
+      <p className="mt-3 max-w-2xl text-sm text-foreground/80">
+        Your booking request has been saved. The next step is the required deposit. Your booking is not yet
+        confirmed and inventory is not reserved until payment is received. A final availability check will be
+        performed when payment is completed.
+      </p>
+      <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-foreground/70">
+        <li>{planTitle}</li>
+        {booking ? (
+          <>
+            <li>Reference: {booking.bookingNumber}</li>
+            <li>{formatEventLocalDateTime({ date: booking.eventDate, time: booking.startTime })}</li>
+            <li>
+              {formatEventLocalTime(booking.startTime)}–{formatEventLocalTime(booking.endTime)} ·{" "}
+              {booking.guestCount} guests
+            </li>
+            {booking.totalCents != null ? (
+              <li>Total {formatMoneyFromCents(booking.totalCents, displayCurrency)}</li>
+            ) : null}
+            {booking.depositRequiredCents != null ? (
+              <li>Deposit required {formatMoneyFromCents(booking.depositRequiredCents, displayCurrency)}</li>
+            ) : null}
+          </>
+        ) : null}
+        <li>Your booking is not yet confirmed. The required deposit and final availability check are still needed.</li>
+        <li>
+          Online payment is not enabled in this test environment. {organizationName} can continue the booking
+          with you.
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+function AdjustmentNotice({ note }: { note?: string }) {
+  const [dismissed, setDismissed] = useState(false);
+  if (!note || dismissed) {
+    return null;
+  }
+  return (
+    <div className="mt-6 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-foreground">
+      <div className="flex items-start justify-between gap-3">
+        <p>{note}</p>
+        <button
+          type="button"
+          className="shrink-0 text-xs font-medium text-foreground/70 underline"
+          onClick={() => setDismissed(true)}
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ConfirmationPanel({
   organizationName,
   planTitle,
@@ -223,16 +343,16 @@ function ConfirmationPanel({
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
         {availabilityChanged
           ? "We’ve saved the package you’re interested in."
-          : "Thanks — we’ve saved the package you’re interested in."}
+          : "Thanks — your inquiry has been submitted."}
       </h1>
       <p className="mt-3 max-w-2xl text-sm text-foreground/80">
         {availabilityChanged
           ? `A member of the events team will follow up to confirm the final details and availability. Your preferred plan (${planTitle}) is saved. The time is not reserved.`
-          : `A member of the ${organizationName} events team will follow up with you to confirm the final details and availability.`}
+          : `A member of the ${organizationName} events team will follow up with you to review the details and help finalize your event.`}
       </p>
       <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-foreground/70">
-        <li>Your preference is saved — you do not need to fill everything out again.</li>
-        <li>Inventory is not held. The time is not reserved.</li>
+        <li>Your inquiry has been submitted — you do not need to fill everything out again.</li>
+        <li>Inventory is not reserved. The time is not held.</li>
         <li>{CUSTOMER_AVAILABILITY_NOTE}</li>
       </ul>
     </div>
@@ -260,6 +380,11 @@ function PlanOptionCard({
   const displayCurrency = plan.currency || currency;
   const duration = formatEventDuration(plan.durationMinutes ?? payload.durationMinutes);
   const availabilityNote = payload.customerAvailabilityNote || CUSTOMER_AVAILABILITY_NOTE;
+  const unavailable =
+    plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE ||
+    plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.NEEDS_ADJUSTMENT;
+  const canBookNow =
+    !unavailable && plan.availabilityStatus !== PLAN_AVAILABILITY_STATUSES.AVAILABILITY_CHANGED;
 
   return (
     <article
@@ -312,7 +437,7 @@ function PlanOptionCard({
 
       <PlanSection title="Dining">{payload.dining.label}</PlanSection>
 
-      <PlanSection title="Itinerary">
+      <PlanSection title="Sample Itinerary">
         {payload.itinerary && payload.itinerary.length > 0 ? (
           <ul className="list-disc space-y-1 pl-5">
             {payload.itinerary.map((segment) => (
@@ -340,9 +465,28 @@ function PlanOptionCard({
 
       <PlanSection title="Event Length">{duration}</PlanSection>
 
+      <PlanSection title="Availability">
+        {unavailable ? (
+          <p>Unavailable at the requested time.</p>
+        ) : payload.itineraryAdjusted ? (
+          <p>Adjusted from your requested time. This itinerary is currently viable.</p>
+        ) : plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.AVAILABLE ? (
+          <p>Currently available for the sample itinerary shown.</p>
+        ) : (
+          <p>{availabilityNote}</p>
+        )}
+      </PlanSection>
+
+      {payload.itineraryAdjusted ? (
+        <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
+          Adjusted from your requested time
+        </p>
+      ) : null}
+
       <PlanSection title="Why We Recommend This">
         <p>{plan.customerFacingReason}</p>
         <p className="mt-2 text-xs text-foreground/55">{availabilityNote}</p>
+        <p className="mt-2 text-xs text-foreground/55">{BOOK_NOW_EXPLANATION}</p>
         {payload.suggestedStartTimes && payload.suggestedStartTimes.length > 0 ? (
           <p className="mt-2 text-xs text-foreground/70">
             Nearby times to consider:{" "}
@@ -355,7 +499,12 @@ function PlanOptionCard({
         {selected ? (
           <p className="text-sm font-medium text-primary">You chose this event plan</p>
         ) : hideCta ? null : (
-          <ChoosePlanButton planId={plan.id} token={token} emphasized={recommended} />
+          <ChoosePlanButton
+            planId={plan.id}
+            token={token}
+            emphasized={recommended}
+            allowBookNow={canBookNow}
+          />
         )}
       </div>
     </article>
@@ -375,10 +524,12 @@ function ChoosePlanButton({
   planId,
   token,
   emphasized,
+  allowBookNow,
 }: {
   planId: string;
   token: string;
   emphasized: boolean;
+  allowBookNow: boolean;
 }) {
   const router = useRouter();
   const pendingRef = useRef(false);
@@ -401,6 +552,9 @@ function ChoosePlanButton({
       const result = await action(formData);
       if (!result.ok) {
         notify.error({ title: result.title ?? errorTitle, description: result.message });
+        if (result.code === "AVAILABILITY_CHANGED" || result.refresh) {
+          router.refresh();
+        }
         return;
       }
       router.refresh();
@@ -416,28 +570,34 @@ function ChoosePlanButton({
   return (
     <PendingActionProvider pending={pending}>
       <div className="space-y-2">
-        <form onSubmit={(event) => submit(event, reservePublicEventPlanAction, "Unable to reserve that plan")}>
+        {allowBookNow ? (
+        <form onSubmit={(event) => submit(event, reservePublicEventPlanAction, "Unable to save that booking request")}>
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="planId" value={planId} />
           <PendingSubmitButton
-            pendingLabel="Reserving…"
+            pendingLabel="Booking…"
             className={
               emphasized
                 ? "w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
                 : "w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
             }
           >
-            Reserve this option
+            Book Now
           </PendingSubmitButton>
         </form>
-        <form onSubmit={(event) => submit(event, selectPublicEventPlanAction, "Unable to save that plan")}>
+        ) : (
+          <p className="rounded-md border border-border px-3 py-2 text-sm text-foreground/70">
+            This option is not available at the requested time.
+          </p>
+        )}
+        <form onSubmit={(event) => submit(event, selectPublicEventPlanAction, "Unable to submit inquiry")}>
           <input type="hidden" name="token" value={token} />
           <input type="hidden" name="planId" value={planId} />
           <PendingSubmitButton
-            pendingLabel="Saving…"
+            pendingLabel="Submitting…"
             className="w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
           >
-            Have an agent contact me
+            Submit inquiry
           </PendingSubmitButton>
         </form>
       </div>

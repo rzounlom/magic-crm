@@ -171,27 +171,25 @@ async function createPlanInquiry(
 }
 
 describe("phase 3B holds and schedule (postgres)", () => {
-  it("places an exact 24-hour hold on customer reserve and leaves follow-up without inventory", async () => {
+  it("creates a pending unpaid booking on Book Now and leaves submit inquiry without occupancy", async () => {
     const tenant = await provisionTenant("path");
     const locationId = tenant.organization.locations[0]?.id ?? null;
     const { type } = await seedLanes(tenant.organizationId, locationId, 2);
     const reserved = await createPlanInquiry(tenant.organization, type, 1);
     const follow = await createPlanInquiry(tenant.organization, type, 1);
 
-    const hold = await reservePublicEventPlan(
+    const booked = await reservePublicEventPlan(
       db,
       { token: reserved.publicToken, planId: reserved.plan.id, rateLimitKey: reserved.publicToken },
       unlimitedLimiter,
     );
-    expect(hold.hold.resourceCount).toBe(1);
-    expect(hold.hold.depositRequiredCents).toBe(30_000);
+    expect(booked.booking.status).toBe(BOOKING_STATUSES.PENDING_PAYMENT);
+    expect(booked.booking.depositRequiredCents).toBe(30_000);
     const inquiry = await db.inquiry.findFirstOrThrow({ where: { id: reserved.inquiryId } });
-    expect(inquiry.salesStage).toBe(INQUIRY_SALES_STAGES.HOLD_PLACED);
+    expect(inquiry.salesStage).toBe(INQUIRY_SALES_STAGES.DEPOSIT_PENDING);
     expect(inquiry.status).toBe(INQUIRY_STATUSES.READY_FOR_HUMAN);
-    const rows = await db.resourceReservation.findMany({ where: { inquiryId: reserved.inquiryId } });
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.status).toBe(RESOURCE_RESERVATION_STATUSES.HOLD);
-    expect(rows[0]?.expiresAt?.getTime()).toBeGreaterThan(Date.now() + 23 * 60 * 60 * 1000);
+    expect(await db.resourceReservation.count({ where: { inquiryId: reserved.inquiryId } })).toBe(0);
+    expect(await db.booking.count({ where: { inquiryId: reserved.inquiryId } })).toBe(1);
 
     await selectPublicEventPlan(
       db,
@@ -200,10 +198,11 @@ describe("phase 3B holds and schedule (postgres)", () => {
     );
     const followInquiry = await db.inquiry.findFirstOrThrow({ where: { id: follow.inquiryId } });
     expect(followInquiry.salesStage).toBe(INQUIRY_SALES_STAGES.READY_TO_BOOK);
+    expect(await db.booking.count({ where: { inquiryId: follow.inquiryId } })).toBe(0);
     expect(await db.resourceReservation.count({ where: { inquiryId: follow.inquiryId } })).toBe(0);
   }, 60_000);
 
-  it("lets only one concurrent hold win the same physical resource", async () => {
+  it("lets two customers Book Now the same slot because pending bookings do not occupy inventory", async () => {
     const tenant = await provisionTenant("race");
     const locationId = tenant.organization.locations[0]?.id ?? null;
     const { type } = await seedLanes(tenant.organizationId, locationId, 1);
@@ -222,25 +221,23 @@ describe("phase 3B holds and schedule (postgres)", () => {
         unlimitedLimiter,
       ),
     ]);
-    const wins = results.filter((row) => row.status === "fulfilled");
-    const losses = results.filter((row) => row.status === "rejected");
-    expect(wins).toHaveLength(1);
-    expect(losses).toHaveLength(1);
-    const loss = losses[0];
-    expect(loss.status).toBe("rejected");
-    if (loss.status === "rejected") {
-      expect(loss.reason).toBeInstanceOf(InquiryError);
-      expect((loss.reason as InquiryError).code).toBe("AVAILABILITY_CHANGED");
-    }
+    expect(results.filter((row) => row.status === "fulfilled")).toHaveLength(2);
+    expect(
+      await db.booking.count({
+        where: {
+          organizationId: tenant.organizationId,
+          status: BOOKING_STATUSES.PENDING_PAYMENT,
+        },
+      }),
+    ).toBe(2);
     expect(
       await db.resourceReservation.count({
         where: {
           organizationId: tenant.organizationId,
-          status: RESOURCE_RESERVATION_STATUSES.HOLD,
           releasedAt: null,
         },
       }),
-    ).toBe(1);
+    ).toBe(0);
   }, 60_000);
 
   it("does not leave a partial multi-resource hold", async () => {
@@ -273,7 +270,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     expect(inquiry.salesStage).not.toBe(INQUIRY_SALES_STAGES.HOLD_PLACED);
   }, 60_000);
 
-  it("treats double-click reserve as one logical hold", async () => {
+  it("treats double-click Book Now as one pending booking", async () => {
     const tenant = await provisionTenant("idem");
     const locationId = tenant.organization.locations[0]?.id ?? null;
     const { type } = await seedLanes(tenant.organizationId, locationId, 2);
@@ -290,10 +287,10 @@ describe("phase 3B holds and schedule (postgres)", () => {
         unlimitedLimiter,
       ),
     ]);
-    expect(results.some((row) => row.hold.reused) || results.every((row) => row.hold.inquiryId === created.inquiryId)).toBe(
-      true,
-    );
-    expect(await db.resourceReservation.count({ where: { inquiryId: created.inquiryId, releasedAt: null } })).toBe(1);
+    expect(results[0]?.booking.id).toBe(results[1]?.booking.id);
+    expect(await db.booking.count({ where: { inquiryId: created.inquiryId } })).toBe(1);
+    expect(await db.bookingLineItem.count({ where: { bookingId: results[0]!.booking.id } })).toBeGreaterThan(0);
+    expect(await db.resourceReservation.count({ where: { inquiryId: created.inquiryId, releasedAt: null } })).toBe(0);
   }, 60_000);
 
   it("expires holds with a controllable clock and never expires BOOKED rows", async () => {
@@ -577,6 +574,9 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const booked = await db.booking.count({
       where: { organizationId: tenant.organizationId, inquiryId: heldInquiry.inquiryId },
     });
+    const competingBookings = await db.booking.count({
+      where: { inquiryId: competing.inquiryId },
+    });
     const competingHolds = await db.resourceReservation.count({
       where: { inquiryId: competing.inquiryId, releasedAt: null, status: RESOURCE_RESERVATION_STATUSES.HOLD },
     });
@@ -589,15 +589,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     } else {
       expect(heldRows.every((row) => row.status === RESOURCE_RESERVATION_STATUSES.HOLD)).toBe(true);
     }
-    expect(
-      await db.resourceReservation.count({
-        where: {
-          organizationId: tenant.organizationId,
-          status: { in: [RESOURCE_RESERVATION_STATUSES.HOLD, RESOURCE_RESERVATION_STATUSES.BOOKED] },
-          releasedAt: null,
-        },
-      }),
-    ).toBe(1);
+    expect(competingBookings).toBeLessThanOrEqual(1);
   }, 60_000);
 
   it("does not let expiry cancel a booking that already converted, and does not revive a released hold", async () => {

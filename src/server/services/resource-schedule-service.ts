@@ -106,6 +106,35 @@ export async function getMasterScheduleDay(
   };
 }
 
+export async function listActiveResourceTypeCounts(
+  database: ScheduleDb,
+  organizationId: string,
+  locationId: string | null | undefined,
+) {
+  const types = await database.resourceType.findMany({
+    where: { organizationId, active: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      _count: {
+        select: {
+          resources: {
+            where: resourcesInLocationWhere(locationId),
+          },
+        },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+  return types.map((row) => ({
+    resourceTypeId: row.id,
+    resourceTypeName: row.name,
+    resourceTypeSlug: row.slug,
+    activeQuantity: row._count.resources,
+  }));
+}
+
 export function scheduleDisplayName(record: {
   customerGroupName: string | null;
   customerFirstName: string | null;

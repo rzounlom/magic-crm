@@ -23,9 +23,20 @@ export type InquiryWorkflowStage =
 export const INQUIRY_WORKFLOW_STAGE_LABELS: Record<InquiryWorkflowStage, string> = {
   [INQUIRY_WORKFLOW_STAGES.READY_FOR_LIVE_AGENT]: "Ready for live agent",
   [INQUIRY_WORKFLOW_STAGES.AGENT_WORKING]: "Agent working",
-  [INQUIRY_WORKFLOW_STAGES.HOLD_PLACED]: "Resources held",
+  [INQUIRY_WORKFLOW_STAGES.HOLD_PLACED]: "Legacy hold",
   [INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE]: "Ready to finalize",
 };
+
+export const INQUIRY_LIST_VIEWS = {
+  ACTIVE: "active",
+  ARCHIVED: "archived",
+} as const;
+
+export type InquiryListView = (typeof INQUIRY_LIST_VIEWS)[keyof typeof INQUIRY_LIST_VIEWS];
+
+export function parseInquiryListView(value: string | null | undefined): InquiryListView {
+  return value === INQUIRY_LIST_VIEWS.ARCHIVED ? INQUIRY_LIST_VIEWS.ARCHIVED : INQUIRY_LIST_VIEWS.ACTIVE;
+}
 
 export const INQUIRY_SALES_STAGES = {
   INQUIRY: "INQUIRY",
@@ -40,6 +51,17 @@ export const INQUIRY_SALES_STAGES = {
 
 export type InquirySalesStage = (typeof INQUIRY_SALES_STAGES)[keyof typeof INQUIRY_SALES_STAGES];
 
+export const INQUIRY_SALES_STAGE_LABELS: Record<InquirySalesStage, string> = {
+  [INQUIRY_SALES_STAGES.INQUIRY]: "Inquiry",
+  [INQUIRY_SALES_STAGES.PROPOSAL_READY]: "Proposal ready",
+  [INQUIRY_SALES_STAGES.READY_TO_BOOK]: "Ready for live agent",
+  [INQUIRY_SALES_STAGES.HOLD_PLACED]: "Legacy hold",
+  [INQUIRY_SALES_STAGES.DEPOSIT_PENDING]: "Pending payment",
+  [INQUIRY_SALES_STAGES.BOOKED]: "Confirmed booking",
+  [INQUIRY_SALES_STAGES.CLOSED]: "Closed",
+  [INQUIRY_SALES_STAGES.LOST]: "Lost",
+};
+
 export const EVENT_PLAN_KINDS = {
   RECOMMENDATION: "RECOMMENDATION",
   AGENT_WORKING: "AGENT_WORKING",
@@ -53,6 +75,7 @@ export const INQUIRY_SOURCES = {
   WEB: "WEB",
   EMAIL: "EMAIL",
   SMS: "SMS",
+  EMPLOYEE: "EMPLOYEE",
 } as const;
 
 export type InquirySource = (typeof INQUIRY_SOURCES)[keyof typeof INQUIRY_SOURCES];

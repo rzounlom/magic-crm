@@ -7,8 +7,9 @@ import {
 } from "@/server/catalog/requirements";
 import { applyAvailabilityProvider, type PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import type { PlannerInquiryFacts } from "@/server/event-planner/build-event-plans";
+import { searchViableStructuredItinerary } from "@/server/resources/itinerary-search";
 import { planAvailabilityStatusFromCheck } from "@/server/resources/plan-availability-status";
-import { findNearbyAvailableStarts } from "@/server/services/nearby-availability";
+import { stampPlanResourceWindows } from "@/server/resources/segment-windows";
 import {
   ATTRACTION_MODES,
   type CatalogProductInput,
@@ -225,71 +226,79 @@ export async function buildCatalogEventPlans(input: {
     const lineItems: PricedLineItem[] = quotes.flatMap((quote) => quote.lineItems);
     const totalCents = quotes.reduce((sum, quote) => sum + quote.totalCents, 0);
     const pricingComplete = quotes.every((quote) => quote.pricingComplete);
-    const itinerary = buildItinerary({
-      startTime: input.inquiry.desiredStartTime,
+    const selectedProducts = selected.map((row) => ({
+      id: row.id,
+      name: row.name,
+      kind: row.kind,
+      durationMinutes: row.durationMinutes,
+    }));
+    const requestedStartTime = input.inquiry.desiredStartTime;
+    let itinerary = buildItinerary({
+      startTime: requestedStartTime,
       durationMinutes,
       foodFirst: profile.foodFirst,
-      products: selected.map((row) => ({
-        id: row.id,
-        name: row.name,
-        kind: row.kind,
-        durationMinutes: row.durationMinutes,
-      })),
+      products: selectedProducts,
     });
-    const resourceRequirements = deriveCatalogResourceRequirements({
+    const baseRequirements = deriveCatalogResourceRequirements({
       productIds: selected.map((row) => row.id),
       guestCount: input.inquiry.guestCount,
       durationMinutes,
       requirements: input.resourceRequirements,
     });
+    let resourceRequirements = stampPlanResourceWindows({
+      itinerary,
+      startTime: requestedStartTime,
+      resourceRequirements: baseRequirements,
+    });
     const food = selected.find((row) => row.kind === "FOOD");
     const spaces = selected.filter((row) => row.kind === "RENTAL");
     const activities = selected.filter((row) => row.kind !== "FOOD" && row.kind !== "RENTAL");
+    const availabilityInput = (startTime: string, requirements = resourceRequirements) => ({
+      eventDate: input.inquiry.desiredDate,
+      startTime,
+      durationMinutes,
+      guestCount: input.inquiry.guestCount,
+      activities: activities.map((row) => ({
+        knowledgeItemId: row.id,
+        productId: row.id,
+        name: row.name,
+        quantity: 1,
+        priceCents: quotes.find((quote) => quote.productId === row.id)?.totalCents ?? 0,
+      })),
+      spaces: spaces.map((row) => ({
+        knowledgeItemId: row.id,
+        name: row.name,
+        priceCents: quotes.find((quote) => quote.productId === row.id)?.totalCents ?? 0,
+      })),
+      resourceRequirements: requirements,
+      excludeInquiryId: input.excludeInquiryId,
+    });
     const availability = await applyAvailabilityProvider(
-      {
-        eventDate: input.inquiry.desiredDate,
-        startTime: input.inquiry.desiredStartTime,
-        durationMinutes,
-        guestCount: input.inquiry.guestCount,
-        activities: activities.map((row) => ({
-          knowledgeItemId: row.id,
-          productId: row.id,
-          name: row.name,
-          quantity: 1,
-          priceCents: quotes.find((quote) => quote.productId === row.id)?.totalCents ?? 0,
-        })),
-        spaces: spaces.map((row) => ({
-          knowledgeItemId: row.id,
-          name: row.name,
-          priceCents: quotes.find((quote) => quote.productId === row.id)?.totalCents ?? 0,
-        })),
-        resourceRequirements,
-        excludeInquiryId: input.excludeInquiryId,
-      },
+      availabilityInput(requestedStartTime ?? ""),
       input.availabilityProvider,
     );
-    const result: ResourceAvailabilityResult = {
+    let result: ResourceAvailabilityResult = {
       validated: availability.validated === true,
       available: availability.available ?? availability.validated === true,
       note: availability.note ?? CUSTOMER_AVAILABILITY_NOTE,
       types: availability.types ?? [],
     };
     let suggestedStartTimes: string[] = [];
-    if (result.validated && !result.available && input.availabilityProvider && input.inquiry.desiredStartTime) {
-      const nearby = await findNearbyAvailableStarts({
-        startTime: input.inquiry.desiredStartTime,
-        check: async (startTime) => {
+    let itineraryAdjusted = false;
+    let adjustmentNote = "";
+    let conflictingActivityLabels: string[] = [];
+    let viableStartTime = requestedStartTime;
+
+    if (input.availabilityProvider) {
+      const viable = await searchViableStructuredItinerary({
+        requestedStartTime,
+        durationMinutes,
+        foodFirst: profile.foodFirst,
+        products: selectedProducts,
+        baseRequirements,
+        check: async ({ startTime, requirements }) => {
           const next = await applyAvailabilityProvider(
-            {
-              eventDate: input.inquiry.desiredDate,
-              startTime,
-              durationMinutes,
-              guestCount: input.inquiry.guestCount,
-              activities: [],
-              spaces: [],
-              resourceRequirements,
-              excludeInquiryId: input.excludeInquiryId,
-            },
+            availabilityInput(startTime, requirements),
             input.availabilityProvider,
           );
           return {
@@ -300,7 +309,20 @@ export async function buildCatalogEventPlans(input: {
           };
         },
       });
-      suggestedStartTimes = nearby.map((row) => row.startTime);
+      if (viable) {
+        itinerary = viable.itinerary;
+        resourceRequirements = viable.requirements;
+        result = viable.availability;
+        viableStartTime = viable.startTime;
+        itineraryAdjusted = viable.adjusted;
+        adjustmentNote = viable.adjustmentNote;
+        conflictingActivityLabels = viable.originalConflictLabels;
+        if (viable.adjusted) {
+          suggestedStartTimes = [viable.startTime];
+        }
+      } else if (result.validated && !result.available) {
+        suggestedStartTimes = [];
+      }
     }
 
     const availabilityStatus = planAvailabilityStatusFromCheck({
@@ -312,6 +334,7 @@ export async function buildCatalogEventPlans(input: {
     const names = selected.map((row) => row.name).join(", ");
     const locationExclusive = resourceRequirements.some((row) => row.locationExclusive);
     const exclusiveNote = locationExclusive ? " Private use of the full facility." : "";
+    const viable = result.validated && result.available;
 
     drafts.push({
       tier: config.tier,
@@ -325,21 +348,22 @@ export async function buildCatalogEventPlans(input: {
         (config.tier === EVENT_PLAN_TIERS.BEST_FIT
           ? `Recommended mix for this group: ${names}.`
           : `Includes ${names}.`) + exclusiveNote,
-      availabilityValidated: result.validated && result.available,
+      availabilityValidated: viable,
       availabilityNote:
-        suggestedStartTimes.length > 0
-          ? `${result.note} Nearby times currently open: ${suggestedStartTimes.join(", ")}.`
-          : result.note,
-      availabilityStatus:
-        availabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE && suggestedStartTimes.length > 0
-          ? PLAN_AVAILABILITY_STATUSES.UNAVAILABLE
-          : availabilityStatus,
+        itineraryAdjusted && adjustmentNote
+          ? adjustmentNote
+          : suggestedStartTimes.length > 0
+            ? `${result.note} Nearby times currently open: ${suggestedStartTimes.join(", ")}.`
+            : result.note,
+      availabilityStatus: viable
+        ? PLAN_AVAILABILITY_STATUSES.AVAILABLE
+        : availabilityStatus,
       payload: {
         organizationId: input.organizationId,
         locationId: input.locationId ?? null,
         guestCount: input.inquiry.guestCount,
         eventDate: input.inquiry.desiredDate,
-        startTime: input.inquiry.desiredStartTime,
+        startTime: viableStartTime,
         durationMinutes,
         activities: activities.map((row) => {
           const quote = quotes.find((item) => item.productId === row.id);
@@ -370,10 +394,14 @@ export async function buildCatalogEventPlans(input: {
         depositPreviewPercent: depositPercent,
         depositPreviewNote: depositPreviewNote(depositPercent),
         suggestedStartTimes,
+        requestedStartTime,
+        itineraryAdjusted,
+        adjustmentNote: itineraryAdjusted ? adjustmentNote : undefined,
+        conflictingActivityLabels,
         catalogBacked: true,
         locationExclusive,
         pricingComplete,
-        customerAvailabilityNote: CUSTOMER_AVAILABILITY_NOTE,
+        customerAvailabilityNote: itineraryAdjusted && adjustmentNote ? adjustmentNote : CUSTOMER_AVAILABILITY_NOTE,
         resourceRequirements,
       },
     });

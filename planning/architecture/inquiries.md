@@ -1,6 +1,8 @@
 # Inquiries (Phase 3A)
 
-Inquiry is the CRM lead / event-sales anchor. Public customers complete a structured **Personal Event Planner** form. The same Inquiry remains throughout sales. After **Confirm Booking**, a distinct `Booking` record becomes the operational source of truth. This phase does not implement payments or outbound email delivery.
+Inquiry is the CRM lead / event-sales anchor. Public customers complete a structured **Personal Event Planner** form. The same Inquiry remains throughout sales. **Book Now** creates a pending unpaid `Booking`. **Confirm Payment & Book** (and future Stripe) allocates BOOKED resources. This phase does not implement payments or outbound email delivery.
+
+**Pending bookings do not block inventory. Physical resources become unavailable only when a booking is confirmed after payment.**
 
 See also [`resource-schedule.md`](./resource-schedule.md) (shared finite-resource availability) and [`communications.md`](./communications.md) (plan-selection vs booking-confirmed emails).
 
@@ -46,34 +48,38 @@ If fewer than three valid options exist, persist what is feasible. If none exist
 
 ## Customer continuation
 
-`/plan/{token}` shows the generated cards. Opening the link sets `recommendationsViewedAt`. **Choose This Event Plan** stores `selectedEventPlanId` / `customerSelectedAt` on the same inquiry, sets `READY_FOR_HUMAN` with `humanHandoffReason = CUSTOMER_SELECTED_PLAN`, pauses conversational AI, and emits `event_plan.selected` (email is skipped until a provider exists). Inventory is not held or booked.
+`/plan/{token}` shows the generated cards. Opening the link sets `recommendationsViewedAt`. **Book Now** creates one pending unpaid Booking (`DEPOSIT_PENDING`) from the selected snapshot and does not occupy inventory. **Submit inquiry** sets `READY_FOR_HUMAN` with `humanHandoffReason = CUSTOMER_SELECTED_PLAN`, pauses conversational AI, and does not create a Booking. Email is skipped until a provider exists.
 
 The token is the existing 32-byte public conversation token. Only the SHA-256 hash is stored.
 
 ## Employee UI
 
-- `/app/inquiries` — `crm.inquiries.view`. **Ready for Live Agent** is the live-booking queue. Inquiries with `humanHandoffReason = CUSTOMER_SELECTED_PLAN` are listed first with **CUSTOMER SELECTED PLAN — READY TO BOOK**. Converted inquiries (`status = BOOKED`) leave that queue and appear under Bookings.
-- `/app/inquiries/[id]` — same view permission. Customer-selected inquiries open the **Live Agent Booking Workspace** (original snapshot + Current Agent Version). After conversion the workspace shows **Converted to Booking** with a link to `/app/bookings/{id}`.
-- `/app/bookings` and `/app/bookings/[id]` — `events.view`. Operational list and read-only detail for confirmed Bookings.
-- Start Working records `assignedUserProfileId` / `assignedAt` and copies the selected plan into an `EventPlanRecommendation` row with `kind = AGENT_WORKING`. The customer-selected row is never overwritten.
-- **Confirm Booking** requires `events.confirm` plus `crm.inquiries.manage`, a Current Agent Version, and an active unexpired HOLD covering finite requirements. It is atomic: Booking + line items + HOLD→BOOKED + Inquiry `BOOKED` + audit, then `booking.confirmed`. Ready to Finalize is not required on the held-proposal path.
-- Inquiry list (`listInquiries` and the Ready for Live Agent queue) is newest `createdAt` first, with `id` DESC as a tie-break. Customer-selected plans stay grouped above other ready-for-human rows.
+- `/app/inquiries` — `crm.inquiries.view`. Default **Active** list is `archivedAt = null`. **Archived** (`?view=archived`) is newest-first. **Pending payment** is grouped above **Ready for Live Agent**. Converted inquiries (`status = BOOKED`) leave that queue and appear under Bookings.
+- `/app/inquiries/[id]` — same view permission. Opens the employee booking workspace (original customer selection + working booking plan, or booked plan after confirmation). Pending bookings stay editable until confirmation. Archive / Unarchive require `crm.inquiries.manage` and do not cancel bookings. If a pending or confirmed booking still exists, the archive dialog warns and links to it.
+- `/app/bookings` and `/app/bookings/[id]` — `events.view`. Includes a Pending payment filter. Confirmed records are read-only. **New Booking** (`/app/bookings/new`, `events.create` + `crm.inquiries.manage`) creates an Inquiry with `source = EMPLOYEE`, no public conversation, and generates plans with the same engine.
+- Start Working records `assignedUserProfileId` / `assignedAt` and copies the selected plan into an `EventPlanRecommendation` row with `kind = AGENT_WORKING`. The customer-selected row is never overwritten. Pricing-affecting edits recalculate on the server.
+- **Check Availability** requires inquiry manage permission. It does not insert occupancy. Conflicts show an inline panel with selectable nearby starts; they do not auto-change the working plan.
+- **Save Pending Booking** persists unpaid commercial intent without occupancy.
+- **Confirm Payment & Book** requires `events.confirm` plus `crm.inquiries.manage`. `crm.inquiries.view` cannot confirm. It calls `confirmPendingBooking` (atomic BOOKED allocation **per itinerary segment**). Confirm loads live DB state and does not fail solely because Check Availability bumped a plan row. Ready to Finalize and Place Hold are not required for new records.
+- **Cancel Booking** requires `events.cancel`. See [`booking.md`](./booking.md).
+- Inquiry list is newest `createdAt` first, with `id` DESC as a tie-break. Archived inquiries are excluded unless **Archived** is selected.
 - Contact customer (mailto / copy phone and email) is available now. Proposal, deposit, and booking edits are not built.
 - Internal notes use `Inquiry.employeeInternalNotes` and are never shown on `/plan/{token}`
 - Take over / leftover conversation notes — `crm.inquiries.manage`
 
 Front Desk does not receive inquiry permissions. Event Sales can view/manage inquiries, view the Master Schedule, and place/release permitted holds. They do not receive Admin Resource Configuration (`inventory.manage`). Administrators have all keys. `ai.manage` is required to create/edit sales knowledge (`/app/admin/ai/knowledge`).
 
-Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK**. Staff should start from the chosen package rather than repeating discovery. Selection is not a reservation. **Confirm Booking** creates the Booking record from the Current Agent Version and converts HOLDs to BOOKED.
+Selected-plan copy: **CUSTOMER SELECTED PLAN — READY TO BOOK** for Submit inquiry. Book Now uses **Pending payment**. Selection is not a reservation.
 
-Workflow stays on `Inquiry.status = READY_FOR_HUMAN` until confirmation. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → `HOLD_PLACED` → optional legacy `READY_TO_FINALIZE`. Commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (customer chose a plan) → `HOLD_PLACED` → `BOOKED`.
+Workflow stays on `Inquiry.status = READY_FOR_HUMAN` until confirmation. Substatus is `workflowStage`: `READY_FOR_LIVE_AGENT` → `AGENT_WORKING` → optional legacy `HOLD_PLACED` / `READY_TO_FINALIZE`. Commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (Submit inquiry) → `DEPOSIT_PENDING` (Book Now) → `BOOKED`. Cancellation sets `CLOSED`. Legacy `HOLD_PLACED` remains readable. Archive is `archivedAt` / `archivedByUserProfileId`, not a business status. Unarchive clears those fields and returns the inquiry to Active based on its persisted status. Conversation and customer data are kept.
 
 Employee booking UI:
 
-- Held proposal: Start Working → Review → Confirm Booking
-- No-hold live-agent path: Start Working → Review → Place Hold → Confirm Booking
+- New Booking (no public inquiry): enter details → Generate plan → Check Availability → Save Pending and/or Confirm Payment & Book
+- Pending booking: Review/Edit → Check Availability → Confirm Payment & Book
+- Live-agent inquiry: Review/Edit → Check Availability → save pending if needed → Confirm Payment & Book after external payment
 
-`READY_TO_FINALIZE` remains persisted for older rows. It is not a required gate before Confirm Booking.
+`READY_TO_FINALIZE` remains persisted for older rows. It is not a required gate. Place Hold is not part of the new flow.
 
 ## Status workflow
 
@@ -105,19 +111,23 @@ Phone is stored as normalized 10-digit digits. Display with `formatPhoneDisplay`
 
 ## Live Agent Booking Workspace
 
-Customer-selected inquiries open a staff workspace on the same Inquiry. The customer-selected `EventPlanRecommendation` (`kind = RECOMMENDATION`) remains the historical choice. Staff edits persist on a separate `AGENT_WORKING` row (`Inquiry.agentWorkingPlanId`). Saving a draft reprices from sales knowledge and re-runs `checkResourceAvailability`. Place / Update / Extend / Release Hold reuse `resource-hold-service` and never create `BOOKED` rows.
+Customer-selected inquiries open a staff workspace on the same Inquiry. The customer-selected `EventPlanRecommendation` (`kind = RECOMMENDATION`) remains the historical choice. Staff edits persist on a separate `AGENT_WORKING` row (`Inquiry.agentWorkingPlanId`). Saving a draft reprices from catalog/sales knowledge and re-runs `checkResourceAvailability`. If a pending Booking already exists, the same save updates that booking in place. Check Availability does not insert occupancy. Confirm Payment & Book calls `confirmPendingBooking` and does not require Place Hold.
 
-The Current Agent Version is the source for Confirm Booking (inquiry, date/time, guests, products, pricing, rotations, holds). The customer-selected recommendation stays immutable history. After confirmation the Booking is the operational record; the working draft is not edited further.
+The working booking plan is the source for confirmation (inquiry, date/time, guests, products, pricing, rotations). The original customer selection stays immutable history. After confirmation the Booking is the operational record and is shown as **Booked plan**; the working draft is not edited further. Allocated resources come from that booking’s BOOKED `ResourceReservation` rows. Legacy HOLD rows remain releasable until they expire or convert, and are labeled only when those HOLD rows actually exist.
+
+**Start Working** assigns the current employee and copies the selected plan into `AGENT_WORKING`. It does not alter the customer snapshot, create occupancy, or change price.
+
+The customer-selected Book Now flow does not show generic Switch Package. Staff change guest count, time, activities, dining, or room on the working plan; the server recalculates.
 
 ## Next
 
-See [`catalog.md`](./catalog.md), [`proposal-engine.md`](./proposal-engine.md), [`resource-schedule.md`](./resource-schedule.md), and [`booking.md`](./booking.md). Phase 3A catalog-backed proposals are complete. Phase 3A.5 location/tenant hardening is complete. Phase 3B is 24-hour exact-resource holds, hold expiry, Master Schedule, and manual Confirm Booking. Phase 3C is email and Stripe.
+See [`catalog.md`](./catalog.md), [`proposal-engine.md`](./proposal-engine.md), [`resource-schedule.md`](./resource-schedule.md), and [`booking.md`](./booking.md). Phase 3A catalog-backed proposals are complete. Phase 3A.5 location/tenant hardening is complete. Phase 3B transactional occupancy is complete. **Phase 3B.4** is segment-level scheduling, availability-aware proposals, and employee New Booking. **Phase 3B.4a** is booking cancellation and inquiry archive (no hard-delete). **Phase 3B.4b** is employee workspace truth (original / working / confirmed / allocated / legacy HOLD). Next planned work: resume availability/overbooking browser acceptance. Do not start the intake + food + room + recommendation-band redesign yet. Phase 3C is Stripe and email.
 
 Related employee-shell follow-up (not this inbox): sticky authenticated header. See `ui-conventions.md`.
 
 ## Channel abstraction
 
-`Inquiry.source` and `Conversation.channel` already include `WEB`, `EMAIL`, and `SMS`. Only WEB is implemented. One inquiry may have multiple conversations later. The public token currently lives on the WEB conversation.
+`Inquiry.source` and `Conversation.channel` already include `WEB`, `EMAIL`, and `SMS`. Employee-created records use `Inquiry.source = EMPLOYEE` and do not create a conversation. Only WEB is implemented for public customers. One inquiry may have multiple conversations later. The public token currently lives on the WEB conversation.
 
 ## Failure behavior
 

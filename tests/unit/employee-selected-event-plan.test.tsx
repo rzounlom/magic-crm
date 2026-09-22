@@ -58,15 +58,15 @@ describe("employee selected event plan", () => {
     );
 
     expect(html).toContain("CUSTOMER SELECTED PLAN — READY TO BOOK");
-    expect(html).toContain("Customer Selected Plan");
+    expect(html).toContain("Original customer selection");
     expect(html).toContain("Go-Karts");
     expect(html).toContain("Catered Slider Bar");
     expect(html).toContain("Private Event Room");
     expect(html).toContain("No — confirm before booking");
-    expect(html).toContain("Inventory is not held");
+    expect(html).toContain("Inventory is reserved only after a booking is confirmed");
     expect(html).toContain("Finite resources needed");
     expect(html).toContain("inventory not configured");
-    expect(html).toContain("original snapshot");
+    expect(html).toContain("Original customer selection");
     expect(html).not.toContain("booking tools are not available yet");
     expect(html).not.toContain("ranking");
     expect(html).toContain("5:30 PM–6:30 PM Go-Karts first.");
