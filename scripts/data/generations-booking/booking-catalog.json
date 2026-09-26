@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "depositPercent": 25,
   "sourceFiles": [
     "Product Price List G1 (1).xlsx",
     "Generations_Food_Options_Pricing_List (1).xlsx"
@@ -429,6 +430,7 @@
       "audience": "MIXED",
       "categorySlug": "timed-attractions",
       "durationMinutes": null,
+      "schedulingBehavior": "NON_SCHEDULED",
       "minGuests": 1,
       "maxGuests": null,
       "weekendOnly": false,

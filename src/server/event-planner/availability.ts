@@ -22,6 +22,8 @@ export type AvailabilityCheckResult = {
 
 export type PlanAvailabilityProvider = {
   check(input: AvailabilityCheckInput): AvailabilityCheckResult | Promise<AvailabilityCheckResult>;
+  /** Occupancy snapshot load time for the latest advisory search. Not used by confirmation. */
+  lastQueryPhaseMs?: number;
 };
 
 export const STATIC_AVAILABILITY_NOTE =

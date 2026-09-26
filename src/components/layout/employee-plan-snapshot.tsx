@@ -4,6 +4,7 @@ import { formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money"
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import { displayPlanTitle } from "@/lib/inquiries/employee-workspace-state";
 import { formatItineraryLine } from "@/lib/inquiries/tenant-datetime";
+import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
 
 export function EmployeePlanSnapshot({
   title,
@@ -75,7 +76,7 @@ export function EmployeePlanSnapshot({
         <div className="mt-4 text-sm">
           <p className="text-foreground/60">Sample Itinerary</p>
           <ul className="mt-1 list-disc pl-5 text-foreground/80">
-            {plan.itinerary.map((segment) => (
+            {plan.itinerary.filter(isSampleItinerarySegment).map((segment) => (
               <li key={`${segment.startTime}-${segment.label}`}>
                 {formatItineraryLine(`${segment.startTime}–${segment.endTime} ${segment.label}`)}
               </li>

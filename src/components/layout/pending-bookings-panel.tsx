@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { formatMoneyFromCents } from "@/lib/event-planner/money";
+import { formatEstimatedDepositLine, formatMoneyFromCents } from "@/lib/event-planner/money";
 import { formatEventLocalDateTime } from "@/lib/inquiries/tenant-datetime";
 
 type PendingBookingRow = {
@@ -57,7 +57,7 @@ export function PendingBookingsPanel({
                     <p className="mt-1 text-foreground/70">
                       {formatMoneyFromCents(booking.totalCents, booking.currency)}
                       {booking.depositRequiredCents > 0
-                        ? ` · Deposit required ${formatMoneyFromCents(booking.depositRequiredCents, booking.currency)}`
+                        ? ` · ${formatEstimatedDepositLine(booking.depositRequiredCents, null, booking.currency)}`
                         : ""}
                     </p>
                   </div>

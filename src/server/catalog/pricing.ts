@@ -71,9 +71,8 @@ export function percentOfCents(cents: number, percent: number): number {
   return Math.trunc((cents * percent + 50) / 100);
 }
 
+/** Schema default when a tenant percent is missing or invalid. Not a per-tenant display override. */
 export const DEFAULT_DEPOSIT_PERCENT = 30;
-
-// TODO(Phase 3C): Confirm Generations deposit policy (public site 25% vs current tenant 30%) before Stripe.
 
 export function depositPercentFromTenant(value: number | null | undefined): number {
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 100) {
@@ -87,7 +86,7 @@ export function depositRequiredCents(totalCents: number, percent: number): numbe
 }
 
 export function depositPreviewNote(percent: number): string {
-  return `${depositPercentFromTenant(percent)}% deposit preview for planning only. Payment is not collected yet.`;
+  return `Estimated deposit is ${depositPercentFromTenant(percent)}% of the total. Payment is not collected yet.`;
 }
 
 function asDays(value: CatalogPriceInput["daysOfWeek"]): WeekdayKey[] | null {

@@ -1,9 +1,10 @@
 import { formatActivityLine } from "@/lib/event-planner/activity-display";
 import { formatEventDuration } from "@/lib/event-planner/labels";
-import { formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
+import { formatEstimatedDepositLine, formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import { CUSTOMER_SELECTED_PLAN_BANNER } from "@/lib/inquiries/ready-for-human-reason";
-import { formatEventLocalDateTime, formatItineraryLine, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { formatCustomerFacingClocks, formatEventLocalDateTime, formatItineraryLine, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
 import { EVENT_PLAN_TIER_TITLES, type EventPlanTier } from "@/types/event-planner";
 import { PLAN_AVAILABILITY_STATUS_LABELS, PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 
@@ -158,7 +159,7 @@ export function EmployeeSelectedEventPlan({
         <div className="mt-4 text-sm">
           <p className="text-foreground/60">Sample Itinerary</p>
           <ul className="mt-1 list-disc pl-5 text-foreground/80">
-            {payload.itinerary.map((segment) => (
+            {payload.itinerary.filter(isSampleItinerarySegment).map((segment) => (
               <li key={`${segment.startTime}-${segment.label}`}>
                 {formatItineraryLine(`${segment.startTime}–${segment.endTime} ${segment.label}`)}
               </li>
@@ -175,9 +176,9 @@ export function EmployeeSelectedEventPlan({
           </ul>
         </div>
       ) : null}
-      <p className="mt-4 text-sm text-foreground/70">{plan.customerFacingReason}</p>
+      <p className="mt-4 text-sm text-foreground/70">{formatCustomerFacingClocks(plan.customerFacingReason)}</p>
       {plan.availabilityNote ? (
-        <p className="mt-3 text-sm text-foreground/70">{plan.availabilityNote}</p>
+        <p className="mt-3 text-sm text-foreground/70">{formatCustomerFacingClocks(plan.availabilityNote)}</p>
       ) : null}
       <p className="mt-4 text-xs text-foreground/55">
         {salesStage === "DEPOSIT_PENDING"
@@ -194,8 +195,11 @@ export function EmployeeSelectedEventPlan({
       ) : null}
       {depositRequiredCents != null && depositRequiredCents > 0 ? (
         <p className="mt-2 text-sm text-foreground/70">
-          Deposit required (preview): {formatMoneyFromCents(depositRequiredCents, currency || plan.currency)} — not
-          collected yet.
+          {formatEstimatedDepositLine(
+            depositRequiredCents,
+            payload.depositPreviewPercent,
+            currency || plan.currency,
+          )}
         </p>
       ) : null}
     </details>

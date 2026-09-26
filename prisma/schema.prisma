@@ -562,6 +562,8 @@ model Product {
   audience         String   @db.VarChar(24)
   shortDescription String?  @db.VarChar(500)
   durationMinutes  Int?
+  /// SCHEDULED | SPACE_WINDOW | NON_SCHEDULED. Null derives from kind, duration, and requirements.
+  schedulingBehavior String? @db.VarChar(24)
   minGuests        Int?
   maxGuests        Int?
   weekendOnly      Boolean  @default(false)

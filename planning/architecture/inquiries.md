@@ -119,6 +119,22 @@ The working booking plan is the source for confirmation (inquiry, date/time, gue
 
 The customer-selected Book Now flow does not show generic Switch Package. Staff change guest count, time, activities, dining, or room on the working plan; the server recalculates.
 
+## Start over (backlog — intake redesign)
+
+Do not implement this until the intake redesign. No database change until that work.
+
+Before booking or submitting, the customer can choose **Start over** when the plan is wrong: incorrect AM/PM, wrong date, wrong guest count, wrong event type or preferences, or they simply want to restart.
+
+Expected behavior:
+
+- Clear the current public planning state and issue a fresh intake/planning flow.
+- Do not silently mutate or delete historical CRM records.
+- If an inquiry already exists, mark or reason it appropriately rather than a destructive delete.
+- Starting over must not create a duplicate resource reservation.
+- Confirm before discarding: "Start over? Your current plan will be discarded and you'll return to the beginning."
+
+Whether abandoned drafts remain internal history is a decision for the intake redesign.
+
 ## Next
 
 See [`catalog.md`](./catalog.md), [`proposal-engine.md`](./proposal-engine.md), [`resource-schedule.md`](./resource-schedule.md), and [`booking.md`](./booking.md). Phase 3A catalog-backed proposals are complete. Phase 3A.5 location/tenant hardening is complete. Phase 3B transactional occupancy is complete. **Phase 3B.4** is segment-level scheduling, availability-aware proposals, and employee New Booking. **Phase 3B.4a** is booking cancellation and inquiry archive (no hard-delete). **Phase 3B.4b** is employee workspace truth (original / working / confirmed / allocated / legacy HOLD). Next planned work: resume availability/overbooking browser acceptance. Do not start the intake + food + room + recommendation-band redesign yet. Phase 3C is Stripe and email.

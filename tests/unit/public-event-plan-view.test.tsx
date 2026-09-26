@@ -292,7 +292,7 @@ describe("public event plan view", () => {
 
     expect(html).toContain("Booking request received");
     expect(html).toContain("Best Fit");
-    expect(html).toContain("Deposit required");
+    expect(html).toContain("Estimated deposit");
     expect(html).toContain("inventory is not reserved");
     expect(html).toContain("Online payment is not enabled");
     expect(html).not.toContain("Book Now");
@@ -380,9 +380,82 @@ describe("public event plan view", () => {
     );
 
     expect(html).toContain("Axe Throwing is not available at the requested time");
+    expect(html).toContain("6:30 PM");
+    expect(html).not.toContain("18:30");
     expect(html).toContain("Adjusted from your requested time");
     expect(html).toContain("This option is not available at the requested time.");
     expect(html).toContain("Book Now");
     expect(html.split("Book Now").length - 1).toBe(1);
+  });
+
+  it("formats proposal copy once and keeps each tenant deposit percent", () => {
+    function renderPercent(percent: number, depositCents: number) {
+      return renderToStaticMarkup(
+        <PublicEventPlanView
+          organizationName="Riverside Fun Center"
+          currency="USD"
+          token="opaque-token"
+          inquiry={{
+            customerFirstName: "Ada",
+            guestCount: 20,
+            eventGoal: "Celebration",
+            selectedEventPlanId: null,
+          }}
+          plans={[
+            {
+              id: `plan-${percent}`,
+              tier: EVENT_PLAN_TIERS.BEST_FIT,
+              title: "Recommended",
+              estimatedTotalCents: 123000,
+              currency: "USD",
+              durationMinutes: 180,
+              customerFacingReason:
+                "Adds Unlimited Arcade Play for a broader experience. This option is 3 hours because it adds an hour of Unlimited Arcade Play.",
+              availabilityStatus: "AVAILABLE",
+              payload: {
+                guestCount: 20,
+                eventDate: "2026-10-15",
+                startTime: "16:00",
+                durationMinutes: 180,
+                activities: [
+                  { knowledgeItemId: "arcade", name: "1 Hour Unlimited Arcade Play", quantity: 1, priceCents: 0 },
+                ],
+                dining: { label: "Fajita Bar", priceCents: 0 },
+                spaces: [],
+                schedule: ["16:00–17:00 Fajita Bar"],
+                itinerary: [{ startTime: "16:00", endTime: "17:00", label: "Fajita Bar" }],
+                pricingComplete: true,
+                depositPreviewCents: depositCents,
+                depositPreviewPercent: percent,
+                itineraryAdjusted: true,
+                adjustmentNote:
+                  "Your requested time overlaps existing Bowling reservations, so this option has been adjusted to start at 16:00.",
+                customerAvailabilityNote:
+                  "we can accommodate the full event starting at 16:00.",
+                suggestedStartTimes: ["17:00", "04:00"],
+                durationNote: "This option is 3 hours because it adds an hour of Unlimited Arcade Play.",
+              },
+            },
+          ]}
+        />,
+      );
+    }
+
+    const tenantA = renderPercent(25, 30750);
+    const tenantB = renderPercent(30, 36900);
+    for (const html of [tenantA, tenantB]) {
+      expect(html).toContain("Adds Unlimited Arcade Play for a broader experience.");
+      expect(html).toContain("This option is 3 hours because it adds an hour of Unlimited Arcade Play.");
+      expect(html).toContain("adjusted to start at 4:00 PM");
+      expect(html).toContain("4:00 AM");
+      expect(html).toContain("5:00 PM");
+      expect(html).toContain("Adjusted to:");
+      expect(html).not.toMatch(/AM PM|PM AM|\b16:00\b|\b17:00\b/);
+    }
+    expect(tenantA).toContain("Estimated deposit: $307.50 (25%). Payment is not collected yet.");
+    expect(tenantA).not.toContain("30%");
+    expect(tenantB).toContain("(30%)");
+    expect(tenantB).not.toContain("(25%)");
+    expect(tenantA).not.toContain("deposit preview");
   });
 });

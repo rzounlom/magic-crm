@@ -13,8 +13,10 @@ System architecture documents. Current implementation notes:
 - Phase 3B — transactional occupancy foundation complete
 - Phase 3B.4 — segment-level resource scheduling, availability-aware proposals, employee New Booking
 - Phase 3B.4a — booking cancellation, inquiry archive/unarchive, employee test-data cleanup
-- Phase 3B.4b — employee workspace truth: original vs working vs confirmed vs allocated vs legacy HOLD (current)
-- Phase 3C — Stripe/email next, after remaining meeting-feedback patches
+- Phase 3B.4b — employee workspace truth: original vs working vs confirmed vs allocated vs legacy HOLD
+- Phase 3B.6 — proposal event length is the real itinerary span; rooms overlap; non-scheduled items stay off the sample itinerary; public times are 12-hour
+- Phase 3B.6b — customer time copy formats a raw clock once; deposit percent comes from `Organization.depositPercent`; duration copy names scheduled time added beyond the base option (current)
+- Phase 3C — Stripe/email next, after remaining meeting-feedback patches. Next after browser verification of 3B.6b: inquiry auto-refresh and the employee notification bell. Do not start the intake redesign yet.
 
 - `database.md`
 - `multi-tenancy.md`

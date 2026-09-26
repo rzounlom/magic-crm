@@ -61,10 +61,20 @@ export async function importBookingCatalog(
 ): Promise<CatalogImportResult> {
   const organization = await database.organization.findFirst({
     where: { slug: input.organizationSlug.trim().toLowerCase() },
-    select: { id: true, name: true, slug: true },
+    select: { id: true, name: true, slug: true, depositPercent: true },
   });
   if (!organization) {
     throw new Error(`No organization found for slug "${input.organizationSlug}".`);
+  }
+
+  if (
+    input.dataset.depositPercent != null &&
+    organization.depositPercent !== input.dataset.depositPercent
+  ) {
+    await database.organization.update({
+      where: { id: organization.id },
+      data: { depositPercent: input.dataset.depositPercent },
+    });
   }
 
   const counts = EMPTY_COUNTS();
@@ -218,6 +228,7 @@ export async function importBookingCatalog(
           audience: product.audience,
           shortDescription: product.shortDescription ?? null,
           durationMinutes: product.durationMinutes ?? null,
+          schedulingBehavior: product.schedulingBehavior ?? null,
           minGuests: product.minGuests ?? null,
           maxGuests: product.maxGuests ?? null,
           weekendOnly: product.weekendOnly,
@@ -244,6 +255,7 @@ export async function importBookingCatalog(
       existing.audience === product.audience &&
       existing.shortDescription === (product.shortDescription ?? null) &&
       existing.durationMinutes === (product.durationMinutes ?? null) &&
+      existing.schedulingBehavior === (product.schedulingBehavior ?? null) &&
       existing.minGuests === (product.minGuests ?? null) &&
       existing.maxGuests === (product.maxGuests ?? null) &&
       existing.weekendOnly === product.weekendOnly &&
@@ -262,6 +274,7 @@ export async function importBookingCatalog(
         audience: product.audience,
         shortDescription: product.shortDescription ?? null,
         durationMinutes: product.durationMinutes ?? null,
+        schedulingBehavior: product.schedulingBehavior ?? null,
         minGuests: product.minGuests ?? null,
         maxGuests: product.maxGuests ?? null,
         weekendOnly: product.weekendOnly,

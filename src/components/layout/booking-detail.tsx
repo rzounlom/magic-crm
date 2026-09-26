@@ -2,10 +2,11 @@ import Link from "next/link";
 
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
-import { formatMoneyFromCents } from "@/lib/event-planner/money";
+import { formatEstimatedDepositLine, formatMoneyFromCents } from "@/lib/event-planner/money";
 import { formatActivityLine } from "@/lib/event-planner/activity-display";
 import { formatEventDuration } from "@/lib/event-planner/labels";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
+import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
 import {
   formatAllocatedSummary,
   formatAllocatedWindow,
@@ -38,6 +39,7 @@ type BookingDetailRecord = {
   subtotalCents: number;
   taxCents: number;
   totalCents: number;
+  depositRequiredCents?: number | null;
   currency: string;
   customerGroupName: string | null;
   customerFirstName: string | null;
@@ -234,8 +236,9 @@ export function BookingDetail({
         <div className="sm:col-span-2">
           <dt className="text-foreground/60">Sample Itinerary</dt>
           <dd className="mt-1 whitespace-pre-wrap">
-            {payload.itinerary && payload.itinerary.length > 0
+            {payload.itinerary && payload.itinerary.filter(isSampleItinerarySegment).length > 0
               ? payload.itinerary
+                  .filter(isSampleItinerarySegment)
                   .map((segment) => formatItineraryLine(`${segment.startTime}–${segment.endTime} ${segment.label}`))
                   .join("\n")
               : payload.schedule.length > 0
@@ -296,7 +299,17 @@ export function BookingDetail({
           <dd>{formatMoneyFromCents(booking.totalCents, booking.currency)}</dd>
         </div>
       </dl>
-      <p className="mt-2 text-xs text-foreground/55">No deposit or payment has been recorded.</p>
+      {booking.depositRequiredCents != null && booking.depositRequiredCents > 0 ? (
+        <p className="mt-2 text-xs text-foreground/55">
+          {formatEstimatedDepositLine(
+            booking.depositRequiredCents,
+            readEventPlanPayload(booking.payload).depositPreviewPercent,
+            booking.currency,
+          )}
+        </p>
+      ) : (
+        <p className="mt-2 text-xs text-foreground/55">No deposit or payment has been recorded.</p>
+      )}
 
       <h2 className="mt-10 text-lg font-semibold">Resources</h2>
       {booking.reservations.length === 0 ? (

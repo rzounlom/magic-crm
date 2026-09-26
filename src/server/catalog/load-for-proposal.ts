@@ -48,6 +48,7 @@ export async function loadCatalogForProposal(
     }),
   ]);
 
+  const productsWithRequirements = new Set(requirementRows.map((row) => row.productId));
   const guestsPerUnitByProduct = new Map<string, number>();
   for (const row of requirementRows) {
     if (
@@ -67,6 +68,8 @@ export async function loadCatalogForProposal(
     kind: product.kind,
     audience: product.audience,
     durationMinutes: product.durationMinutes,
+    schedulingBehavior: product.schedulingBehavior,
+    hasResourceRequirements: productsWithRequirements.has(product.id),
     minGuests: product.minGuests,
     maxGuests: product.maxGuests,
     weekendOnly: product.weekendOnly,

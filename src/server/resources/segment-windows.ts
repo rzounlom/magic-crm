@@ -1,4 +1,5 @@
 import { occupancyInstants, resolveSchedulingTimeZone } from "@/lib/inquiries/tenant-datetime";
+import { customerActivityName } from "@/server/catalog/scheduling-behavior";
 import { applyRotationWindows } from "@/server/resources/rotation-windows";
 import {
   minutesToClock,
@@ -194,12 +195,9 @@ export function customerAdjustmentNote(input: {
   viableStartTime: string;
   orderChanged: boolean;
 }): string {
-  const activity = input.conflictLabels[0] ?? "a requested activity";
+  const activity = customerActivityName(input.conflictLabels[0] ?? "an activity");
   if (input.orderChanged && input.viableStartTime === input.requestedStartTime) {
-    return `Your original time has a scheduling conflict with ${activity}. We found a nearby schedule that can accommodate your group, so the options below have been adjusted.`;
+    return `Your requested time overlaps existing ${activity} reservations, so the activity order was adjusted.`;
   }
-  if (input.requestedStartTime && input.viableStartTime !== input.requestedStartTime) {
-    return `${activity} is not available at the requested time, but we can accommodate the full event starting at ${input.viableStartTime}.`;
-  }
-  return `Your original time has a scheduling conflict with ${activity}. We found a nearby schedule that can accommodate your group, so the options below have been adjusted.`;
+  return `Your requested time overlaps existing ${activity} reservations, so this option has been adjusted to start at ${input.viableStartTime}.`;
 }

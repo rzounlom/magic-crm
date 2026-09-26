@@ -78,9 +78,7 @@ No payment ledger is created. Optional fields `paymentConfirmedExternallyAt` / `
 
 ## Deposit
 
-`depositRequiredCents` is snapshotted from `Organization.depositPercent`. Do not hardcode 25 or 30 in generic engines.
-
-TODO(Phase 3C): Confirm Generations deposit policy (public site 25% vs current tenant configuration) before Stripe.
+`depositRequiredCents` is snapshotted from `Organization.depositPercent` using integer cents. Do not hardcode 25 or 30 in proposal rendering. The schema default remains 30. The development booking-catalog dataset sets `depositPercent` for the organization that imports it. Customer copy is `Estimated deposit: $X (N%). Payment is not collected yet.`
 
 ## Payment / availability race
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { formatEstimatedDepositLine } from "@/lib/event-planner/money";
 import { percentOfCents, priceProduct, depositRequiredCents, depositPercentFromTenant } from "@/server/catalog/pricing";
 import { PRODUCT_KINDS, PRODUCT_PRICE_STRATEGIES, type CatalogProductInput } from "@/types/catalog";
 
@@ -159,8 +160,29 @@ describe("catalog pricing", () => {
   it("applies tenant deposit percent in integer cents", () => {
     expect(depositRequiredCents(100_000, 30)).toBe(30_000);
     expect(depositRequiredCents(100_000, 20)).toBe(20_000);
+    expect(depositRequiredCents(73_000, 25)).toBe(18_250);
+    expect(depositRequiredCents(123_000, 25)).toBe(30_750);
+    expect(depositRequiredCents(188_000, 25)).toBe(47_000);
     expect(depositPercentFromTenant(50)).toBe(50);
     expect(depositPercentFromTenant(101)).toBe(30);
+  });
+
+  it("keeps each tenant deposit percent isolated for the same total", () => {
+    const totalCents = 123_000;
+    const tenantAPercent = depositPercentFromTenant(25);
+    const tenantBPercent = depositPercentFromTenant(30);
+    const tenantACents = depositRequiredCents(totalCents, tenantAPercent);
+    const tenantBCents = depositRequiredCents(totalCents, tenantBPercent);
+    expect(tenantACents).toBe(30_750);
+    expect(tenantBCents).toBe(36_900);
+    expect(percentOfCents(totalCents, tenantAPercent)).toBe(tenantACents);
+    const tenantALine = formatEstimatedDepositLine(tenantACents, tenantAPercent);
+    const tenantBLine = formatEstimatedDepositLine(tenantBCents, tenantBPercent);
+    expect(tenantALine).toBe("Estimated deposit: $307.50 (25%). Payment is not collected yet.");
+    expect(tenantBLine).toBe("Estimated deposit: $369 (30%). Payment is not collected yet.");
+    expect(tenantALine).not.toContain("30%");
+    expect(tenantBLine).not.toContain("25%");
+    expect(tenantALine).not.toContain("deposit preview");
   });
 
   it("does not invent guests-per-unit or combo size when tenant config is missing", () => {

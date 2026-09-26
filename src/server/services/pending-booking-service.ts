@@ -21,7 +21,12 @@ import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { shiftItineraryToStart, stampPlanResourceWindows } from "@/server/resources/segment-windows";
 import { localEventWindow, minutesToClock } from "@/server/resources/time-window";
 import { recordAuditEvent } from "@/server/services/audit";
-import { findNearbyAvailableStarts } from "@/server/services/nearby-availability";
+import {
+  evaluateAvailabilitySnapshot,
+  loadLocationAvailabilitySnapshot,
+} from "@/server/resources/availability-snapshot";
+import { logAvailabilitySearch } from "@/server/logging";
+import { findNearbyAvailableStarts, NEARBY_START_OFFSETS_MINUTES } from "@/server/services/nearby-availability";
 import { assignExactResourcesForRequirements } from "@/server/services/proposal-hold-service";
 import {
   checkResourceAvailability,
@@ -343,10 +348,18 @@ async function nearbyTimesForConflict(
     itinerary?: EventPlanPayload["itinerary"];
   },
 ) {
+  const started = Date.now();
+  const snapshot = await loadLocationAvailabilitySnapshot(database, {
+    organizationId: input.organizationId,
+    locationId: input.locationId,
+    slotDate: input.eventDate,
+  });
+  let candidatesEvaluated = 0;
   const nearby = await findNearbyAvailableStarts({
     startTime: input.startTime,
-    check: (startTime) =>
-      checkResourceAvailability(database, {
+    check: async (startTime) => {
+      candidatesEvaluated += 1;
+      return evaluateAvailabilitySnapshot(snapshot, {
         organizationId: input.organizationId,
         locationId: input.locationId,
         date: input.eventDate,
@@ -358,7 +371,17 @@ async function nearbyTimesForConflict(
           resourceRequirements: input.requirements,
         }),
         excludeInquiryId: input.inquiryId,
-      }),
+        now: snapshot.now,
+      });
+    },
+  });
+  logAvailabilitySearch({
+    phase: "nearby_confirmation",
+    candidatesEvaluated,
+    horizonMinutes: Math.max(...NEARBY_START_OFFSETS_MINUTES) - Math.min(...NEARBY_START_OFFSETS_MINUTES),
+    queryPhaseMs: snapshot.queryPhaseMs,
+    totalMs: Date.now() - started,
+    selectedStart: nearby[0]?.startTime ?? null,
   });
   return nearby.map((row) => row.startTime);
 }
@@ -617,16 +640,6 @@ export async function confirmPendingBooking(
         excludeInquiryId: inquiry.id,
       });
       if (!availability.validated || !availability.available) {
-        const nearbyStartTimes = await nearbyTimesForConflict(tx as BookingDb, {
-          organizationId: input.organizationId,
-          locationId: inquiry.locationId,
-          inquiryId: inquiry.id,
-          eventDate,
-          startTime,
-          durationMinutes,
-          requirements,
-          itinerary: payload.itinerary,
-        });
         const conflictingTypes = availability.types
           .filter((row) => row.conflict)
           .map((row) => row.resourceTypeName);
@@ -638,23 +651,11 @@ export async function confirmPendingBooking(
           where: { id: inquiry.id },
           data: { salesStage: INQUIRY_SALES_STAGES.DEPOSIT_PENDING, status: INQUIRY_STATUSES.READY_FOR_HUMAN },
         });
-        await recordAuditEvent(tx, {
-          organizationId: input.organizationId,
-          actorUserProfileId: input.actorUserProfileId,
-          action: "booking.confirmation_conflict",
-          resourceType: "booking",
-          resourceId: current.id,
-          metadata: {
-            inquiryId: inquiry.id,
-            conflictingTypes: conflictingTypes.join(", ") || null,
-            nearbyStartTimes: nearbyStartTimes.join(", ") || null,
-          },
-        });
         return {
           booking: current,
           created: false as const,
           conflict: {
-            nearbyStartTimes,
+            nearbyStartTimes: [] as string[],
             conflictingTypes,
             note: availability.note || "Availability changed before this booking could be confirmed.",
           },
@@ -807,6 +808,31 @@ export async function confirmPendingBooking(
   }
 
   if (conflict) {
+    const nearbyStartTimes = await nearbyTimesForConflict(database, {
+      organizationId: input.organizationId,
+      locationId: inquiry.locationId,
+      inquiryId: inquiry.id,
+      eventDate,
+      startTime,
+      durationMinutes,
+      requirements,
+      itinerary: payload.itinerary,
+    });
+    conflict = { ...conflict, nearbyStartTimes };
+    if (booking) {
+      await recordAuditEvent(database, {
+        organizationId: input.organizationId,
+        actorUserProfileId: input.actorUserProfileId,
+        action: "booking.confirmation_conflict",
+        resourceType: "booking",
+        resourceId: booking.id,
+        metadata: {
+          inquiryId: inquiry.id,
+          conflictingTypes: conflict.conflictingTypes.join(", ") || null,
+          nearbyStartTimes: nearbyStartTimes.join(", ") || null,
+        },
+      });
+    }
     throw new BookingError(
       "AVAILABILITY_CONFLICT",
       conflict.nearbyStartTimes.length > 0

@@ -1,4 +1,5 @@
-import { buildItinerary } from "@/server/catalog/itinerary";
+import { buildItinerary, itinerarySpanMinutes } from "@/server/catalog/itinerary";
+import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
 import { applyAvailabilityProvider, type PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import {
   buildEventPlans,
@@ -195,11 +196,15 @@ export async function generateRecommendations(
         catalog: input.resourceCatalog,
         storedRequirements: input.storedRequirements,
       });
+      const builtItinerary = itineraryFromKnowledgeDraft(draft, input.knowledge);
+      const spanMinutes = itinerarySpanMinutes(builtItinerary.filter(isSampleItinerarySegment));
+      const durationMinutes = spanMinutes > 0 ? spanMinutes : draft.durationMinutes;
       const structuredPayload = {
         ...draft.payload,
-        itinerary: itineraryFromKnowledgeDraft(draft, input.knowledge),
+        durationMinutes,
+        itinerary: builtItinerary,
       };
-      const stampedDraft = { ...draft, payload: structuredPayload };
+      const stampedDraft = { ...draft, durationMinutes, payload: structuredPayload };
       let resourceRequirements = stampPlanResourceWindows(
         structuredPayload,
         applyInventoryFeasibility(derived, inventory),
@@ -208,7 +213,7 @@ export async function generateRecommendations(
         {
           eventDate: structuredPayload.eventDate,
           startTime: structuredPayload.startTime,
-          durationMinutes: draft.durationMinutes,
+          durationMinutes,
           guestCount: draft.guestCount,
           activities: structuredPayload.activities,
           spaces: structuredPayload.spaces,
@@ -245,8 +250,10 @@ export async function generateRecommendations(
         .map((row) => row.rotationNote)
         .filter((note): note is string => Boolean(note));
       const viable = result.validated && result.available;
+      const sampleItinerary = (itinerary ?? []).filter(isSampleItinerarySegment);
       return {
         ...draft,
+        durationMinutes,
         availabilityValidated: viable,
         availabilityNote: itineraryAdjusted && adjustmentNote ? adjustmentNote : result.note,
         availabilityStatus: viable
@@ -266,8 +273,8 @@ export async function generateRecommendations(
             itineraryAdjusted && adjustmentNote ? adjustmentNote : draft.payload.customerAvailabilityNote,
           resourceRequirements,
           schedule: [
-            ...(itinerary.length > 0
-              ? itinerary.map((row) => `${row.startTime}–${row.endTime} ${row.label}`)
+            ...(sampleItinerary.length > 0
+              ? sampleItinerary.map((row) => `${row.startTime}–${row.endTime} ${row.label}`)
               : draft.payload.schedule),
             ...rotationNotes,
           ],

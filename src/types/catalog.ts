@@ -1,3 +1,12 @@
+export const PRODUCT_SCHEDULING_BEHAVIORS = {
+  SCHEDULED: "SCHEDULED",
+  SPACE_WINDOW: "SPACE_WINDOW",
+  NON_SCHEDULED: "NON_SCHEDULED",
+} as const;
+
+export type ProductSchedulingBehavior =
+  (typeof PRODUCT_SCHEDULING_BEHAVIORS)[keyof typeof PRODUCT_SCHEDULING_BEHAVIORS];
+
 export const PRODUCT_KINDS = {
   ATTRACTION: "ATTRACTION",
   PACKAGE: "PACKAGE",
@@ -67,11 +76,10 @@ export type WeekdayKey = (typeof WEEKDAY_KEYS)[number];
 
 export const DEPOSIT_PREVIEW_PERCENT = 30;
 
-export const DEPOSIT_PREVIEW_NOTE =
-  "30% deposit preview for planning only. Payment is not collected yet.";
+export const DEPOSIT_PREVIEW_NOTE = "Payment is not collected yet.";
 
 export function depositPreviewNoteForPercent(percent: number): string {
-  return `${percent}% deposit preview for planning only. Payment is not collected yet.`;
+  return `Estimated deposit is ${percent}% of the total. Payment is not collected yet.`;
 }
 
 export type CatalogPriceInput = {
@@ -104,6 +112,8 @@ export type CatalogProductInput = {
   kind: string;
   audience: string;
   durationMinutes: number | null;
+  /** Tenant override. Null means derive from kind, duration, and resource requirements. */
+  schedulingBehavior?: string | null;
   minGuests: number | null;
   maxGuests: number | null;
   weekendOnly: boolean;
@@ -169,4 +179,6 @@ export type ItinerarySegment = {
   startOffsetMinutes?: number;
   durationMinutes?: number;
   consumesInventory?: boolean;
+  /** DINING and ACTIVITY are the sample itinerary. SPACE overlaps that span. */
+  role?: "DINING" | "ACTIVITY" | "SPACE";
 };

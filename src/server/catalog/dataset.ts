@@ -5,6 +5,7 @@ import {
   PRODUCT_KINDS,
   PRODUCT_PRICE_STRATEGIES,
   PRODUCT_QUANTITY_RULES,
+  PRODUCT_SCHEDULING_BEHAVIORS,
   WEEKDAY_KEYS,
 } from "@/types/catalog";
 
@@ -50,6 +51,10 @@ const productSchema = z.object({
   audience: z.string().trim().min(1).max(24),
   categorySlug: z.string().trim().min(1).max(80),
   durationMinutes: z.number().int().positive().optional().nullable(),
+  schedulingBehavior: z
+    .enum(Object.values(PRODUCT_SCHEDULING_BEHAVIORS) as [string, ...string[]])
+    .optional()
+    .nullable(),
   minGuests: z.number().int().positive().optional().nullable(),
   maxGuests: z.number().int().positive().optional().nullable(),
   weekendOnly: z.boolean().optional().default(false),
@@ -90,6 +95,7 @@ export const bookingCatalogDatasetSchema = z.object({
   version: z.number().int().positive(),
   sourceFiles: z.array(z.string()),
   ambiguities: z.array(ambiguitySchema),
+  depositPercent: z.number().int().min(0).max(100).optional(),
   categories: z.array(categorySchema).min(1),
   resourceTypes: z.array(resourceTypeSchema).min(1),
   products: z.array(productSchema).min(1),

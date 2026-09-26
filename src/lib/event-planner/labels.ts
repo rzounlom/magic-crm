@@ -33,19 +33,37 @@ export function formatDiningPreference(value: string | null | undefined): string
 }
 
 export function formatDurationMinutes(minutes: number): string {
-  if (minutes in EVENT_DURATION_LABELS) {
-    return EVENT_DURATION_LABELS[minutes as EventDurationMinutes];
+  if (!minutes || minutes <= 0) {
+    return "Duration to be confirmed";
   }
-  if (minutes < 60 || minutes % 60 !== 0) {
-    return `${minutes} minutes`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  if (hours === 0) {
+    return minutes === 1 ? "1 minute" : `${minutes} minutes`;
   }
-  const hours = minutes / 60;
-  return hours === 1 ? "1 hour" : `${hours} hours`;
+  const hourLabel = hours === 1 ? "1 hour" : `${hours} hours`;
+  if (remainder === 0) {
+    return hourLabel;
+  }
+  const minuteLabel = remainder === 1 ? "1 minute" : `${remainder} minutes`;
+  return `${hourLabel} ${minuteLabel}`;
 }
 
+/** Exact event span. A 5-hour itinerary is "5 hours", not the intake band "5+ hours". */
 export function formatEventDuration(minutes: number | null | undefined): string {
   if (!minutes) {
     return "—";
+  }
+  return formatDurationMinutes(minutes);
+}
+
+/** Intake desired-duration bands, including "5+ hours". */
+export function formatDesiredDuration(minutes: number | null | undefined): string {
+  if (!minutes) {
+    return "—";
+  }
+  if (minutes in EVENT_DURATION_LABELS) {
+    return EVENT_DURATION_LABELS[minutes as EventDurationMinutes];
   }
   return formatDurationMinutes(minutes);
 }

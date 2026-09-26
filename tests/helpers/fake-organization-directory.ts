@@ -44,7 +44,6 @@ export function createFakeOrganizationDirectory(): FakeOrganizationDirectory {
   const memberships = new Map<string, OrganizationMembershipRecord[]>();
   const createdInvitations: FakeInvitation[] = [];
   const revokedInvitationIds: string[] = [];
-  let invitationCount = 0;
   let organizationCount = 0;
 
   const directory: FakeOrganizationDirectory = {
@@ -79,9 +78,8 @@ export function createFakeOrganizationDirectory(): FakeOrganizationDirectory {
       if (pending) {
         throw clerkError("duplicate_record", 400, "already been invited");
       }
-      invitationCount += 1;
       const invitation: FakeInvitation = {
-        id: `orginv_${invitationCount}`,
+        id: `orginv_${crypto.randomUUID()}`,
         emailAddress: input.emailAddress,
         clerkOrganizationId: input.clerkOrganizationId,
         expiresAt: new Date(Date.now() + input.expiresInDays * 24 * 60 * 60 * 1000),

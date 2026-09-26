@@ -1,9 +1,12 @@
-import { buildItinerary, type ItineraryProduct } from "@/server/catalog/itinerary";
+import { composeEventItinerary, type ItineraryProduct } from "@/server/catalog/itinerary";
+import { resolveSchedulingBehavior } from "@/server/catalog/scheduling-behavior";
+import { PRODUCT_SCHEDULING_BEHAVIORS } from "@/types/catalog";
 import {
   conflictingActivityLabels,
   customerAdjustmentNote,
   stampPlanResourceWindows,
 } from "@/server/resources/segment-windows";
+import { logAvailabilitySearch } from "@/server/logging";
 import { NEARBY_START_OFFSETS_MINUTES } from "@/server/services/nearby-availability";
 import { minutesToClock, parseClockToMinutes } from "@/server/resources/time-window";
 import type { EventPlanItinerarySegment } from "@/types/event-planner";
@@ -24,6 +27,7 @@ import { SCHEDULE_DAY_END_MINUTE, SCHEDULE_DAY_START_MINUTE } from "@/types/reso
  */
 export type ViableItinerarySearchResult = {
   startTime: string;
+  eventLengthMinutes: number;
   itinerary: EventPlanItinerarySegment[];
   requirements: PlanResourceRequirement[];
   availability: ResourceAvailabilityResult;
@@ -63,13 +67,23 @@ function permutations<T>(items: T[]): T[][] {
   return results;
 }
 
+function isSequencedProduct(product: ItineraryProduct): boolean {
+  const role = resolveSchedulingBehavior(product);
+  return role === "DINING" || role === PRODUCT_SCHEDULING_BEHAVIORS.SCHEDULED;
+}
+
 export function candidateProductOrders(input: {
   products: ItineraryProduct[];
   foodFirst: boolean;
 }): ItineraryProduct[][] {
-  const food = input.products.filter((row) => row.kind === "FOOD");
-  const rest = input.products.filter((row) => row.kind !== "FOOD");
-  return permutations(rest).map((perm) => (input.foodFirst ? [...food, ...perm] : [...perm, ...food]));
+  const sequenced = input.products.filter(isSequencedProduct);
+  const food = sequenced.filter((row) => resolveSchedulingBehavior(row) === "DINING");
+  const activities = sequenced.filter((row) => resolveSchedulingBehavior(row) !== "DINING");
+  const held = input.products.filter((row) => !isSequencedProduct(row));
+  return permutations(activities).map((perm) => [
+    ...(input.foodFirst ? [...food, ...perm] : [...perm, ...food]),
+    ...held,
+  ]);
 }
 
 export async function searchViableStructuredItinerary(input: {
@@ -80,12 +94,14 @@ export async function searchViableStructuredItinerary(input: {
   baseRequirements: PlanResourceRequirement[];
   check: (input: {
     startTime: string;
+    eventLengthMinutes: number;
     itinerary: EventPlanItinerarySegment[];
     requirements: PlanResourceRequirement[];
   }) => Promise<ResourceAvailabilityResult>;
   offsetsMinutes?: number[];
   dayStartMinute?: number;
   dayEndMinute?: number;
+  queryPhaseMs?: () => number;
 }): Promise<ViableItinerarySearchResult | null> {
   if (!input.requestedStartTime) {
     return null;
@@ -98,35 +114,55 @@ export async function searchViableStructuredItinerary(input: {
   const dayEnd = input.dayEndMinute ?? SCHEDULE_DAY_END_MINUTE;
   const orders = candidateProductOrders({ products: input.products, foodFirst: input.foodFirst });
   let originalConflictLabels: string[] = [];
+  let candidatesEvaluated = 0;
+  const started = Date.now();
+  const offsets = input.offsetsMinutes ?? NEARBY_START_OFFSETS_MINUTES;
+  const horizonMinutes = offsets.length > 0 ? Math.max(...offsets) - Math.min(...offsets) : 0;
 
-  for (const offset of input.offsetsMinutes ?? NEARBY_START_OFFSETS_MINUTES) {
+  for (const offset of offsets) {
     const next = base + offset;
     if (next < dayStart || next > dayEnd - 30) {
       continue;
     }
     const startTime = minutesToClock(next);
     for (const [orderIndex, products] of orders.entries()) {
-      const itinerary = buildItinerary({
+      const composed = composeEventItinerary({
         startTime,
-        durationMinutes: input.durationMinutes,
         foodFirst: input.foodFirst,
         preserveOrder: true,
         products,
+        fallbackMinutes: input.durationMinutes,
       });
+      const itinerary = composed.itinerary;
       const requirements = stampPlanResourceWindows({
         itinerary,
         startTime,
         resourceRequirements: input.baseRequirements,
       });
-      const availability = await input.check({ startTime, itinerary, requirements });
+      candidatesEvaluated += 1;
+      const availability = await input.check({
+        startTime,
+        eventLengthMinutes: composed.eventLengthMinutes,
+        itinerary,
+        requirements,
+      });
       if (offset === 0 && orderIndex === 0 && (!availability.validated || !availability.available)) {
         originalConflictLabels = conflictingActivityLabels(requirements, availability.types);
       }
       if (availability.validated && availability.available) {
         const orderChanged = orderIndex > 0;
         const adjusted = offset !== 0 || orderChanged;
+        logAvailabilitySearch({
+          phase: "proposal_itinerary",
+          candidatesEvaluated,
+          horizonMinutes,
+          queryPhaseMs: input.queryPhaseMs?.() ?? 0,
+          totalMs: Date.now() - started,
+          selectedStart: startTime,
+        });
         return {
           startTime,
+          eventLengthMinutes: composed.eventLengthMinutes,
           itinerary,
           requirements,
           availability,
@@ -145,5 +181,13 @@ export async function searchViableStructuredItinerary(input: {
       }
     }
   }
+  logAvailabilitySearch({
+    phase: "proposal_itinerary",
+    candidatesEvaluated,
+    horizonMinutes,
+    queryPhaseMs: input.queryPhaseMs?.() ?? 0,
+    totalMs: Date.now() - started,
+    selectedStart: null,
+  });
   return null;
 }

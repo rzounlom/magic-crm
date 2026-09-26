@@ -15,7 +15,7 @@ import { BOOKING_STATUSES } from "@/types/booking";
 import {
   formatBudgetRange,
   formatDiningPreference,
-  formatEventDuration,
+  formatDesiredDuration,
   formatGuestMix,
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
@@ -470,7 +470,7 @@ export function LiveAgentWorkspace({
                 <div>
                   <dt className="text-foreground/60">Event</dt>
                   <dd>
-                    {inquiry.eventType || "—"} · {formatEventDuration(inquiry.desiredDurationMinutes)} ·{" "}
+                    {inquiry.eventType || "—"} · {formatDesiredDuration(inquiry.desiredDurationMinutes)} ·{" "}
                     {formatGuestMix(inquiry.guestMix)}
                   </dd>
                 </div>

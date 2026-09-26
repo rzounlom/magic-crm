@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { formatCustomerFacingClocks } from "@/lib/inquiries/tenant-datetime";
 import { buildItinerary } from "@/server/catalog/itinerary";
 import { searchViableStructuredItinerary } from "@/server/resources/itinerary-search";
 import {
@@ -101,7 +102,11 @@ describe("segment resource windows", () => {
     });
     expect(note).toContain("Axe Throwing");
     expect(note).toContain("19:30");
+    expect(note).not.toContain("7:30");
     expect(note).not.toContain("res_");
+    const rendered = formatCustomerFacingClocks(note);
+    expect(rendered).toContain("7:30 PM");
+    expect(rendered).not.toMatch(/AM PM|PM AM|\b19:30\b/);
   });
 
   it("searches closest start first and does not call a later offset after a hit", async () => {

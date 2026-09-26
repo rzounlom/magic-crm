@@ -176,6 +176,7 @@ export type EventPlanItinerarySegment = {
   startOffsetMinutes?: number;
   durationMinutes?: number;
   consumesInventory?: boolean;
+  role?: "DINING" | "ACTIVITY" | "SPACE";
 };
 
 export type EventPlanDining = {
@@ -199,11 +200,21 @@ export type EventPlanRotation = {
   assignments: EventPlanRotationAssignment[];
 };
 
+export type EventPlanIncludedItem = {
+  knowledgeItemId: string;
+  name: string;
+  quantity?: number;
+  unitLabel?: string;
+};
+
 export type EventPlanSpace = {
   knowledgeItemId: string;
   name: string;
   priceCents: number;
   priceText?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  durationMinutes?: number | null;
 };
 
 export type EventPlanRanking = {
@@ -219,8 +230,11 @@ export type EventPlanPayload = {
   startTime: string | null;
   durationMinutes: number;
   activities: EventPlanActivity[];
+  includedItems?: EventPlanIncludedItem[];
   dining: EventPlanDining;
   spaces: EventPlanSpace[];
+  /** Why this option is longer than the duration the customer requested. */
+  durationNote?: string | null;
   schedule: string[];
   pricingComplete: boolean;
   historicalInfluence?: string | null;

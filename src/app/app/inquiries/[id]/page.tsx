@@ -12,7 +12,7 @@ import { db } from "@/lib/db";
 import {
   formatBudgetRange,
   formatDiningPreference,
-  formatEventDuration,
+  formatDesiredDuration,
   formatGuestMix,
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
@@ -260,7 +260,7 @@ export default async function InquiryDetailPage({
         </div>
         <div>
           <dt className="text-foreground/60">Event length</dt>
-          <dd className="mt-1">{formatEventDuration(inquiry.desiredDurationMinutes)}</dd>
+          <dd className="mt-1">{formatDesiredDuration(inquiry.desiredDurationMinutes)}</dd>
         </div>
         <div>
           <dt className="text-foreground/60">Budget</dt>

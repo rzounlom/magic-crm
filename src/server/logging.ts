@@ -41,6 +41,23 @@ export function logTenantEvent(
   );
 }
 
+export function logAvailabilitySearch(fields: {
+  phase: "proposal_itinerary" | "nearby_confirmation";
+  candidatesEvaluated: number;
+  horizonMinutes: number;
+  queryPhaseMs: number;
+  totalMs: number;
+  selectedStart: string | null;
+}): void {
+  console.info(
+    JSON.stringify({
+      scope: "magiccrm.availability",
+      event: "nearby_search",
+      ...fields,
+    }),
+  );
+}
+
 export function logSalesAgentEvent(
   event: SalesAgentLogEvent,
   fields: {

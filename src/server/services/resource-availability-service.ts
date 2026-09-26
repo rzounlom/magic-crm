@@ -14,6 +14,11 @@ import {
   locationHasExclusiveOccupancy,
   lockLocationForScheduling,
 } from "@/server/resources/location-exclusivity";
+import {
+  evaluateAvailabilitySnapshot,
+  loadLocationAvailabilitySnapshot,
+  type LocationAvailabilitySnapshot,
+} from "@/server/resources/availability-snapshot";
 import type { PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import { recordAuditEvent } from "@/server/services/audit";
 import { INQUIRY_SALES_STAGES, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES } from "@/types/inquiry";
@@ -489,13 +494,44 @@ export function createResourceScheduleAvailabilityProvider(
   organizationId: string,
   locationId?: string | null,
 ): PlanAvailabilityProvider {
-  return {
+  const snapshots = new Map<string, LocationAvailabilitySnapshot>();
+  const provider: PlanAvailabilityProvider = {
+    lastQueryPhaseMs: 0,
     async check(input) {
       const requirements = input.resourceRequirements ?? [];
-      const result = await checkResourceAvailability(database, {
+      const slotDate = input.eventDate;
+      if (!slotDate) {
+        const result = await checkResourceAvailability(database, {
+          organizationId,
+          locationId,
+          date: input.eventDate,
+          startTime: input.startTime,
+          durationMinutes: input.durationMinutes,
+          resourceRequirements: requirements,
+          excludeInquiryId: input.excludeInquiryId,
+          excludeBookingId: input.excludeBookingId,
+        });
+        return {
+          validated: result.validated,
+          available: result.available,
+          note: result.note,
+          types: result.types,
+        };
+      }
+      let snapshot = snapshots.get(slotDate);
+      if (!snapshot) {
+        snapshot = await loadLocationAvailabilitySnapshot(database, {
+          organizationId,
+          locationId,
+          slotDate,
+        });
+        snapshots.set(slotDate, snapshot);
+        provider.lastQueryPhaseMs = snapshot.queryPhaseMs;
+      }
+      const result = evaluateAvailabilitySnapshot(snapshot, {
         organizationId,
         locationId,
-        date: input.eventDate,
+        date: slotDate,
         startTime: input.startTime,
         durationMinutes: input.durationMinutes,
         resourceRequirements: requirements,
@@ -510,4 +546,5 @@ export function createResourceScheduleAvailabilityProvider(
       };
     },
   };
+  return provider;
 }

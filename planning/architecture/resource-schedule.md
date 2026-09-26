@@ -41,6 +41,8 @@ Admin UI (`/app/admin/resources`) lets an organization administrator create reso
 
 **Invariant: Resource reservations use itinerary segment windows, not the full event window.** `stampPlanResourceWindows` / `applyItineraryWindows` copy structured itinerary `startOffsetMinutes` + `durationMinutes` onto each `PlanResourceRequirement.windowStartTime/windowEndTime`. Rotation waves still override after that. Legacy snapshots without segment windows fall back to the event window so old bookings keep rendering.
 
+A bowling requirement is checked only on the bowling segment. A room entitlement is checked on the overlapping space window (the event span, or the rental duration when that is longer). Non-scheduled items do not create resource windows unless they have a real inventory requirement. Candidate search builds that full itinerary for each event start before accepting it.
+
 `generateRecommendations` (knowledge path) and `buildCatalogEventPlans` (catalog path) always go through `PlanAvailabilityProvider`. Production uses `createResourceScheduleAvailabilityProvider`, which calls the same checker with those segment windows. Nearby itinerary search is `searchViableStructuredItinerary` (closest start first, then bounded activity permutations with food-first preserved). `findNearbyAvailableStarts` remains the shared start-offset helper (`0, ±30, ±60, ±90, ±120`).
 
 Public proposals are availability-aware before Book Now. Each Good / Recommended / Premium option is checked independently. Book Now performs a fresh precheck but does not lock inventory. Final confirmation remains the authoritative atomic availability check.

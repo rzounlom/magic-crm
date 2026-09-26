@@ -76,6 +76,8 @@ describe("booking catalog import and proposals (postgres)", () => {
     expect(first.productsCreated).toBeGreaterThan(0);
     expect(first.ambiguities.some((row) => row.code === "BROWNIE_TRAY_TYPO")).toBe(true);
     expect(await db.product.count({ where: { organizationId: other.id } })).toBe(0);
+    expect((await db.organization.findFirstOrThrow({ where: { id: target.id } })).depositPercent).toBe(25);
+    expect((await db.organization.findFirstOrThrow({ where: { id: other.id } })).depositPercent).toBe(30);
 
     const second = await importBookingCatalog(db, { organizationSlug: target.slug, dataset });
     expect(second.productsCreated).toBe(0);

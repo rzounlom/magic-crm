@@ -20,7 +20,16 @@ Sales knowledge (`SalesKnowledgeItem`) stays policies, FAQs, hours, and sales co
 ## Models
 
 - `ProductCategory` — grouping (birthday packages, food, rentals)
-- `Product` — SKU with audience, duration, guest bounds, optional `weekendOnly` and `fulfillmentGroup`
+- `Product` — SKU with audience, duration, guest bounds, optional `weekendOnly`, `fulfillmentGroup`, and `schedulingBehavior`
+
+`schedulingBehavior` is an optional tenant override: `SCHEDULED`, `SPACE_WINDOW`, or `NON_SCHEDULED`. When it is null, the engine derives the role:
+
+- `FOOD` → dining block (sequential)
+- `RENTAL` → space entitlement (overlaps the event)
+- add-on, or any product with no duration and no resource requirements → non-scheduled included item
+- otherwise → scheduled activity
+
+Do not turn a non-scheduled product into an itinerary block. Do not invent a duration from price, cents, quantity, or serving size. A null duration with no resource requirement is not a timed activity.
 - `ProductPrice` — one or more strategies in **integer cents** (`PACKAGE_BASE_PLUS_ADDITIONAL`, `PER_PERSON`, `PER_LANE_WEEKDAY_WEEKEND`, `FIXED_RENTAL`, `DAY_SPECIFIC_RENTAL`, `DURATION_BASE_PLUS_ADDITIONAL_HOUR`, `TIME_WINDOW_RENTAL`, food strategies)
 - `ProductResourceRequirement` — how a catalog `Product` consumes finite inventory. One product may have many requirement rows (a composite package). Quantity rules:
   - `FIXED` — exact count (tenant-configured, never a MagicCRM constant)
@@ -66,7 +75,7 @@ Admin onboarding UI is not built yet. Entitlements (whether the tenant has `EVEN
 
 ## Money
 
-All amounts are integer cents. Use `priceProduct` in `src/server/catalog/pricing.ts`. Deposit preview uses `Organization.depositPercent` (default 30). Collection, Stripe, and payment links are Phase 3C.
+All amounts are integer cents. Use `priceProduct` in `src/server/catalog/pricing.ts`. Deposit amount uses `Organization.depositPercent` (schema default 30). A dataset may include `depositPercent`; import writes that value on the selected organization only. Collection, Stripe, and payment links are Phase 3C.
 
 ## Phase 3C (not this phase)
 

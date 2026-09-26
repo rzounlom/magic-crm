@@ -6,15 +6,15 @@ import { useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatEventDuration, personalEventPlannerTitle } from "@/lib/event-planner/labels";
-import { formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
+import { formatEstimatedDepositLine, formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { isBestFitTier, readEventPlanPayload } from "@/lib/event-planner/payload";
-import { formatEventLocalDateTime, formatEventLocalTime, formatItineraryLine, formatItineraryRange, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { formatAdjustedEventWindow, formatCustomerFacingClocks, formatEventLocalDateTime, formatEventLocalTime, formatItineraryLine, formatItineraryRange, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
 import { onSafeSubmitAttempt } from "@/lib/ui/confirm-gate";
 import { notify } from "@/lib/ui/notify";
 import { yieldToPaint } from "@/lib/ui/yield-to-paint";
 import { selectPublicEventPlanAction, reservePublicEventPlanAction } from "@/server/actions/public-inquiry";
 import { BOOK_NOW_EXPLANATION, CUSTOMER_AVAILABILITY_NOTE, EVENT_PLAN_TIERS } from "@/types/event-planner";
-import { DEPOSIT_PREVIEW_NOTE } from "@/types/catalog";
 import { BOOKING_STATUSES } from "@/types/booking";
 import { INQUIRY_SALES_STAGES } from "@/types/inquiry";
 import { PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
@@ -109,6 +109,7 @@ export function PublicEventPlanView({
           planTitle={pendingPlan?.title ?? "Selected package"}
           booking={pendingBooking}
           currency={pendingPlan?.currency || currency}
+          depositPercent={readEventPlanPayload(pendingPlan?.payload).depositPreviewPercent}
         />
       ) : pending ? (
         <PendingBookingPanel
@@ -116,6 +117,7 @@ export function PublicEventPlanView({
           planTitle={pendingPlan?.title ?? "Selected package"}
           booking={null}
           currency={pendingPlan?.currency || currency}
+          depositPercent={readEventPlanPayload(pendingPlan?.payload).depositPreviewPercent}
         />
       ) : finalized ? (
         <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 px-5 py-6">
@@ -153,7 +155,7 @@ export function PublicEventPlanView({
             and complete payment next, or submit an inquiry for a team member to follow up. Inventory is
             not reserved until payment is received.
           </p>
-          <AdjustmentNotice note={adjustmentNote} />
+          <AdjustmentNotice note={adjustmentNote ? formatCustomerFacingClocks(adjustmentNote) : undefined} />
         </>
       )}
       {plans.length === 0 ? (
@@ -254,6 +256,7 @@ function PendingBookingPanel({
   planTitle,
   booking,
   currency,
+  depositPercent,
 }: {
   organizationName: string;
   planTitle: string;
@@ -268,6 +271,7 @@ function PendingBookingPanel({
     currency?: string | null;
   } | null;
   currency: string;
+  depositPercent?: number | null;
 }) {
   const displayCurrency = booking?.currency || currency;
   return (
@@ -293,7 +297,9 @@ function PendingBookingPanel({
               <li>Total {formatMoneyFromCents(booking.totalCents, displayCurrency)}</li>
             ) : null}
             {booking.depositRequiredCents != null ? (
-              <li>Deposit required {formatMoneyFromCents(booking.depositRequiredCents, displayCurrency)}</li>
+              <li>
+                {formatEstimatedDepositLine(booking.depositRequiredCents, depositPercent, displayCurrency)}
+              </li>
             ) : null}
           </>
         ) : null}
@@ -379,7 +385,14 @@ function PlanOptionCard({
   const perPerson = guestCount ? perPersonCents(total, guestCount) : null;
   const displayCurrency = plan.currency || currency;
   const duration = formatEventDuration(plan.durationMinutes ?? payload.durationMinutes);
-  const availabilityNote = payload.customerAvailabilityNote || CUSTOMER_AVAILABILITY_NOTE;
+  const sampleItinerary = (payload.itinerary ?? []).filter(isSampleItinerarySegment);
+  const adjustedWindow = formatAdjustedEventWindow(
+    payload.startTime,
+    plan.durationMinutes ?? payload.durationMinutes,
+  );
+  const availabilityNote = formatCustomerFacingClocks(payload.customerAvailabilityNote || CUSTOMER_AVAILABILITY_NOTE);
+  const recommendation = formatCustomerFacingClocks(plan.customerFacingReason);
+  const durationNote = formatCustomerFacingClocks(payload.durationNote);
   const unavailable =
     plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE ||
     plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.NEEDS_ADJUSTMENT;
@@ -413,8 +426,7 @@ function PlanOptionCard({
       </p>
       {payload.depositPreviewCents != null && payload.pricingComplete ? (
         <p className="mt-1 text-xs text-foreground/60">
-          Deposit preview {formatMoneyFromCents(payload.depositPreviewCents, displayCurrency)} ·{" "}
-          {payload.depositPreviewNote ?? DEPOSIT_PREVIEW_NOTE}
+          {formatEstimatedDepositLine(payload.depositPreviewCents, payload.depositPreviewPercent, displayCurrency)}
         </p>
       ) : null}
 
@@ -437,10 +449,23 @@ function PlanOptionCard({
 
       <PlanSection title="Dining">{payload.dining.label}</PlanSection>
 
-      <PlanSection title="Sample Itinerary">
-        {payload.itinerary && payload.itinerary.length > 0 ? (
+      {payload.includedItems && payload.includedItems.length > 0 ? (
+        <PlanSection title="Included items">
           <ul className="list-disc space-y-1 pl-5">
-            {payload.itinerary.map((segment) => (
+            {payload.includedItems.map((item) => (
+              <li key={item.knowledgeItemId}>
+                {item.name}
+                {item.quantity ? ` · ${item.quantity}${item.unitLabel ? ` ${item.unitLabel}` : ""}` : ""}
+              </li>
+            ))}
+          </ul>
+        </PlanSection>
+      ) : null}
+
+      <PlanSection title="Sample Itinerary">
+        {sampleItinerary.length > 0 ? (
+          <ul className="list-disc space-y-1 pl-5">
+            {sampleItinerary.map((segment) => (
               <li key={`${segment.startTime}-${segment.label}`}>
                 {formatItineraryRange(segment.startTime, segment.endTime)} {segment.label}
               </li>
@@ -459,17 +484,32 @@ function PlanOptionCard({
 
       <PlanSection title="Space">
         {payload.spaces.length > 0
-          ? payload.spaces.map((space) => space.name).join(", ")
+          ? payload.spaces.map((space) => {
+              const window =
+                space.startTime && space.endTime
+                  ? formatItineraryRange(space.startTime, space.endTime)
+                  : null;
+              const reservation =
+                space.durationMinutes && space.durationMinutes > 0
+                  ? `${formatEventDuration(space.durationMinutes)} reservation`
+                  : null;
+              return [space.name, reservation, window].filter(Boolean).join(" · ");
+            }).join(", ")
           : "Shared / to be confirmed"}
       </PlanSection>
 
-      <PlanSection title="Event Length">{duration}</PlanSection>
+      <PlanSection title="Event Length">
+        <p>{duration}</p>
+      </PlanSection>
 
       <PlanSection title="Availability">
         {unavailable ? (
           <p>Unavailable at the requested time.</p>
         ) : payload.itineraryAdjusted ? (
-          <p>Adjusted from your requested time. This itinerary is currently viable.</p>
+          <p>
+            Adjusted from your requested time. This itinerary is currently viable.
+            {adjustedWindow ? ` Adjusted to: ${adjustedWindow}.` : ""}
+          </p>
         ) : plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.AVAILABLE ? (
           <p>Currently available for the sample itinerary shown.</p>
         ) : (
@@ -480,12 +520,24 @@ function PlanOptionCard({
       {payload.itineraryAdjusted ? (
         <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
           Adjusted from your requested time
+          {adjustedWindow ? (
+            <>
+              <br />
+              Adjusted to: {adjustedWindow}
+            </>
+          ) : null}
         </p>
       ) : null}
 
       <PlanSection title="Why We Recommend This">
-        <p>{plan.customerFacingReason}</p>
-        <p className="mt-2 text-xs text-foreground/55">{availabilityNote}</p>
+        <p>{recommendation}</p>
+        {durationNote && !recommendation.includes(durationNote) ? <p className="mt-2">{durationNote}</p> : null}
+        {payload.itineraryAdjusted && (payload.adjustmentNote || payload.customerAvailabilityNote) ? (
+          <p className="mt-2">
+            {formatCustomerFacingClocks(payload.adjustmentNote || payload.customerAvailabilityNote)}
+          </p>
+        ) : null}
+        <p className="mt-2 text-xs text-foreground/55">{CUSTOMER_AVAILABILITY_NOTE}</p>
         <p className="mt-2 text-xs text-foreground/55">{BOOK_NOW_EXPLANATION}</p>
         {payload.suggestedStartTimes && payload.suggestedStartTimes.length > 0 ? (
           <p className="mt-2 text-xs text-foreground/70">

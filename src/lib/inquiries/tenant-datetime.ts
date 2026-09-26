@@ -34,6 +34,55 @@ export function formatEventLocalTime(value: string | null | undefined): string |
   }).format(utc);
 }
 
+const RAW_CLOCK_IN_PROSE = /\b(?:[01]?\d|2[0-3]):[0-5]\d\b/g;
+
+/**
+ * Format raw event-local clocks (`16:00`) once.
+ * A clock already followed by AM/PM is left alone so `4:00 PM` is not parsed as 04:00 and rewritten to `4:00 AM PM`.
+ */
+export function formatCustomerFacingClocks(text: string | null | undefined): string {
+  if (!text) {
+    return "";
+  }
+  return text.replace(RAW_CLOCK_IN_PROSE, (match, offset: number) => {
+    const rest = text.slice(offset + match.length);
+    if (/^\s*[AP]M\b/i.test(rest)) {
+      return match;
+    }
+    return formatEventLocalTime(match) ?? match;
+  });
+}
+
+/** Format two raw event-local clocks once: `16:00` + `18:00` → `4:00 PM–6:00 PM`. */
+export function formatEventLocalRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+): string | null {
+  const startLabel = formatEventLocalTime(start);
+  const endLabel = formatEventLocalTime(end);
+  if (startLabel && endLabel) {
+    return `${startLabel}–${endLabel}`;
+  }
+  return startLabel || endLabel;
+}
+
+export function formatAdjustedEventWindow(
+  startTime: string | null | undefined,
+  durationMinutes: number | null | undefined,
+): string | null {
+  const parsed = parseEventLocalTime(startTime);
+  if (!parsed || !durationMinutes || durationMinutes <= 0) {
+    return formatEventLocalTime(startTime);
+  }
+  const total = parsed.hour * 60 + parsed.minute + durationMinutes;
+  const endHour = Math.floor(total / 60) % 24;
+  const endMinute = total % 60;
+  return formatEventLocalRange(
+    startTime,
+    `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`,
+  );
+}
+
 export function formatEventLocalDateTime(input: {
   date?: Date | string | null;
   time?: string | null;
@@ -228,12 +277,7 @@ export const formatTenantTimestamp = formatOrganizationTimestamp;
 export const formatItineraryTime = formatEventLocalTime;
 
 export function formatItineraryRange(start: string | null | undefined, end: string | null | undefined): string {
-  const startLabel = formatEventLocalTime(start) ?? (start?.trim() || "");
-  const endLabel = formatEventLocalTime(end) ?? (end?.trim() || "");
-  if (startLabel && endLabel) {
-    return `${startLabel}–${endLabel}`;
-  }
-  return startLabel || endLabel;
+  return formatEventLocalRange(start, end) ?? "";
 }
 
 /** Display a stored itinerary line such as `17:30–18:30 Fajita Bar` in 12-hour time. */
