@@ -96,7 +96,8 @@ export function archiveInquiryConfirm(input: {
 export function unarchiveInquiryConfirm(): DestructiveConfirmCopy {
   return {
     title: "Restore this inquiry?",
-    description: "It will return to the active inquiry queue based on its current status.",
+    description:
+      "It returns to the active inquiry queue unless its confirmed event has already ended. Ended events stay in this history.",
     confirmLabel: "Restore inquiry",
     confirmPendingLabel: "Restoring…",
   };

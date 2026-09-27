@@ -96,6 +96,7 @@ async function main() {
     console.info(`  Numbered resources created/unchanged: ${result.resourcesCreated}/${result.resourcesUnchanged}`);
     console.info(
       `  Profiles created/updated/unchanged: ${result.profilesCreated}/${result.profilesUpdated}/${result.profilesUnchanged}`,
+      `  Attraction interests created/updated/unchanged: ${result.interestsCreated}/${result.interestsUpdated}/${result.interestsUnchanged}`,
     );
     console.info("  Unresolved source ambiguities:");
     for (const item of result.ambiguities) {

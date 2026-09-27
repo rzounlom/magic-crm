@@ -2,8 +2,10 @@
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PublicEventPlanView } from "@/components/layout/public-event-plan-view";
 import { EVENT_PLAN_TIERS } from "@/types/event-planner";
@@ -56,6 +58,8 @@ describe("public event plan view", () => {
                 { startTime: "18:30", endTime: "19:00", label: "Axe Throwing" },
               ],
               pricingComplete: true,
+              depositPreviewCents: 114000,
+              depositPreviewPercent: 30,
             },
           },
           {
@@ -78,6 +82,26 @@ describe("public event plan view", () => {
               pricingComplete: true,
             },
           },
+          {
+            id: "p3",
+            tier: EVENT_PLAN_TIERS.PREMIUM,
+            title: "Premium Celebration",
+            estimatedTotalCents: 720000,
+            currency: "USD",
+            durationMinutes: 180,
+            customerFacingReason: "The fullest option.",
+            payload: {
+              guestCount: 24,
+              eventDate: "2026-10-15",
+              startTime: "18:00",
+              durationMinutes: 180,
+              activities: [{ knowledgeItemId: "c", name: "Laser Tag - 90 Minutes", quantity: 1, priceCents: 0 }],
+              dining: { label: "Catered meal", priceCents: 0 },
+              spaces: [],
+              schedule: [],
+              pricingComplete: true,
+            },
+          },
         ]}
       />,
     );
@@ -86,8 +110,23 @@ describe("public event plan view", () => {
     expect(html).toContain("Riverside Fun Center Personal Event Planner");
     expect(html).toContain("RECOMMENDED");
     expect(html).toContain("Why We Recommend This");
+    expect(html).toContain("Good");
+    expect(html).toContain("RECOMMENDED");
+    expect(html).toContain("Premium");
+    expect(html).toContain("$3,800");
+    expect(html).toContain("Estimated deposit");
+    expect(html).toContain("(30%)");
+    expect(html).toContain("Laser Tag - 90 minutes");
     expect(html).toContain("Book Now");
     expect(html).toContain("Submit inquiry");
+    const detailsAt = html.indexOf("data-plan-details");
+    const actionsAt = html.indexOf("data-plan-actions");
+    expect(detailsAt).toBeGreaterThan(-1);
+    expect(actionsAt).toBeGreaterThan(detailsAt);
+    expect(html.indexOf("Book Now")).toBeGreaterThan(actionsAt);
+    expect(html.indexOf("Submit inquiry")).toBeGreaterThan(actionsAt);
+    expect(html.slice(detailsAt, actionsAt)).toContain("Attractions");
+    expect(html.slice(detailsAt, actionsAt)).not.toContain("Book Now");
     expect(html).toContain("Attractions");
     expect(html).toContain("Dining");
     expect(html).toContain("Event Length");
@@ -385,7 +424,10 @@ describe("public event plan view", () => {
     expect(html).toContain("Adjusted from your requested time");
     expect(html).toContain("This option is not available at the requested time.");
     expect(html).toContain("Book Now");
-    expect(html.split("Book Now").length - 1).toBe(1);
+    const mobile = html.slice(html.indexOf('data-proposal-mobile'), html.indexOf('data-proposal-desktop'));
+    const desktop = html.slice(html.indexOf('data-proposal-desktop'));
+    expect(mobile.split("Book Now").length - 1).toBe(1);
+    expect(desktop.split("Book Now").length - 1).toBe(1);
   });
 
   it("formats proposal copy once and keeps each tenant deposit percent", () => {
@@ -457,5 +499,92 @@ describe("public event plan view", () => {
     expect(tenantB).toContain("(30%)");
     expect(tenantB).not.toContain("(25%)");
     expect(tenantA).not.toContain("deposit preview");
+  });
+});
+
+function comparisonPlan(tier: string, id: string, totalCents: number) {
+  return {
+    id,
+    tier,
+    title: tier,
+    estimatedTotalCents: totalCents,
+    currency: "USD",
+    durationMinutes: 120,
+    customerFacingReason: `${id} reason`,
+    availabilityStatus: "AVAILABLE",
+    payload: {
+      guestCount: 10,
+      eventDate: "2026-10-15",
+      startTime: "14:00",
+      durationMinutes: 120,
+      activities: [],
+      dining: { label: "Pizza", priceCents: 0 },
+      spaces: [],
+      schedule: [],
+      itinerary: [],
+      pricingComplete: true,
+    },
+  };
+}
+
+describe("mobile proposal comparison", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("shows every card on the desktop grid and one selected card on the mobile selector", async () => {
+    const user = userEvent.setup();
+    render(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="opaque-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 10,
+          eventGoal: "Celebration",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          comparisonPlan(EVENT_PLAN_TIERS.BUDGET, "good-plan", 80000),
+          comparisonPlan(EVENT_PLAN_TIERS.BEST_FIT, "recommended-plan", 120000),
+          comparisonPlan(EVENT_PLAN_TIERS.PREMIUM, "premium-plan", 180000),
+        ]}
+      />,
+    );
+
+    const desktop = document.querySelector("[data-proposal-desktop]");
+    const mobile = document.querySelector("[data-proposal-mobile]");
+    expect(desktop?.className).toContain("hidden");
+    expect(desktop?.className).toContain("lg:grid-cols-3");
+    expect(desktop?.querySelectorAll("article")).toHaveLength(3);
+    expect(mobile?.className).toContain("lg:hidden");
+    expect(mobile?.querySelectorAll("article")).toHaveLength(1);
+
+    const selector = screen.getByRole("tablist", { name: "Proposal options" });
+    const recommended = within(selector).getByRole("tab", { name: /Recommended/ });
+    const good = within(selector).getByRole("tab", { name: /^Good/ });
+    const premium = within(selector).getByRole("tab", { name: /Premium/ });
+    expect(recommended.getAttribute("aria-selected")).toBe("true");
+    expect(good.getAttribute("aria-selected")).toBe("false");
+    expect(mobile?.getAttribute("role")).toBe("tabpanel");
+
+    const mobileRegion = within(mobile as HTMLElement);
+    expect(mobileRegion.getAllByRole("button", { name: "Book Now" })).toHaveLength(1);
+    expect(mobileRegion.getAllByRole("button", { name: "Submit inquiry" })).toHaveLength(1);
+    expect(mobileRegion.getAllByDisplayValue("recommended-plan")).toHaveLength(2);
+
+    await user.click(good);
+    expect(good.getAttribute("aria-selected")).toBe("true");
+    expect(mobileRegion.getAllByDisplayValue("good-plan")).toHaveLength(2);
+    expect(mobileRegion.queryByDisplayValue("recommended-plan")).toBeNull();
+    expect(mobileRegion.getAllByRole("button", { name: "Book Now" })).toHaveLength(1);
+
+    await user.click(premium);
+    expect(premium.getAttribute("aria-selected")).toBe("true");
+    expect(mobileRegion.getAllByDisplayValue("premium-plan")).toHaveLength(2);
+    expect(mobileRegion.queryByDisplayValue("good-plan")).toBeNull();
+    expect(mobile?.querySelectorAll("article")).toHaveLength(1);
+    expect(desktop?.querySelectorAll("article")).toHaveLength(3);
   });
 });

@@ -86,7 +86,7 @@ export function ConfirmDialog({
           <button
             ref={cancelRef}
             type="button"
-            className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground"
+            className="cursor-pointer rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground disabled:cursor-not-allowed"
             onClick={onCancel}
             disabled={confirmPending}
           >
@@ -94,7 +94,7 @@ export function ConfirmDialog({
           </button>
           <button
             type="button"
-            className="rounded-md bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive"
+            className="cursor-pointer rounded-md bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive disabled:cursor-not-allowed"
             onClick={onConfirm}
             disabled={confirmPending}
           >

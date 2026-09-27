@@ -13,10 +13,11 @@ import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { BOOKING_STATUSES } from "@/types/booking";
 import {
-  formatBudgetRange,
+  formatBeveragePreference,
   formatDiningPreference,
   formatDesiredDuration,
   formatGuestMix,
+  formatIntakeBudget,
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
 import { formatInquiryActivityAction } from "@/lib/inquiries/activity-labels";
@@ -65,6 +66,8 @@ type WorkspaceInquiry = {
   desiredDurationMinutes: number | null;
   budgetMin: number | null;
   budgetMax: number | null;
+  budgetPreference?: string | null;
+  beveragePreference?: string | null;
   eventGoal: string | null;
   occasion: string | null;
   diningPreference: string | null;
@@ -470,22 +473,34 @@ export function LiveAgentWorkspace({
                 <div>
                   <dt className="text-foreground/60">Event</dt>
                   <dd>
-                    {inquiry.eventType || "—"} · {formatDesiredDuration(inquiry.desiredDurationMinutes)} ·{" "}
-                    {formatGuestMix(inquiry.guestMix)}
+                    {inquiry.eventType || "—"}
+                    {inquiry.desiredDurationMinutes != null
+                      ? ` · ${formatDesiredDuration(inquiry.desiredDurationMinutes)}`
+                      : ""}
+                    {` · ${formatGuestMix(inquiry.guestMix)}`}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-foreground/60">Budget</dt>
-                  <dd>{formatBudgetRange(inquiry.budgetMin, inquiry.budgetMax)}</dd>
+                  <dd>
+                    {formatIntakeBudget({
+                      budgetPreference: inquiry.budgetPreference,
+                      budgetMin: inquiry.budgetMin,
+                      budgetMax: inquiry.budgetMax,
+                    })}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-foreground/60">Goal / occasion</dt>
                   <dd>{[inquiry.eventGoal, inquiry.occasion].filter(Boolean).join(" · ") || "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-foreground/60">Dining / space</dt>
+                  <dt className="text-foreground/60">Food / private space</dt>
                   <dd>
                     {formatDiningPreference(inquiry.diningPreference)} · {formatSpacePreference(inquiry.spacePreference)}
+                    {inquiry.beveragePreference
+                      ? ` · Beverages: ${formatBeveragePreference(inquiry.beveragePreference)}`
+                      : ""}
                   </dd>
                 </div>
                 <div>

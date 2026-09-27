@@ -1,11 +1,18 @@
 import { z } from "zod";
 
+import {
+  BEVERAGE_PREFERENCE_VALUES,
+  BUDGET_PREFERENCE_VALUES,
+  budgetCentsForPreference,
+  FOOD_PREFERENCE_VALUES,
+  PRIVATE_SPACE_PREFERENCE_VALUES,
+  spacePreferenceFromIntake,
+} from "@/lib/event-planner/intake-contract";
 import { normalizeUsPhoneForStorage, usPhoneDigits } from "@/lib/inquiries/public-phone";
 import { isValidInvitationEmail, normalizeInvitationEmail } from "@/server/team/invitation-email";
 import {
   BUDGET_BAND_CENTS,
   BUDGET_BAND_VALUES,
-  DINING_PREFERENCE_VALUES,
   EVENT_DURATION_MINUTES,
   GUEST_MIX_VALUES,
   SPACE_PREFERENCE_VALUES,
@@ -72,23 +79,40 @@ export const publicIntakeSchema = z
         .regex(/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/, { error: "Choose a valid start time." })
         .optional(),
     ),
-    guestCount: z.coerce
+    guestCount: z.preprocess((value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return /^\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
+      }
+      return value;
+    }, z
       .number({ error: "Enter a guest count greater than 0." })
       .int({ error: "Enter a whole number of guests." })
       .min(1, { error: "Enter a guest count greater than 0." })
-      .max(PUBLIC_INTAKE_LIMITS.guestCount, { error: "Guest count is too large." }),
+      .max(PUBLIC_INTAKE_LIMITS.guestCount, { error: "Guest count is too large." })),
     guestMix: z.enum(GUEST_MIX_VALUES, { error: "Choose a guest mix." }),
-    desiredDurationMinutes: z.coerce
-      .number({ error: "Choose an event length." })
-      .refine(
-        (value): value is (typeof EVENT_DURATION_MINUTES)[number] =>
-          (EVENT_DURATION_MINUTES as readonly number[]).includes(value),
-        { error: "Choose an event length." },
-      ),
-    budgetBand: z.enum(BUDGET_BAND_VALUES, { error: "Choose a budget range." }),
-    eventGoal: z.string().trim().min(1, { error: "Choose a main event goal." }).max(80),
-    diningPreference: z.string().trim().min(1, { error: "Choose a dining preference." }).max(80),
-    spacePreference: z.enum(SPACE_PREFERENCE_VALUES, { error: "Choose a space preference." }),
+    desiredDurationMinutes: z.preprocess(
+      emptyToUndefined,
+      z.coerce
+        .number({ error: "Choose an event length." })
+        .refine(
+          (value): value is (typeof EVENT_DURATION_MINUTES)[number] =>
+            (EVENT_DURATION_MINUTES as readonly number[]).includes(value),
+          { error: "Choose an event length." },
+        )
+        .optional(),
+    ),
+    budgetBand: z.preprocess(emptyToUndefined, z.enum(BUDGET_BAND_VALUES).optional()),
+    budgetPreference: z.preprocess(emptyToUndefined, z.enum(BUDGET_PREFERENCE_VALUES).optional()),
+    eventGoal: z.preprocess(emptyToUndefined, z.string().trim().min(1).max(80).optional()),
+    diningPreference: z.preprocess(emptyToUndefined, z.string().trim().min(1).max(80).optional()),
+    foodPreference: z.preprocess(emptyToUndefined, z.enum(FOOD_PREFERENCE_VALUES).optional()),
+    beveragePreference: z.preprocess(emptyToUndefined, z.enum(BEVERAGE_PREFERENCE_VALUES).optional()),
+    spacePreference: z.preprocess(emptyToUndefined, z.enum(SPACE_PREFERENCE_VALUES).optional()),
+    privateSpacePreference: z.preprocess(
+      emptyToUndefined,
+      z.enum(PRIVATE_SPACE_PREFERENCE_VALUES).optional(),
+    ),
     attractionMode: z.preprocess((value) => {
       if (value == null || value === "") {
         return undefined;
@@ -108,19 +132,52 @@ export const publicIntakeSchema = z
     companyWebsite: z.string().optional(),
     submissionId: z.string().trim().min(8).max(80),
   })
+  .superRefine((data, ctx) => {
+    if (!data.foodPreference && !data.diningPreference) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["foodPreference"],
+        message: "Choose whether to include food.",
+      });
+    }
+    if (!data.privateSpacePreference && !data.spacePreference) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["privateSpacePreference"],
+        message: "Choose a space preference.",
+      });
+    }
+    if (!data.budgetPreference && !data.budgetBand) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["budgetPreference"],
+        message: "Choose a budget preference.",
+      });
+    }
+  })
   .transform((data) => {
-    const band = BUDGET_BAND_CENTS[data.budgetBand];
+    const eventGoal = data.eventGoal?.trim() || data.eventType;
+    const diningPreference = data.foodPreference ?? data.diningPreference ?? "";
+    const spacePreference = data.privateSpacePreference
+      ? spacePreferenceFromIntake(data.privateSpacePreference)
+      : (data.spacePreference ?? "no_preference");
+    const budget = data.budgetPreference
+      ? budgetCentsForPreference(data.budgetPreference, data.guestCount)
+      : data.budgetBand
+        ? BUDGET_BAND_CENTS[data.budgetBand]
+        : { min: null, max: null };
     return {
       ...data,
       customerGroupName: data.customerGroupName?.trim() || undefined,
-      occasion: data.eventGoal,
-      diningPreference: DINING_PREFERENCE_VALUES.includes(
-        data.diningPreference as (typeof DINING_PREFERENCE_VALUES)[number],
-      )
-        ? data.diningPreference
-        : data.diningPreference,
-      budgetMin: band.min,
-      budgetMax: band.max,
+      eventGoal,
+      occasion: eventGoal,
+      diningPreference,
+      spacePreference,
+      beveragePreference: data.beveragePreference ?? null,
+      budgetPreference: data.budgetPreference ?? null,
+      desiredDurationMinutes: data.desiredDurationMinutes ?? null,
+      budgetMin: budget.min,
+      budgetMax: budget.max,
     };
   });
 

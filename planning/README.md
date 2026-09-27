@@ -16,8 +16,11 @@ System architecture documents. Current implementation notes:
 - Phase 3B.4b — employee workspace truth: original vs working vs confirmed vs allocated vs legacy HOLD
 - Phase 3B.6 — proposal event length is the real itinerary span; rooms overlap; non-scheduled items stay off the sample itinerary; public times are 12-hour
 - Phase 3B.6b — customer time copy formats a raw clock once; deposit percent comes from `Organization.depositPercent`; duration copy names scheduled time added beyond the base option
-- Employee inquiry awareness — authenticated header polls about every 15 seconds; the bell and inquiry list update without a browser refresh (current)
-- Phase 3C — Stripe/email next. Do not start the intake redesign yet.
+- Employee inquiry awareness — authenticated header polls about every 15 seconds; the bell and inquiry list update without a browser refresh
+- Public event intake redesign, phase 1 — guided planner and canonical preferences. Recommendation composition for food tiers, budget-aware Good / Recommended / Premium, room selection, and beverages is the next phase and is not implemented yet.
+- Inquiry lifecycle and public viewport — ended confirmed bookings leave the Active inquiry queue by query, the planner and proposal cards scroll inside the viewport, and page-critical mutations use a shared blocking state.
+- Public attraction interests — intake offers tenant-configured concepts, not duration SKUs. Narrow proposal widths show one Good / Recommended / Premium card at a time. Recommendation composition is still the next phase.
+- Phase 3C — Stripe/email after the recommendation-engine phase.
 
 - `database.md`
 - `multi-tenancy.md`
@@ -25,10 +28,11 @@ System architecture documents. Current implementation notes:
 - `authorization.md`
 - `team-management.md`
 - `client-onboarding.md`
-- `inquiries.md` — Personal Event Planner intake, Book Now pending bookings, Submit inquiry, employee New Booking, archive vs booking cancellation, employee workspace states, employee inquiry polling and notification bell
+- `catalog.md` — tenant products, prices, and conceptual attraction interests mapped to fulfillment products
+- `inquiries.md` — guided public intake, conceptual attraction interests, canonical preferences, Start over, Book Now pending bookings, Submit inquiry, employee New Booking, archive vs booking cancellation, employee workspace states, employee inquiry polling and notification bell
 - `resource-schedule.md` — tenant finite-resource model, itinerary-segment occupancy, Admin inventory, Master Schedule occupancy vs pending bookings, confirmed allocated resources vs availability, cancelled reservations no longer block inventory, legacy HOLDs
 - `booking.md` — pending vs confirmed bookings; segment windows; Confirm Payment & Book / `confirmPendingBooking`; original vs working vs confirmed snapshots; cancel vs delete; pre-segment bookings are not rewritten
-- `proposal-engine.md` — availability-aware Good / Recommended / Premium; nearby itinerary search; Book Now precheck
+- `proposal-engine.md` — availability-aware Good / Recommended / Premium; interest-to-product adapter; one mobile proposal at a time; nearby itinerary search; Book Now precheck
 - `communications.md` — inquiry vs selected-plan vs booking-confirmed emails; `CommunicationEvent` log without a mailer
 - `ai-sales-agent.md`
 - `ui-conventions.md` — includes the planned **Employee shell polish / sticky authenticated header** follow-up

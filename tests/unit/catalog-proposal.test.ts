@@ -167,6 +167,49 @@ describe("catalog proposal selection", () => {
     });
     expect(good.map((row) => row.slug)).toEqual(["have-a-ball-mini-golf"]);
   });
+
+  it("keeps one product when a conceptual interest expands to grouped duration SKUs", () => {
+    const axes = [
+      catalogProduct({
+        id: "axe-60",
+        slug: "axe-throwing-60",
+        name: "Axe Throwing - 60 Minutes",
+        fulfillmentGroup: "axe-throwing",
+      }),
+      catalogProduct({
+        id: "axe-30",
+        slug: "axe-throwing-30",
+        name: "Axe Throwing - 30 Minutes",
+        fulfillmentGroup: "axe-throwing",
+      }),
+      ...products,
+    ];
+    const good = selectCatalogProductsForTier({
+      tierKey: "good",
+      addOnSlugs: [],
+      includeSpace: false,
+      attractionMode: ATTRACTION_MODES.KNOWN,
+      profile,
+      productsBySlug: new Map(axes.map((row) => [row.slug, row])),
+      productsById: new Map(axes.map((row) => [row.id, row])),
+      inquiry: {
+        eventType: "Birthday Party",
+        eventGoal: "Celebration",
+        guestCount: 12,
+        guestMix: "mostly_adults",
+        desiredDurationMinutes: 120,
+        desiredDate: "2026-10-17",
+        desiredStartTime: "14:00",
+        budgetMin: null,
+        budgetMax: null,
+        diningPreference: "none",
+        spacePreference: "no_preference",
+        attractionInterestIds: ["axe-60", "axe-30"],
+        customerNotes: null,
+      },
+    });
+    expect(good.map((row) => row.slug)).toEqual(["axe-throwing-60"]);
+  });
 });
 
 describe("nearby availability", () => {

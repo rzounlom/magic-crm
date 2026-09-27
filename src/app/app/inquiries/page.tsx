@@ -71,8 +71,8 @@ export default async function InquiriesPage({
       </div>
       <p className="mt-4 max-w-xl text-sm text-foreground/70">
         {archived
-          ? "Archived inquiries are hidden from the active queue. History is kept. Archiving does not cancel a booking."
-          : "Ready for Live Agent is the booking workspace queue. Customer-selected plans are prioritized. Confirmed events move to Bookings. This queue is not a payment tool."}
+          ? "Archived inquiries and confirmed events that have already ended stay here. History is kept. Nothing is deleted, and archiving does not cancel a booking."
+          : "Ready for Live Agent is the booking workspace queue. Customer-selected plans are prioritized. A confirmed event leaves this queue after it ends and stays in Archived. This queue is not a payment tool."}
       </p>
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Inquiry views">
         <Link

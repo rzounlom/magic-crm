@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { unstable_rethrow } from "next/navigation";
 import { useRef, useState, type ReactNode } from "react";
 
+import { BlockingMutation } from "@/components/ui/blocking-mutation";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PendingActionProvider } from "@/components/ui/pending-submit-button";
 import {
@@ -23,6 +24,8 @@ type SecurityActionFormProps = {
   className?: string;
   confirm?: DestructiveConfirmCopy;
   notice: MutationNoticeCopy;
+  blocking?: boolean;
+  blockingLabel?: string;
 };
 
 export function SecurityActionForm({
@@ -31,6 +34,8 @@ export function SecurityActionForm({
   className,
   confirm,
   notice,
+  blocking = false,
+  blockingLabel = "Working…",
 }: SecurityActionFormProps) {
   const router = useRouter();
   const pendingRef = useRef(false);
@@ -128,6 +133,7 @@ export function SecurityActionForm({
           }}
         />
       ) : null}
+      <BlockingMutation active={blocking && pending} label={blockingLabel} />
     </PendingActionProvider>
   );
 }

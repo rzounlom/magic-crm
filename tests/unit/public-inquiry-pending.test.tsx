@@ -34,7 +34,7 @@ describe("public inquiry pending UX", () => {
     expect(onSafeSubmitAttempt(true)).toBe("block");
     expect(onSafeSubmitAttempt(false)).toBe("run");
     const source = readFileSync(
-      path.join(process.cwd(), "src/components/layout/public-inquiry-form.tsx"),
+      path.join(process.cwd(), "src/components/layout/public-intake-wizard.tsx"),
       "utf8",
     );
     expect(source).toContain("onSafeSubmitAttempt");
@@ -42,6 +42,6 @@ describe("public inquiry pending UX", () => {
     expect(source).toContain("yieldToPaint");
     expect(source).toContain("onSubmit");
     expect(source).toContain("PUBLIC_INQUIRY_PENDING_COPY");
-    expect(source).toContain("PublicInquiryPendingBanner");
+    expect(source).toContain("BlockingMutation");
   });
 });

@@ -38,6 +38,14 @@ Two kinds of values exist. Do not mix them.
 
 A Master Schedule date such as `2026-09-17` is that tenant-local civil day (`eventLocalSlotDate`), not UTC’s September 17.
 
+## Page-critical mutations
+
+Small updates, such as marking a notification read, use the button’s own pending state.
+
+Creating event options, saving a public booking request, submitting a public inquiry, and confirming a booking use `BlockingMutation`. It covers the page, blocks pointer interaction, exposes the status to assistive technology, and clears when the action succeeds, navigates, or fails. Toasts still report the result.
+
+Public planner and proposal screens keep primary actions outside the scrolling content region. Desktop proposal cards share one row. Below the `lg` breakpoint, the proposal comparison is a Good / Recommended / Premium selector with one card. Recommended starts selected. Switching tiers changes only the visible card. The summary stays fixed, the detail area scrolls inside the card, and Book Now / Submit inquiry stay on that card.
+
 ## Pending actions
 
 Disable the submitting control and use wording such as Adding…, Saving…, or Removing…. Ignore a second submit while pending.

@@ -11,10 +11,11 @@ import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { db } from "@/lib/db";
 import {
-  formatBudgetRange,
+  formatBeveragePreference,
   formatDiningPreference,
   formatDesiredDuration,
   formatGuestMix,
+  formatIntakeBudget,
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
 import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display";
@@ -263,24 +264,38 @@ export default async function InquiryDetailPage({
           <dt className="text-foreground/60">Guest mix</dt>
           <dd className="mt-1">{formatGuestMix(inquiry.guestMix)}</dd>
         </div>
-        <div>
-          <dt className="text-foreground/60">Event length</dt>
-          <dd className="mt-1">{formatDesiredDuration(inquiry.desiredDurationMinutes)}</dd>
-        </div>
+        {inquiry.desiredDurationMinutes != null ? (
+          <div>
+            <dt className="text-foreground/60">Requested length</dt>
+            <dd className="mt-1">{formatDesiredDuration(inquiry.desiredDurationMinutes)}</dd>
+          </div>
+        ) : null}
         <div>
           <dt className="text-foreground/60">Budget</dt>
-          <dd className="mt-1">{formatBudgetRange(inquiry.budgetMin, inquiry.budgetMax)}</dd>
+          <dd className="mt-1">
+            {formatIntakeBudget({
+              budgetPreference: inquiry.budgetPreference,
+              budgetMin: inquiry.budgetMin,
+              budgetMax: inquiry.budgetMax,
+            })}
+          </dd>
         </div>
         <div>
           <dt className="text-foreground/60">Event goal</dt>
           <dd className="mt-1">{inquiry.eventGoal || inquiry.occasion || "—"}</dd>
         </div>
         <div>
-          <dt className="text-foreground/60">Dining preference</dt>
+          <dt className="text-foreground/60">Food</dt>
           <dd className="mt-1">{formatDiningPreference(inquiry.diningPreference)}</dd>
         </div>
+        {inquiry.beveragePreference ? (
+          <div>
+            <dt className="text-foreground/60">Beverages</dt>
+            <dd className="mt-1">{formatBeveragePreference(inquiry.beveragePreference)}</dd>
+          </div>
+        ) : null}
         <div>
-          <dt className="text-foreground/60">Space preference</dt>
+          <dt className="text-foreground/60">Private space</dt>
           <dd className="mt-1">{formatSpacePreference(inquiry.spacePreference)}</dd>
         </div>
         <div>

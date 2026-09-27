@@ -180,6 +180,8 @@ export function LiveAgentBookingActions({
               canSubmitConfirm ? (
                 <SecurityActionForm
                   action={confirmBookingAction}
+                  blocking
+                  blockingLabel="Confirming the booking…"
                   notice={{ successTitle: "Booking confirmed", errorTitle: "Unable to confirm booking" }}
                   confirm={{
                     title: "Confirm payment and booking?",

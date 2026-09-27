@@ -3,6 +3,7 @@ import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
 import { loadCatalogForProposal } from "@/server/catalog/load-for-proposal";
 import { createPublicInquiry } from "@/server/services/inquiry-service";
+import { listPublicPlannerCatalog } from "@/server/services/event-plan-service";
 import { importBookingCatalog } from "@/server/services/catalog-import-service";
 import { checkResourceAvailability, reserveResourcesInTransaction } from "@/server/services/resource-availability-service";
 import { provisionOrganization } from "@/server/services/provision-organization";
@@ -280,26 +281,140 @@ describe("catalog tenant isolation (postgres)", () => {
       const alphaProduct = await db.product.findFirstOrThrow({
         where: { organizationId: alpha.id, slug: "laser-tag" },
       });
-      const betaCreated = await createPublicInquiry(
-        db,
-        intake(beta.slug, {
-          guestCount: 12,
-          guestMix: "mostly_children",
-          attractionInterestIds: [alphaProduct.id],
-          attractionMode: "known",
-        }),
-        undefined,
-        unlimitedLimiter,
-      );
-      const betaPlan = await db.eventPlanRecommendation.findFirstOrThrow({
-        where: { inquiryId: betaCreated.inquiryId },
-      });
-      expect(JSON.stringify(betaPlan.payload)).not.toContain(alphaProduct.id);
-      expect(JSON.stringify(betaPlan.payload)).not.toMatch(/laser-tag/);
+      await expect(
+        createPublicInquiry(
+          db,
+          intake(beta.slug, {
+            guestCount: 12,
+            guestMix: "mostly_children",
+            attractionInterestIds: [alphaProduct.id],
+            attractionMode: "known",
+          }),
+          undefined,
+          unlimitedLimiter,
+        ),
+      ).rejects.toMatchObject({ code: "INVALID_INTAKE" });
 
       const betaCatalog = await loadCatalogForProposal(db, beta.id, beta.locations[0]?.id);
       expect(betaCatalog.products.every((row) => !row.slug.includes("axe"))).toBe(true);
       expect(betaCatalog.products.some((row) => row.slug === "trampoline")).toBe(true);
+    },
+    60_000,
+  );
+
+  it(
+    "persists the redesigned intake on each tenant catalog and rejects foreign or inactive attractions",
+    async () => {
+      const alpha = await provisionNamed("Tenant Alpha Intake");
+      const beta = await provisionNamed("Tenant Beta Intake");
+      await importBookingCatalog(db, { organizationSlug: alpha.slug, dataset: TENANT_ALPHA_DATASET });
+      await importBookingCatalog(db, { organizationSlug: beta.slug, dataset: TENANT_BETA_DATASET });
+
+      const alphaCatalog = await listPublicPlannerCatalog(db, alpha.slug);
+      const betaCatalog = await listPublicPlannerCatalog(db, beta.slug);
+      const alphaNames = alphaCatalog.attractions.map((item) => item.name);
+      const betaNames = betaCatalog.attractions.map((item) => item.name);
+      expect(alphaNames).toEqual(expect.arrayContaining(["Bowling 1 Hour", "Axe Throwing", "Laser Tag", "Arcade"]));
+      expect(alphaNames).not.toContain("Trampoline Park");
+      expect(alphaNames).not.toContain("Upstairs Buyout");
+      expect(betaNames).toEqual(expect.arrayContaining(["Bowling 1 Hour", "Trampoline Park", "Arcade"]));
+      expect(betaNames).not.toContain("Axe Throwing");
+      expect(betaNames).not.toContain("Laser Tag");
+      expect(betaNames).not.toContain("Full Venue");
+
+      const alphaBowling = await db.product.findFirstOrThrow({
+        where: { organizationId: alpha.id, slug: "bowling-1h" },
+      });
+      const alphaAxe = await db.product.findFirstOrThrow({
+        where: { organizationId: alpha.id, slug: "axe-throwing" },
+      });
+      const created = await createPublicInquiry(
+        db,
+        intake(alpha.slug, {
+          guestCount: 20,
+          guestMix: "mostly_children",
+          foodPreference: "WANTS_FOOD",
+          beveragePreference: "NOT_SURE",
+          privateSpacePreference: "YES",
+          budgetPreference: "PER_GUEST_45_55",
+          attractionInterestIds: [alphaBowling.id, alphaAxe.id],
+          organizationId: beta.id,
+          desiredDurationMinutes: undefined,
+          diningPreference: undefined,
+          spacePreference: undefined,
+          budgetBand: undefined,
+          eventGoal: undefined,
+          attractionMode: undefined,
+        }),
+        undefined,
+        unlimitedLimiter,
+      );
+      const row = await db.inquiry.findFirstOrThrow({ where: { id: created.inquiryId } });
+      expect(row.organizationId).toBe(alpha.id);
+      expect(row.locationId).toBe(alpha.locations[0]?.id);
+      expect(row.diningPreference).toBe("WANTS_FOOD");
+      expect(row.beveragePreference).toBe("NOT_SURE");
+      expect(row.budgetPreference).toBe("PER_GUEST_45_55");
+      expect(row.spacePreference).toBe("private");
+      expect(row.desiredDurationMinutes).toBeNull();
+      expect(row.budgetMin).toBe(90_000);
+      expect(row.budgetMax).toBe(110_000);
+      expect(row.audience).toBe("KIDS_YOUTH");
+      const plans = await db.eventPlanRecommendation.findMany({ where: { inquiryId: created.inquiryId } });
+      expect(plans.length).toBeGreaterThan(0);
+      const payload = JSON.stringify(plans.map((plan) => plan.payload));
+      expect(payload).toMatch(/bowling-1h/);
+      expect(payload).toMatch(/axe-throwing/);
+      expect(payload).toMatch(/pizza-combo/);
+
+      const recommended = await createPublicInquiry(
+        db,
+        intake(alpha.slug, {
+          guestCount: 12,
+          guestMix: "mostly_children",
+          foodPreference: "NO_FOOD",
+          beveragePreference: "NO",
+          privateSpacePreference: "NO_PREFERENCE",
+          budgetPreference: "FLEXIBLE",
+          attractionInterestIds: [],
+          desiredDurationMinutes: undefined,
+          diningPreference: undefined,
+          spacePreference: undefined,
+          budgetBand: undefined,
+          eventGoal: undefined,
+        }),
+        undefined,
+        unlimitedLimiter,
+      );
+      const recommendedPlans = await db.eventPlanRecommendation.findMany({
+        where: { inquiryId: recommended.inquiryId },
+      });
+      expect(recommendedPlans.length).toBeGreaterThan(0);
+      const recommendedPayload = JSON.stringify(recommendedPlans.map((plan) => plan.payload));
+      expect(recommendedPayload).toMatch(/laser-tag/);
+      expect(recommendedPayload).not.toMatch(/pizza-combo/);
+
+      const betaTrampoline = await db.product.findFirstOrThrow({
+        where: { organizationId: beta.id, slug: "trampoline" },
+      });
+      await expect(
+        createPublicInquiry(
+          db,
+          intake(alpha.slug, { attractionInterestIds: [betaTrampoline.id] }),
+          undefined,
+          unlimitedLimiter,
+        ),
+      ).rejects.toMatchObject({ code: "INVALID_INTAKE" });
+
+      await db.product.update({ where: { id: alphaBowling.id }, data: { active: false } });
+      await expect(
+        createPublicInquiry(
+          db,
+          intake(alpha.slug, { attractionInterestIds: [alphaBowling.id] }),
+          undefined,
+          unlimitedLimiter,
+        ),
+      ).rejects.toMatchObject({ code: "INVALID_INTAKE" });
     },
     60_000,
   );

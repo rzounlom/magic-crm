@@ -7,14 +7,24 @@ import {
   type InquiryAwarenessSnapshot,
   type InquiryNotificationItem,
 } from "@/lib/inquiries/inquiry-awareness";
+import { inquiryListWhere } from "@/server/inquiries/inquiry-queue";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
+import { INQUIRY_LIST_VIEWS } from "@/types/inquiry";
 import { PERMISSIONS } from "@/types/permissions";
 
 type InquiryNotificationDb = PrismaClient;
 
-function activeInquiryWhere(organizationId: string) {
-  return { organizationId, archivedAt: null };
+async function activeInquiryWhere(ctx: RequestContext, database: InquiryNotificationDb) {
+  const organization = await database.organization.findFirst({
+    where: { id: ctx.organizationId },
+    select: { timezone: true },
+  });
+  return inquiryListWhere({
+    organizationId: ctx.organizationId,
+    view: INQUIRY_LIST_VIEWS.ACTIVE,
+    timeZone: organization?.timezone,
+  });
 }
 
 export async function getInquiryAwareness(
@@ -29,7 +39,7 @@ async function loadInquiryAwarenessSnapshot(
   ctx: RequestContext,
   database: InquiryNotificationDb,
 ): Promise<InquiryAwarenessSnapshot> {
-  const active = activeInquiryWhere(ctx.organizationId);
+  const active = await activeInquiryWhere(ctx, database);
   const [unreadCount, recent] = await Promise.all([
     database.inquiry.count({
       where: {
@@ -116,7 +126,7 @@ export async function markAllInquiryNotificationsSeen(
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
   const unseen = await database.inquiry.findMany({
     where: {
-      ...activeInquiryWhere(ctx.organizationId),
+      ...(await activeInquiryWhere(ctx, database)),
       notificationSeen: {
         none: { organizationId: ctx.organizationId, userProfileId: ctx.userId },
       },

@@ -14,6 +14,8 @@ export async function deleteTestOrganizations(
   await database.resourceReservation.deleteMany({ where: { organizationId: { in: ids } } });
   await database.booking.deleteMany({ where: { organizationId: { in: ids } } });
   await database.organizationBookingSequence.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.attractionInterestProduct.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.attractionInterest.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productResourceRequirement.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productServing.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productPrice.deleteMany({ where: { organizationId: { in: ids } } });

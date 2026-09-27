@@ -91,6 +91,15 @@ const ambiguitySchema = z.object({
   message: z.string(),
 });
 
+const attractionInterestSchema = z.object({
+  slug: z.string().trim().min(1).max(80),
+  label: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(500).optional().nullable(),
+  active: z.boolean().optional().default(true),
+  displayOrder: z.number().int().nonnegative().optional().default(0),
+  productSlugs: z.array(z.string().trim().min(1).max(80)).min(1),
+});
+
 export const bookingCatalogDatasetSchema = z.object({
   version: z.number().int().positive(),
   sourceFiles: z.array(z.string()),
@@ -100,6 +109,7 @@ export const bookingCatalogDatasetSchema = z.object({
   resourceTypes: z.array(resourceTypeSchema).min(1),
   products: z.array(productSchema).min(1),
   recommendationProfiles: z.array(profileSchema).min(1),
+  attractionInterests: z.array(attractionInterestSchema).optional(),
 });
 
 export type BookingCatalogDataset = z.infer<typeof bookingCatalogDatasetSchema>;

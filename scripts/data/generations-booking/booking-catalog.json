@@ -318,7 +318,7 @@
       "minGuests": 1,
       "maxGuests": null,
       "weekendOnly": false,
-      "fulfillmentGroup": null,
+      "fulfillmentGroup": "axe-throwing",
       "shortDescription": "30 minutes of axe throwing.",
       "prices": [
         {
@@ -348,7 +348,7 @@
       "minGuests": 1,
       "maxGuests": null,
       "weekendOnly": false,
-      "fulfillmentGroup": null,
+      "fulfillmentGroup": "axe-throwing",
       "shortDescription": "60 minutes of axe throwing.",
       "prices": [
         {
@@ -1983,6 +1983,43 @@
         ],
         "premiumSpaceSlug": "lower-event-room"
       }
+    }
+  ],
+  "attractionInterests": [
+    {
+      "slug": "axe-throwing",
+      "label": "Axe Throwing",
+      "description": "Axe throwing lanes.",
+      "displayOrder": 0,
+      "productSlugs": ["axe-throwing-60", "axe-throwing-30"]
+    },
+    {
+      "slug": "bowling",
+      "label": "Bowling",
+      "description": "Bowling lanes.",
+      "displayOrder": 1,
+      "productSlugs": ["bowling-1h"]
+    },
+    {
+      "slug": "laser-tag",
+      "label": "Laser Tag",
+      "description": "Laser tag play.",
+      "displayOrder": 2,
+      "productSlugs": ["unlimited-laser-tag-90"]
+    },
+    {
+      "slug": "arcade",
+      "label": "Arcade",
+      "description": "Arcade play.",
+      "displayOrder": 3,
+      "productSlugs": ["unlimited-arcade-1h"]
+    },
+    {
+      "slug": "mini-golf",
+      "label": "Mini Golf",
+      "description": "Mini golf.",
+      "displayOrder": 4,
+      "productSlugs": ["have-a-ball-mini-golf"]
     }
   ]
 }

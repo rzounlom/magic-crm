@@ -25,9 +25,9 @@ export type GuestMix = (typeof GUEST_MIX_VALUES)[number];
 
 export const GUEST_MIX_LABELS: Record<GuestMix, string> = {
   mostly_adults: "Mostly Adults",
-  mostly_children: "Mostly Children",
+  mostly_children: "Mostly Kids / Youth",
   teens: "Teens",
-  mixed_ages: "Mixed Ages",
+  mixed_ages: "Mix of Kids & Adults",
 };
 
 export const EVENT_DURATION_MINUTES = [120, 180, 240, 300] as const;
@@ -77,9 +77,9 @@ export const SPACE_PREFERENCE_VALUES = ["private", "semi_private", "no_preferenc
 export type SpacePreference = (typeof SPACE_PREFERENCE_VALUES)[number];
 
 export const SPACE_PREFERENCE_LABELS: Record<SpacePreference, string> = {
-  private: "Private Space Preferred",
+  private: "Private event space",
   semi_private: "Semi-Private Is Fine",
-  no_preference: "No Preference",
+  no_preference: "No preference",
 };
 
 export const DINING_PREFERENCE_VALUES = [

@@ -49,6 +49,101 @@ describe("public intake validation", () => {
     ).toBe(true);
   });
 
+  it("accepts the canonical planner payload and ignores a browser organization id", () => {
+    const parsed = publicIntakeSchema.safeParse({
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "ada@example.com",
+      eventType: "Birthday Party",
+      preferredDate: "2026-09-26",
+      startTime: "17:00",
+      guestCount: "20",
+      guestMix: "mostly_adults",
+      foodPreference: "WANTS_FOOD",
+      beveragePreference: "NOT_SURE",
+      privateSpacePreference: "YES",
+      budgetPreference: "PER_GUEST_45_55",
+      attractionInterestIds: ["attr_bowling", "attr_axe"],
+      organizationId: "org_other",
+      locationId: "loc_other",
+      depositPercent: 0,
+      submissionId: "sub_valid",
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) {
+      return;
+    }
+    expect(parsed.data.diningPreference).toBe("WANTS_FOOD");
+    expect(parsed.data.spacePreference).toBe("private");
+    expect(parsed.data.beveragePreference).toBe("NOT_SURE");
+    expect(parsed.data.budgetPreference).toBe("PER_GUEST_45_55");
+    expect(parsed.data.budgetMin).toBe(90_000);
+    expect(parsed.data.budgetMax).toBe(110_000);
+    expect(parsed.data.desiredDurationMinutes).toBeNull();
+    expect(parsed.data.eventGoal).toBe("Birthday Party");
+    expect(parsed.data).not.toHaveProperty("organizationId");
+    expect(parsed.data).not.toHaveProperty("locationId");
+    expect(parsed.data).not.toHaveProperty("depositPercent");
+  });
+
+  it("stores a total event budget band without multiplying by guest count", () => {
+    const parsed = publicIntakeSchema.safeParse({
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "ada@example.com",
+      eventType: "Birthday Party",
+      preferredDate: "2026-09-26",
+      startTime: "17:00",
+      guestCount: "20",
+      guestMix: "mostly_adults",
+      foodPreference: "WANTS_FOOD",
+      privateSpacePreference: "YES",
+      budgetBand: "1500_3000",
+      submissionId: "sub_valid",
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) {
+      return;
+    }
+    expect(parsed.data.budgetPreference).toBeNull();
+    expect(parsed.data.budgetMin).toBe(150_000);
+    expect(parsed.data.budgetMax).toBe(300_000);
+    expect(parsed.data.beveragePreference).toBeNull();
+  });
+
+  it("rejects a non-numeric guest count and a foreign-looking food code on the new field", () => {
+    expect(
+      publicIntakeSchema.safeParse({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        email: "ada@example.com",
+        eventType: "Birthday Party",
+        preferredDate: "2026-10-15",
+        guestCount: "1e2",
+        guestMix: "mostly_adults",
+        foodPreference: "WANTS_FOOD",
+        privateSpacePreference: "NO_PREFERENCE",
+        budgetPreference: "FLEXIBLE",
+        submissionId: "sub_valid",
+      }).success,
+    ).toBe(false);
+    expect(
+      publicIntakeSchema.safeParse({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        email: "ada@example.com",
+        eventType: "Birthday Party",
+        preferredDate: "2026-10-15",
+        guestCount: 12,
+        guestMix: "mostly_adults",
+        foodPreference: "catered_fajita",
+        privateSpacePreference: "YES",
+        budgetPreference: "VALUE",
+        submissionId: "sub_valid",
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects invalid email, zero guests, and missing event type", () => {
     expect(
       publicIntakeSchema.safeParse({

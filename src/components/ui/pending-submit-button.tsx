@@ -20,16 +20,19 @@ export function PendingSubmitButton({
   pendingLabel,
   children,
   className,
+  form,
 }: {
   pendingLabel: string;
   children: ReactNode;
   className?: string;
+  form?: string;
 }) {
   const pending = useContext(PendingActionContext);
 
   return (
     <button
       type="submit"
+      form={form}
       disabled={pending}
       className={`cursor-pointer disabled:cursor-not-allowed ${className ?? ""}`}
       aria-busy={pending}

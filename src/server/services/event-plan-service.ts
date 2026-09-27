@@ -5,6 +5,7 @@ import {
 } from "@/lib/ai/public-conversation-token";
 import { getPublicRateLimiter, type RateLimiter } from "@/lib/ai/rate-limiter";
 import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
+import { engineDiningPreference } from "@/lib/event-planner/intake-contract";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
@@ -16,6 +17,10 @@ import {
   type PlannerKnowledgeItem,
 } from "@/server/event-planner/build-event-plans";
 import { generateRecommendations } from "@/server/event-planner/generate-recommendations";
+import {
+  customerAttractionChoices,
+  expandAttractionSelections,
+} from "@/server/catalog/attraction-interests";
 import { loadCatalogForProposal } from "@/server/catalog/load-for-proposal";
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
 import { depositPercentFromTenant } from "@/server/catalog/pricing";
@@ -76,7 +81,7 @@ function toPlannerFacts(inquiry: {
     desiredStartTime: inquiry.desiredStartTime,
     budgetMin: inquiry.budgetMin,
     budgetMax: inquiry.budgetMax,
-    diningPreference: inquiry.diningPreference,
+    diningPreference: engineDiningPreference(inquiry.diningPreference),
     spacePreference: inquiry.spacePreference,
     attractionInterestIds: attractionInterestIdsFromJson(inquiry.attractionInterestIds),
     customerNotes: inquiry.customerNotes,
@@ -133,6 +138,99 @@ async function similarActivityNames(
   return names;
 }
 
+export async function listSelectablePublicAttractions(database: PlannerDb, organizationId: string) {
+  const [interests, products] = await Promise.all([
+    database.attractionInterest.findMany({
+      where: { organizationId },
+      select: {
+        id: true,
+        organizationId: true,
+        label: true,
+        description: true,
+        active: true,
+        displayOrder: true,
+      },
+      orderBy: [{ displayOrder: "asc" }, { label: "asc" }],
+    }),
+    database.product.findMany({
+      where: { organizationId, active: true, kind: "ATTRACTION" },
+      select: { id: true, name: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+  ]);
+  const knowledge =
+    products.length > 0
+      ? []
+      : await database.salesKnowledgeItem.findMany({
+          where: {
+            organizationId,
+            active: true,
+            type: SALES_KNOWLEDGE_TYPES.ATTRACTION,
+          },
+          select: { id: true, name: true, shortDescription: true },
+          orderBy: { name: "asc" },
+        });
+  const choices = customerAttractionChoices({
+    interests,
+    organizationId,
+    fallback:
+      products.length > 0
+        ? products.map((item) => ({ id: item.id, name: item.name, description: null }))
+        : knowledge.map((item) => ({
+            id: item.id,
+            name: item.name,
+            description: item.shortDescription,
+          })),
+  });
+  return choices.map((item) => ({
+    id: item.id,
+    type: "ATTRACTION" as const,
+    name: item.name,
+    shortDescription: item.description,
+  }));
+}
+
+export async function expandStoredAttractionSelections(
+  database: PlannerDb,
+  organizationId: string,
+  storedIds: string[],
+) {
+  if (storedIds.length === 0) {
+    return [];
+  }
+  const interests = await database.attractionInterest.findMany({
+    where: { organizationId, id: { in: storedIds } },
+    select: {
+      id: true,
+      products: {
+        orderBy: { sortOrder: "asc" },
+        select: { productId: true },
+      },
+    },
+  });
+  return expandAttractionSelections({
+    storedIds,
+    interests: interests.map((row) => ({
+      id: row.id,
+      productIds: row.products.map((product) => product.productId),
+    })),
+  });
+}
+
+export async function assertSelectablePublicAttractions(
+  database: PlannerDb,
+  organizationId: string,
+  attractionIds: string[],
+) {
+  if (attractionIds.length === 0) {
+    return;
+  }
+  const allowed = new Set((await listSelectablePublicAttractions(database, organizationId)).map((item) => item.id));
+  if (attractionIds.some((id) => !allowed.has(id))) {
+    throw new InquiryError("INVALID_INTAKE", "Choose attractions offered by this venue.");
+  }
+}
+
 export async function listPublicPlannerCatalog(database: PlannerDb, organizationSlug: string) {
   const organization = await database.organization.findFirst({
     where: { slug: organizationSlug.trim().toLowerCase(), onboardingStatus: "ACTIVE" },
@@ -163,25 +261,13 @@ export async function listPublicPlannerCatalog(database: PlannerDb, organization
     orderBy: { name: "asc" },
   });
 
-  const catalogProducts = await database.product.findMany({
-    where: {
-      organizationId: organization.id,
-      active: true,
-      kind: { in: ["ATTRACTION", "PACKAGE"] },
-    },
-    select: { id: true, name: true, kind: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  const attractions = await listSelectablePublicAttractions(database, organization.id);
   const catalogDining = await database.product.findMany({
     where: { organizationId: organization.id, active: true, kind: "FOOD" },
     select: { id: true, name: true, slug: true },
     orderBy: { sortOrder: "asc" },
   });
 
-  const attractions =
-    catalogProducts.length > 0
-      ? catalogProducts.map((item) => ({ id: item.id, type: item.kind, name: item.name, shortDescription: null }))
-      : items.filter((item) => item.type === SALES_KNOWLEDGE_TYPES.ATTRACTION);
   const diningItems =
     catalogDining.length > 0
       ? catalogDining.map((item) => ({
@@ -274,6 +360,14 @@ export async function generateEventPlansForInquiry(
     attractionMode: inquiry.attractionMode,
     attractionInterestIds: facts.attractionInterestIds,
   });
+  const engineFacts = {
+    ...facts,
+    attractionInterestIds: await expandStoredAttractionSelections(
+      database,
+      input.organizationId,
+      facts.attractionInterestIds,
+    ),
+  };
   const availabilityProvider =
     input.availabilityProvider ??
     createResourceScheduleAvailabilityProvider(database, input.organizationId, locationId);
@@ -284,7 +378,7 @@ export async function generateEventPlansForInquiry(
     drafts = await buildCatalogEventPlans({
       organizationId: input.organizationId,
       locationId,
-      inquiry: facts,
+      inquiry: engineFacts,
       products: catalog.products,
       profiles: catalog.profiles,
       resourceRequirements: catalog.resourceRequirements,
@@ -296,7 +390,7 @@ export async function generateEventPlansForInquiry(
   } else {
     const historical = await similarActivityNames(database, input.organizationId, inquiry);
     drafts = await generateRecommendations({
-      inquiry: facts,
+      inquiry: engineFacts,
       knowledge: knowledge as PlannerKnowledgeItem[],
       similarActivityNames: historical,
       currency: organization.currency,

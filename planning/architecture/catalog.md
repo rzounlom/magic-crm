@@ -10,7 +10,8 @@ Products may be organization-wide (`locationId` null) or location-specific. Reso
 
 | Model | Tenant boundary |
 | --- | --- |
-| `ProductCategory` / `Product` / `RecommendationProfile` | `organizationId` |
+| `ProductCategory` / `Product` / `RecommendationProfile` / `AttractionInterest` | `organizationId` |
+| `AttractionInterestProduct` | `organizationId` plus composite FKs to the same-tenant `AttractionInterest` and `Product` |
 | `ProductPrice` / `ProductServing` / `ProductResourceRequirement` | `organizationId` plus composite FK to the same-tenant parent `Product` (and `ResourceType` for requirements) |
 | `ResourceType` / `Resource` | `organizationId`; `Resource.locationId` is the physical location |
 | `EventPlanRecommendation` | `organizationId` plus composite FK to the same-tenant `Inquiry`; snapshot JSON also stores `organizationId` / `locationId` for Phase 3B holds |
@@ -20,7 +21,9 @@ Sales knowledge (`SalesKnowledgeItem`) stays policies, FAQs, hours, and sales co
 ## Models
 
 - `ProductCategory` — grouping (birthday packages, food, rentals)
-- `Product` — SKU with audience, duration, guest bounds, optional `weekendOnly`, `fulfillmentGroup`, and `schedulingBehavior`
+- `Product` — sellable SKU with audience, duration, guest bounds, optional `weekendOnly`, `fulfillmentGroup`, and `schedulingBehavior`
+- `AttractionInterest` — customer-facing activity concept owned by the organization (`label`, `slug`, `active`, `displayOrder`, optional description). It is not a price and not a duration.
+- `AttractionInterestProduct` — ordered catalog products that can fulfill that interest. The public planner shows the interest. The proposal adapter expands it to those product ids before the existing engine runs.
 
 `schedulingBehavior` is an optional tenant override: `SCHEDULED`, `SPACE_WINDOW`, or `NON_SCHEDULED`. When it is null, the engine derives the role:
 

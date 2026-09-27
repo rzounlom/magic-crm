@@ -14,11 +14,33 @@ Public customer routes (`/inquire/*`, `/plan/*`, `/conversation/*`) each wrap `P
 
 Customer-facing title is `{organizationName} Personal Event Planner`. Do not special-case a tenant name in application code.
 
-The slug is resolved server-side. Only organizations with `onboardingStatus = ACTIVE` accept inquiries. Invalid or inactive slugs return 404. The form never accepts a browser-supplied `organizationId`. Attractions and dining options on the form come from that tenant’s active `SalesKnowledgeItem` rows. If the tenant has no food items, the form uses generic dining preference categories. Mapping those intake keys to catalog food products is tenant `RecommendationProfile.diningPreferenceMap` data, not a global Generations menu.
+The slug is resolved server-side. Only organizations with `onboardingStatus = ACTIVE` accept inquiries. Invalid or inactive slugs return 404. The form never accepts a browser-supplied `organizationId`, `locationId`, price, deposit, or resource quantity. Location is the organization's primary location.
+
+The customer walks a short planner. Answers stay in the browser until the last step. Back and Edit keep the other answers. There is no server draft and no inquiry until **Build my event options**.
+
+1. Event type — shared `EVENT_TYPE_OPTIONS` until a tenant event-type catalog exists. Do not branch on a tenant name.
+2. Group size — whole number of guests, bounded by `PUBLIC_INTAKE_LIMITS.guestCount`.
+3. Group mix — Mostly Kids / Youth, Mostly Adults, or Mix of Kids & Adults. Stored as the existing `guestMix` values `mostly_children`, `mostly_adults`, and `mixed_ages`, which already map to `KIDS_YOUTH`, `ADULTS`, and `MIXED`.
+4. Attractions — multi-select cards for that tenant's active `AttractionInterest` rows (a customer-facing concept such as bowling, not a duration SKU). Each interest maps to one or more catalog products. If the tenant has no active interests, active attraction products are the fallback, then sales-knowledge attractions. Rooms, catering, packages, cards, and duration variants are not choices unless the tenant maps them behind an interest. Zero selections are allowed and mean "recommend from the tenant profile." Selected ids are preferences, not held inventory. Inactive interests and another tenant's ids are rejected. New submissions store interest ids. Older inquiries may still store Product or sales-knowledge ids; employee detail resolves whichever kind is stored.
+5. Food — Yes / No, stored as `diningPreference` `WANTS_FOOD` or `NO_FOOD`. The customer does not pick a catering SKU.
+6. Private space — Yes / No preference, stored as `spacePreference` `private` or `no_preference`. The customer does not pick a room.
+7. Budget — total event ranges from `BUDGET_BAND_VALUES` (`Under $1,500` through `$7,500+`) plus Flexible / show me options. The band writes `budgetMin` / `budgetMax` in cents. It is recommendation guidance, not a quote, a cap, or a price override. Flexible leaves those cents null and stores `budgetPreference = FLEXIBLE`.
+8. Date and preferred start time — 12-hour controls. Stored as a date plus `HH:mm` in the location's event-local clock.
+9. Review, contact details, then **Build my event options**.
+
+There is no dedicated beverage question. `beveragePreference` stays on older rows and still displays for staff. New submissions leave it null. Beverages can return later as package inclusions or catalog add-ons.
+
+Attraction names that include a duration are formatted for display only (`60 Minutes` → `1 hour`, `90 Minutes` → `90 minutes`). Stored product names and `durationMinutes` do not change.
+
+The planner is a viewport shell: context and the step question stay put, the answer region scrolls, and Back / Continue / Build my event options stay in a footer. **Build my event options** covers the page with “Creating your event options…” until the request finishes or fails.
+
+The customer is not asked for a duration. `desiredDurationMinutes` stays null on new inquiries. Older inquiries that have it still display it.
+
+Canonical fields the server persists: `eventType`, `guestCount`, `guestMix` (audience), `attractionInterestIds`, `diningPreference` (food), `beveragePreference`, `budgetPreference` (plus derived `budgetMin` / `budgetMax` cents for the current engine), `desiredDate`, `desiredStartTime`, `spacePreference`. `eventGoal` is set from the event type when the customer does not send a separate goal, so older goal-based ranking still has a signal.
 
 After a valid submit:
 
-1. Create `Inquiry` (`NEW`, `source = WEB`) with planner fields (guest mix, duration, budget range in cents, goal, dining, space, attraction interest ids) and the tenant's primary `locationId` (resolved from the public slug, never from a browser `organizationId`)
+1. Create `Inquiry` (`NEW`, `source = WEB`) with the canonical planner fields and the tenant's primary `locationId` (resolved from the public slug, never from a browser `organizationId`)
 2. Create `Conversation` (`channel = WEB`) with a hashed public token (opaque continuation; not a customer chat UI)
 3. Persist the intake as an inbound customer message for staff history
 4. Run the recommendation engine against tenant sales knowledge (`generateRecommendations` → `buildEventPlans`)
@@ -135,25 +157,35 @@ This contract is a snapshot (`unreadCount`, recent notification items, newest in
 
 Notifications in this phase are new inquiries only. The item `kind` is `inquiry.created` so another kind can be added later. There is no email, SMS, browser Notification API, sound, or preference center.
 
-## Start over (backlog — intake redesign)
+## Start over
 
-Do not implement this until the intake redesign. No database change until that work.
+A text **Start over** control is available on the planner. It is not the primary action. Confirmation uses the shared dialog, not `window.confirm`.
 
-Before booking or submitting, the customer can choose **Start over** when the plan is wrong: incorrect AM/PM, wrong date, wrong guest count, wrong event type or preferences, or they simply want to restart.
+- Title: Start over?
+- Body: Your current plan will be discarded and you'll return to the beginning.
+- Actions: Cancel, Start over
 
-Expected behavior:
+Confirming clears the in-browser answers and returns to step 1. The planner does not keep a server draft, and the inquiry is created only when the customer builds options, so Start over does not delete CRM history and cannot release a reservation that was never created.
 
-- Clear the current public planning state and issue a fresh intake/planning flow.
-- Do not silently mutate or delete historical CRM records.
-- If an inquiry already exists, mark or reason it appropriately rather than a destructive delete.
-- Starting over must not create a duplicate resource reservation.
-- Confirm before discarding: "Start over? Your current plan will be discarded and you'll return to the beginning."
+## Active queue and ended events
 
-Whether abandoned drafts remain internal history is a decision for the intake redesign.
+The Active list is inquiries with `archivedAt` null whose confirmed or completed booking has not ended. The end is `Booking.endsAt` compared to server time. An end equal to now is already historical. A future `endsAt` stays Active even if the inquiry is old.
+
+Cancelled and pending-payment bookings stay Active. They are not “the event is over.” An inquiry with no booking stays Active until someone archives it.
+
+Rows confirmed before `endsAt` existed fall back to the event calendar date being strictly before today in the organization timezone. A same-day legacy row with no `endsAt` stays Active.
+
+The Archived view is manual archives plus those ended confirmed/completed bookings. The query does this. Nothing is deleted, and no job flips `archivedAt`. Restoring a manually archived inquiry returns it to Active unless the confirmed event has already ended.
+
+## Backward compatibility
+
+Older inquiries keep their stored dining key or product slug, event-total budget cents, per-guest `budgetPreference`, `beveragePreference`, `semi_private` space value, guest mix including `teens`, and `desiredDurationMinutes`. Employee inquiry detail renders those values. New rows use total-event budget bands and do not ask about beverages. Nothing rewrites old rows to look new.
+
+The current proposal engine is unchanged aside from a read adapter: `WANTS_FOOD` → `not_sure`, `NO_FOOD` → `none`. The next phase replaces that adapter with tenant food tiers, budget-aware Good / Recommended / Premium, room selection, and beverage recommendations. Do not implement those rules in the intake UI.
 
 ## Next
 
-See [`catalog.md`](./catalog.md), [`proposal-engine.md`](./proposal-engine.md), [`resource-schedule.md`](./resource-schedule.md), and [`booking.md`](./booking.md). Phase 3A catalog-backed proposals are complete. Phase 3A.5 location/tenant hardening is complete. Phase 3B transactional occupancy is complete. **Phase 3B.4** is segment-level scheduling, availability-aware proposals, and employee New Booking. **Phase 3B.4a** is booking cancellation and inquiry archive (no hard-delete). **Phase 3B.4b** is employee workspace truth (original / working / confirmed / allocated / legacy HOLD). Next planned work: resume availability/overbooking browser acceptance. Do not start the intake + food + room + recommendation-band redesign yet. Phase 3C is Stripe and email.
+See [`catalog.md`](./catalog.md), [`proposal-engine.md`](./proposal-engine.md), [`resource-schedule.md`](./resource-schedule.md), and [`booking.md`](./booking.md). Phase 3A catalog-backed proposals are complete. Phase 3A.5 location/tenant hardening is complete. Phase 3B transactional occupancy is complete. **Phase 3B.4** is segment-level scheduling, availability-aware proposals, and employee New Booking. **Phase 3B.4a** is booking cancellation and inquiry archive (no hard-delete). **Phase 3B.4b** is employee workspace truth (original / working / confirmed / allocated / legacy HOLD). Public intake phase 1 is the guided planner and canonical preferences. Next: recommendation composition for food tiers, budget-aware options, room selection, and beverages. Phase 3C is Stripe and email.
 
 Related employee-shell follow-up (not this inbox): sticky authenticated header. See `ui-conventions.md`.
 

@@ -6,10 +6,18 @@ import {
 } from "@/lib/ai/public-conversation-token";
 import { getPublicRateLimiter, type RateLimiter } from "@/lib/ai/rate-limiter";
 import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
+import {
+  formatBeveragePreference,
+  formatDiningPreference,
+  formatGuestMix,
+  formatIntakeBudget,
+  formatSpacePreference,
+} from "@/lib/event-planner/labels";
 import { publicInquiryPathForActiveOrganization } from "@/lib/inquiries/organization-display-name";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
-import { resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
+import { formatEventLocalTime, resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
 import { AuthorizationError, InquiryError } from "@/server/errors";
+import { inquiryListWhere } from "@/server/inquiries/inquiry-queue";
 import {
   isHoneypotFilled,
   normalizePublicEmail,
@@ -19,11 +27,12 @@ import {
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
+import { attractionSelectionLabels } from "@/server/catalog/attraction-interests";
 import { attractionInterestIdsFromJson } from "@/server/event-planner/build-event-plans";
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
 import { normalizeInvitationEmail } from "@/server/team/invitation-email";
 import { resolvePrimaryLocationId } from "@/server/locations/primary-location";
-import { generateEventPlansForInquiry } from "@/server/services/event-plan-service";
+import { assertSelectablePublicAttractions, generateEventPlansForInquiry } from "@/server/services/event-plan-service";
 import { startWorkingInquiry } from "@/server/services/live-agent-service";
 import { runSalesAgentTurn, type SalesAgentRuntime } from "@/server/services/sales-agent-service";
 import {
@@ -33,7 +42,6 @@ import {
   INQUIRY_SOURCES,
   INQUIRY_STATUSES,
   INQUIRY_WORKFLOW_STAGES,
-  INQUIRY_LIST_VIEWS,
   parseInquiryListView,
   MESSAGE_DIRECTIONS,
   MESSAGE_SENDER_TYPES,
@@ -57,11 +65,15 @@ export type PublicIntakeInput = {
   startTime?: string;
   guestCount?: number;
   guestMix?: string;
-  desiredDurationMinutes?: number;
+  desiredDurationMinutes?: number | null;
   budgetBand?: string;
+  budgetPreference?: string | null;
   eventGoal?: string;
   diningPreference?: string;
+  foodPreference?: string;
+  beveragePreference?: string | null;
   spacePreference?: string;
+  privateSpacePreference?: string;
   attractionInterestIds?: string[];
   attractionMode?: string;
   notes?: string;
@@ -143,6 +155,8 @@ export async function createPublicInquiry(
 
   const organization = await resolvePublicInquiryOrganization(database, input.organizationSlug);
   const locationId = await resolvePrimaryLocationId(database, organization.id);
+  const attractionInterestIds = [...new Set(parsed.data.attractionInterestIds)];
+  await assertSelectablePublicAttractions(database, organization.id, attractionInterestIds);
   const emailNormalized = normalizePublicEmail(parsed.data.email);
   const { token, hash } = createPublicConversationToken();
   const desiredDate = parsed.data.preferredDate
@@ -172,9 +186,11 @@ export async function createPublicInquiry(
         desiredDurationMinutes: parsed.data.desiredDurationMinutes,
         budgetMin: parsed.data.budgetMin,
         budgetMax: parsed.data.budgetMax,
+        budgetPreference: parsed.data.budgetPreference,
         diningPreference: parsed.data.diningPreference,
+        beveragePreference: parsed.data.beveragePreference,
         spacePreference: parsed.data.spacePreference,
-        attractionInterestIds: parsed.data.attractionInterestIds,
+        attractionInterestIds,
         customerNotes: parsed.data.notes?.trim() || null,
         aiHandlingEnabled: false,
         salesStage: INQUIRY_SALES_STAGES.INQUIRY,
@@ -381,12 +397,17 @@ export async function listInquiries(
   input: { view?: string | null } = {},
 ) {
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
-  const archived = parseInquiryListView(input.view) === INQUIRY_LIST_VIEWS.ARCHIVED;
+  const view = parseInquiryListView(input.view);
+  const organization = await database.organization.findFirst({
+    where: { id: ctx.organizationId },
+    select: { timezone: true },
+  });
   return database.inquiry.findMany({
-    where: {
+    where: inquiryListWhere({
       organizationId: ctx.organizationId,
-      archivedAt: archived ? { not: null } : null,
-    },
+      view,
+      timeZone: organization?.timezone,
+    }),
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: 100,
     include: {
@@ -498,20 +519,32 @@ export async function getInquiryDetail(
   }
 
   const interestIds = attractionInterestIdsFromJson(inquiry.attractionInterestIds);
-  const interestItems =
+  const [interestItems, interestProducts, conceptualInterests] =
     interestIds.length > 0
-      ? await database.salesKnowledgeItem.findMany({
-          where: { organizationId: ctx.organizationId, id: { in: interestIds } },
-          select: { id: true, name: true },
-        })
-      : [];
-  const namesById = new Map(interestItems.map((item) => [item.id, item.name]));
+      ? await Promise.all([
+          database.salesKnowledgeItem.findMany({
+            where: { organizationId: ctx.organizationId, id: { in: interestIds } },
+            select: { id: true, name: true },
+          }),
+          database.product.findMany({
+            where: { organizationId: ctx.organizationId, id: { in: interestIds } },
+            select: { id: true, name: true },
+          }),
+          database.attractionInterest.findMany({
+            where: { organizationId: ctx.organizationId, id: { in: interestIds } },
+            select: { id: true, label: true },
+          }),
+        ])
+      : [[], [], []];
 
   return {
     ...inquiry,
-    attractionInterestNames: interestIds
-      .map((id) => namesById.get(id))
-      .filter((name): name is string => Boolean(name)),
+    attractionInterestNames: attractionSelectionLabels({
+      storedIds: interestIds,
+      knowledge: interestItems,
+      products: interestProducts,
+      interests: conceptualInterests,
+    }),
   };
 }
 
@@ -817,8 +850,12 @@ function formatIntakeMessage(input: {
   startTime?: string;
   guestCount?: number;
   guestMix?: string;
-  desiredDurationMinutes?: number;
+  desiredDurationMinutes?: number | null;
   diningPreference?: string;
+  beveragePreference?: string | null;
+  budgetPreference?: string | null;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
   spacePreference?: string;
   notes?: string;
 }): string {
@@ -829,14 +866,26 @@ function formatIntakeMessage(input: {
   if (input.customerGroupName) lines.push(`Group: ${input.customerGroupName}`);
   if (input.phone) lines.push(`Phone: ${input.phone}`);
   if (input.eventType) lines.push(`Planning: ${input.eventType}`);
-  if (input.eventGoal) lines.push(`Goal: ${input.eventGoal}`);
+  if (input.eventGoal && input.eventGoal !== input.eventType) lines.push(`Goal: ${input.eventGoal}`);
   if (input.preferredDate) lines.push(`Preferred date: ${input.preferredDate}`);
-  if (input.startTime) lines.push(`Approximate start: ${input.startTime}`);
+  if (input.startTime) {
+    lines.push(`Preferred start: ${formatEventLocalTime(input.startTime) ?? input.startTime}`);
+  }
   if (input.guestCount) lines.push(`Guest count: ${input.guestCount}`);
-  if (input.guestMix) lines.push(`Guest mix: ${input.guestMix}`);
+  if (input.guestMix) lines.push(`Guest mix: ${formatGuestMix(input.guestMix)}`);
   if (input.desiredDurationMinutes) lines.push(`Duration minutes: ${input.desiredDurationMinutes}`);
-  if (input.diningPreference) lines.push(`Dining: ${input.diningPreference}`);
-  if (input.spacePreference) lines.push(`Space: ${input.spacePreference}`);
+  if (input.diningPreference) lines.push(`Food: ${formatDiningPreference(input.diningPreference)}`);
+  if (input.beveragePreference) lines.push(`Beverages: ${formatBeveragePreference(input.beveragePreference)}`);
+  if (input.budgetPreference || input.budgetMin != null || input.budgetMax != null) {
+    lines.push(
+      `Budget: ${formatIntakeBudget({
+        budgetPreference: input.budgetPreference,
+        budgetMin: input.budgetMin,
+        budgetMax: input.budgetMax,
+      })}`,
+    );
+  }
+  if (input.spacePreference) lines.push(`Private space: ${formatSpacePreference(input.spacePreference)}`);
   if (input.notes) lines.push(`Notes: ${input.notes}`);
   return lines.join("\n");
 }

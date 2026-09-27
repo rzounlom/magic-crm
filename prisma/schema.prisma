@@ -53,6 +53,8 @@ model Organization {
   bookingSequences    OrganizationBookingSequence[]
   aiUsage             AiUsage[]
   inquirySeen         InquirySeen[]
+  attractionInterests AttractionInterest[]
+  attractionInterestProducts AttractionInterestProduct[]
 
   @@index([onboardingStatus])
   @@map("organizations")
@@ -287,9 +289,14 @@ model Inquiry {
   budgetMax                Int?
   occasion                 String?   @db.VarChar(120)
   eventGoal                String?   @db.VarChar(80)
+  /// Legacy dining key or product slug, or canonical WANTS_FOOD | NO_FOOD.
   diningPreference         String?   @db.VarChar(80)
   spacePreference          String?   @db.VarChar(32)
-  /// Tenant sales-knowledge item ids the customer selected. Empty array when none.
+  /// YES | NO | NOT_SURE. Legacy planner answer. The public planner no longer asks this. Kept so older inquiries still display.
+  beveragePreference       String?   @db.VarChar(24)
+  /// Legacy per-guest preference, or FLEXIBLE. New public intake writes budgetMin/budgetMax from total-event bands and leaves this null except for Flexible.
+  budgetPreference         String?   @db.VarChar(32)
+  /// New intake stores AttractionInterest ids. Older rows may store Product ids or sales-knowledge attraction ids.
   attractionInterestIds    Json?
   customerNotes            String?   @db.VarChar(2000)
   internalSummary          String?   @db.VarChar(4000)
@@ -603,12 +610,53 @@ model Product {
   prices       ProductPrice[]
   resourceRequirements ProductResourceRequirement[]
   servings     ProductServing[]
+  attractionInterestProducts AttractionInterestProduct[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
   @@index([organizationId, categoryId])
   @@index([organizationId, active, kind])
   @@map("products")
+}
+
+/// Customer-facing activity concept for one organization. Not a sellable SKU.
+model AttractionInterest {
+  id             String   @id @default(cuid())
+  organizationId String
+  slug           String
+  label          String
+  description    String?
+  active         Boolean  @default(true)
+  displayOrder   Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  products     AttractionInterestProduct[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId, active, displayOrder])
+  @@map("attraction_interests")
+}
+
+/// Maps one conceptual interest to catalog products the proposal engine may fulfill.
+model AttractionInterestProduct {
+  id                   String   @id @default(cuid())
+  organizationId       String
+  attractionInterestId String
+  productId            String
+  sortOrder            Int      @default(0)
+  createdAt            DateTime @default(now())
+
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  attractionInterest AttractionInterest @relation(fields: [organizationId, attractionInterestId], references: [organizationId, id], onDelete: Restrict)
+  product            Product            @relation(fields: [organizationId, productId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, attractionInterestId, productId])
+  @@index([organizationId, productId])
+  @@map("attraction_interest_products")
 }
 
 /// One pricing strategy row for a product. Amounts are integer cents.

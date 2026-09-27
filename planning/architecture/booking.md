@@ -106,6 +106,8 @@ Employee UI is enough. Do not SQL-delete test records:
 
 Archive does not cancel the booking.
 
+A confirmed or completed booking whose `endsAt` is at or before server now leaves the Active inquiry queue and appears in Archived history without a status change and without deleting the booking. Cancelled bookings stay in Active. See [`inquiries.md`](./inquiries.md).
+
 ## Legacy HOLD
 
 

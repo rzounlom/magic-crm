@@ -27,7 +27,29 @@ Intake → catalog (or knowledge) engine → structured itinerary → `stampPlan
 - Snapshots store line items, structured itinerary (segment id, product id, start offset, duration, customer label), resource requirements with segment windows, availability, a tenant-configured deposit (`Organization.depositPercent`, schema default 30), and `organizationId` / `locationId`. A booking-catalog dataset may set `depositPercent` for that organization on import. Changing catalog prices later must not rewrite a persisted snapshot. Final allocation still uses current active resources.
 - Customer-facing clocks are stored as raw event-local `HH:mm` and formatted once (`16:00` → `4:00 PM`). Do not append a meridiem after formatting.
 - When an option is longer than the requested/base itinerary, the explanation names scheduled activities that are not already on the base option. Rooms, cards, and credits are not extra scheduled hours.
-- Public **Start over** is specified in [`inquiries.md`](./inquiries.md) and is not implemented yet.
+- Public **Start over** clears the in-progress planner and returns to step 1. It does not delete an inquiry, because the inquiry is created only when the customer builds options. See [`inquiries.md`](./inquiries.md).
+- The public offer screen keeps Good / Recommended / Premium, snapshot totals, and the tenant deposit percent. Each card pins the price summary and Book Now / Submit inquiry, and scrolls attractions, dining, itinerary, and the recommendation inside the card. At `lg` and wider, all three cards stay side by side. Narrower widths show a Good / Recommended / Premium selector and one card. Recommended is the initial selection. Book Now and Submit inquiry belong to that visible card. Book Now still creates a pending unpaid booking. Submit inquiry still does not hold inventory.
+
+## Intake compatibility (phase 1)
+
+The public planner now stores preferences. This phase does **not** change how Good / Recommended / Premium are composed.
+
+- `WANTS_FOOD` is adapted to the existing `not_sure` dining signal before the current engine runs, so the tenant `defaultFoodSlug` still applies. `NO_FOOD` is adapted to `none`.
+- Legacy dining keys and product slugs are passed through unchanged.
+- `private` / `no_preference` still mean the same thing to the current space logic. `semi_private` remains readable on older inquiries.
+- New public intake writes event-total `budgetMin` / `budgetMax` from `BUDGET_BAND_CENTS`. Those cents are a ranking signal, not a price promise and not a React override of catalog prices. Older per-guest `budgetPreference` rows still expand to `guestCount × band`. `FLEXIBLE` leaves the cents null.
+- Explicit attraction selections still force known-attraction mode. An empty selection still means recommend from the tenant `RecommendationProfile`.
+- New intake stores `AttractionInterest` ids. Before the existing engine runs, those ids expand to the tenant's mapped product candidates. The stored inquiry ids are not rewritten. Proposal snapshots stay immutable.
+- Older inquiries may still store Product ids or sales-knowledge ids. Those ids pass through the adapter unchanged.
+- When mapped candidates share a tenant `fulfillmentGroup`, the current engine still keeps one product from that group. Duration choice inside a concept is not a new composition rule.
+- New inquiries leave `desiredDurationMinutes` null. Event length remains the itinerary span.
+
+**Next recommendation-engine phase — do not treat the adapter as the new rules.** That phase will compose:
+
+- food tiers from the tenant catalog (not a customer-chosen catering SKU)
+- budget-aware Good / Recommended / Premium
+- room selection from tenant catalog, capacity, event type, and availability
+- beverage recommendations from `beveragePreference`
 
 ## Availability
 

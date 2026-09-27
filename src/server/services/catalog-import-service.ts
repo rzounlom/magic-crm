@@ -22,6 +22,9 @@ export type CatalogImportCounts = {
   profilesCreated: number;
   profilesUpdated: number;
   profilesUnchanged: number;
+  interestsCreated: number;
+  interestsUpdated: number;
+  interestsUnchanged: number;
 };
 
 export type CatalogImportResult = CatalogImportCounts & {
@@ -46,6 +49,9 @@ const EMPTY_COUNTS = (): CatalogImportCounts => ({
   profilesCreated: 0,
   profilesUpdated: 0,
   profilesUnchanged: 0,
+  interestsCreated: 0,
+  interestsUpdated: 0,
+  interestsUnchanged: 0,
 });
 
 function sameJson(left: unknown, right: unknown): boolean {
@@ -412,6 +418,8 @@ export async function importBookingCatalog(
     counts.profilesUpdated += 1;
   }
 
+  await syncAttractionInterests(database, organizationId, input.dataset, productIds, counts);
+
   return {
     ...counts,
     organizationId,
@@ -419,4 +427,59 @@ export async function importBookingCatalog(
     organizationSlug: organization.slug,
     ambiguities: input.dataset.ambiguities,
   };
+}
+
+async function syncAttractionInterests(
+  database: ImportDb,
+  organizationId: string,
+  dataset: BookingCatalogDataset,
+  productIds: Map<string, string>,
+  counts: CatalogImportCounts,
+) {
+  for (const interest of dataset.attractionInterests ?? []) {
+    const missing = interest.productSlugs.filter((slug) => !productIds.has(slug));
+    if (missing.length > 0) {
+      throw new Error(
+        `Attraction interest ${interest.slug} references unknown products: ${missing.join(", ")}`,
+      );
+    }
+    const existing = await database.attractionInterest.findFirst({
+      where: { organizationId, slug: interest.slug },
+    });
+    const data = {
+      label: interest.label,
+      description: interest.description ?? null,
+      active: interest.active,
+      displayOrder: interest.displayOrder,
+    };
+    const unchanged =
+      existing !== null &&
+      existing.label === data.label &&
+      existing.description === data.description &&
+      existing.active === data.active &&
+      existing.displayOrder === data.displayOrder;
+    const row = existing
+      ? await database.attractionInterest.update({ where: { id: existing.id }, data })
+      : await database.attractionInterest.create({
+          data: { organizationId, slug: interest.slug, ...data },
+        });
+    if (!existing) {
+      counts.interestsCreated += 1;
+    } else if (unchanged) {
+      counts.interestsUnchanged += 1;
+    } else {
+      counts.interestsUpdated += 1;
+    }
+    await database.attractionInterestProduct.deleteMany({
+      where: { organizationId, attractionInterestId: row.id },
+    });
+    await database.attractionInterestProduct.createMany({
+      data: interest.productSlugs.map((slug, index) => ({
+        organizationId,
+        attractionInterestId: row.id,
+        productId: productIds.get(slug) ?? "",
+        sortOrder: index,
+      })),
+    });
+  }
 }

@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { unstable_rethrow } from "next/navigation";
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 
+import { BlockingMutation } from "@/components/ui/blocking-mutation";
 import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pending-submit-button";
-import { formatEventDuration, personalEventPlannerTitle } from "@/lib/event-planner/labels";
+import { formatCustomerDurationText, formatEventDuration, personalEventPlannerTitle } from "@/lib/event-planner/labels";
 import { formatEstimatedDepositLine, formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { isBestFitTier, readEventPlanPayload } from "@/lib/event-planner/payload";
 import { formatAdjustedEventWindow, formatCustomerFacingClocks, formatEventLocalDateTime, formatEventLocalTime, formatItineraryLine, formatItineraryRange, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
@@ -97,7 +98,7 @@ export function PublicEventPlanView({
     .find((payload) => payload.itineraryAdjusted && payload.adjustmentNote)?.adjustmentNote;
 
   return (
-    <section className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
+    <section className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col overflow-hidden px-4 py-3 sm:px-6">
       <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">
         {organizationName}
       </p>
@@ -145,21 +146,20 @@ export function PublicEventPlanView({
         )
       ) : (
         <>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
             Your Personal Event Plan
           </h1>
-          <p className="mt-4 max-w-2xl text-sm text-foreground/70">
+          <p className="mt-1 max-w-3xl text-sm text-foreground/70">
             {personalEventPlannerTitle(organizationName)} prepared options for {firstName}
             {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
-            {inquiry.eventGoal ? ` · ${inquiry.eventGoal}` : ""}. {BOOK_NOW_EXPLANATION} You can book now
-            and complete payment next, or submit an inquiry for a team member to follow up. Inventory is
-            not reserved until payment is received.
+            {inquiry.eventGoal ? ` · ${inquiry.eventGoal}` : ""}. Book now to continue toward payment, or
+            submit an inquiry for follow-up. Inventory is not reserved until payment is received.
           </p>
           <AdjustmentNotice note={adjustmentNote ? formatCustomerFacingClocks(adjustmentNote) : undefined} />
         </>
       )}
       {plans.length === 0 ? (
-        <div className="mt-10 rounded-md border border-border px-5 py-6">
+        <div className="mt-6 overflow-y-auto rounded-md border border-border px-5 py-6">
           <h2 className="text-lg font-semibold">We&apos;re putting the finishing touches on your event plan</h2>
           <p className="mt-2 text-sm text-foreground/70">
             A member of our team will follow up with your best options. You do not need to fill this
@@ -167,18 +167,13 @@ export function PublicEventPlanView({
           </p>
         </div>
       ) : (
-        <div className="mt-10 grid gap-5 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <PlanOptionCard
-              key={plan.id}
-              plan={plan}
-              currency={currency}
-              token={token}
-              selected={selectedId === plan.id}
-              hideCta={Boolean(selectedId) || finalized || pending}
-            />
-          ))}
-        </div>
+        <ProposalComparison
+          plans={plans}
+          currency={currency}
+          token={token}
+          selectedId={selectedId}
+          hideCta={Boolean(selectedId) || finalized || pending}
+        />
       )}
     </section>
   );
@@ -365,6 +360,126 @@ function ConfirmationPanel({
   );
 }
 
+function proposalTierLabel(tier: string) {
+  if (tier === EVENT_PLAN_TIERS.BUDGET) {
+    return "Good";
+  }
+  if (isBestFitTier(tier)) {
+    return "Recommended";
+  }
+  return "Premium";
+}
+
+function ProposalComparison({
+  plans,
+  currency,
+  token,
+  selectedId,
+  hideCta,
+}: {
+  plans: PlanCard[];
+  currency: string;
+  token: string;
+  selectedId: string | null;
+  hideCta: boolean;
+}) {
+  const recommended = plans.find((plan) => isBestFitTier(plan.tier)) ?? plans[0];
+  const [mobileTier, setMobileTier] = useState(recommended?.tier ?? EVENT_PLAN_TIERS.BEST_FIT);
+  const mobilePlan = plans.find((plan) => plan.tier === mobileTier) ?? recommended;
+
+  function onTierKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft" && event.key !== "Home" && event.key !== "End") {
+      return;
+    }
+    event.preventDefault();
+    const nextIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? plans.length - 1
+          : event.key === "ArrowRight"
+            ? (index + 1) % plans.length
+            : (index - 1 + plans.length) % plans.length;
+    const next = plans[nextIndex];
+    if (!next) {
+      return;
+    }
+    setMobileTier(next.tier);
+    document.getElementById(`proposal-tier-${next.tier}`)?.focus();
+  }
+
+  return (
+    <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div
+        role="tablist"
+        aria-label="Proposal options"
+        data-proposal-tier-selector
+        className="mb-3 grid grid-cols-3 gap-2 lg:hidden"
+      >
+        {plans.map((plan, index) => {
+          const selected = plan.tier === mobilePlan?.tier;
+          const label = proposalTierLabel(plan.tier);
+          return (
+            <button
+              key={plan.id}
+              id={`proposal-tier-${plan.tier}`}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls="proposal-mobile-panel"
+              tabIndex={selected ? 0 : -1}
+              className={`min-h-11 min-w-0 cursor-pointer rounded-md border px-2 py-2 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                selected
+                  ? "border-primary bg-primary/10 font-semibold text-primary ring-2 ring-primary/30"
+                  : "border-border bg-background font-medium text-foreground"
+              }`}
+              onClick={() => setMobileTier(plan.tier)}
+              onKeyDown={(event) => onTierKeyDown(event, index)}
+            >
+              <span className="block truncate">{label}</span>
+              <span className="block text-xs" aria-hidden={selected ? undefined : true}>
+                {selected ? "Selected" : "\u00a0"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div
+        id="proposal-mobile-panel"
+        role="tabpanel"
+        aria-labelledby={mobilePlan ? `proposal-tier-${mobilePlan.tier}` : undefined}
+        data-proposal-mobile
+        className="min-h-0 flex-1 lg:hidden"
+      >
+        {mobilePlan ? (
+          <PlanOptionCard
+            plan={mobilePlan}
+            currency={currency}
+            token={token}
+            selected={selectedId === mobilePlan.id}
+            hideCta={hideCta}
+          />
+        ) : null}
+      </div>
+      <div
+        data-proposal-desktop
+        className="hidden min-h-0 gap-4 lg:grid lg:h-full lg:min-h-0 lg:flex-1 lg:grid-cols-3"
+      >
+        {plans.map((plan) => (
+          <PlanOptionCard
+            key={plan.id}
+            plan={plan}
+            currency={currency}
+            token={token}
+            selected={selectedId === plan.id}
+            hideCta={hideCta}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PlanOptionCard({
   plan,
   currency,
@@ -391,7 +506,7 @@ function PlanOptionCard({
     plan.durationMinutes ?? payload.durationMinutes,
   );
   const availabilityNote = formatCustomerFacingClocks(payload.customerAvailabilityNote || CUSTOMER_AVAILABILITY_NOTE);
-  const recommendation = formatCustomerFacingClocks(plan.customerFacingReason);
+  const recommendation = formatCustomerDurationText(formatCustomerFacingClocks(plan.customerFacingReason));
   const durationNote = formatCustomerFacingClocks(payload.durationNote);
   const unavailable =
     plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE ||
@@ -401,10 +516,11 @@ function PlanOptionCard({
 
   return (
     <article
-      className={`flex h-full flex-col rounded-md border px-5 py-5 ${
+      className={`flex h-full max-h-full min-h-0 flex-col overflow-hidden rounded-md border ${
         recommended ? "border-primary ring-2 ring-primary/30" : "border-border"
       } ${selected ? "bg-muted/50" : "bg-background"}`}
     >
+      <div data-plan-summary className="shrink-0 px-4 pt-3">
       {recommended ? (
         <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">RECOMMENDED</p>
       ) : (
@@ -412,30 +528,32 @@ function PlanOptionCard({
           {plan.tier === EVENT_PLAN_TIERS.BUDGET ? "Good" : "Premium"}
         </p>
       )}
-      <h2 className="mt-2 text-xl font-semibold">{plan.title}</h2>
-      <p className="mt-3 text-3xl font-semibold tracking-tight">
+      <h2 className="mt-1 text-lg font-semibold">{plan.title}</h2>
+      <p className="mt-1 text-2xl font-semibold tracking-tight">
         {payload.pricingComplete || total > 0
           ? formatMoneyFromCents(total, displayCurrency)
           : "Pricing to confirm"}
       </p>
-      <p className="mt-1 text-xs text-foreground/60">
+      <p className="mt-0.5 text-xs leading-tight text-foreground/60">
         Estimated total
         {perPerson != null && total > 0
           ? ` · ${formatMoneyFromCents(perPerson, displayCurrency)} per person`
           : ""}
       </p>
       {payload.depositPreviewCents != null && payload.pricingComplete ? (
-        <p className="mt-1 text-xs text-foreground/60">
+        <p className="mt-0.5 text-xs leading-tight text-foreground/60">
           {formatEstimatedDepositLine(payload.depositPreviewCents, payload.depositPreviewPercent, displayCurrency)}
         </p>
       ) : null}
+      </div>
+      <div data-plan-details className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
 
       <PlanSection title="Attractions">
         {payload.activities.length > 0 ? (
           <ul className="list-disc space-y-1 pl-5">
             {payload.activities.map((activity) => (
               <li key={activity.knowledgeItemId}>
-                {activity.name}
+                {formatCustomerDurationText(activity.name)}
                 {activity.quantity > 1 && activity.unitLabel
                   ? ` · ${activity.quantity} ${activity.unitLabel}s`
                   : ""}
@@ -454,7 +572,7 @@ function PlanOptionCard({
           <ul className="list-disc space-y-1 pl-5">
             {payload.includedItems.map((item) => (
               <li key={item.knowledgeItemId}>
-                {item.name}
+                {formatCustomerDurationText(item.name)}
                 {item.quantity ? ` · ${item.quantity}${item.unitLabel ? ` ${item.unitLabel}` : ""}` : ""}
               </li>
             ))}
@@ -467,14 +585,14 @@ function PlanOptionCard({
           <ul className="list-disc space-y-1 pl-5">
             {sampleItinerary.map((segment) => (
               <li key={`${segment.startTime}-${segment.label}`}>
-                {formatItineraryRange(segment.startTime, segment.endTime)} {segment.label}
+                {formatItineraryRange(segment.startTime, segment.endTime)} {formatCustomerDurationText(segment.label)}
               </li>
             ))}
           </ul>
         ) : payload.schedule.length > 0 ? (
           <ul className="list-disc space-y-1 pl-5">
             {payload.schedule.map((row) => (
-              <li key={row}>{formatItineraryLine(row)}</li>
+              <li key={row}>{formatCustomerDurationText(formatItineraryLine(row))}</li>
             ))}
           </ul>
         ) : (
@@ -546,8 +664,9 @@ function PlanOptionCard({
           </p>
         ) : null}
       </PlanSection>
+      </div>
 
-      <div className="mt-auto pt-5">
+      <div data-plan-actions className="shrink-0 border-t border-border px-4 py-2">
         {selected ? (
           <p className="text-sm font-medium text-primary">You chose this event plan</p>
         ) : hideCta ? null : (
@@ -586,6 +705,7 @@ function ChoosePlanButton({
   const router = useRouter();
   const pendingRef = useRef(false);
   const [pending, setPending] = useState(false);
+  const [pendingLabel, setPendingLabel] = useState("Working…");
 
   async function submit(
     event: FormEvent<HTMLFormElement>,
@@ -598,6 +718,7 @@ function ChoosePlanButton({
     }
     const formData = new FormData(event.currentTarget);
     pendingRef.current = true;
+    setPendingLabel(action === reservePublicEventPlanAction ? "Saving your booking request…" : "Submitting your inquiry…");
     setPending(true);
     await yieldToPaint();
     try {
@@ -620,6 +741,7 @@ function ChoosePlanButton({
   }
 
   return (
+    <>
     <PendingActionProvider pending={pending}>
       <div className="space-y-2">
         {allowBookNow ? (
@@ -654,5 +776,7 @@ function ChoosePlanButton({
         </form>
       </div>
     </PendingActionProvider>
+    <BlockingMutation active={pending} label={pendingLabel} />
+    </>
   );
 }

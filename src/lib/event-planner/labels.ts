@@ -1,4 +1,12 @@
 import {
+  BEVERAGE_PREFERENCE_LABELS,
+  BUDGET_PREFERENCE_LABELS,
+  type BeveragePreference,
+  type BudgetPreference,
+  FOOD_PREFERENCE_LABELS,
+  type FoodPreference,
+} from "@/lib/event-planner/intake-contract";
+import {
   BUDGET_BAND_CENTS,
   BUDGET_BAND_LABELS,
   type BudgetBand,
@@ -26,10 +34,47 @@ export function formatSpacePreference(value: string | null | undefined): string 
 }
 
 export function formatDiningPreference(value: string | null | undefined): string {
+  if (value && value in FOOD_PREFERENCE_LABELS) {
+    return FOOD_PREFERENCE_LABELS[value as FoodPreference];
+  }
   if (value && value in DINING_PREFERENCE_LABELS) {
     return DINING_PREFERENCE_LABELS[value as keyof typeof DINING_PREFERENCE_LABELS];
   }
   return value || "—";
+}
+
+export function formatBeveragePreference(value: string | null | undefined): string {
+  if (value && value in BEVERAGE_PREFERENCE_LABELS) {
+    return BEVERAGE_PREFERENCE_LABELS[value as BeveragePreference];
+  }
+  return value || "—";
+}
+
+const CUSTOMER_DURATION_PHRASE = /\b(\d+)\s*(minutes?|mins?|hours?|hrs?)\b/gi;
+
+/** Customer-facing length. Exact hours become "1 hour" / "2 hours". Other lengths stay in minutes, including 90. */
+export function formatCustomerDurationMinutes(minutes: number): string {
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    return "";
+  }
+  const whole = Math.round(minutes);
+  if (whole % 60 === 0) {
+    const hours = whole / 60;
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+  return whole === 1 ? "1 minute" : `${whole} minutes`;
+}
+
+/** Presentation-only. Does not change stored product names, durations, or prices. */
+export function formatCustomerDurationText(value: string): string {
+  return value.replace(CUSTOMER_DURATION_PHRASE, (match, amount: string, unit: string) => {
+    const count = Number(amount);
+    if (!Number.isFinite(count)) {
+      return match;
+    }
+    const minutes = /^h/i.test(unit) ? count * 60 : count;
+    return formatCustomerDurationMinutes(minutes) || match;
+  });
 }
 
 export function formatDurationMinutes(minutes: number): string {
@@ -66,6 +111,17 @@ export function formatDesiredDuration(minutes: number | null | undefined): strin
     return EVENT_DURATION_LABELS[minutes as EventDurationMinutes];
   }
   return formatDurationMinutes(minutes);
+}
+
+export function formatIntakeBudget(input: {
+  budgetPreference?: string | null;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+}): string {
+  if (input.budgetPreference && input.budgetPreference in BUDGET_PREFERENCE_LABELS) {
+    return BUDGET_PREFERENCE_LABELS[input.budgetPreference as BudgetPreference];
+  }
+  return formatBudgetRange(input.budgetMin, input.budgetMax);
 }
 
 export function formatBudgetRange(
