@@ -210,6 +210,38 @@ describe("catalog proposal selection", () => {
     });
     expect(good.map((row) => row.slug)).toEqual(["axe-throwing-60"]);
   });
+
+  it("keeps bowling and mini golf when only the package variants share a fulfillment group", () => {
+    const rows = [
+      ...products,
+      catalogProduct({ id: "bowl-1h", slug: "bowling-1h", name: "Bowling - 1 Hour", fulfillmentGroup: null }),
+    ];
+    const good = selectCatalogProductsForTier({
+      tierKey: "good",
+      addOnSlugs: [],
+      includeSpace: false,
+      attractionMode: ATTRACTION_MODES.KNOWN,
+      profile,
+      productsBySlug: new Map(rows.map((row) => [row.slug, row])),
+      productsById: new Map(rows.map((row) => [row.id, row])),
+      inquiry: {
+        eventType: "Birthday Party",
+        eventGoal: "Celebration",
+        guestCount: 12,
+        guestMix: "mostly_adults",
+        desiredDurationMinutes: 120,
+        desiredDate: "2026-10-17",
+        desiredStartTime: "14:00",
+        budgetMin: null,
+        budgetMax: null,
+        diningPreference: "none",
+        spacePreference: "no_preference",
+        attractionInterestIds: ["bowl-1h", "ball-golf"],
+        customerNotes: null,
+      },
+    });
+    expect(good.map((row) => row.slug).sort()).toEqual(["bowling-1h", "have-a-ball-mini-golf"]);
+  });
 });
 
 describe("nearby availability", () => {

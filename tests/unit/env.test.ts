@@ -133,6 +133,52 @@ describe("parseTestDatabaseEnv", () => {
       assertTestDatabaseIsIsolated(testEnv, { DATABASE_URL: validPostgresUrl }),
     ).toThrow(/must not match the development database/);
   });
+
+  it("treats a pooled URL and a direct URL for the same database as one target", () => {
+    const pooled =
+      "postgresql://magiccrm:super-secret-password@ep-example-pooler.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require";
+    const direct = "postgresql://magiccrm:other-secret@ep-example.c-11.us-east-1.aws.neon.tech/neondb";
+    const testEnv = parseTestDatabaseEnv({
+      MAGICCRM_DATABASE_ROLE: "test",
+      DATABASE_URL: pooled,
+      DIRECT_URL: direct,
+    });
+
+    try {
+      assertTestDatabaseIsIsolated(testEnv, { DATABASE_URL: direct, DIRECT_URL: pooled });
+      throw new Error("expected isolation to fail");
+    } catch (error) {
+      expect(error).toBeInstanceOf(EnvValidationError);
+      expect(String(error)).toMatch(/must not match the development database/);
+      expect(String(error)).toContain("ep-example-pooler.c-11.us-east-1.aws.neon.tech/neondb");
+      expect(String(error)).not.toContain("super-secret-password");
+      expect(String(error)).not.toContain("other-secret");
+      expect(String(error)).not.toContain("postgresql://");
+    }
+  });
+
+  it("allows a different database endpoint that happens to share the database name", () => {
+    const testEnv = parseTestDatabaseEnv({
+      MAGICCRM_DATABASE_ROLE: "test",
+      DATABASE_URL: "postgresql://magiccrm:secret@ep-test.c-11.us-east-1.aws.neon.tech/neondb",
+      DIRECT_URL: "postgresql://magiccrm:secret@ep-test.c-11.us-east-1.aws.neon.tech/neondb",
+    });
+    expect(() =>
+      assertTestDatabaseIsIsolated(testEnv, {
+        DATABASE_URL: "postgresql://magiccrm:secret@ep-dev-pooler.c-11.us-east-1.aws.neon.tech/neondb",
+        DIRECT_URL: "postgresql://magiccrm:secret@ep-dev.c-11.us-east-1.aws.neon.tech/neondb",
+      }),
+    ).not.toThrow();
+  });
+
+  it("refuses to run when the development database cannot be identified", () => {
+    const testEnv = parseTestDatabaseEnv({
+      MAGICCRM_DATABASE_ROLE: "test",
+      DATABASE_URL: validPostgresUrl,
+      DIRECT_URL: validPostgresUrl,
+    });
+    expect(() => assertTestDatabaseIsIsolated(testEnv, {})).toThrow(/Development DATABASE_URL is required/);
+  });
 });
 
 describe("parsePrismaCliEnv", () => {

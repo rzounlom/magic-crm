@@ -526,6 +526,8 @@ export async function confirmPendingBooking(
   let conflict: ConfirmPendingBookingResult["conflict"] = null;
 
   try {
+    // Per-requirement occupancy checks run inside this transaction. Neon
+    // round-trips for a multi-resource plan exceed Prisma's 5s default.
     const result = await database.$transaction(async (tx) => {
       await lockLocationForScheduling(tx, input.organizationId, inquiry.locationId);
       const raced = await tx.booking.findFirst({
@@ -771,7 +773,7 @@ export async function confirmPendingBooking(
         });
       }
       return { booking: confirmed, created: true as const, conflict: null };
-    });
+    }, { timeout: 20_000 });
     booking = result.booking;
     created = result.created;
     conflict = result.conflict;

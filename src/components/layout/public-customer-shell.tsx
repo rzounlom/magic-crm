@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { PUBLIC_CONTENT_CLASS } from "@/components/layout/public-content";
+
 type PublicCustomerShellProps = {
   brand?: string;
   children: ReactNode;
@@ -15,12 +17,12 @@ export function PublicCustomerShell({
     <div
       className={
         contained
-          ? "flex h-dvh max-h-dvh flex-col overflow-hidden bg-background text-foreground"
+          ? "flex h-dvh max-h-dvh flex-col overflow-hidden overflow-x-hidden bg-background text-foreground"
           : "flex min-h-full flex-col bg-background text-foreground"
       }
     >
       <header className="shrink-0 border-b border-border bg-muted/60">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center px-4 sm:px-6">
+        <div className={`${PUBLIC_CONTENT_CLASS} flex h-14 items-center`}>
           <p className="text-sm font-semibold tracking-wide text-foreground">{brand}</p>
         </div>
       </header>

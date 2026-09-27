@@ -18,6 +18,7 @@ import {
   PLANNER_STEP_TITLES,
   PRIVATE_SPACE_PREFERENCE_LABELS,
   PRIVATE_SPACE_PREFERENCE_VALUES,
+  contactFieldErrors,
   formatPreferredDateTime,
   intakeBudgetLabel,
   initialPlannerState,
@@ -30,7 +31,7 @@ import {
   type PlannerStep,
 } from "@/lib/event-planner/intake-contract";
 import { formatCustomerDurationText } from "@/lib/event-planner/labels";
-import { formatUsPhoneInput } from "@/lib/inquiries/public-phone";
+import { formatPhoneDisplay, formatUsPhoneInput } from "@/lib/inquiries/public-phone";
 import { onSafeSubmitAttempt } from "@/lib/ui/confirm-gate";
 import { notify } from "@/lib/ui/notify";
 import { yieldToPaint } from "@/lib/ui/yield-to-paint";
@@ -98,6 +99,9 @@ export function PublicIntakeWizard({
   }
 
   function onContinue() {
+    if (state.step === "contact") {
+      setContactErrors(contactFieldErrors(state.answers));
+    }
     if (plannerStepError(state.step, state.answers)) {
       setShowError(true);
       return;
@@ -136,7 +140,7 @@ export function PublicIntakeWizard({
     });
     if (!clientCheck.success) {
       setContactErrors(clientCheck.fieldErrors);
-      setShowError(true);
+      dispatch({ type: "go", step: "contact" });
       return;
     }
 
@@ -150,6 +154,10 @@ export function PublicIntakeWizard({
       const result = await action(formData);
       if (!result.ok) {
         setContactErrors(result.fieldErrors ?? {});
+        const contactKeys = ["firstName", "lastName", "email", "phone", "customerGroupName", "notes"];
+        if (contactKeys.some((key) => result.fieldErrors?.[key])) {
+          dispatch({ type: "go", step: "contact" });
+        }
         notify.error({
           title: result.title ?? "Unable to send inquiry",
           description: result.message,
@@ -196,6 +204,12 @@ export function PublicIntakeWizard({
           {state.answers.attractionInterestIds.map((id) => (
             <input key={id} type="hidden" name="attractionInterestIds" value={id} />
           ))}
+          <input type="hidden" name="firstName" value={state.answers.firstName} />
+          <input type="hidden" name="lastName" value={state.answers.lastName} />
+          <input type="hidden" name="email" value={state.answers.email} />
+          <input type="hidden" name="phone" value={state.answers.phone} />
+          <input type="hidden" name="customerGroupName" value={state.answers.customerGroupName} />
+          <input type="hidden" name="notes" value={state.answers.notes} />
           <div className="hidden" aria-hidden="true">
             <label htmlFor={honeypotId}>Company website</label>
             <input id={honeypotId} name="companyWebsite" tabIndex={-1} autoComplete="off" />
@@ -209,66 +223,6 @@ export function PublicIntakeWizard({
           <p className="mt-4 text-sm text-foreground/70">
             Building these options does not book your event or hold a time.
           </p>
-
-          <div className="mt-8 grid gap-4 pb-2">
-            <ContactField
-              label="First name"
-              name="firstName"
-              value={state.answers.firstName}
-              autoComplete="given-name"
-              disabled={pending}
-              error={contactErrors.firstName}
-              onChange={(value) => edit({ firstName: value })}
-            />
-            <ContactField
-              label="Last name"
-              name="lastName"
-              value={state.answers.lastName}
-              autoComplete="family-name"
-              disabled={pending}
-              error={contactErrors.lastName}
-              onChange={(value) => edit({ lastName: value })}
-            />
-            <ContactField
-              label="Email"
-              name="email"
-              type="email"
-              value={state.answers.email}
-              autoComplete="email"
-              disabled={pending}
-              error={contactErrors.email}
-              onChange={(value) => edit({ email: value })}
-            />
-            <ContactField
-              label="Phone (optional)"
-              name="phone"
-              type="tel"
-              value={state.answers.phone}
-              autoComplete="tel"
-              disabled={pending}
-              error={contactErrors.phone}
-              onChange={(value) => edit({ phone: formatUsPhoneInput(value) })}
-            />
-            <ContactField
-              label="Group or company name (optional)"
-              name="customerGroupName"
-              value={state.answers.customerGroupName}
-              disabled={pending}
-              error={contactErrors.customerGroupName}
-              onChange={(value) => edit({ customerGroupName: value })}
-            />
-            <label className="block text-sm font-medium text-foreground">
-              Notes (optional)
-              <textarea
-                name="notes"
-                value={state.answers.notes}
-                disabled={pending}
-                rows={3}
-                className={INPUT_CLASS}
-                onChange={(event) => edit({ notes: event.target.value })}
-              />
-            </label>
-          </div>
       </form>
     ) : (
       <StepBody
@@ -276,6 +230,8 @@ export function PublicIntakeWizard({
         answers={state.answers}
         attractions={attractions}
         errorId={stepError ? `${state.step}-error` : undefined}
+        fieldErrors={contactErrors}
+        disabled={pending}
         onEdit={edit}
         onToggleAttraction={(id) => dispatch({ type: "toggleAttraction", id })}
       />
@@ -313,13 +269,13 @@ export function PublicIntakeWizard({
         <div className="shrink-0">
           <StepIntro step={state.step} />
         </div>
-        {stepError ? (
+        {stepError && state.step !== "contact" ? (
           <p id={`${state.step}-error`} role="alert" className="mt-4 shrink-0 text-sm text-destructive">
             {stepError}
           </p>
         ) : null}
 
-        <div data-planner-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4">
+        <div data-planner-scroll className="public-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain py-4">
           {scrollBody}
         </div>
 
@@ -402,6 +358,13 @@ function StepIntro({ step }: { step: PlannerStep }) {
       </p>
     );
   }
+  if (step === "contact") {
+    return (
+      <p className="mt-3 text-sm text-foreground/70">
+        We&apos;ll use this to send your event options. Review comes next.
+      </p>
+    );
+  }
   return null;
 }
 
@@ -410,6 +373,8 @@ function StepBody({
   answers,
   attractions,
   errorId,
+  fieldErrors,
+  disabled,
   onEdit,
   onToggleAttraction,
 }: {
@@ -417,6 +382,8 @@ function StepBody({
   answers: PlannerAnswers;
   attractions: PublicPlannerAttraction[];
   errorId?: string;
+  fieldErrors: Record<string, string>;
+  disabled: boolean;
   onEdit: (patch: Partial<PlannerAnswers>) => void;
   onToggleAttraction: (id: string) => void;
 }) {
@@ -594,6 +561,70 @@ function StepBody({
     );
   }
 
+  if (step === "contact") {
+    return (
+      <div className="grid gap-4 pb-2 sm:grid-cols-2">
+        <ContactField
+          label="First name"
+          name="firstName"
+          value={answers.firstName}
+          autoComplete="given-name"
+          disabled={disabled}
+          error={fieldErrors.firstName}
+          onChange={(value) => onEdit({ firstName: value })}
+        />
+        <ContactField
+          label="Last name"
+          name="lastName"
+          value={answers.lastName}
+          autoComplete="family-name"
+          disabled={disabled}
+          error={fieldErrors.lastName}
+          onChange={(value) => onEdit({ lastName: value })}
+        />
+        <ContactField
+          label="Email"
+          name="email"
+          type="email"
+          value={answers.email}
+          autoComplete="email"
+          disabled={disabled}
+          error={fieldErrors.email}
+          onChange={(value) => onEdit({ email: value })}
+        />
+        <ContactField
+          label="Phone (optional)"
+          name="phone"
+          type="tel"
+          value={answers.phone}
+          autoComplete="tel"
+          disabled={disabled}
+          error={fieldErrors.phone}
+          onChange={(value) => onEdit({ phone: formatUsPhoneInput(value) })}
+        />
+        <ContactField
+          label="Group or company name (optional)"
+          name="customerGroupName"
+          value={answers.customerGroupName}
+          disabled={disabled}
+          error={fieldErrors.customerGroupName}
+          onChange={(value) => onEdit({ customerGroupName: value })}
+        />
+        <label className="block text-sm font-medium text-foreground sm:col-span-2">
+          Notes (optional)
+          <textarea
+            name="notes"
+            value={answers.notes}
+            disabled={disabled}
+            rows={3}
+            className={INPUT_CLASS}
+            onChange={(event) => onEdit({ notes: event.target.value })}
+          />
+        </label>
+      </div>
+    );
+  }
+
   return null;
 }
 
@@ -607,7 +638,7 @@ function ChoiceGroup({
   children: ReactNode;
 }) {
   return (
-    <fieldset className="grid gap-3" aria-describedby={errorId}>
+    <fieldset className="grid gap-3 sm:grid-cols-2" aria-describedby={errorId}>
       <legend className="sr-only">{legend}</legend>
       {children}
     </fieldset>
@@ -686,27 +717,36 @@ function ContactField({
 }) {
   const errorId = `${name}-error`;
   return (
-    <label className="block text-sm font-medium text-foreground" htmlFor={name}>
-      {label}
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        autoComplete={autoComplete}
-        disabled={disabled}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : undefined}
-        className={INPUT_CLASS}
-        onChange={(event) => onChange(event.target.value)}
-      />
+    <div>
+      <label className="block text-sm font-medium text-foreground" htmlFor={name}>
+        {label}
+        <input
+          id={name}
+          name={name}
+          type={type}
+          value={value}
+          autoComplete={autoComplete}
+          disabled={disabled}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
+          className={INPUT_CLASS}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
       {error ? (
         <span id={errorId} role="alert" className="mt-1 block text-sm font-normal text-destructive">
           {error}
         </span>
       ) : null}
-    </label>
+    </div>
   );
+}
+
+function contactSummary(answers: PlannerAnswers): string {
+  const name = [answers.firstName.trim(), answers.lastName.trim()].filter(Boolean).join(" ");
+  return [name, answers.email.trim(), formatPhoneDisplay(answers.phone), answers.customerGroupName.trim(), answers.notes.trim()]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function ReviewList({
@@ -745,6 +785,7 @@ function ReviewList({
       step: "budget",
     },
     { label: "Preferred date and time", value: formatPreferredDateTime(answers), step: "when" },
+    { label: "Contact information", value: contactSummary(answers), step: "contact" },
   ];
 
   return (

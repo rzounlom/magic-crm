@@ -56,6 +56,10 @@ Do not use `db push` as the long-term CI source of truth.
 
 ## Cleanup / isolation
 
+Integration startup is fail-closed. `.env.test` must set `MAGICCRM_DATABASE_ROLE=test` plus its own `DATABASE_URL` and `DIRECT_URL`. Those URLs are not filled in from the process environment. The guard compares database identity — Neon endpoint with the `-pooler` host suffix removed, plus the database name — against every `DATABASE_URL` and `DIRECT_URL` in `.env` and `.env.local`. A pooled URL and a direct URL for the same branch are the same database and are refused. If the development target cannot be identified, tests do not start. The startup line prints the role, host, and database name only.
+
+Destructive helpers (`deleteTestOrganizations`, stale invitation cleanup) run only after that guard passes, and only through the Prisma client created from the test URL.
+
 Until a richer harness exists:
 
 - Prefer wrapping each test in a transaction and rolling back, or

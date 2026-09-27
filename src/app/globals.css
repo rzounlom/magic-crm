@@ -54,6 +54,25 @@ label:has(:disabled) {
   animation: magiccrm-spin 0.7s linear infinite;
 }
 
+.public-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+.public-scroll::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+.public-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.public-scroll::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 999px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .magiccrm-spinner {
     animation: none;

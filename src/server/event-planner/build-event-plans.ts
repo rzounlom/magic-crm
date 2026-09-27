@@ -45,6 +45,7 @@ export type PlannerInquiryFacts = {
   desiredStartTime: string | null;
   budgetMin: number | null;
   budgetMax: number | null;
+  budgetFlexible?: boolean;
   diningPreference: string | null;
   spacePreference: string | null;
   attractionInterestIds: string[];

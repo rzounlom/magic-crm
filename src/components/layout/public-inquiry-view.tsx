@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { PUBLIC_CONTENT_CLASS } from "@/components/layout/public-content";
 import { personalEventPlannerTitle } from "@/lib/event-planner/labels";
 
 type PublicInquiryViewProps = {
@@ -9,7 +10,7 @@ type PublicInquiryViewProps = {
 
 export function PublicInquiryView({ organizationName, children }: PublicInquiryViewProps) {
   return (
-    <section className="mx-auto flex h-full min-h-0 w-full max-w-2xl flex-col overflow-hidden px-4 py-4 sm:px-6">
+    <section className={`${PUBLIC_CONTENT_CLASS} flex h-full min-h-0 flex-col overflow-hidden py-4`}>
       <header className="shrink-0">
         <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">
           {organizationName}

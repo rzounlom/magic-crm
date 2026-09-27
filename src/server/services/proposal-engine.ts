@@ -10,6 +10,15 @@ import {
 } from "@/server/catalog/scheduling-behavior";
 import { percentOfCents, priceProduct, weekdayKeyFromIsoDate, isWeekendKey, depositPercentFromTenant, depositPreviewNote } from "@/server/catalog/pricing";
 import {
+  budgetFitForTotal,
+  compositionDelta,
+  compositionReason,
+  composeTierProducts,
+  readTierComposition,
+  selectFoodWithinBudget,
+  type AttractionSelection,
+} from "@/server/catalog/tier-composition";
+import {
   deriveCatalogResourceRequirements,
   type CatalogResourceRequirementRow,
 } from "@/server/catalog/requirements";
@@ -151,11 +160,8 @@ export function selectCatalogProductsForTier(input: {
     const groups = new Set(selected.map((row) => row.fulfillmentGroup).filter((value): value is string => Boolean(value)));
     if (groups.size > 0) {
       for (const group of groups) {
-        const slug = resolveFulfillmentSlug(
-          group,
-          selected,
-          input.profile,
-        );
+        const inGroup = selected.filter((row) => row.fulfillmentGroup === group);
+        const slug = resolveFulfillmentSlug(group, inGroup, input.profile);
         pushSlug(slug);
       }
       for (const product of selected) {
@@ -207,6 +213,8 @@ export async function buildCatalogEventPlans(input: {
   depositPercent?: number;
   availabilityProvider?: PlanAvailabilityProvider;
   excludeInquiryId?: string | null;
+  attractionSelections?: AttractionSelection[];
+  directAttractionProductIds?: string[];
 }): Promise<EventPlanDraft[]> {
   const audience = audienceFromGuestMix(input.inquiry.guestMix);
   const attractionMode = attractionModeFromIntake({
@@ -216,32 +224,111 @@ export async function buildCatalogEventPlans(input: {
   const productsBySlug = new Map(input.products.map((row) => [row.slug, row]));
   const productsById = new Map(input.products.map((row) => [row.id, row]));
   const drafts: EventPlanDraft[] = [];
+  let previousProducts: LoadedCatalogProduct[] | null = null;
 
   for (const [sortOrder, config] of TIER_ORDER.entries()) {
-    const selected = selectCatalogProductsForTier({
-      tierKey: config.key,
-      addOnSlugs: profile[config.addOn],
-      includeSpace: config.includeSpace,
-      inquiry: input.inquiry,
-      attractionMode,
-      profile,
-      productsBySlug,
-      productsById,
-    });
+    const tierStrategy = readTierComposition(profile, config.key);
+    const composed = tierStrategy
+      ? composeTierProducts({
+          tierKey: config.key,
+          tier: tierStrategy,
+          profile,
+          inquiry: input.inquiry,
+          attractionMode,
+          selections: input.attractionSelections ?? [],
+          directProductIds: input.directAttractionProductIds ?? [],
+          productsBySlug,
+          productsById,
+          isWeekend: (date) => isWeekendKey(weekdayKeyFromIsoDate(date)),
+        })
+      : null;
+    let selected = composed
+      ? composed.products
+      : selectCatalogProductsForTier({
+          tierKey: config.key,
+          addOnSlugs: profile[config.addOn],
+          includeSpace: config.includeSpace,
+          inquiry: input.inquiry,
+          attractionMode,
+          profile,
+          productsBySlug,
+          productsById,
+        });
+    let spaceUnmet = composed?.spaceUnmet ?? false;
+    let unfulfilledInterestSlugs = composed?.unfulfilledInterestSlugs ?? [];
     if (selected.length === 0) {
       continue;
+    }
+    if (tierStrategy && config.key === "good" && input.inquiry.budgetMax != null && input.inquiry.diningPreference !== "none") {
+      const priceTotal = (rows: LoadedCatalogProduct[]) =>
+        rows.reduce((sum, product) => sum + priceProduct(product, {
+          guestCount: input.inquiry.guestCount,
+          eventDate: input.inquiry.desiredDate,
+          startTime: input.inquiry.desiredStartTime,
+          durationMinutes: input.inquiry.desiredDurationMinutes ?? 60,
+        }).totalCents, 0);
+      const primaryFood = selected.find((row) => row.kind === "FOOD");
+      const alternates = profile.composition?.foodStrategies.value ?? [];
+      const totals = new Map<string, number>();
+      if (primaryFood) {
+        totals.set(primaryFood.slug, priceTotal(selected));
+      }
+      for (const slug of alternates) {
+        if (totals.has(slug)) {
+          continue;
+        }
+        const alternate = composeTierProducts({
+          tierKey: config.key,
+          tier: tierStrategy,
+          profile,
+          inquiry: input.inquiry,
+          attractionMode,
+          selections: input.attractionSelections ?? [],
+          directProductIds: input.directAttractionProductIds ?? [],
+          productsBySlug,
+          productsById,
+          isWeekend: (date) => isWeekendKey(weekdayKeyFromIsoDate(date)),
+          foodSlugOverride: slug,
+        });
+        totals.set(slug, priceTotal(alternate.products));
+      }
+      const chosenFood = selectFoodWithinBudget({
+        primarySlug: primaryFood?.slug ?? null,
+        alternateSlugs: alternates,
+        proposalTotalByFoodSlug: totals,
+        budgetMax: input.inquiry.budgetMax,
+        allowSwap: true,
+      });
+      if (chosenFood && chosenFood !== primaryFood?.slug) {
+        const swapped = composeTierProducts({
+          tierKey: config.key,
+          tier: tierStrategy,
+          profile,
+          inquiry: input.inquiry,
+          attractionMode,
+          selections: input.attractionSelections ?? [],
+          directProductIds: input.directAttractionProductIds ?? [],
+          productsBySlug,
+          productsById,
+          isWeekend: (date) => isWeekendKey(weekdayKeyFromIsoDate(date)),
+          foodSlugOverride: chosenFood,
+        });
+        selected = swapped.products;
+        spaceUnmet = swapped.spaceUnmet;
+        unfulfilledInterestSlugs = swapped.unfulfilledInterestSlugs;
+      }
     }
 
     const requirementIds = new Set(input.resourceRequirements.map((row) => row.productId));
     const selectedProducts = selected.map((row) => toItineraryProduct(row, requirementIds));
     const requestedStartTime = input.inquiry.desiredStartTime;
-    const composed = composeEventItinerary({
+    const itineraryDraft = composeEventItinerary({
       startTime: requestedStartTime,
       foodFirst: profile.foodFirst,
       products: selectedProducts,
       fallbackMinutes: input.inquiry.desiredDurationMinutes ?? 60,
     });
-    let durationMinutes = composed.eventLengthMinutes || input.inquiry.desiredDurationMinutes || 60;
+    let durationMinutes = itineraryDraft.eventLengthMinutes || input.inquiry.desiredDurationMinutes || 60;
     const pricingContext = {
       guestCount: input.inquiry.guestCount,
       eventDate: input.inquiry.desiredDate,
@@ -252,7 +339,7 @@ export async function buildCatalogEventPlans(input: {
     const lineItems: PricedLineItem[] = quotes.flatMap((quote) => quote.lineItems);
     const totalCents = quotes.reduce((sum, quote) => sum + quote.totalCents, 0);
     const pricingComplete = quotes.every((quote) => quote.pricingComplete);
-    let itinerary = composed.itinerary;
+    let itinerary = itineraryDraft.itinerary;
     const scheduledProductIds = selectedProducts
       .filter((row) => resolveSchedulingBehavior(row) !== PRODUCT_SCHEDULING_BEHAVIORS.NON_SCHEDULED)
       .map((row) => row.id);
@@ -381,17 +468,29 @@ export async function buildCatalogEventPlans(input: {
       requestedMinutes: input.inquiry.desiredDurationMinutes,
       eventLengthMinutes: durationMinutes,
       sequenced,
-      roomMinutes: composed.roomMinutes,
+      roomMinutes: itineraryDraft.roomMinutes,
       baselineNames,
     });
+    const delta = tierStrategy ? compositionDelta(previousProducts, selected) : null;
     const fallbackReason =
       (config.tier === EVENT_PLAN_TIERS.BEST_FIT
         ? `Recommended mix for this group: ${names}.`
         : `Includes ${names}.`) + exclusiveNote;
-    const experience = optionExperienceSentence(added.map((row) => row.name), fallbackReason);
-    const customerFacingReason = [added.length > 0 ? `${experience}${exclusiveNote}` : experience, durationNote]
+    const experience = delta
+      ? compositionReason(delta, names)
+      : optionExperienceSentence(added.map((row) => row.name), fallbackReason);
+    const spaceNote = spaceUnmet
+      ? "No private space in this venue's catalog fits this group."
+      : null;
+    const customerFacingReason = [added.length > 0 && !delta ? `${experience}${exclusiveNote}` : experience, durationNote, spaceNote]
       .filter(Boolean)
       .join(" ");
+    const budgetFit = budgetFitForTotal({
+      totalCents,
+      budgetMin: input.inquiry.budgetMin,
+      budgetMax: input.inquiry.budgetMax,
+      flexible: input.inquiry.budgetFlexible === true,
+    });
 
     drafts.push({
       tier: config.tier,
@@ -465,11 +564,18 @@ export async function buildCatalogEventPlans(input: {
         conflictingActivityLabels,
         catalogBacked: true,
         locationExclusive,
+        budgetFit,
+        spaceUnmet,
+        unfulfilledInterestSlugs,
+        compositionDelta: delta
+          ? { comparedWithTier: previousProducts ? drafts[drafts.length - 1]?.tier ?? null : null, ...delta }
+          : undefined,
         pricingComplete,
         customerAvailabilityNote: itineraryAdjusted && adjustmentNote ? adjustmentNote : CUSTOMER_AVAILABILITY_NOTE,
         resourceRequirements,
       },
     });
+    previousProducts = selected;
   }
 
   return drafts;

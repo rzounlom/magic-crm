@@ -116,20 +116,32 @@ describe("public intake wizard", () => {
     await user.selectOptions(screen.getByLabelText("AM/PM"), "PM");
     await continuePlanner(user);
 
+    expect(screen.getByRole("heading", { name: "How can we reach you?" })).toBe(document.activeElement);
+    await user.type(screen.getByLabelText("First name"), "Ada");
+    await user.type(screen.getByLabelText("Last name"), "Lovelace");
+    await user.type(screen.getByLabelText("Email"), "ada@example.com");
+    await continuePlanner(user);
+
     expect(screen.getByRole("heading", { name: "Review your event" })).toBe(document.activeElement);
     expect(screen.getByText("September 26, 2026 at 5:00 PM")).toBeTruthy();
     expect(screen.queryByText("17:00")).toBeNull();
     expect(screen.getByText("Bowling, Axe Throwing")).toBeTruthy();
     expect(screen.getByText("$1,500–$3,000")).toBeTruthy();
+    expect(screen.getByText(/Ada Lovelace/)).toBeTruthy();
+    expect(screen.getByText(/ada@example.com/)).toBeTruthy();
+    expect(screen.queryByLabelText("First name")).toBeNull();
     expect(screen.queryByText(/per guest/i)).toBeNull();
     expect(screen.queryByText(/Beverages/i)).toBeNull();
     expect(screen.getByRole("button", { name: "Build my event options" })).toBeTruthy();
     expect(screen.getByText(/does not book your event/i)).toBeTruthy();
 
+    await user.click(screen.getByRole("button", { name: "Edit Contact information" }));
+    expect(screen.getByLabelText("First name")).toHaveProperty("value", "Ada");
     await user.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByLabelText("Hour")).toHaveProperty("value", "5");
     await continuePlanner(user);
-    expect(screen.getAllByText("Yes").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("First name")).toHaveProperty("value", "Ada");
+    await continuePlanner(user);
 
     await user.click(screen.getByRole("button", { name: "Edit Guests" }));
     const guests = screen.getByLabelText("Guest count");
@@ -211,11 +223,17 @@ describe("public intake wizard", () => {
     await user.selectOptions(screen.getByLabelText("Minute"), "00");
     await user.selectOptions(screen.getByLabelText("AM/PM"), "PM");
     await continuePlanner(user);
-    expect(screen.getByText("We'll recommend options")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "How can we reach you?" })).toBeTruthy();
+    await continuePlanner(user);
+    expect(screen.getByRole("textbox", { name: /first name/i }).getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText("Enter a first name.")).toBeTruthy();
 
-    await user.type(screen.getByLabelText("First name"), "Ada");
-    await user.type(screen.getByLabelText("Last name"), "Lovelace");
-    await user.type(screen.getByLabelText("Email"), "ada@example.com");
+    await user.type(screen.getByRole("textbox", { name: /first name/i }), "Ada");
+    await user.type(screen.getByRole("textbox", { name: /last name/i }), "Lovelace");
+    await user.type(screen.getByRole("textbox", { name: /email/i }), "ada@example.com");
+    await continuePlanner(user);
+    expect(screen.getByText("We'll recommend options")).toBeTruthy();
+    expect(screen.queryByLabelText("First name")).toBeNull();
 
     const submitPromise = user.click(screen.getByRole("button", { name: "Build my event options" }));
     await screen.findByRole("button", { name: PUBLIC_INQUIRY_PENDING_COPY });
@@ -224,7 +242,7 @@ describe("public intake wizard", () => {
     await waitFor(() => {
       expect(action).toHaveBeenCalledTimes(1);
     });
-    expect(screen.getByLabelText("First name")).toHaveProperty("disabled", true);
+    expect(screen.queryByLabelText("First name")).toBeNull();
 
     await user.click(screen.getByRole("button", { name: PUBLIC_INQUIRY_PENDING_COPY }));
     expect(action).toHaveBeenCalledTimes(1);

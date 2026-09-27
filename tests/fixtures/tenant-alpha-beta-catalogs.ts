@@ -221,6 +221,84 @@ export const TENANT_BETA_KIDS_PROFILE = TENANT_BETA_PROFILES[0]!.payload;
 export const TENANT_ALPHA_ADULT_PROFILE = TENANT_ALPHA_PROFILES[1]!.payload;
 export const TENANT_BETA_ADULT_PROFILE = TENANT_BETA_PROFILES[1]!.payload;
 
+export const TENANT_BETA_COMPOSITION_PROFILE: RecommendationProfilePayload = {
+  ...TENANT_BETA_ADULT_PROFILE,
+  foodFirst: false,
+  composition: {
+    foodStrategies: {
+      value: ["snack-combo"],
+      standard: ["snack-combo"],
+      premium: ["snack-combo"],
+    },
+    spaceSlugs: ["full-venue"],
+    tiers: {
+      good: {
+        foodStrategy: "value",
+        coreAttractionSlugs: ["bowling-1h"],
+        upgradeSlugs: [],
+        fulfillmentByInterest: {},
+        includeSpace: false,
+        spaceFit: "tightest",
+      },
+      better: {
+        foodStrategy: "standard",
+        coreAttractionSlugs: ["bowling-1h"],
+        upgradeSlugs: [],
+        fulfillmentByInterest: {},
+        includeSpace: false,
+        spaceFit: "tightest",
+      },
+      best: {
+        foodStrategy: "premium",
+        coreAttractionSlugs: ["bowling-1h"],
+        upgradeSlugs: [],
+        fulfillmentByInterest: {},
+        includeSpace: false,
+        spaceFit: "tightest",
+      },
+    },
+  },
+};
+
+export const TENANT_BETA_KIDS_COMPOSITION_PROFILE: RecommendationProfilePayload = {
+  ...TENANT_BETA_PROFILES[0]!.payload,
+  foodFirst: false,
+  composition: {
+    foodStrategies: {
+      value: ["snack-combo"],
+      standard: ["snack-combo"],
+      premium: ["snack-combo"],
+    },
+    spaceSlugs: [],
+    tiers: {
+      good: {
+        foodStrategy: "value",
+        coreAttractionSlugs: ["trampoline"],
+        upgradeSlugs: [],
+        fulfillmentByInterest: {},
+        includeSpace: false,
+        spaceFit: "tightest",
+      },
+      better: {
+        foodStrategy: "standard",
+        coreAttractionSlugs: ["trampoline", "arcade"],
+        upgradeSlugs: [],
+        fulfillmentByInterest: {},
+        includeSpace: false,
+        spaceFit: "tightest",
+      },
+      best: {
+        foodStrategy: "premium",
+        coreAttractionSlugs: ["trampoline", "arcade"],
+        upgradeSlugs: [],
+        fulfillmentByInterest: {},
+        includeSpace: false,
+        spaceFit: "tightest",
+      },
+    },
+  },
+};
+
 function datasetProduct(
   product: LoadedCatalogProduct,
   categorySlug: string,

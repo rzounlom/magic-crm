@@ -66,6 +66,7 @@ function toPlannerFacts(inquiry: {
   desiredStartTime: string | null;
   budgetMin: number | null;
   budgetMax: number | null;
+  budgetPreference?: string | null;
   diningPreference: string | null;
   spacePreference: string | null;
   attractionInterestIds: Prisma.JsonValue | null;
@@ -81,6 +82,7 @@ function toPlannerFacts(inquiry: {
     desiredStartTime: inquiry.desiredStartTime,
     budgetMin: inquiry.budgetMin,
     budgetMax: inquiry.budgetMax,
+    budgetFlexible: inquiry.budgetPreference === "FLEXIBLE",
     diningPreference: engineDiningPreference(inquiry.diningPreference),
     spacePreference: inquiry.spacePreference,
     attractionInterestIds: attractionInterestIdsFromJson(inquiry.attractionInterestIds),
@@ -188,6 +190,32 @@ export async function listSelectablePublicAttractions(database: PlannerDb, organ
     name: item.name,
     shortDescription: item.description,
   }));
+}
+
+export async function loadAttractionCompositionInputs(
+  database: PlannerDb,
+  organizationId: string,
+  storedIds: string[],
+) {
+  if (storedIds.length === 0) {
+    return { selections: [], directProductIds: [] as string[] };
+  }
+  const interests = await database.attractionInterest.findMany({
+    where: { organizationId, id: { in: storedIds } },
+    select: {
+      id: true,
+      slug: true,
+      products: { orderBy: { sortOrder: "asc" }, select: { productId: true } },
+    },
+  });
+  const interestIds = new Set(interests.map((row) => row.id));
+  return {
+    selections: interests.map((row) => ({
+      interestSlug: row.slug,
+      productIds: row.products.map((product) => product.productId),
+    })),
+    directProductIds: storedIds.filter((id) => !interestIds.has(id)),
+  };
 }
 
 export async function expandStoredAttractionSelections(
@@ -360,6 +388,11 @@ export async function generateEventPlansForInquiry(
     attractionMode: inquiry.attractionMode,
     attractionInterestIds: facts.attractionInterestIds,
   });
+  const attractionInputs = await loadAttractionCompositionInputs(
+    database,
+    input.organizationId,
+    facts.attractionInterestIds,
+  );
   const engineFacts = {
     ...facts,
     attractionInterestIds: await expandStoredAttractionSelections(
@@ -386,6 +419,8 @@ export async function generateEventPlansForInquiry(
       depositPercent: depositPercentFromTenant(organization.depositPercent),
       availabilityProvider,
       excludeInquiryId: inquiry.id,
+      attractionSelections: attractionInputs.selections,
+      directAttractionProductIds: attractionInputs.directProductIds,
     });
   } else {
     const historical = await similarActivityNames(database, input.organizationId, inquiry);

@@ -35,6 +35,12 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
       : [],
     catalogBacked: payload.catalogBacked === true,
     locationExclusive: payload.locationExclusive === true,
+    budgetFit: payload.budgetFit,
+    spaceUnmet: payload.spaceUnmet === true,
+    unfulfilledInterestSlugs: Array.isArray(payload.unfulfilledInterestSlugs)
+      ? payload.unfulfilledInterestSlugs
+      : [],
+    compositionDelta: payload.compositionDelta,
     selectionAvailability: payload.selectionAvailability,
   };
 }

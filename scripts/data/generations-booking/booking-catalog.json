@@ -1915,7 +1915,7 @@
           "catered_slider": "slider-bar",
           "catered_fajita": "fajita-bar"
         },
-        "foodFirst": false,
+        "foodFirst": true,
         "goodAddOnSlugs": [],
         "betterAddOnSlugs": [
           "cookie-tray"
@@ -1924,7 +1924,41 @@
           "cookie-tray",
           "brownie-tray"
         ],
-        "premiumSpaceSlug": "lower-event-room"
+        "premiumSpaceSlug": "lower-event-room",
+        "composition": {
+          "foodStrategies": {
+            "value": ["pizza-pitcher-combo"],
+            "standard": ["fajita-bar"],
+            "premium": ["slider-bar"]
+          },
+          "spaceSlugs": ["lower-event-room", "skybox"],
+          "tiers": {
+            "good": {
+              "foodStrategy": "value",
+              "coreAttractionSlugs": ["unlimited-laser-tag-90", "unlimited-arcade-1h"],
+              "upgradeSlugs": [],
+              "fulfillmentByInterest": {},
+              "includeSpace": false,
+              "spaceFit": "tightest"
+            },
+            "better": {
+              "foodStrategy": "standard",
+              "coreAttractionSlugs": ["unlimited-laser-tag-90", "unlimited-arcade-1h"],
+              "upgradeSlugs": [],
+              "fulfillmentByInterest": {},
+              "includeSpace": false,
+              "spaceFit": "tightest"
+            },
+            "best": {
+              "foodStrategy": "premium",
+              "coreAttractionSlugs": ["unlimited-laser-tag-90", "unlimited-arcade-1h"],
+              "upgradeSlugs": ["climbers-cove-90"],
+              "fulfillmentByInterest": {},
+              "includeSpace": false,
+              "spaceFit": "largest"
+            }
+          }
+        }
       }
     },
     {
@@ -1953,7 +1987,41 @@
           "unlimited-arcade-1h",
           "laser-plex-card"
         ],
-        "premiumSpaceSlug": "skybox"
+        "premiumSpaceSlug": "skybox",
+        "composition": {
+          "foodStrategies": {
+            "value": ["fajita-bar", "breakfast-bar"],
+            "standard": ["slider-bar"],
+            "premium": ["smokehouse-bbq"]
+          },
+          "spaceSlugs": ["lower-event-room", "skybox"],
+          "tiers": {
+            "good": {
+              "foodStrategy": "value",
+              "coreAttractionSlugs": ["axe-throwing-30", "bowling-1h"],
+              "upgradeSlugs": [],
+              "fulfillmentByInterest": { "axe-throwing": "axe-throwing-30" },
+              "includeSpace": false,
+              "spaceFit": "tightest"
+            },
+            "better": {
+              "foodStrategy": "standard",
+              "coreAttractionSlugs": ["axe-throwing-60", "bowling-1h"],
+              "upgradeSlugs": [],
+              "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
+              "includeSpace": false,
+              "spaceFit": "tightest"
+            },
+            "best": {
+              "foodStrategy": "premium",
+              "coreAttractionSlugs": ["axe-throwing-60", "bowling-1h"],
+              "upgradeSlugs": ["unlimited-arcade-1h"],
+              "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
+              "includeSpace": true,
+              "spaceFit": "largest"
+            }
+          }
+        }
       }
     },
     {
@@ -1981,7 +2049,41 @@
         "bestAddOnSlugs": [
           "axe-throwing-30"
         ],
-        "premiumSpaceSlug": "lower-event-room"
+        "premiumSpaceSlug": "lower-event-room",
+        "composition": {
+          "foodStrategies": {
+            "value": ["pizza-pitcher-combo"],
+            "standard": ["fajita-bar"],
+            "premium": ["slider-bar"]
+          },
+          "spaceSlugs": ["lower-event-room", "skybox"],
+          "tiers": {
+            "good": {
+              "foodStrategy": "value",
+              "coreAttractionSlugs": ["bowling-1h"],
+              "upgradeSlugs": [],
+              "fulfillmentByInterest": {},
+              "includeSpace": false,
+              "spaceFit": "tightest"
+            },
+            "better": {
+              "foodStrategy": "standard",
+              "coreAttractionSlugs": ["bowling-1h", "unlimited-arcade-1h"],
+              "upgradeSlugs": [],
+              "fulfillmentByInterest": {},
+              "includeSpace": false,
+              "spaceFit": "tightest"
+            },
+            "best": {
+              "foodStrategy": "premium",
+              "coreAttractionSlugs": ["bowling-1h", "unlimited-arcade-1h"],
+              "upgradeSlugs": ["axe-throwing-60"],
+              "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
+              "includeSpace": true,
+              "spaceFit": "largest"
+            }
+          }
+        }
       }
     }
   ],

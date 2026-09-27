@@ -151,6 +151,55 @@ export type PriceQuote = {
   pricingComplete: boolean;
 };
 
+export const FOOD_TIER_STRATEGIES = {
+  VALUE: "value",
+  STANDARD: "standard",
+  PREMIUM: "premium",
+} as const;
+
+export type FoodTierStrategy = (typeof FOOD_TIER_STRATEGIES)[keyof typeof FOOD_TIER_STRATEGIES];
+
+export const SPACE_FIT_STRATEGIES = {
+  TIGHTEST: "tightest",
+  LARGEST: "largest",
+} as const;
+
+export type SpaceFitStrategy = (typeof SPACE_FIT_STRATEGIES)[keyof typeof SPACE_FIT_STRATEGIES];
+
+export const BUDGET_FITS = {
+  WITHIN_RANGE: "WITHIN_RANGE",
+  BELOW_RANGE: "BELOW_RANGE",
+  ABOVE_RANGE: "ABOVE_RANGE",
+  FLEXIBLE: "FLEXIBLE",
+  UNSPECIFIED: "UNSPECIFIED",
+} as const;
+
+export type BudgetFit = (typeof BUDGET_FITS)[keyof typeof BUDGET_FITS];
+
+/** One independently composed tier. Not "the previous tier plus an add-on". */
+export type TierCompositionConfig = {
+  foodStrategy: FoodTierStrategy;
+  /** Used only when the customer did not select attraction interests. */
+  coreAttractionSlugs: string[];
+  /** Products that belong to this tier alone. */
+  upgradeSlugs: string[];
+  /** Attraction-interest slug → preferred fulfillment product slug for this tier. */
+  fulfillmentByInterest: Record<string, string>;
+  includeSpace: boolean;
+  spaceFit: SpaceFitStrategy;
+};
+
+export type RecommendationCompositionConfig = {
+  foodStrategies: Record<FoodTierStrategy, string[]>;
+  /** Party-space product slugs. Capacity is each product's maxGuests, not a runtime constant. */
+  spaceSlugs: string[];
+  tiers: {
+    good: TierCompositionConfig;
+    better: TierCompositionConfig;
+    best: TierCompositionConfig;
+  };
+};
+
 export type RecommendationProfilePayload = {
   defaultPackageSlugs: {
     good: string;
@@ -168,6 +217,8 @@ export type RecommendationProfilePayload = {
   betterAddOnSlugs: string[];
   bestAddOnSlugs: string[];
   premiumSpaceSlug?: string | null;
+  /** When present, each tier is composed from this strategy instead of stacking add-ons. */
+  composition?: RecommendationCompositionConfig;
 };
 
 export type ItinerarySegment = {

@@ -1,9 +1,12 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
+import { assertTestDatabaseClient } from "./test-database";
+
 export async function deleteTestOrganizations(
   database: PrismaClient,
   organizationIds: readonly string[],
 ): Promise<void> {
+  assertTestDatabaseClient(database);
   if (organizationIds.length === 0) {
     return;
   }

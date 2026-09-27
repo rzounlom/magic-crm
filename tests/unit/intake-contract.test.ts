@@ -4,6 +4,7 @@ import { audienceFromGuestMix } from "@/server/catalog/audience";
 import {
   PLANNER_STEPS,
   budgetCentsForPreference,
+  contactFieldErrors,
   emptyPlannerAnswers,
   engineDiningPreference,
   format12HourClock,
@@ -25,6 +26,7 @@ describe("public intake planner contract", () => {
       "space",
       "budget",
       "when",
+      "contact",
       "review",
     ]);
 
@@ -50,6 +52,42 @@ describe("public intake planner contract", () => {
     expect(plannerStepError("guests", { ...emptyPlannerAnswers(), guestCount: "1e2" })).toMatch(/whole number/i);
     expect(plannerStepError("guests", { ...emptyPlannerAnswers(), guestCount: "20" })).toBeNull();
     expect(plannerStepError("attractions", emptyPlannerAnswers())).toBeNull();
+  });
+
+  it("requires contact details before review and clears them on start over", () => {
+    const complete = {
+      ...emptyPlannerAnswers(),
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "ada@example.com",
+      phone: "(555) 010-2000",
+      customerGroupName: "Analytical Engines",
+      notes: "Window seat",
+    };
+    expect(plannerStepError("contact", emptyPlannerAnswers())).toMatch(/first name/i);
+    expect(plannerStepError("contact", { ...complete, email: "not-an-email" })).toMatch(/email/i);
+    expect(contactFieldErrors({ ...complete, phone: "555" }).phone).toMatch(/10-digit/i);
+    expect(plannerStepError("contact", complete)).toBeNull();
+    expect(plannerStepError("review", complete)).toBeNull();
+
+    const blocked = reducePlanner({ step: "contact", answers: emptyPlannerAnswers() }, { type: "next" });
+    expect(blocked.step).toBe("contact");
+
+    let state = reducePlanner({ step: "contact", answers: complete }, { type: "next" });
+    expect(state.step).toBe("review");
+    state = reducePlanner(state, { type: "back" });
+    expect(state.step).toBe("contact");
+    expect(state.answers.email).toBe("ada@example.com");
+    expect(state.answers.notes).toBe("Window seat");
+    state = reducePlanner(state, { type: "go", step: "review" });
+    state = reducePlanner(state, { type: "go", step: "contact" });
+    expect(state.answers.firstName).toBe("Ada");
+    state = reducePlanner(state, { type: "startOver" });
+    expect(state.step).toBe("event");
+    expect(state.answers.firstName).toBe("");
+    expect(state.answers.email).toBe("");
+    expect(state.answers.phone).toBe("");
+    expect(state.answers.notes).toBe("");
   });
 
   it("maps the three customer group choices onto the existing audience values", () => {

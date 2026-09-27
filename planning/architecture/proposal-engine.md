@@ -16,40 +16,38 @@ Intake → catalog (or knowledge) engine → structured itinerary → `stampPlan
 
 ## Catalog proposals
 
-`RecommendationProfile` supplies Good / Recommended / Premium defaults (`budget` / `best_fit` / `premium` internally). Public labels are Good, Recommended, Premium. Which products, add-ons, food, and sequencing belong in those tiers is **tenant data**.
+`RecommendationProfile` supplies Good / Recommended / Premium defaults (`budget` / `best_fit` / `premium` internally). Public labels are Good, Recommended, Premium. Which products, food, rooms, and sequencing belong in those tiers is **tenant data**.
 
-- Explicit attraction IDs always override profile defaults, but only if those IDs exist in the current tenant catalog. Foreign IDs fail closed.
-- Fulfillment groups (for example two package variants in one group) are tenant-configured.
-- Adult/kids mixes come from `defaultPackageSlugs` / `defaultAttractionSlugs` on the tenant profile.
-- Food sequencing uses `foodFirst` on the tenant profile. Dining intake keys map through `diningPreferenceMap`.
-- Pricing is integer cents via `priceProduct`. Guests-per-unit and serving sizes come from catalog rows. The LLM must not calculate prices.
+When `composition` is present on the profile, each tier is composed on its own from customer intent, that tier's strategy, the catalog, guest/date constraints, and total-event budget guidance. Recommended is not Good plus an add-on. Profiles without `composition` keep the older package, default-attraction, and add-on lists so existing tenants keep working.
+
+- Explicit `AttractionInterest` selections are primary. The engine picks one fulfillment product per interest for that tier (`fulfillmentByInterest`, then the first mapped product that fits guest count and date). It does not replace a selected interest with the profile's default attractions. A missing or unfit product is recorded on `unfulfilledInterestSlugs`. It is not silently swapped for a different activity.
+- A `fulfillmentGroup` collapses duration or package variants of one experience (two axe session lengths, two packages in one group). It does not drop a second customer-selected interest. On the legacy path, group matching uses only products that already belong to that group.
+- Tier upgrades still skip a product whose `fulfillmentGroup` is already on that tier, so one experience is not sold twice inside the same option.
+- With no explicit interests, the tier uses its configured `coreAttractionSlugs`, then `upgradeSlugs`.
+- Food comes from the tier's `foodStrategy` (`value`, `standard`, `premium`) and the tenant's `foodStrategies` slug lists. `diningPreference: none` omits food. A mapped dining key or a product slug still selects that catalog product. Good may switch to a later value-tier food when the proposal total is above `budgetMax`. That swap does not change quantities, prices, or explicit activities. Recommended and Premium are not stripped to land inside the range.
+- `foodFirst` is still the tenant itinerary order. Another tenant can put activities first.
+- Private space uses `spaceSlugs` and each product's `maxGuests`. `tightest` is the smallest room that fits; `largest` is the biggest that fits. A `private` or `semi_private` request adds that room, or sets `spaceUnmet` and says so in the recommendation copy when none fits. When private space was not requested, a room is added only if that tier sets `includeSpace`.
+- `budgetMin` / `budgetMax` are total-event guidance. Catalog cents stay authoritative. Each snapshot stores `budgetFit`: `WITHIN_RANGE`, `BELOW_RANGE`, `ABOVE_RANGE`, `FLEXIBLE`, or `UNSPECIFIED`. Flexible inquiries store `budgetFlexible` and do not invent a range. Premium may sit above the range. The engine does not invent discounts or drop required resource quantities.
+- `compositionDelta` compares the previous tier's products: food change, fulfillment change, added products, and added space. Customer copy uses those facts. It does not infer an extra hour of one activity from a duration gap.
+- Beverages are catalog products. The public planner does not ask about them. A profile may list a real beverage product in food or upgrade slugs. The engine does not create a product that is absent from the catalog.
+- Pricing is integer cents via `priceProduct`. Guests-per-unit and serving sizes come from catalog rows. Combo quantity uses `servesMin`. The LLM must not calculate prices, quantities, durations, capacity, availability, itinerary times, or budget fit.
 - Exhausted configured inventory is `UNAVAILABLE` unless a nearby viable itinerary is found; then the snapshot is rewritten to that itinerary (`itineraryAdjusted`, customer-facing `adjustmentNote`). Book Now is hidden on options that remain unavailable.
 - Snapshots store line items, structured itinerary (segment id, product id, start offset, duration, customer label), resource requirements with segment windows, availability, a tenant-configured deposit (`Organization.depositPercent`, schema default 30), and `organizationId` / `locationId`. A booking-catalog dataset may set `depositPercent` for that organization on import. Changing catalog prices later must not rewrite a persisted snapshot. Final allocation still uses current active resources.
 - Customer-facing clocks are stored as raw event-local `HH:mm` and formatted once (`16:00` → `4:00 PM`). Do not append a meridiem after formatting.
-- When an option is longer than the requested/base itinerary, the explanation names scheduled activities that are not already on the base option. Rooms, cards, and credits are not extra scheduled hours.
+- When an option is longer than the requested/base itinerary and the profile has no `composition` block, the explanation names scheduled activities that are not already on the base option. Rooms, cards, and credits are not extra scheduled hours. Composed tiers use `compositionDelta` instead.
 - Public **Start over** clears the in-progress planner and returns to step 1. It does not delete an inquiry, because the inquiry is created only when the customer builds options. See [`inquiries.md`](./inquiries.md).
 - The public offer screen keeps Good / Recommended / Premium, snapshot totals, and the tenant deposit percent. Each card pins the price summary and Book Now / Submit inquiry, and scrolls attractions, dining, itinerary, and the recommendation inside the card. At `lg` and wider, all three cards stay side by side. Narrower widths show a Good / Recommended / Premium selector and one card. Recommended is the initial selection. Book Now and Submit inquiry belong to that visible card. Book Now still creates a pending unpaid booking. Submit inquiry still does not hold inventory.
 
-## Intake compatibility (phase 1)
+## Intake compatibility
 
-The public planner now stores preferences. This phase does **not** change how Good / Recommended / Premium are composed.
-
-- `WANTS_FOOD` is adapted to the existing `not_sure` dining signal before the current engine runs, so the tenant `defaultFoodSlug` still applies. `NO_FOOD` is adapted to `none`.
-- Legacy dining keys and product slugs are passed through unchanged.
-- `private` / `no_preference` still mean the same thing to the current space logic. `semi_private` remains readable on older inquiries.
-- New public intake writes event-total `budgetMin` / `budgetMax` from `BUDGET_BAND_CENTS`. Those cents are a ranking signal, not a price promise and not a React override of catalog prices. Older per-guest `budgetPreference` rows still expand to `guestCount × band`. `FLEXIBLE` leaves the cents null.
-- Explicit attraction selections still force known-attraction mode. An empty selection still means recommend from the tenant `RecommendationProfile`.
-- New intake stores `AttractionInterest` ids. Before the existing engine runs, those ids expand to the tenant's mapped product candidates. The stored inquiry ids are not rewritten. Proposal snapshots stay immutable.
-- Older inquiries may still store Product ids or sales-knowledge ids. Those ids pass through the adapter unchanged.
-- When mapped candidates share a tenant `fulfillmentGroup`, the current engine still keeps one product from that group. Duration choice inside a concept is not a new composition rule.
+- `WANTS_FOOD` is adapted to `not_sure`, which tells a composed profile to use that tier's food strategy. `NO_FOOD` is `none` and omits food. A legacy dining key still maps through `diningPreferenceMap`. A stored product slug still selects that product.
+- `private` and `semi_private` request a fitting configured space. `no_preference` adds a space only when the tier sets `includeSpace`.
+- New public intake writes event-total `budgetMin` / `budgetMax` from `BUDGET_BAND_CENTS`. Those cents guide Good's value-food choice and the stored `budgetFit`. They do not override catalog prices. Older per-guest `budgetPreference` rows still expand to `guestCount × band`. `FLEXIBLE` leaves the cents null.
+- Explicit attraction selections still force known-attraction mode. An empty selection still means recommend from the tenant profile.
+- New intake stores `AttractionInterest` ids. The catalog engine receives each interest with its ordered product candidates and also the expanded product ids for profiles that have no `composition` block. The stored inquiry ids are not rewritten.
+- Older inquiries may still store Product ids or sales-knowledge ids. Direct product ids are fulfilled as selected when they belong to the tenant catalog.
 - New inquiries leave `desiredDurationMinutes` null. Event length remains the itinerary span.
-
-**Next recommendation-engine phase — do not treat the adapter as the new rules.** That phase will compose:
-
-- food tiers from the tenant catalog (not a customer-chosen catering SKU)
-- budget-aware Good / Recommended / Premium
-- room selection from tenant catalog, capacity, event type, and availability
-- beverage recommendations from `beveragePreference`
+- There is no beverage intake step. Do not invent a beverage product in order to differentiate tiers.
 
 ## Availability
 

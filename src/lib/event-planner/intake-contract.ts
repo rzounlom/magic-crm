@@ -1,3 +1,4 @@
+import { usPhoneDigits } from "@/lib/inquiries/public-phone";
 import { PUBLIC_INTAKE_LIMITS } from "@/types/inquiry";
 import { BUDGET_BAND_LABELS, EVENT_TYPE_OPTIONS, type BudgetBand } from "@/types/event-planner";
 
@@ -10,6 +11,7 @@ export const PLANNER_STEPS = [
   "space",
   "budget",
   "when",
+  "contact",
   "review",
 ] as const;
 
@@ -24,6 +26,7 @@ export const PLANNER_STEP_TITLES: Record<PlannerStep, string> = {
   space: "Would you like a private event space?",
   budget: "What budget should we plan around?",
   when: "When would you like to start?",
+  contact: "How can we reach you?",
   review: "Review your event",
 };
 
@@ -188,14 +191,43 @@ export function plannerStepError(step: PlannerStep, answers: PlannerAnswers): st
         return "Choose a start time.";
       }
       return null;
+    case "contact":
+      return Object.values(contactFieldErrors(answers))[0] ?? null;
     case "review":
-      if (!answers.firstName.trim()) return "Enter a first name.";
-      if (!answers.lastName.trim()) return "Enter a last name.";
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email.trim())) return "Enter a valid email address.";
       return null;
     default:
       return null;
   }
+}
+
+export function contactFieldErrors(answers: PlannerAnswers): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (!answers.firstName.trim()) {
+    errors.firstName = "Enter a first name.";
+  }
+  if (!answers.lastName.trim()) {
+    errors.lastName = "Enter a last name.";
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email.trim())) {
+    errors.email = "Enter a valid email address.";
+  }
+  const phone = optionalPhoneError(answers.phone);
+  if (phone) {
+    errors.phone = phone;
+  }
+  return errors;
+}
+
+function optionalPhoneError(phone: string): string | null {
+  const trimmed = phone.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const withoutFormatting = trimmed.replace(/[\s().+-]/g, "");
+  if (!/^\d+$/.test(withoutFormatting) || usPhoneDigits(trimmed).length !== 10) {
+    return "Enter a 10-digit phone number.";
+  }
+  return null;
 }
 
 export function reducePlanner(state: PlannerState, action: PlannerAction): PlannerState {

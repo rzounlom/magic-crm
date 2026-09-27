@@ -254,6 +254,17 @@ export type EventPlanPayload = {
   conflictingActivityLabels?: string[];
   catalogBacked?: boolean;
   locationExclusive?: boolean;
+  budgetFit?: import("@/types/catalog").BudgetFit;
+  spaceUnmet?: boolean;
+  unfulfilledInterestSlugs?: string[];
+  compositionDelta?: {
+    comparedWithTier: string | null;
+    addedProductNames: string[];
+    foodFrom: string | null;
+    foodTo: string | null;
+    spaceAdded: string | null;
+    fulfillmentChanges: Array<{ fromName: string; toName: string }>;
+  };
   selectionAvailability?: {
     status: string;
     checkedAt: string;

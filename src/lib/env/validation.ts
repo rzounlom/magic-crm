@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ApplicationUrlError, parseApplicationOrigin } from "./application-url";
+import { databaseTargetFromUrl, databaseTargetsMatch, sanitizeDatabaseTarget } from "./database-target";
 
 const POSTGRES_PROTOCOLS = new Set(["postgres:", "postgresql:"]);
 
@@ -145,17 +146,38 @@ export function parseTestDatabaseEnv(source: NodeJS.Dict<string>): TestDatabaseE
 
 export function assertTestDatabaseIsIsolated(
   testEnv: Pick<TestDatabaseEnv, "DATABASE_URL" | "DIRECT_URL">,
-  developmentEnv: NodeJS.Dict<string>,
+  developmentEnv: {
+    DATABASE_URL?: string | null;
+    DIRECT_URL?: string | null;
+    developmentUrls?: readonly string[];
+  },
 ): void {
-  if (developmentEnv.DATABASE_URL && developmentEnv.DATABASE_URL === testEnv.DATABASE_URL) {
+  const testUrls = [testEnv.DATABASE_URL, testEnv.DIRECT_URL];
+  const developmentUrls = [
+    ...(developmentEnv.developmentUrls ?? []),
+    developmentEnv.DATABASE_URL,
+    developmentEnv.DIRECT_URL,
+  ].filter((value): value is string => Boolean(value?.trim()));
+
+  if (developmentUrls.length === 0) {
     throw new EnvValidationError([
-      "Test DATABASE_URL must not match the development database",
+      "Development DATABASE_URL is required so tests can prove they are not using it",
     ]);
   }
 
-  if (developmentEnv.DIRECT_URL && developmentEnv.DIRECT_URL === testEnv.DIRECT_URL) {
-    throw new EnvValidationError([
-      "Test DIRECT_URL must not match the development database",
-    ]);
+  for (const testUrl of testUrls) {
+    if (!databaseTargetFromUrl(testUrl)) {
+      throw new EnvValidationError(["Test database URL must identify a PostgreSQL database"]);
+    }
+    for (const developmentUrl of developmentUrls) {
+      if (!databaseTargetsMatch(testUrl, developmentUrl)) {
+        continue;
+      }
+      const testTarget = sanitizeDatabaseTarget(databaseTargetFromUrl(testUrl));
+      const developmentTarget = sanitizeDatabaseTarget(databaseTargetFromUrl(developmentUrl));
+      throw new EnvValidationError([
+        `Test database must not match the development database (${testTarget?.host ?? "unknown"}/${testTarget?.database ?? "unknown"} is the same database as ${developmentTarget?.host ?? "unknown"}/${developmentTarget?.database ?? "unknown"})`,
+      ]);
+    }
   }
 }

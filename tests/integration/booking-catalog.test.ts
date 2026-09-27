@@ -165,7 +165,12 @@ describe("booking catalog import and proposals (postgres)", () => {
       reason: "block all lanes for the searchable day",
     });
 
-    const created = await createPublicInquiry(db, intake(tenantA.slug, { guestCount: 48 }), undefined, unlimitedLimiter);
+    const created = await createPublicInquiry(
+      db,
+      intake(tenantA.slug, { guestCount: 48, guestMix: "mostly_adults" }),
+      undefined,
+      unlimitedLimiter,
+    );
     const plans = await db.eventPlanRecommendation.findMany({
       where: { inquiryId: created.inquiryId },
     });

@@ -26,7 +26,8 @@ The customer walks a short planner. Answers stay in the browser until the last s
 6. Private space — Yes / No preference, stored as `spacePreference` `private` or `no_preference`. The customer does not pick a room.
 7. Budget — total event ranges from `BUDGET_BAND_VALUES` (`Under $1,500` through `$7,500+`) plus Flexible / show me options. The band writes `budgetMin` / `budgetMax` in cents. It is recommendation guidance, not a quote, a cap, or a price override. Flexible leaves those cents null and stores `budgetPreference = FLEXIBLE`.
 8. Date and preferred start time — 12-hour controls. Stored as a date plus `HH:mm` in the location's event-local clock.
-9. Review, contact details, then **Build my event options**.
+9. Contact information — first name, last name, and email are required. Phone, group or company name, and notes are optional. The customer cannot continue with an invalid required field.
+10. Review — read-only summary of every answer, including contact, with an Edit link back to each step. **Build my event options** submits. The review screen does not contain contact inputs. There is still no inquiry until that submit.
 
 There is no dedicated beverage question. `beveragePreference` stays on older rows and still displays for staff. New submissions leave it null. Beverages can return later as package inclusions or catalog add-ons.
 
@@ -58,13 +59,11 @@ No customer account is created. Recommendation email is deferred until a communi
 
 The engine tries to produce three *useful* choices, not three packages for their own sake. Internal tiers stay `budget` / `best_fit` / `premium`. **Public labels** are Good / Recommended / Premium:
 
-- **Good** — lower-cost event that still covers the core goal
-- **Recommended** — strongest overall close (budget midpoint, selected attractions, dining/space fit); visually **RECOMMENDED**
-- **Premium** — additional activity, dining, space, or duration value from tenant knowledge or catalog
+- **Good** — a complete value-conscious event for the customer's core request
+- **Recommended** — the tenant's preferred balance of food, activities, duration, and value
+- **Premium** — a configured upgrade with understandable extra value, which may sit above the stated budget
 
-Hard facts come from `SalesKnowledgeItem` (names, `priceText`, min/max guests, published age notes). The engine does not invent prices, hours, lane counts, food products, or availability. Guest-count and published age/capacity notes skip or penalize impractical combinations; unknown capacity is not fabricated. Internal `payload.ranking` scores stay off the customer UI.
-
-Customer notes and attraction checkboxes are ranking signals, not hard requirements, except published restrictions (age, min/max guests) which cannot be overridden.
+On the catalog path, explicit attraction interests stay in every tier that can fulfill them. Food tier, fulfillment duration, upgrades, and private space come from that audience's `composition` block. The knowledge path still treats notes and checkboxes as ranking signals against `SalesKnowledgeItem` text. Neither path invents prices, hours, lane counts, food products, or availability. Guest-count and published age/capacity limits still apply. Internal `payload.ranking` scores stay off the customer UI. Catalog snapshots also store `budgetFit`, `spaceUnmet`, `unfulfilledInterestSlugs`, and `compositionDelta`.
 
 If fewer than three valid options exist, persist what is feasible. If none exist, keep the inquiry and show the customer a staff-follow-up message.
 
@@ -181,11 +180,11 @@ The Archived view is manual archives plus those ended confirmed/completed bookin
 
 Older inquiries keep their stored dining key or product slug, event-total budget cents, per-guest `budgetPreference`, `beveragePreference`, `semi_private` space value, guest mix including `teens`, and `desiredDurationMinutes`. Employee inquiry detail renders those values. New rows use total-event budget bands and do not ask about beverages. Nothing rewrites old rows to look new.
 
-The current proposal engine is unchanged aside from a read adapter: `WANTS_FOOD` → `not_sure`, `NO_FOOD` → `none`. The next phase replaces that adapter with tenant food tiers, budget-aware Good / Recommended / Premium, room selection, and beverage recommendations. Do not implement those rules in the intake UI.
+`WANTS_FOOD` still becomes `not_sure` and `NO_FOOD` becomes `none` before the engine runs. A profile with `composition` then chooses food, attractions, and private space from that tenant's tier strategy. See [`proposal-engine.md`](./proposal-engine.md). The intake UI does not pick SKUs, prices, or rooms.
 
 ## Next
 
-See [`catalog.md`](./catalog.md), [`proposal-engine.md`](./proposal-engine.md), [`resource-schedule.md`](./resource-schedule.md), and [`booking.md`](./booking.md). Phase 3A catalog-backed proposals are complete. Phase 3A.5 location/tenant hardening is complete. Phase 3B transactional occupancy is complete. **Phase 3B.4** is segment-level scheduling, availability-aware proposals, and employee New Booking. **Phase 3B.4a** is booking cancellation and inquiry archive (no hard-delete). **Phase 3B.4b** is employee workspace truth (original / working / confirmed / allocated / legacy HOLD). Public intake phase 1 is the guided planner and canonical preferences. Next: recommendation composition for food tiers, budget-aware options, room selection, and beverages. Phase 3C is Stripe and email.
+See [`catalog.md`](./catalog.md), [`proposal-engine.md`](./proposal-engine.md), [`resource-schedule.md`](./resource-schedule.md), and [`booking.md`](./booking.md). Phase 3A catalog-backed proposals are complete. Phase 3A.5 location/tenant hardening is complete. Phase 3B transactional occupancy is complete. **Phase 3B.4** is segment-level scheduling, availability-aware proposals, and employee New Booking. **Phase 3B.4a** is booking cancellation and inquiry archive (no hard-delete). **Phase 3B.4b** is employee workspace truth (original / working / confirmed / allocated / legacy HOLD). Public intake phase 1 is the guided planner and canonical preferences. Deterministic recommendation composition chooses each Good / Recommended / Premium option from tenant configuration. Phase 3C is Stripe and email.
 
 Related employee-shell follow-up (not this inbox): sticky authenticated header. See `ui-conventions.md`.
 

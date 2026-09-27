@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
+import { assertTestDatabaseClient } from "./test-database";
+
 const LEGACY_FIXTURE_INVITATION_ID = /^orginv_\d+$/;
 
 /**
@@ -12,6 +14,7 @@ export async function cleanupStaleTestInvitationFixtures(database: PrismaClient)
   invitations: number;
   queuedGroups: number;
 }> {
+  assertTestDatabaseClient(database);
   const stale = await database.teamInvitation.findMany({
     select: { id: true, clerkOrganizationInvitationId: true },
   });

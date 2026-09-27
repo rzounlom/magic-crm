@@ -112,7 +112,7 @@ describe("proposal nearby search (postgres)", () => {
       },
     });
     const payload = readEventPlanPayload(good.payload);
-    expect(good.durationMinutes).toBe(120);
+    expect(good.durationMinutes).toBe(180);
     expect(payload.startTime).not.toBe("17:00");
     expect(payload.itineraryAdjusted).toBe(true);
     const bowling = (payload.itinerary ?? []).find((segment) => segment.label.toLowerCase().includes("bowling"));

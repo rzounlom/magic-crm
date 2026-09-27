@@ -23,7 +23,7 @@ Sales knowledge (`SalesKnowledgeItem`) stays policies, FAQs, hours, and sales co
 - `ProductCategory` — grouping (birthday packages, food, rentals)
 - `Product` — sellable SKU with audience, duration, guest bounds, optional `weekendOnly`, `fulfillmentGroup`, and `schedulingBehavior`
 - `AttractionInterest` — customer-facing activity concept owned by the organization (`label`, `slug`, `active`, `displayOrder`, optional description). It is not a price and not a duration.
-- `AttractionInterestProduct` — ordered catalog products that can fulfill that interest. The public planner shows the interest. The proposal adapter expands it to those product ids before the existing engine runs.
+- `AttractionInterestProduct` — ordered catalog products that can fulfill that interest. The public planner shows the interest. The proposal engine chooses one of those products per tier from tenant configuration, guest fit, and date rules. The customer does not pick the duration SKU.
 
 `schedulingBehavior` is an optional tenant override: `SCHEDULED`, `SPACE_WINDOW`, or `NON_SCHEDULED`. When it is null, the engine derives the role:
 
@@ -42,7 +42,7 @@ Do not turn a non-scheduled product into an itinerary block. Do not invent a dur
   - `LOCATION_EXCLUSIVE` — exclusive ownership of every active bookable resource at **this** Location (not other locations in the organization)
 
 - `ProductServing` — food `servesMin` / `servesMax` / optional `unitCount`. Do not invent quantities beyond the source range
-- `RecommendationProfile` — per organization + audience JSON (default package slugs, food-first sequencing, add-on slugs)
+- `RecommendationProfile` — per organization + audience JSON. Legacy fields are default packages, default attractions, add-on slugs, `foodFirst`, `diningPreferenceMap`, and `fulfillmentGroups`. Optional `composition` is the tier strategy: `foodStrategies` (value / standard / premium product slugs), `spaceSlugs`, and a `good` / `better` / `best` block (`foodStrategy`, `coreAttractionSlugs`, `upgradeSlugs`, `fulfillmentByInterest`, `includeSpace`, `spaceFit`). Generations adult, youth, and mixed strategies live in that tenant's import file. They are not MagicCRM defaults. A second tenant with different products uses the same JSON shape.
 
 Inquiry commercial lifecycle is `salesStage`: `INQUIRY` → `PROPOSAL_READY` → `READY_TO_BOOK` (Submit inquiry, no occupancy) → `DEPOSIT_PENDING` (Book Now pending booking, no occupancy) → `BOOKED`. Legacy `HOLD_PLACED` remains readable. `Inquiry.status` remains handling/pipeline.
 

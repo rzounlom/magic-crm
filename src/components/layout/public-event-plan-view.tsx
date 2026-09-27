@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { unstable_rethrow } from "next/navigation";
 import { useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 
+import { PUBLIC_CONTENT_CLASS } from "@/components/layout/public-content";
 import { BlockingMutation } from "@/components/ui/blocking-mutation";
 import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatCustomerDurationText, formatEventDuration, personalEventPlannerTitle } from "@/lib/event-planner/labels";
@@ -98,7 +99,7 @@ export function PublicEventPlanView({
     .find((payload) => payload.itineraryAdjusted && payload.adjustmentNote)?.adjustmentNote;
 
   return (
-    <section className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col overflow-hidden px-4 py-3 sm:px-6">
+    <section className={`${PUBLIC_CONTENT_CLASS} flex h-full min-h-0 flex-col overflow-hidden py-3`}>
       <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">
         {organizationName}
       </p>
@@ -159,7 +160,7 @@ export function PublicEventPlanView({
         </>
       )}
       {plans.length === 0 ? (
-        <div className="mt-6 overflow-y-auto rounded-md border border-border px-5 py-6">
+        <div className="public-scroll mt-6 overflow-y-auto rounded-md border border-border px-5 py-6">
           <h2 className="text-lg font-semibold">We&apos;re putting the finishing touches on your event plan</h2>
           <p className="mt-2 text-sm text-foreground/70">
             A member of our team will follow up with your best options. You do not need to fill this
@@ -546,7 +547,7 @@ function PlanOptionCard({
         </p>
       ) : null}
       </div>
-      <div data-plan-details className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+      <div data-plan-details className="public-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4">
 
       <PlanSection title="Attractions">
         {payload.activities.length > 0 ? (
