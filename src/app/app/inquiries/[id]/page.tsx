@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { LiveAgentWorkspace } from "@/components/layout/live-agent-workspace";
+import { AcknowledgeInquiryView } from "@/components/layout/acknowledge-inquiry-view";
 import { EmployeeInquiryConversation } from "@/components/layout/employee-inquiry-conversation";
 import { InquiryArchiveActions } from "@/components/layout/inquiry-archive-actions";
 import { InquiryFunnel } from "@/components/layout/inquiry-funnel";
@@ -146,7 +147,9 @@ export default async function InquiryDetailPage({
 
   if (selectedPlan) {
     return (
-      <LiveAgentWorkspace
+      <>
+        <AcknowledgeInquiryView inquiryId={inquiry.id} />
+        <LiveAgentWorkspace
         inquiry={inquiry}
         selectedPlan={selectedPlan}
         workingPlan={workingPlan}
@@ -168,11 +171,13 @@ export default async function InquiryDetailPage({
         }))}
         inventoryCounts={inventoryCounts}
       />
+      </>
     );
   }
 
   return (
     <section className="max-w-3xl">
+      <AcknowledgeInquiryView inquiryId={inquiry.id} />
       <Link href="/app/inquiries" className="text-sm text-primary">
         Back to inquiries
       </Link>

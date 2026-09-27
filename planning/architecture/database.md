@@ -188,6 +188,7 @@ Committed migrations:
 - `20260909200000_confirmed_bookings` — Booking, BookingLineItem, OrganizationBookingSequence; ResourceReservation/CommunicationEvent booking FKs
 - `20260916120000_booking_catalog` — ProductCategory, Product, ProductPrice, ProductResourceRequirement, ProductServing, RecommendationProfile; Inquiry salesStage/audience/attractionMode
 - `20260916180000_phase_3b_holds_booking` — Organization.depositPercent; ResourceReservation locationId/startsAt/endsAt; Booking deposit cents and UTC instants
+- `20260926200000_inquiry_notification_seen` — `InquirySeen` per employee per inquiry; inquiry list index `(organizationId, archivedAt, createdAt)`
 
 ## Seed / reference data
 

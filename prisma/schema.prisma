@@ -52,6 +52,7 @@ model Organization {
   bookingLineItems    BookingLineItem[]
   bookingSequences    OrganizationBookingSequence[]
   aiUsage             AiUsage[]
+  inquirySeen         InquirySeen[]
 
   @@index([onboardingStatus])
   @@map("organizations")
@@ -114,6 +115,7 @@ model UserProfile {
   paymentAttestedBookings     Booking[]             @relation("BookingPaymentAttestedBy")
   cancelledBookings           Booking[]             @relation("BookingCancelledBy")
   resourceReservations        ResourceReservation[] @relation("ResourceReservationCreatedBy")
+  inquirySeen                 InquirySeen[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, clerkUserId])
@@ -328,9 +330,11 @@ model Inquiry {
   communicationEvents  CommunicationEvent[]
   bookings             Booking[]
   aiUsage              AiUsage[]
+  notificationSeen     InquirySeen[]
 
   @@unique([organizationId, id])
   @@index([organizationId, status, createdAt])
+  @@index([organizationId, archivedAt, createdAt])
   @@index([organizationId, customerEmailNormalized])
   @@index([organizationId, selectedEventPlanId])
   @@index([organizationId, customerSelectedAt])
@@ -339,6 +343,26 @@ model Inquiry {
   @@index([organizationId, archivedAt])
   @@index([archivedByUserProfileId])
   @@map("inquiries")
+}
+
+/// One employee's acknowledgement of one inquiry. Other employees keep their own rows.
+/// Opening the inquiry list does not insert a row.
+model InquirySeen {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  userProfileId  String
+  inquiryId      String
+  seenAt         DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  userProfile  UserProfile  @relation(fields: [organizationId, userProfileId], references: [organizationId, id], onDelete: Restrict)
+  inquiry      Inquiry      @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, userProfileId, inquiryId])
+  @@index([organizationId, userProfileId])
+  @@index([inquiryId])
+  @@map("inquiry_seen")
 }
 
 /// Tenant-scoped recommended event plan tied to one inquiry. Not a reservation.

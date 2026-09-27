@@ -119,6 +119,22 @@ The working booking plan is the source for confirmation (inquiry, date/time, gue
 
 The customer-selected Book Now flow does not show generic Switch Package. Staff change guest count, time, activities, dining, or room on the working plan; the server recalculates.
 
+## Employee inquiry awareness
+
+Public inquiry creation writes the inquiry and returns. It does not wait for an employee session, and it does not enqueue a notification job.
+
+While the authenticated employee app is open, the header polls `getInquiryAwareness` about every 15 seconds. The poll pauses while the browser tab is hidden and runs again when the tab becomes visible. One in-flight request is allowed. A failed poll is ignored and retried on the next interval.
+
+The request uses `RequestContext`. The browser never supplies `organizationId`. The employee needs `crm.inquiries.view`. The response is the unread count plus a short recent list (name, guest count, event goal, time). It is not the inquiry detail payload.
+
+`InquirySeen` is one row per employee per inquiry they have opened. Opening `/app/inquiries` does not create rows. Any visit to that inquiry’s detail page does, including the queue, the bell, and a direct URL. Opening inquiry B does not mark a newer inquiry C seen. Mark all as read inserts seen rows for the current employee’s active inquiries in the current organization only. Another employee keeps their own rows. Seen state survives reload and a later sign-in.
+
+The bell shows that unread count and updates from the snapshot returned by a seen write, without waiting for the next poll. A poll that started before that write cannot paint the badge unread again. A toast fires only for inquiries that arrive after the first poll in the current browser session. Marking inquiries read does not toast. The inquiry list refreshes in place when a newer inquiry appears; the employee is not navigated away.
+
+This contract is a snapshot (`unreadCount`, recent notification items, newest inquiry id/time). Polling is the current transport. A later SSE, WebSocket, or managed realtime channel can replace the timer without rewriting the bell, as long as it delivers the same snapshot and the same per-employee seen model.
+
+Notifications in this phase are new inquiries only. The item `kind` is `inquiry.created` so another kind can be added later. There is no email, SMS, browser Notification API, sound, or preference center.
+
 ## Start over (backlog — intake redesign)
 
 Do not implement this until the intake redesign. No database change until that work.

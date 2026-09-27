@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 
+import {
+  InquiryAwarenessProvider,
+  InquiryNotificationControl,
+} from "@/components/layout/inquiry-awareness-provider";
 import { EmployeeHeaderBar } from "@/components/layout/employee-header-bar";
 import {
   EmployeeOrganizationSwitcher,
@@ -21,9 +25,11 @@ type EmployeeShellProps = {
 
 export function EmployeeShell({ children }: EmployeeShellProps) {
   return (
-    <div className="flex min-h-full flex-col bg-background text-foreground">
-      <EmployeeHeaderBar
-        inquiriesNav={
+    <InquiryAwarenessProvider>
+      <div className="flex min-h-full flex-col bg-background text-foreground">
+        <EmployeeHeaderBar
+          notifications={<InquiryNotificationControl />}
+          inquiriesNav={
           <Suspense fallback={null}>
             <InquiryNavLink />
           </Suspense>
@@ -67,6 +73,7 @@ export function EmployeeShell({ children }: EmployeeShellProps) {
         userButton={<EmployeeUserButton />}
       />
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-10">{children}</main>
-    </div>
+      </div>
+    </InquiryAwarenessProvider>
   );
 }

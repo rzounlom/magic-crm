@@ -10,6 +10,7 @@ type EmployeeHeaderBarProps = {
   securityNav?: ReactNode;
   knowledgeNav?: ReactNode;
   publicInquiryAction?: ReactNode;
+  notifications?: ReactNode;
   organizationSwitcher: ReactNode;
   userButton: ReactNode;
 };
@@ -23,6 +24,7 @@ export function EmployeeHeaderBar({
   securityNav,
   knowledgeNav,
   publicInquiryAction,
+  notifications,
   organizationSwitcher,
   userButton,
 }: EmployeeHeaderBarProps) {
@@ -57,6 +59,7 @@ export function EmployeeHeaderBar({
         )}
         {publicInquiryAction ? <div className="shrink-0">{publicInquiryAction}</div> : null}
         <div className="flex min-w-0 items-center justify-end gap-3">
+          {notifications ? <div className="shrink-0">{notifications}</div> : null}
           <div className="min-w-0 max-w-[min(40%,10rem)] overflow-hidden sm:max-w-[16rem]">
             {organizationSwitcher}
           </div>

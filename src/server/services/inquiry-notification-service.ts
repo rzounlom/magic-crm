@@ -1,0 +1,137 @@
+import type { PrismaClient } from "@/generated/prisma/client";
+
+import {
+  INQUIRY_NOTIFICATION_LIMIT,
+  inquiryNotificationCustomerLabel,
+  inquiryNotificationDetail,
+  type InquiryAwarenessSnapshot,
+  type InquiryNotificationItem,
+} from "@/lib/inquiries/inquiry-awareness";
+import { requirePermission } from "@/server/policies/require-permission";
+import type { RequestContext } from "@/server/request-context";
+import { PERMISSIONS } from "@/types/permissions";
+
+type InquiryNotificationDb = PrismaClient;
+
+function activeInquiryWhere(organizationId: string) {
+  return { organizationId, archivedAt: null };
+}
+
+export async function getInquiryAwareness(
+  ctx: RequestContext,
+  database: InquiryNotificationDb,
+): Promise<InquiryAwarenessSnapshot> {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
+  return loadInquiryAwarenessSnapshot(ctx, database);
+}
+
+async function loadInquiryAwarenessSnapshot(
+  ctx: RequestContext,
+  database: InquiryNotificationDb,
+): Promise<InquiryAwarenessSnapshot> {
+  const active = activeInquiryWhere(ctx.organizationId);
+  const [unreadCount, recent] = await Promise.all([
+    database.inquiry.count({
+      where: {
+        ...active,
+        notificationSeen: {
+          none: { organizationId: ctx.organizationId, userProfileId: ctx.userId },
+        },
+      },
+    }),
+    database.inquiry.findMany({
+      where: active,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: INQUIRY_NOTIFICATION_LIMIT,
+      select: {
+        id: true,
+        customerFirstName: true,
+        guestCount: true,
+        eventGoal: true,
+        createdAt: true,
+        notificationSeen: {
+          where: { organizationId: ctx.organizationId, userProfileId: ctx.userId },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    }),
+  ]);
+
+  const notifications: InquiryNotificationItem[] = recent.map((inquiry) => ({
+    id: inquiry.id,
+    kind: "inquiry.created",
+    title: "New inquiry",
+    customerLabel: inquiryNotificationCustomerLabel(inquiry.customerFirstName),
+    detail: inquiryNotificationDetail(inquiry.guestCount, inquiry.eventGoal),
+    createdAt: inquiry.createdAt.toISOString(),
+    href: `/app/inquiries/${inquiry.id}`,
+    unread: inquiry.notificationSeen.length === 0,
+  }));
+  const newest = recent[0] ?? null;
+
+  return {
+    organizationId: ctx.organizationId,
+    unreadCount,
+    newestInquiryId: newest?.id ?? null,
+    newestInquiryAt: newest ? newest.createdAt.toISOString() : null,
+    notifications,
+  };
+}
+
+export async function markInquiryNotificationSeen(
+  ctx: RequestContext,
+  database: InquiryNotificationDb,
+  inquiryId: string,
+): Promise<InquiryAwarenessSnapshot> {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId: ctx.organizationId },
+    select: { id: true },
+  });
+  if (inquiry) {
+    await database.inquirySeen.upsert({
+      where: {
+        organizationId_userProfileId_inquiryId: {
+          organizationId: ctx.organizationId,
+          userProfileId: ctx.userId,
+          inquiryId,
+        },
+      },
+      create: {
+        organizationId: ctx.organizationId,
+        userProfileId: ctx.userId,
+        inquiryId,
+      },
+      update: {},
+    });
+  }
+  return loadInquiryAwarenessSnapshot(ctx, database);
+}
+
+export async function markAllInquiryNotificationsSeen(
+  ctx: RequestContext,
+  database: InquiryNotificationDb,
+): Promise<InquiryAwarenessSnapshot> {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
+  const unseen = await database.inquiry.findMany({
+    where: {
+      ...activeInquiryWhere(ctx.organizationId),
+      notificationSeen: {
+        none: { organizationId: ctx.organizationId, userProfileId: ctx.userId },
+      },
+    },
+    select: { id: true },
+  });
+  if (unseen.length > 0) {
+    await database.inquirySeen.createMany({
+      data: unseen.map((inquiry) => ({
+        organizationId: ctx.organizationId,
+        userProfileId: ctx.userId,
+        inquiryId: inquiry.id,
+      })),
+      skipDuplicates: true,
+    });
+  }
+  return loadInquiryAwarenessSnapshot(ctx, database);
+}

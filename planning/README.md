@@ -15,8 +15,9 @@ System architecture documents. Current implementation notes:
 - Phase 3B.4a — booking cancellation, inquiry archive/unarchive, employee test-data cleanup
 - Phase 3B.4b — employee workspace truth: original vs working vs confirmed vs allocated vs legacy HOLD
 - Phase 3B.6 — proposal event length is the real itinerary span; rooms overlap; non-scheduled items stay off the sample itinerary; public times are 12-hour
-- Phase 3B.6b — customer time copy formats a raw clock once; deposit percent comes from `Organization.depositPercent`; duration copy names scheduled time added beyond the base option (current)
-- Phase 3C — Stripe/email next, after remaining meeting-feedback patches. Next after browser verification of 3B.6b: inquiry auto-refresh and the employee notification bell. Do not start the intake redesign yet.
+- Phase 3B.6b — customer time copy formats a raw clock once; deposit percent comes from `Organization.depositPercent`; duration copy names scheduled time added beyond the base option
+- Employee inquiry awareness — authenticated header polls about every 15 seconds; the bell and inquiry list update without a browser refresh (current)
+- Phase 3C — Stripe/email next. Do not start the intake redesign yet.
 
 - `database.md`
 - `multi-tenancy.md`
@@ -24,7 +25,7 @@ System architecture documents. Current implementation notes:
 - `authorization.md`
 - `team-management.md`
 - `client-onboarding.md`
-- `inquiries.md` — Personal Event Planner intake, Book Now pending bookings, Submit inquiry, employee New Booking, archive vs booking cancellation, employee workspace states
+- `inquiries.md` — Personal Event Planner intake, Book Now pending bookings, Submit inquiry, employee New Booking, archive vs booking cancellation, employee workspace states, employee inquiry polling and notification bell
 - `resource-schedule.md` — tenant finite-resource model, itinerary-segment occupancy, Admin inventory, Master Schedule occupancy vs pending bookings, confirmed allocated resources vs availability, cancelled reservations no longer block inventory, legacy HOLDs
 - `booking.md` — pending vs confirmed bookings; segment windows; Confirm Payment & Book / `confirmPendingBooking`; original vs working vs confirmed snapshots; cancel vs delete; pre-segment bookings are not rewritten
 - `proposal-engine.md` — availability-aware Good / Recommended / Premium; nearby itinerary search; Book Now precheck
