@@ -416,7 +416,7 @@ function ProposalComparison({
         role="tablist"
         aria-label="Proposal options"
         data-proposal-tier-selector
-        className="mb-3 grid grid-cols-3 gap-2 lg:hidden"
+        className="mb-3 grid grid-cols-3 gap-1 rounded-full bg-muted p-1 lg:hidden"
       >
         {plans.map((plan, index) => {
           const selected = plan.tier === mobilePlan?.tier;
@@ -430,10 +430,10 @@ function ProposalComparison({
               aria-selected={selected}
               aria-controls="proposal-mobile-panel"
               tabIndex={selected ? 0 : -1}
-              className={`box-border min-h-11 min-w-0 cursor-pointer rounded-md border px-2 py-2 text-center outline-2 -outline-offset-2 focus-visible:outline-primary ${
+              className={`box-border min-h-11 min-w-0 cursor-pointer rounded-full border px-2 py-2 text-center outline-2 -outline-offset-2 focus-visible:outline-primary ${
                 selected
-                  ? "border-primary bg-primary/10 font-semibold text-primary outline-primary/40"
-                  : "border-border bg-background font-medium text-foreground outline-transparent"
+                  ? "border-primary bg-surface font-semibold text-primary shadow-sm outline-primary/40"
+                  : "border-transparent bg-transparent font-medium text-foreground outline-transparent"
               }`}
               onClick={() => setMobileTier(plan.tier)}
               onKeyDown={(event) => onTierKeyDown(event, index)}

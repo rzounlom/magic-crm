@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { ScheduleCreateEventDialog } from "@/components/layout/schedule-create-event-dialog";
 import type { ScheduleBookingCompletion } from "@/components/layout/schedule-booking-session";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatEventLocalTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import {
@@ -223,7 +224,7 @@ export function MasterScheduleBoard({
         {canCreate ? (
           <button
             type="button"
-            className={`${CONTROL} ml-auto rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground`}
+            className={`${CONTROL} ml-auto rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground`}
             onClick={() => openCreate({ startMinute: null, resource: null })}
           >
             + Create Event
@@ -237,14 +238,14 @@ export function MasterScheduleBoard({
             reservations.filter((row) => group.resources.some((resource) => resource.id === row.resourceId)).map((row) => row.resourceId),
           );
           return (
-            <li key={group.id} className="rounded-md bg-muted px-3 py-1.5 text-xs text-foreground/80">
+            <li key={group.id} className="rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-foreground/80 shadow-sm">
               {occupancySummary(group.name, count.occupied, count.total)}
             </li>
           );
         })}
       </ul>
       {visibleReservations.length === 0 ? (
-        <p className="mt-4 text-sm text-foreground/70">No scheduled events for this day.</p>
+        <EmptyState title="No scheduled events for this day." />
       ) : null}
 
       <div className="public-scroll mt-4 hidden max-w-full overflow-x-auto md:block">
@@ -268,9 +269,16 @@ export function MasterScheduleBoard({
               <p className="sticky left-0 mt-3 bg-background py-1 text-xs font-semibold tracking-wide text-foreground/70 uppercase">
                 {group.name}
               </p>
-              {group.resources.map((resource) => (
-                <div key={resource.id} className="flex border-t border-border/70">
-                  <div className="sticky left-0 z-20 flex w-44 shrink-0 items-center bg-background pr-3 text-sm">
+              {group.resources.map((resource, index) => (
+                <div
+                  key={resource.id}
+                  className={`flex border-t border-border/60 ${index % 2 === 1 ? "bg-muted/50" : "bg-surface"}`}
+                >
+                  <div
+                    className={`sticky left-0 z-20 flex w-44 shrink-0 items-center pr-3 text-sm ${
+                      index % 2 === 1 ? "bg-muted" : "bg-surface"
+                    }`}
+                  >
                     {resource.name}
                   </div>
                   <div className="relative h-12" style={{ width: timelineWidth }}>
@@ -280,7 +288,7 @@ export function MasterScheduleBoard({
                           key={slot}
                           type="button"
                           aria-label={`Start an event at ${formatEventLocalTime(minutesToClock(slot))} on ${resource.name}`}
-                          className={`${CONTROL} absolute inset-y-1 rounded-sm hover:bg-primary/5`}
+                          className={`${CONTROL} absolute inset-y-1 rounded-md hover:bg-primary/10`}
                           style={{ left: ((slot - startMinute) / slotMinutes) * SLOT_WIDTH, width: SLOT_WIDTH }}
                           onClick={() =>
                             openCreate({
@@ -316,8 +324,10 @@ export function MasterScheduleBoard({
                           <button
                             key={row.id}
                             type="button"
-                            className={`${CONTROL} absolute inset-y-1 z-10 overflow-hidden rounded-sm border px-2 text-left text-xs ${
-                              hold ? "border-warning/50 bg-warning/20" : "border-primary/40 bg-primary/15"
+                            className={`${CONTROL} absolute inset-y-1 z-10 overflow-hidden rounded-md border px-2 text-left text-xs ${
+                              hold
+                                ? "border-warning bg-warning/25 text-foreground"
+                                : "border-primary/60 bg-primary/15 text-foreground"
                             }`}
                             style={{ left: place.left, width: Math.max(place.width - 4, 28) }}
                             onClick={() => {
@@ -346,8 +356,8 @@ export function MasterScheduleBoard({
             <li key={row.id}>
               <button
                 type="button"
-                className={`${CONTROL} w-full rounded-md border px-3 py-3 text-left text-sm ${
-                  hold ? "border-warning/50 bg-warning/15" : "border-primary/30 bg-primary/10"
+                className={`${CONTROL} w-full rounded-2xl border px-3 py-3 text-left text-sm shadow-sm ${
+                  hold ? "border-warning bg-warning/20" : "border-primary/40 bg-primary/10"
                 }`}
                 onClick={() => {
                   setCreateContext(null);
@@ -424,8 +434,8 @@ function FilterButton({
     <button
       type="button"
       aria-pressed={pressed}
-      className={`${CONTROL} rounded-md px-3 py-1.5 text-sm ${
-        pressed ? "bg-primary text-primary-foreground" : "border border-border"
+      className={`${CONTROL} rounded-full px-3 py-1.5 text-sm font-semibold ${
+        pressed ? "bg-primary text-primary-foreground" : "bg-surface text-foreground shadow-sm"
       }`}
       onClick={onClick}
     >

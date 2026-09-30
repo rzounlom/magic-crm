@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { TeamSectionTabs } from "@/components/layout/team-section-tabs";
 import { db } from "@/lib/db";
@@ -42,21 +45,21 @@ export default async function TeamEmployeesPage() {
 
   return (
     <section className="max-w-3xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Admin</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Team</h1>
-      <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Employees in this organization. Security groups control what they can do in MagicCRM.
-      </p>
+      <PageHeader
+        eyebrow="Admin"
+        title="Team"
+        description="Employees in this organization. Security groups control what they can do in MagicCRM."
+      />
       <TeamSectionTabs active="employees" canManage={view.canManage} />
       {view.employees.length === 0 ? (
-        <p className="mt-8 text-sm text-foreground/70">No employees yet.</p>
+        <EmptyState title="No employees yet." />
       ) : (
         <ul className="mt-8 space-y-3">
           {view.employees.map((employee) => (
             <li key={employee.id}>
               <Link
                 href={`/app/admin/team/${employee.id}`}
-                className="flex items-center gap-3 rounded-md border border-border bg-background px-4 py-4 hover:bg-muted/60"
+                className="record-row flex items-center gap-3"
               >
                 {employee.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element

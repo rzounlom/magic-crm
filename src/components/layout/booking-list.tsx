@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { Badge, bookingBadgeTone } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
 import { formatEventLocalDateTime } from "@/lib/inquiries/tenant-datetime";
 import { employeeDisplayName } from "@/lib/inquiries/workflow-stage";
@@ -92,8 +95,8 @@ export function BookingList({
             <Link
               key={value}
               href={href}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                value === activeFilter ? "bg-primary text-primary-foreground" : "border border-border"
+              className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
+                value === activeFilter ? "bg-primary text-primary-foreground" : "bg-surface text-foreground shadow-sm"
               }`}
             >
               {FILTER_LABELS[value]}
@@ -102,7 +105,7 @@ export function BookingList({
         })}
       </nav>
       {bookings.length === 0 ? (
-        <p className="mt-8 text-sm text-foreground/70">No bookings in this view.</p>
+        <EmptyState title="No bookings in this view." />
       ) : (
         <ul className="mt-6 space-y-3">
           {bookings.map((booking) => {
@@ -118,14 +121,14 @@ export function BookingList({
               <li key={booking.id}>
                 <Link
                   href={`/app/bookings/${booking.id}`}
-                  className="block rounded-md border border-border px-4 py-4 hover:bg-muted/60"
+                  className="record-row"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-foreground">{booking.bookingNumber}</p>
                       <p className="mt-1 text-sm text-foreground/70">{name}</p>
                     </div>
-                    <span className="text-xs font-medium tracking-wide text-foreground/60">{status}</span>
+                    <Badge tone={bookingBadgeTone(booking.status)}>{status}</Badge>
                   </div>
                   <p className="mt-3 text-sm text-foreground/80">
                     {formatEventLocalDateTime({ date: booking.eventDate, time: booking.startTime })}

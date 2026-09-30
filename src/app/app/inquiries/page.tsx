@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+
 import { LiveAgentInquiryQueue } from "@/components/layout/live-agent-inquiry-queue";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
@@ -55,21 +58,21 @@ export default async function InquiriesPage({
 
   return (
     <section className="max-w-4xl">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Sales</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Inquiries</h1>
-        </div>
-        <a
-          href={view.publicInquiryHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-1 cursor-pointer rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/60"
-        >
-          Open Personal Event Planner
-        </a>
-      </div>
-      <p className="mt-4 max-w-xl text-sm text-foreground/70">
+      <PageHeader
+        eyebrow="Sales"
+        title="Inquiries"
+        actions={
+          <a
+            href={view.publicInquiryHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cursor-pointer rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary/40"
+          >
+            Open Personal Event Planner
+          </a>
+        }
+      />
+      <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
         {archived
           ? "Archived inquiries and confirmed events that have already ended stay here. History is kept. Nothing is deleted, and archiving does not cancel a booking."
           : "Ready for Live Agent is the booking workspace queue. Customer-selected plans are prioritized. A confirmed event leaves this queue after it ends and stays in Archived. This queue is not a payment tool."}
@@ -77,25 +80,23 @@ export default async function InquiriesPage({
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Inquiry views">
         <Link
           href="/app/inquiries"
-          className={`rounded-md px-3 py-1.5 text-sm ${
-            !archived ? "bg-primary text-primary-foreground" : "border border-border"
+          className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
+            !archived ? "bg-primary text-primary-foreground" : "bg-surface text-foreground shadow-sm"
           }`}
         >
           Active
         </Link>
         <Link
           href="/app/inquiries?view=archived"
-          className={`rounded-md px-3 py-1.5 text-sm ${
-            archived ? "bg-primary text-primary-foreground" : "border border-border"
+          className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
+            archived ? "bg-primary text-primary-foreground" : "bg-surface text-foreground shadow-sm"
           }`}
         >
           Archived
         </Link>
       </nav>
       {view.inquiries.length === 0 ? (
-        <p className="mt-8 text-sm text-foreground/70">
-          {archived ? "No archived inquiries." : "No inquiries yet."}
-        </p>
+        <EmptyState title={archived ? "No archived inquiries." : "No inquiries yet."} />
       ) : (
         <LiveAgentInquiryQueue inquiries={view.inquiries} timeZone={view.timeZone} />
       )}

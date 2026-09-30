@@ -254,9 +254,17 @@ export function PublicIntakeWizard({
         className="mx-auto flex h-fit max-h-full min-h-0 w-full max-w-272 flex-col overflow-hidden px-2"
       >
         <div className="flex shrink-0 items-center justify-between gap-4">
-          <p className="text-sm font-medium text-foreground/70">
-            Step {stepIndex + 1} of {PLANNER_STEPS.length}
-          </p>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground/70">
+              Step {stepIndex + 1} of {PLANNER_STEPS.length}
+            </p>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${((stepIndex + 1) / PLANNER_STEPS.length) * 100}%` }}
+              />
+            </div>
+          </div>
           <button
             type="button"
             className="cursor-pointer rounded-md border border-destructive/40 px-3 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed"

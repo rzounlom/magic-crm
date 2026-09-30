@@ -173,8 +173,7 @@ Principles:
 - strong empty states
 - clear loading/saving/error states
 - responsive layouts
-- interactive controls use a pointer cursor (`cursor-pointer`)
-- disabled controls use a disabled cursor (`cursor: not-allowed`) and do not look clickable
+- Every enabled clickable/tappable control must use cursor:pointer on desktop. Disabled interactive controls use cursor:not-allowed where appropriate. Display-only elements must not imply interactivity.
 
 The authenticated employee header always includes, from left to right: MagicCRM brand, permission-aware module navigation (Team when `users.view`, Security when `security_groups.view`), OrganizationSwitcher, and the Clerk UserButton. UserButton and OrganizationSwitcher are account/tenant controls for every signed-in employee. They must not depend on MagicCRM permissions such as `security_groups.view` or `users.view`. Only module links are permission-aware. Use a shrinking flex layout so a long organization name cannot push the UserButton off-screen.
 

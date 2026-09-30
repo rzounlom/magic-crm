@@ -2,6 +2,12 @@
 
 Shared employee-app UX primitives. Product look-and-feel remains in `.cursor/rules/magiccrm.mdc`.
 
+## Pointer cursor
+
+Every enabled clickable/tappable control must use cursor:pointer on desktop. Disabled interactive controls use cursor:not-allowed where appropriate. Display-only elements must not imply interactivity.
+
+Apply this in `src/app/globals.css` for semantic controls (buttons, links, selects, summaries, tabs, menu items, checkboxes, radios, and date/time fields) and in shared primitives. Do not put `cursor: pointer` on page containers, plain text, or read-only cards. A clickable card must be a link or button. Native operating-system menus, such as `<option>` lists inside a closed `<select>`, are drawn by the platform and are outside this stylesheet.
+
 ## Mutation feedback
 
 Use `notify` from `@/lib/ui/notify`. Do not call Sonner (or another toast library) from feature code.

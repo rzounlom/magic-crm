@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { TeamSectionTabs } from "@/components/layout/team-section-tabs";
@@ -64,18 +67,18 @@ export default async function TeamInvitationsPage() {
 
   return (
     <section className="max-w-3xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Admin</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Team</h1>
-      <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Pending invitations stay here until the person accepts and signs in.
-      </p>
+      <PageHeader
+        eyebrow="Admin"
+        title="Team"
+        description="Pending invitations stay here until the person accepts and signs in."
+      />
       <TeamSectionTabs active="invitations" canManage={view.canManage} />
       {view.invitations.length === 0 ? (
-        <p className="mt-8 text-sm text-foreground/70">No pending invitations.</p>
+        <EmptyState title="No pending invitations." />
       ) : (
         <ul className="mt-8 space-y-3">
           {view.invitations.map((invitation) => (
-            <li key={invitation.id} className="rounded-md border border-border px-4 py-4">
+            <li key={invitation.id} className="record-row">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-medium text-foreground">{invitation.email}</p>

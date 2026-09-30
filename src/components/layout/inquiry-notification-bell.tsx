@@ -70,7 +70,7 @@ export function InquiryNotificationBell({
           id={panelId}
           role="region"
           aria-label="Notifications"
-          className="absolute right-0 z-30 mt-2 w-80 rounded-md border border-border bg-background p-3 shadow-md"
+          className="absolute right-0 z-30 mt-2 w-80 rounded-2xl border border-border bg-surface p-3 shadow-xl"
         >
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold">Notifications</p>

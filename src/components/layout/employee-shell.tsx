@@ -26,7 +26,7 @@ type EmployeeShellProps = {
 export function EmployeeShell({ children }: EmployeeShellProps) {
   return (
     <InquiryAwarenessProvider>
-      <div className="flex min-h-full flex-col bg-background text-foreground">
+      <div className="flex min-h-full flex-col overflow-x-hidden bg-background text-foreground">
         <EmployeeHeaderBar
           notifications={<InquiryNotificationControl />}
           inquiriesNav={
@@ -72,7 +72,7 @@ export function EmployeeShell({ children }: EmployeeShellProps) {
         organizationSwitcher={<EmployeeOrganizationSwitcher />}
         userButton={<EmployeeUserButton />}
       />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-10">{children}</main>
+      <main className="mx-auto flex w-full max-w-[90rem] flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
     </InquiryAwarenessProvider>
   );

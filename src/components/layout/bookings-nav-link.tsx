@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ModuleNavLink } from "@/components/ui/module-nav-link";
 
 import { db } from "@/lib/db";
 import { isAuthorizationError, isTenantContextError } from "@/server/errors";
@@ -20,8 +20,6 @@ export async function BookingsNavLink() {
   }
 
   return (
-    <Link href="/app/bookings" className="text-sm text-primary">
-      Bookings
-    </Link>
+    <ModuleNavLink href="/app/bookings">Bookings</ModuleNavLink>
   );
 }

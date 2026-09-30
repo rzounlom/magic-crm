@@ -296,7 +296,7 @@ export function LiveAgentWorkspace({
         </p>
         {inquiry.workflowStage === INQUIRY_WORKFLOW_STAGES.HOLD_PLACED ||
         inquiry.workflowStage === INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE ? (
-          <p className="mt-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground/70">
+          <p className="mt-2 rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
             This inquiry uses a legacy workflow stage. You can still cancel a booking or archive the inquiry.
           </p>
         ) : null}
@@ -339,7 +339,7 @@ export function LiveAgentWorkspace({
         <div className="space-y-6">
           {booked || cancelled ? (
             <>
-              <section className="rounded-md border border-border px-5 py-5">
+              <section className="rounded-2xl border border-border bg-surface shadow-sm px-5 py-5">
                 <h2 className="text-lg font-semibold">{booked ? "Booking confirmed" : "Booking cancelled"}</h2>
                 {booking ? (
                   <p className="mt-2 text-sm">
@@ -430,7 +430,7 @@ export function LiveAgentWorkspace({
         </div>
 
         <aside className="space-y-4">
-          <section className="rounded-md border border-border px-4 py-4 text-sm">
+          <section className="rounded-2xl border border-border bg-surface shadow-sm px-4 py-4 text-sm">
             <h2 className="font-semibold">Customer</h2>
             <p className="mt-2">{[inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") || displayName}</p>
             <p className="mt-2 flex flex-wrap items-center gap-2">
@@ -462,7 +462,7 @@ export function LiveAgentWorkspace({
                 notice={{ successTitle: "Customer contacted", errorTitle: "Unable to record contact" }}
               >
                 <input type="hidden" name="inquiryId" value={inquiry.id} />
-                <PendingSubmitButton pendingLabel="Saving…" className="rounded-md border border-border px-3 py-1.5 text-sm">
+                <PendingSubmitButton pendingLabel="Saving…" className="rounded-xl border border-border bg-surface px-3 py-1.5 text-sm font-semibold">
                   {inquiry.customerContactedAt ? "Contacted again" : "Mark customer contacted"}
                 </PendingSubmitButton>
               </SecurityActionForm>
@@ -514,7 +514,7 @@ export function LiveAgentWorkspace({
             </details>
           </section>
 
-          <details className="rounded-md border border-border px-4 py-4 text-sm">
+          <details className="rounded-2xl border border-border bg-surface shadow-sm px-4 py-4 text-sm">
             <summary className="cursor-pointer font-semibold">Staff notes</summary>
             <p className="mt-1 text-xs text-foreground/60">Not shown on the customer plan page.</p>
             {canManage ? (
@@ -529,9 +529,9 @@ export function LiveAgentWorkspace({
                   rows={4}
                   maxLength={4000}
                   defaultValue={inquiry.employeeInternalNotes ?? ""}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2"
                 />
-                <PendingSubmitButton pendingLabel="Saving…" className="rounded-md border border-border px-3 py-1.5">
+                <PendingSubmitButton pendingLabel="Saving…" className="rounded-xl border border-border bg-surface px-3 py-1.5 font-semibold">
                   Save notes
                 </PendingSubmitButton>
               </SecurityActionForm>
@@ -542,7 +542,7 @@ export function LiveAgentWorkspace({
         </aside>
       </div>
 
-      <details className="mt-8 rounded-md border border-border px-4 py-4 text-sm">
+      <details className="mt-8 rounded-2xl border border-border bg-surface shadow-sm px-4 py-4 text-sm">
         <summary className="cursor-pointer font-semibold">History and notes</summary>
         <InquiryFunnel
           timeZone={timeZone}
@@ -580,7 +580,7 @@ export function LiveAgentWorkspace({
                 required
                 rows={3}
                 maxLength={2000}
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
+                className="mt-1 w-full rounded-xl border border-border bg-surface px-3 py-2"
               />
             </label>
             <PendingSubmitButton

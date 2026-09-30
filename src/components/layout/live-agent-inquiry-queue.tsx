@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
+
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
 import { CUSTOMER_SELECTED_PLAN_BANNER } from "@/lib/inquiries/ready-for-human-reason";
 import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display";
@@ -205,9 +207,7 @@ function InquiryRow({
     <li>
       <Link
         href={`/app/inquiries/${inquiry.id}`}
-        className={`block rounded-md border px-4 py-4 hover:bg-muted/60 ${
-          priority ? "border-primary/40 bg-primary/5" : "border-border"
-        }`}
+        className={priority ? "record-row is-priority" : "record-row"}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -224,14 +224,14 @@ function InquiryRow({
               {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
             </p>
           </div>
-          <span className="text-xs font-medium tracking-wide text-foreground/60">
+          <Badge tone={priority ? "info" : "neutral"}>
             {formatInquiryQueueLabel({
               ...inquiry,
               bookingNumber: inquiry.bookings?.[0]?.bookingNumber,
               bookingStatus: inquiry.bookings?.[0]?.status,
               salesStage: "salesStage" in inquiry ? String(inquiry.salesStage ?? "") : null,
             })}
-          </span>
+          </Badge>
         </div>
         {priority ? (
           <p className="mt-3 text-xs font-semibold tracking-[0.14em] text-primary uppercase">

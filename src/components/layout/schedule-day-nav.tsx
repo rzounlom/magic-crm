@@ -7,7 +7,7 @@ import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { SCHEDULE_FOCUS_ALL } from "@/lib/resources/schedule-board";
 
 const NAV_BUTTON =
-  "cursor-pointer rounded-md border border-border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60";
+  "cursor-pointer rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold shadow-sm disabled:cursor-not-allowed disabled:opacity-60";
 
 export function ScheduleDayNav({
   date,

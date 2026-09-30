@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EmployeeBookingBuilder } from "@/components/layout/employee-manual-booking-form";
+import { PageHeader } from "@/components/ui/page-header";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { readBookingBuilderSearchHint } from "@/lib/resources/schedule-board";
 import { db } from "@/lib/db";
@@ -74,15 +75,16 @@ export default async function NewBookingPage({
 
   return (
     <section className="max-w-4xl">
-      <Link href="/app/bookings" className="text-sm text-primary">
+      <Link href="/app/bookings" className="text-sm font-semibold text-primary">
         Back to bookings
       </Link>
-      <p className="mt-4 text-sm font-semibold tracking-[0.18em] text-primary uppercase">Operations</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">New Booking</h1>
-      <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Create a customer event without a public inquiry. Catalog pricing, itinerary generation, availability,
-        and confirmation use the same engine as Book Now.
-      </p>
+      <div className="mt-4">
+        <PageHeader
+          eyebrow="Operations"
+          title="New Booking"
+          description="Create a customer event without a public inquiry. Catalog pricing, itinerary generation, availability, and confirmation use the same engine as Book Now."
+        />
+      </div>
       <EmployeeBookingBuilder
         locations={view.locations}
         attractions={view.attractions}

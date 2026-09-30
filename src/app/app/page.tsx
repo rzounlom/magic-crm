@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/ui/page-header";
 import { readTrustedClerkAuth } from "@/lib/auth/trusted-clerk-auth";
 import { db } from "@/lib/db";
 import { formatUserDisplayLabel } from "@/lib/identity/user-display";
@@ -25,11 +26,8 @@ export default async function EmployeeHomePage() {
 
   return (
     <section className="max-w-xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">MagicCRM</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-        Employee application
-      </h1>
-      <dl className="mt-8 space-y-4 border-t border-border pt-6 text-sm">
+      <PageHeader eyebrow="MagicCRM" title="Employee application" />
+      <dl className="mt-8 space-y-4 rounded-2xl border border-border bg-surface p-5 text-sm shadow-sm">
         <div>
           <dt className="text-foreground/60">Organization</dt>
           <dd className="mt-1 font-medium text-foreground">{view.organizationName}</dd>
@@ -102,9 +100,7 @@ async function loadEmployeeHomeView(): Promise<EmployeeHomeView> {
 function StatusPanel({ title, body }: { title: string; body: string }) {
   return (
     <section className="max-w-xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">MagicCRM</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{title}</h1>
-      <p className="mt-6 text-sm text-foreground/70">{body}</p>
+      <PageHeader eyebrow="MagicCRM" title={title} description={body} />
     </section>
   );
 }

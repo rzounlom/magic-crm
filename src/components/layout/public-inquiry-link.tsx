@@ -8,7 +8,7 @@ export function PublicInquiryLink({ href }: PublicInquiryLinkProps) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="shrink-0 cursor-pointer rounded-md border border-border px-2.5 py-1 text-sm font-medium text-foreground hover:bg-muted/60"
+      className="shrink-0 cursor-pointer rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary/40"
     >
       Public Inquiry
     </a>

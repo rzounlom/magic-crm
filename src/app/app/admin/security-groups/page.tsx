@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ui/page-header";
+
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityAuthorizationNote } from "@/components/layout/security-authorization-note";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
@@ -43,12 +45,11 @@ export default async function SecurityGroupsPage() {
 
   return (
     <section className="max-w-3xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Admin</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Security groups</h1>
-      <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Security groups control what employees can access in this organization. Membership is
-        separate from signing in.
-      </p>
+      <PageHeader
+        eyebrow="Admin"
+        title="Security groups"
+        description="Security groups control what employees can access in this organization. Membership is separate from signing in."
+      />
       <SecurityAuthorizationNote />
       {view.canManage ? (
         <div className="mt-6 flex flex-wrap items-center gap-4">
@@ -76,7 +77,7 @@ export default async function SecurityGroupsPage() {
           <li key={group.id}>
             <Link
               href={`/app/admin/security-groups/${group.id}`}
-              className="block rounded-md border border-border bg-background px-4 py-4 hover:bg-muted/60"
+              className="record-row block"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>

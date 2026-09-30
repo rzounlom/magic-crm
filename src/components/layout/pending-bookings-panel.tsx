@@ -29,7 +29,7 @@ export function PendingBookingsPanel({
   bookings: PendingBookingRow[];
 }) {
   return (
-    <section className="mt-8 rounded-md border border-border px-4 py-4">
+    <section className="mt-8 rounded-2xl border border-border bg-surface px-4 py-4 shadow-sm">
       <h2 className="text-lg font-semibold">Pending bookings</h2>
       <p className="mt-1 text-sm text-foreground/70">
         These are unpaid booking requests. They are visible here for operations but do not occupy lanes,

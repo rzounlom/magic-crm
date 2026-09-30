@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
@@ -38,14 +41,11 @@ export default async function SalesKnowledgePage() {
 
   return (
     <section className="max-w-3xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Admin</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-        AI sales knowledge
-      </h1>
-      <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Temporary tenant knowledge for the Event Assistant. Catalog will replace or back this later.
-        Do not invent offerings in prompts.
-      </p>
+      <PageHeader
+        eyebrow="Admin"
+        title="AI sales knowledge"
+        description="Temporary tenant knowledge for the Event Assistant. Catalog will replace or back this later. Do not invent offerings in prompts."
+      />
       {view.canManage ? (
         <Link
           href="/app/admin/ai/knowledge/new"
@@ -55,14 +55,14 @@ export default async function SalesKnowledgePage() {
         </Link>
       ) : null}
       {view.items.length === 0 ? (
-        <p className="mt-8 text-sm text-foreground/70">No knowledge items yet.</p>
+        <EmptyState title="No knowledge items yet." />
       ) : (
         <ul className="mt-8 space-y-3">
           {view.items.map((item) => (
             <li key={item.id}>
               <Link
                 href={`/app/admin/ai/knowledge/${item.id}`}
-                className="block rounded-md border border-border px-4 py-4 hover:bg-muted/60"
+                className="record-row block"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>

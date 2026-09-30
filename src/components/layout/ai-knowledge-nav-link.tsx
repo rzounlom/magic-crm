@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ModuleNavLink } from "@/components/ui/module-nav-link";
 
 import { db } from "@/lib/db";
 import { isAuthorizationError, isTenantContextError } from "@/server/errors";
@@ -20,8 +20,6 @@ export async function AiKnowledgeNavLink() {
   }
 
   return (
-    <Link href="/app/admin/ai/knowledge" className="text-sm text-primary">
-      AI Knowledge
-    </Link>
+    <ModuleNavLink href="/app/admin/ai/knowledge">AI Knowledge</ModuleNavLink>
   );
 }

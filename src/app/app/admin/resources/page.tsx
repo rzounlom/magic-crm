@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
 import { formatRequirementRule } from "@/server/resources/plan-availability-status";
@@ -32,12 +35,11 @@ export default async function AdminResourcesPage() {
 
   return (
     <section className="max-w-3xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Admin</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Resources</h1>
-      <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Configure tenant finite inventory. Lane and room counts are not hardcoded. Deactivate instead of
-        deleting types that already have history.
-      </p>
+      <PageHeader
+        eyebrow="Admin"
+        title="Resources"
+        description="Configure tenant finite inventory. Lane and room counts are not hardcoded. Deactivate instead of deleting types that already have history."
+      />
       <Link
         href="/app/admin/resources/new"
         className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
@@ -45,7 +47,7 @@ export default async function AdminResourcesPage() {
         Add resource type
       </Link>
       {view.types.length === 0 ? (
-        <p className="mt-8 text-sm text-foreground/70">No resource types yet.</p>
+        <EmptyState title="No resource types yet." />
       ) : (
         <ul className="mt-8 space-y-3">
           {view.types.map((type) => {
@@ -57,7 +59,7 @@ export default async function AdminResourcesPage() {
               <li key={type.id}>
                 <Link
                   href={`/app/admin/resources/${type.id}`}
-                  className="block rounded-md border border-border px-4 py-4 hover:bg-muted/60"
+                  className="record-row block"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ui/page-header";
+
 import { EmployeeInquiryBookingReview } from "@/components/layout/employee-inquiry-booking-review";
 import { MasterScheduleBoard } from "@/components/layout/master-schedule-board";
 import { PendingBookingsPanel } from "@/components/layout/pending-bookings-panel";
@@ -121,11 +123,11 @@ export default async function MasterSchedulePage({
 
   return (
     <section className="w-full max-w-none overflow-x-hidden">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Operations</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">Master Schedule</h1>
-      <p className="mt-2 max-w-2xl text-sm text-foreground/70">
-        Occupied lanes, bays, and rooms for this location. A block is a real hold or confirmed booking.
-      </p>
+      <PageHeader
+        eyebrow="Operations"
+        title="Master Schedule"
+        description="Occupied lanes, bays, and rooms for this location. A block is a real hold or confirmed booking."
+      />
       <ScheduleDayNav
         date={view.date}
         prev={shiftDate(view.date, -1)}

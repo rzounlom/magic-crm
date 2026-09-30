@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PageHeader } from "@/components/ui/page-header";
+
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
@@ -32,11 +34,11 @@ export default async function NewSecurityGroupPage() {
 
   return (
     <section className="max-w-xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Admin</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Create group</h1>
-      <p className="mt-4 text-sm text-foreground/70">
-        Custom groups let you combine permissions for how this fun center actually staffs.
-      </p>
+      <PageHeader
+        eyebrow="Admin"
+        title="Create group"
+        description="Custom groups let you combine permissions for how this fun center actually staffs."
+      />
       <SecurityActionForm
         action={createSecurityGroupAction}
         className="mt-8 space-y-4"

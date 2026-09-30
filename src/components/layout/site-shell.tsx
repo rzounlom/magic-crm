@@ -8,12 +8,15 @@ type SiteShellProps = {
 export function SiteShell({ children }: SiteShellProps) {
   return (
     <div className="flex min-h-full flex-col bg-background text-foreground">
-      <header className="border-b border-border bg-muted/60">
-        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-6">
-          <Link href="/" className="text-sm font-semibold tracking-wide text-foreground">
+      <header className="border-b border-border/80 bg-surface/90">
+        <div className="mx-auto flex h-16 w-full max-w-[90rem] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="brand-mark">
+            <span className="brand-mark-mark" aria-hidden>
+              M
+            </span>
             MagicCRM
           </Link>
-          <Link href="/sign-in" className="text-sm text-primary">
+          <Link href="/sign-in" className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">
             Employee sign in
           </Link>
         </div>

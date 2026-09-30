@@ -28,6 +28,7 @@ const organizationSwitcherAppearance = {
      * Appearance is the supported way to hide the create action in employee UX.
      * Tenant creation remains Clerk Dashboard / platform-controlled.
      */
+    organizationSwitcherPopoverActionButton: { cursor: "pointer" },
     organizationSwitcherPopoverActionButton__createOrganization: { display: "none" },
     organizationSwitcherPopoverActionButtonIcon__createOrganization: { display: "none" },
   },
@@ -40,6 +41,9 @@ const userButtonAppearance = {
       flexShrink: "0",
     },
     userButtonTrigger: {
+      cursor: "pointer",
+    },
+    userButtonPopoverActionButton: {
       cursor: "pointer",
     },
     userButtonAvatarBox: {

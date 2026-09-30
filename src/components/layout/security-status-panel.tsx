@@ -5,9 +5,9 @@ type SecurityStatusPanelProps = {
 
 export function SecurityStatusPanel({ title, body }: SecurityStatusPanelProps) {
   return (
-    <section className="max-w-xl">
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground">{title}</h1>
-      <p className="mt-4 text-sm text-foreground/70">{body}</p>
+    <section className="empty-state max-w-xl">
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{body}</p>
     </section>
   );
 }

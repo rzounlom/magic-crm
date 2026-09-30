@@ -61,7 +61,7 @@ export function ConfirmDialog({
       ref={dialogRef}
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
-      className="fixed top-1/2 left-1/2 m-0 max-h-[min(90vh,100%)] w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-border bg-background p-0 text-foreground shadow-lg backdrop:bg-foreground/40"
+      className="fixed top-1/2 left-1/2 m-0 max-h-[min(90vh,100%)] w-[min(28rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-border bg-surface p-0 text-foreground shadow-xl backdrop:bg-foreground/45"
       onCancel={(event) => {
         event.preventDefault();
         if (!confirmPending) {

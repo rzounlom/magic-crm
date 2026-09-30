@@ -21,9 +21,14 @@ export function PublicCustomerShell({
           : "flex min-h-full flex-col bg-background text-foreground"
       }
     >
-      <header className="shrink-0 border-b border-border bg-muted/60">
-        <div className={`${PUBLIC_CONTENT_CLASS} flex h-14 items-center`}>
-          <p className="text-sm font-semibold tracking-wide text-foreground">{brand}</p>
+      <header className="shrink-0 border-b border-border/80 bg-surface/90 backdrop-blur-md">
+        <div className={`${PUBLIC_CONTENT_CLASS} flex h-16 items-center`}>
+          <p className="brand-mark">
+            <span className="brand-mark-mark" aria-hidden>
+              {brand.slice(0, 1)}
+            </span>
+            {brand}
+          </p>
         </div>
       </header>
       <main className={contained ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "flex flex-1 flex-col"}>

@@ -1,4 +1,5 @@
 import { BookingList } from "@/components/layout/booking-list";
+import { PageHeader } from "@/components/ui/page-header";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
 import { BOOKING_LIST_FILTERS } from "@/types/booking";
@@ -43,12 +44,11 @@ export default async function BookingsPage({
 
   return (
     <section className="max-w-4xl">
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">Operations</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Bookings</h1>
-      <p className="mt-4 max-w-xl text-sm text-foreground/70">
-        Confirmed events occupy the Master Schedule. Pending payment bookings are listed separately and do
-        not block inventory. Payment collection is not part of this list.
-      </p>
+      <PageHeader
+        eyebrow="Operations"
+        title="Bookings"
+        description="Confirmed events occupy the Master Schedule. Pending payment bookings are listed separately and do not block inventory. Payment collection is not part of this list."
+      />
       <BookingList bookings={view.bookings} filter={view.filter} search={view.search} />
     </section>
   );
