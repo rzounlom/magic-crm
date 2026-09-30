@@ -306,7 +306,7 @@ export async function listPendingBookingsForSchedule(
   database: BookingDb,
   date: string,
 ) {
-  await requirePermission(ctx, PERMISSIONS.INVENTORY_VIEW, database);
+  await requirePermission(ctx, PERMISSIONS.CALENDAR_VIEW, database);
   const rows = await listPendingBookingsForDay(database, {
     organizationId: ctx.organizationId,
     date,

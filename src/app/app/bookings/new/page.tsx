@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-import { EmployeeManualBookingForm } from "@/components/layout/employee-manual-booking-form";
+import { EmployeeBookingBuilder } from "@/components/layout/employee-manual-booking-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { readBookingBuilderSearchHint } from "@/lib/resources/schedule-board";
 import { db } from "@/lib/db";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
@@ -55,8 +56,18 @@ async function loadView(): Promise<View> {
   }
 }
 
-export default async function NewBookingPage() {
+export default async function NewBookingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    date?: string;
+    start?: string;
+    locationId?: string;
+    resourceName?: string;
+  }>;
+}) {
   const view = await loadView();
+  const search = await searchParams;
   if (view.kind === "status") {
     return <SecurityStatusPanel title={view.title} body={view.body} />;
   }
@@ -72,10 +83,11 @@ export default async function NewBookingPage() {
         Create a customer event without a public inquiry. Catalog pricing, itinerary generation, availability,
         and confirmation use the same engine as Book Now.
       </p>
-      <EmployeeManualBookingForm
+      <EmployeeBookingBuilder
         locations={view.locations}
         attractions={view.attractions}
         defaultLocationId={view.defaultLocationId}
+        scheduleHint={readBookingBuilderSearchHint(search)}
       />
     </section>
   );

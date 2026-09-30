@@ -16,7 +16,7 @@ import { PERMISSIONS } from "@/types/permissions";
 type ScheduleDb = PrismaClient;
 
 export async function listScheduleResourceTypes(ctx: RequestContext, database: ScheduleDb) {
-  await requirePermission(ctx, PERMISSIONS.INVENTORY_VIEW, database);
+  await requirePermission(ctx, PERMISSIONS.CALENDAR_VIEW, database);
   return database.resourceType.findMany({
     where: { organizationId: ctx.organizationId, active: true },
     select: {
@@ -36,7 +36,7 @@ export async function getMasterScheduleDay(
   database: ScheduleDb,
   input: { date: string; resourceTypeId: string },
 ) {
-  await requirePermission(ctx, PERMISSIONS.INVENTORY_VIEW, database);
+  await requirePermission(ctx, PERMISSIONS.CALENDAR_VIEW, database);
   const resourceType = await database.resourceType.findFirst({
     where: {
       id: input.resourceTypeId,
@@ -106,6 +106,86 @@ export async function getMasterScheduleDay(
   };
 }
 
+function activeReservationWhere(now: Date) {
+  return {
+    releasedAt: null,
+    status: {
+      in: [RESOURCE_RESERVATION_STATUSES.HOLD, RESOURCE_RESERVATION_STATUSES.BOOKED],
+    },
+    OR: [
+      { status: RESOURCE_RESERVATION_STATUSES.BOOKED },
+      { expiresAt: null },
+      { expiresAt: { gt: now } },
+    ],
+  };
+}
+
+export async function getMasterScheduleBoard(
+  ctx: RequestContext,
+  database: ScheduleDb,
+  input: { date: string },
+) {
+  await requirePermission(ctx, PERMISSIONS.CALENDAR_VIEW, database);
+  await releaseExpiredHolds(database, ctx.organizationId);
+  const types = await database.resourceType.findMany({
+    where: { organizationId: ctx.organizationId, active: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, slug: true },
+  });
+  const resources = await database.resource.findMany({
+    where: {
+      organizationId: ctx.organizationId,
+      resourceTypeId: { in: types.map((row) => row.id) },
+      ...resourcesInLocationWhere(ctx.locationId),
+    },
+    orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, resourceTypeId: true, displayOrder: true },
+  });
+  const reservations = await database.resourceReservation.findMany({
+    where: {
+      organizationId: ctx.organizationId,
+      resourceId: { in: resources.map((row) => row.id) },
+      slotDate: eventLocalSlotDate(input.date),
+      ...activeReservationWhere(new Date()),
+    },
+    include: {
+      inquiry: {
+        select: {
+          id: true,
+          customerGroupName: true,
+          customerFirstName: true,
+          customerLastName: true,
+          eventType: true,
+          guestCount: true,
+          customerNotes: true,
+          selectedEventPlanId: true,
+        },
+      },
+      booking: {
+        select: {
+          id: true,
+          bookingNumber: true,
+          customerGroupName: true,
+          customerFirstName: true,
+          customerLastName: true,
+          guestCount: true,
+          selectedEventPlanId: true,
+        },
+      },
+    },
+    orderBy: [{ startMinute: "asc" }, { resourceId: "asc" }],
+  });
+  return {
+    date: input.date,
+    types,
+    resources,
+    reservations,
+    slotMinutes: SCHEDULE_SLOT_MINUTES,
+    startMinute: SCHEDULE_DAY_START_MINUTE,
+    endMinute: SCHEDULE_DAY_END_MINUTE,
+  };
+}
+
 export async function listActiveResourceTypeCounts(
   database: ScheduleDb,
   organizationId: string,
@@ -135,17 +215,4 @@ export async function listActiveResourceTypeCounts(
   }));
 }
 
-export function scheduleDisplayName(record: {
-  customerGroupName: string | null;
-  customerFirstName: string | null;
-  customerLastName: string | null;
-} | null): string {
-  if (!record) {
-    return "Held";
-  }
-  if (record.customerGroupName?.trim()) {
-    return record.customerGroupName.trim();
-  }
-  const name = [record.customerFirstName, record.customerLastName].filter(Boolean).join(" ").trim();
-  return name || "Inquiry";
-}
+export { scheduleDisplayName } from "@/lib/resources/schedule-board";

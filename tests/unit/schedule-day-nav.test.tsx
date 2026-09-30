@@ -25,8 +25,7 @@ describe("schedule day navigation pending", () => {
         prev="2026-09-16"
         next="2026-09-18"
         today="2026-09-17"
-        selectedTypeId="type_lane"
-        types={[{ id: "type_lane", name: "Bowling Lane" }]}
+        focus="all"
       />,
     );
 

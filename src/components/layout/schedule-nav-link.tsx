@@ -9,7 +9,7 @@ import { PERMISSIONS } from "@/types/permissions";
 export async function ScheduleNavLink() {
   try {
     const ctx = await getRequestContext();
-    if (!(await hasPermission(ctx, PERMISSIONS.INVENTORY_VIEW, db))) {
+    if (!(await hasPermission(ctx, PERMISSIONS.CALENDAR_VIEW, db))) {
       return null;
     }
   } catch (error) {

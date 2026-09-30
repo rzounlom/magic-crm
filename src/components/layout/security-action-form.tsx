@@ -26,6 +26,9 @@ type SecurityActionFormProps = {
   notice: MutationNoticeCopy;
   blocking?: boolean;
   blockingLabel?: string;
+  onResult?: (result: SecurityActionResult) => void;
+  /** Return "stay" to keep the current page instead of following redirectTo. */
+  onRedirect?: (href: string) => "stay" | void;
 };
 
 export function SecurityActionForm({
@@ -36,6 +39,8 @@ export function SecurityActionForm({
   notice,
   blocking = false,
   blockingLabel = "Working…",
+  onResult,
+  onRedirect,
 }: SecurityActionFormProps) {
   const router = useRouter();
   const pendingRef = useRef(false);
@@ -55,6 +60,7 @@ export function SecurityActionForm({
     let keepPending = false;
     try {
       const result = await action(formData);
+      onResult?.(result);
       const next = mutationNotice(result, {
         ...notice,
         successDescription: interpolateDescription(notice.successDescription, formData),
@@ -64,6 +70,9 @@ export function SecurityActionForm({
         description: next.description || undefined,
       });
       if (next.redirectTo) {
+        if (onRedirect?.(next.redirectTo) === "stay") {
+          return;
+        }
         keepPending = true;
         router.push(next.redirectTo);
         return;

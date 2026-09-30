@@ -15,7 +15,13 @@ import {
 import { getRequestContext } from "@/server/get-request-context";
 import { confirmInquiryBooking, cancelBooking } from "@/server/services/booking-service";
 import { createEmployeeManualInquiry } from "@/server/services/inquiry-service";
+import { EVENT_DURATION_MINUTES } from "@/types/event-planner";
 import type { SecurityActionResult } from "@/types/security-action";
+
+function employeeDurationMinutes(value: FormDataEntryValue | null): number {
+  const parsed = Number(value);
+  return EVENT_DURATION_MINUTES.includes(parsed as (typeof EVENT_DURATION_MINUTES)[number]) ? parsed : 120;
+}
 
 export async function confirmBookingAction(formData: FormData): Promise<SecurityActionResult> {
   const inquiryId = String(formData.get("inquiryId") ?? "").trim();
@@ -90,7 +96,7 @@ export async function createEmployeeManualBookingAction(formData: FormData): Pro
       startTime: String(formData.get("startTime") ?? "").trim(),
       guestCount: Number(formData.get("guestCount") ?? 0),
       guestMix: String(formData.get("guestMix") ?? "").trim() || null,
-      desiredDurationMinutes: Number(formData.get("desiredDurationMinutes") ?? 180),
+      desiredDurationMinutes: employeeDurationMinutes(formData.get("desiredDurationMinutes")),
       diningPreference: String(formData.get("diningPreference") ?? "").trim() || null,
       spacePreference: String(formData.get("spacePreference") ?? "").trim() || null,
       attractionInterestIds: formData.getAll("attractionInterestIds").map(String).filter(Boolean),

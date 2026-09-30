@@ -4,28 +4,35 @@ import { useRouter } from "next/navigation";
 import { useTransition, type FormEvent } from "react";
 
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { SCHEDULE_FOCUS_ALL } from "@/lib/resources/schedule-board";
 
 const NAV_BUTTON =
-  "rounded-md border border-border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60";
+  "cursor-pointer rounded-md border border-border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60";
 
 export function ScheduleDayNav({
   date,
   prev,
   next,
   today,
-  selectedTypeId,
-  types,
+  focus,
 }: {
   date: string;
   prev: string;
   next: string;
   today: string;
-  selectedTypeId: string | null;
-  types: Array<{ id: string; name: string }>;
+  focus: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const typeQuery = selectedTypeId ? `&type=${selectedTypeId}` : "";
+  const prominent = formatScheduleDate(date);
+
+  function hrefFor(nextDate: string) {
+    const params = new URLSearchParams({ date: nextDate });
+    if (focus && focus !== SCHEDULE_FOCUS_ALL) {
+      params.set("focus", focus);
+    }
+    return `/app/schedule?${params.toString()}`;
+  }
 
   function go(href: string) {
     if (pending) {
@@ -43,24 +50,23 @@ export function ScheduleDayNav({
     }
     const form = new FormData(event.currentTarget);
     const nextDate = String(form.get("date") ?? date);
-    const type = String(form.get("type") ?? selectedTypeId ?? "");
-    go(`/app/schedule?date=${nextDate}${type ? `&type=${type}` : ""}`);
+    go(hrefFor(nextDate));
   }
 
   return (
-    <>
-      <div className="mt-6 flex flex-wrap items-end gap-3">
-        <button type="button" disabled={pending} className={NAV_BUTTON} onClick={() => go(`/app/schedule?date=${prev}${typeQuery}`)}>
+    <div className="mt-5">
+      <p className="text-lg font-semibold text-foreground">{prominent}</p>
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <button type="button" disabled={pending} className={NAV_BUTTON} onClick={() => go(hrefFor(prev))}>
           Previous day
         </button>
-        <button type="button" disabled={pending} className={NAV_BUTTON} onClick={() => go(`/app/schedule?date=${today}${typeQuery}`)}>
+        <button type="button" disabled={pending} className={NAV_BUTTON} onClick={() => go(hrefFor(today))}>
           Today
         </button>
-        <button type="button" disabled={pending} className={NAV_BUTTON} onClick={() => go(`/app/schedule?date=${next}${typeQuery}`)}>
+        <button type="button" disabled={pending} className={NAV_BUTTON} onClick={() => go(hrefFor(next))}>
           Next day
         </button>
         <form className="flex items-end gap-2" onSubmit={onDateSubmit}>
-          {selectedTypeId ? <input type="hidden" name="type" value={selectedTypeId} /> : null}
           <label className="text-sm">
             <span className="sr-only">Date</span>
             <input
@@ -68,36 +74,33 @@ export function ScheduleDayNav({
               name="date"
               defaultValue={date}
               disabled={pending}
-              className="rounded-md border border-border bg-background px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60"
+              className="cursor-pointer rounded-md border border-border bg-background px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
             />
           </label>
           <button
             type="submit"
             disabled={pending}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            className="cursor-pointer rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pending ? <LoadingIndicator label="Loading…" /> : "Go"}
           </button>
         </form>
         {pending ? <p className="text-xs text-foreground/60">Loading schedule…</p> : null}
       </div>
-      {types.length > 0 ? (
-        <nav className="mt-6 flex flex-wrap gap-2" aria-label="Resource types">
-          {types.map((type) => (
-            <button
-              key={type.id}
-              type="button"
-              disabled={pending}
-              onClick={() => go(`/app/schedule?date=${date}&type=${type.id}`)}
-              className={`rounded-md px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 ${
-                type.id === selectedTypeId ? "bg-primary text-primary-foreground" : "border border-border"
-              }`}
-            >
-              {type.name}
-            </button>
-          ))}
-        </nav>
-      ) : null}
-    </>
+    </div>
   );
+}
+
+function formatScheduleDate(iso: string): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  if (!year || !month || !day) {
+    return iso;
+  }
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
 }

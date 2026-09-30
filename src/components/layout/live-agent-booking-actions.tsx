@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ScheduleBookingActionForm } from "@/components/layout/schedule-booking-session";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
@@ -163,22 +164,26 @@ export function LiveAgentBookingActions({
               </Link>
             ) : null}
             {canManage && assigned && showWorkingActions && !showStartWorking ? (
-              <SecurityActionForm
+              <ScheduleBookingActionForm
+                completeKind="pending"
                 action={savePendingBookingAction}
+                blocking
+                blockingLabel="Saving pending booking…"
                 notice={{ successTitle: "Pending booking saved", errorTitle: "Unable to save pending booking" }}
               >
                 <input type="hidden" name="inquiryId" value={inquiryId} />
                 <PendingSubmitButton
                   pendingLabel="Saving…"
-                  className="w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
+                  className="w-full cursor-pointer rounded-md border border-border px-4 py-2 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed"
                 >
                   Save Pending Booking
                 </PendingSubmitButton>
-              </SecurityActionForm>
+              </ScheduleBookingActionForm>
             ) : null}
             {showWorkingActions ? (
               canSubmitConfirm ? (
-                <SecurityActionForm
+                <ScheduleBookingActionForm
+                  completeKind="confirmed"
                   action={confirmBookingAction}
                   blocking
                   blockingLabel="Confirming the booking…"
@@ -196,7 +201,7 @@ export function LiveAgentBookingActions({
                   <PendingSubmitButton pendingLabel="Confirming…" className={PRIMARY_BUTTON}>
                     Confirm Payment & Book
                   </PendingSubmitButton>
-                </SecurityActionForm>
+                </ScheduleBookingActionForm>
               ) : (
                 <DisabledStatusButton>Confirm Payment & Book</DisabledStatusButton>
               )
