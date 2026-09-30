@@ -60,6 +60,8 @@ describe("public event plan view", () => {
               pricingComplete: true,
               depositPreviewCents: 114000,
               depositPreviewPercent: 30,
+              budgetExplanationCode: "ABOVE_BUDGET",
+              budgetDifferenceCents: 230000,
             },
           },
           {
@@ -114,6 +116,8 @@ describe("public event plan view", () => {
     expect(html).toContain("RECOMMENDED");
     expect(html).toContain("Premium");
     expect(html).toContain("$3,800");
+    expect(html).toContain("$2,300 above your preferred range");
+    expect(html).not.toContain("text-destructive");
     expect(html).toContain("Estimated deposit");
     expect(html).toContain("(30%)");
     expect(html).toContain("Laser Tag - 90 minutes");
@@ -557,7 +561,16 @@ describe("mobile proposal comparison", () => {
     const mobile = document.querySelector("[data-proposal-mobile]");
     expect(desktop?.className).toContain("hidden");
     expect(desktop?.className).toContain("lg:grid-cols-3");
-    expect(desktop?.querySelectorAll("article")).toHaveLength(3);
+    const articles = [...(desktop?.querySelectorAll("article") ?? [])];
+    expect(articles).toHaveLength(3);
+    for (const article of articles) {
+      expect(article.className).toContain("box-border");
+      expect(article.className).toContain("w-full");
+      expect(article.className).toContain("outline-2");
+      expect(article.className).not.toMatch(/\bring-/);
+      expect(article.className).not.toMatch(/\bborder-[248]\b/);
+    }
+    expect(articles.filter((article) => article.className.includes("outline-primary/40"))).toHaveLength(1);
     expect(mobile?.className).toContain("lg:hidden");
     expect(mobile?.querySelectorAll("article")).toHaveLength(1);
 

@@ -1939,7 +1939,8 @@
               "upgradeSlugs": [],
               "fulfillmentByInterest": {},
               "includeSpace": false,
-              "spaceFit": "tightest"
+              "spaceFit": "tightest",
+              "spaceSlugOrder": ["lower-event-room", "skybox"]
             },
             "better": {
               "foodStrategy": "standard",
@@ -1947,7 +1948,8 @@
               "upgradeSlugs": [],
               "fulfillmentByInterest": {},
               "includeSpace": false,
-              "spaceFit": "tightest"
+              "spaceFit": "tightest",
+              "spaceSlugOrder": ["lower-event-room", "skybox"]
             },
             "best": {
               "foodStrategy": "premium",
@@ -1955,7 +1957,8 @@
               "upgradeSlugs": ["climbers-cove-90"],
               "fulfillmentByInterest": {},
               "includeSpace": false,
-              "spaceFit": "largest"
+              "spaceFit": "largest",
+              "spaceSlugOrder": ["skybox", "lower-event-room"]
             }
           }
         }
@@ -2002,7 +2005,8 @@
               "upgradeSlugs": [],
               "fulfillmentByInterest": { "axe-throwing": "axe-throwing-30" },
               "includeSpace": false,
-              "spaceFit": "tightest"
+              "spaceFit": "tightest",
+              "spaceSlugOrder": ["lower-event-room", "skybox"]
             },
             "better": {
               "foodStrategy": "standard",
@@ -2010,7 +2014,8 @@
               "upgradeSlugs": [],
               "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
               "includeSpace": false,
-              "spaceFit": "tightest"
+              "spaceFit": "tightest",
+              "spaceSlugOrder": ["lower-event-room", "skybox"]
             },
             "best": {
               "foodStrategy": "premium",
@@ -2018,7 +2023,8 @@
               "upgradeSlugs": ["unlimited-arcade-1h"],
               "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
               "includeSpace": true,
-              "spaceFit": "largest"
+              "spaceFit": "largest",
+              "spaceSlugOrder": ["skybox", "lower-event-room"]
             }
           }
         }
@@ -2064,7 +2070,8 @@
               "upgradeSlugs": [],
               "fulfillmentByInterest": {},
               "includeSpace": false,
-              "spaceFit": "tightest"
+              "spaceFit": "tightest",
+              "spaceSlugOrder": ["lower-event-room", "skybox"]
             },
             "better": {
               "foodStrategy": "standard",
@@ -2072,7 +2079,8 @@
               "upgradeSlugs": [],
               "fulfillmentByInterest": {},
               "includeSpace": false,
-              "spaceFit": "tightest"
+              "spaceFit": "tightest",
+              "spaceSlugOrder": ["lower-event-room", "skybox"]
             },
             "best": {
               "foodStrategy": "premium",
@@ -2080,7 +2088,8 @@
               "upgradeSlugs": ["axe-throwing-60"],
               "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
               "includeSpace": true,
-              "spaceFit": "largest"
+              "spaceFit": "largest",
+              "spaceSlugOrder": ["skybox", "lower-event-room"]
             }
           }
         }

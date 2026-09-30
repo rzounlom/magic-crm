@@ -176,6 +176,24 @@ export const BUDGET_FITS = {
 
 export type BudgetFit = (typeof BUDGET_FITS)[keyof typeof BUDGET_FITS];
 
+/** Customer-facing budget classification. Advisory only; catalog prices stay unchanged. */
+export const BUDGET_EXPLANATION_CODES = {
+  WITHIN_BUDGET: "WITHIN_BUDGET",
+  ABOVE_BUDGET: "ABOVE_BUDGET",
+  BELOW_BUDGET: "BELOW_BUDGET",
+  NO_BUDGET: "NO_BUDGET",
+  UNSPECIFIED: "UNSPECIFIED",
+} as const;
+
+export type BudgetExplanationCode = (typeof BUDGET_EXPLANATION_CODES)[keyof typeof BUDGET_EXPLANATION_CODES];
+
+export type BudgetAssessment = {
+  budgetFit: BudgetFit;
+  budgetExplanationCode: BudgetExplanationCode;
+  /** Signed cents versus the relevant bound. Positive is above the ceiling. Negative is below the floor. */
+  budgetDifferenceCents: number | null;
+};
+
 /** One independently composed tier. Not "the previous tier plus an add-on". */
 export type TierCompositionConfig = {
   foodStrategy: FoodTierStrategy;
@@ -183,10 +201,26 @@ export type TierCompositionConfig = {
   coreAttractionSlugs: string[];
   /** Products that belong to this tier alone. */
   upgradeSlugs: string[];
+  /**
+   * Upgrade slugs this tier may omit when the priced total is above budgetMax.
+   * Explicit attractions, dining, and space are never removed to hit a budget.
+   * Beverage slugs listed here may also be omitted.
+   */
+  budgetOptionalUpgradeSlugs?: string[];
+  /**
+   * Separate beverage products for this tier. Omitted when the customer declines food.
+   * A drink bundled inside a food product stays on that product and is not listed here.
+   */
+  beverageSlugs?: string[];
   /** Attraction-interest slug → preferred fulfillment product slug for this tier. */
   fulfillmentByInterest: Record<string, string>;
   includeSpace: boolean;
   spaceFit: SpaceFitStrategy;
+  /**
+   * Room product slugs in preference order. The first product that fits guest count and date wins.
+   * When omitted, spaceSlugs plus spaceFit still apply.
+   */
+  spaceSlugOrder?: string[];
 };
 
 export type RecommendationCompositionConfig = {

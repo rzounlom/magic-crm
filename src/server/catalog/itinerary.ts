@@ -88,18 +88,23 @@ export function composeEventItinerary(input: {
   const activitySpan = cursor - start;
   const rooms = input.products.filter((product) => roleOf(product) === PRODUCT_SCHEDULING_BEHAVIORS.SPACE_WINDOW);
   const roomMinutes = rooms.reduce((max, product) => Math.max(max, product.durationMinutes ?? 0), 0);
-  const eventLengthMinutes = Math.max(activitySpan, roomMinutes, activitySpan === 0 && roomMinutes === 0 ? input.fallbackMinutes ?? 0 : 0);
-  const resolvedLength = eventLengthMinutes > 0 ? eventLengthMinutes : input.fallbackMinutes ?? 0;
+  // Customer event length is the dining/activity span. A longer room entitlement
+  // stays on the space reservation and does not stretch the event.
+  const eventLengthMinutes =
+    activitySpan > 0 ? activitySpan : roomMinutes > 0 ? roomMinutes : (input.fallbackMinutes ?? 0);
+  const resolvedLength = eventLengthMinutes > 0 ? eventLengthMinutes : (input.fallbackMinutes ?? 0);
 
   rooms.forEach((product, index) => {
+    const entitlement = product.durationMinutes && product.durationMinutes > 0 ? product.durationMinutes : 0;
+    const reservationMinutes = Math.max(entitlement, activitySpan > 0 ? activitySpan : resolvedLength);
     segments.push({
       id: `seg-space-${product.id}-${index}`,
       startTime: minutesToClock(start),
-      endTime: minutesToClock(start + resolvedLength),
+      endTime: minutesToClock(start + reservationMinutes),
       label: product.name,
       productId: product.id,
       startOffsetMinutes: 0,
-      durationMinutes: resolvedLength,
+      durationMinutes: reservationMinutes,
       consumesInventory: true,
       role: "SPACE",
     });

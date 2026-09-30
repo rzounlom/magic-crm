@@ -110,6 +110,12 @@ export function EmployeeSelectedEventPlan({
           <dt className="text-foreground/60">Plan dining</dt>
           <dd className="mt-1">{payload.dining.label}</dd>
         </div>
+        {payload.beverages && payload.beverages.length > 0 ? (
+          <div>
+            <dt className="text-foreground/60">Beverages</dt>
+            <dd className="mt-1">{payload.beverages.map((item) => item.name).join(", ")}</dd>
+          </div>
+        ) : null}
         <div>
           <dt className="text-foreground/60">Room / space</dt>
           <dd className="mt-1">

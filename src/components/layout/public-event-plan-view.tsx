@@ -8,6 +8,7 @@ import { PUBLIC_CONTENT_CLASS } from "@/components/layout/public-content";
 import { BlockingMutation } from "@/components/ui/blocking-mutation";
 import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatCustomerDurationText, formatEventDuration, personalEventPlannerTitle } from "@/lib/event-planner/labels";
+import { budgetFitCustomerText } from "@/lib/event-planner/budget-fit";
 import { formatEstimatedDepositLine, formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
 import { isBestFitTier, readEventPlanPayload } from "@/lib/event-planner/payload";
 import { formatAdjustedEventWindow, formatCustomerFacingClocks, formatEventLocalDateTime, formatEventLocalTime, formatItineraryLine, formatItineraryRange, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
@@ -429,10 +430,10 @@ function ProposalComparison({
               aria-selected={selected}
               aria-controls="proposal-mobile-panel"
               tabIndex={selected ? 0 : -1}
-              className={`min-h-11 min-w-0 cursor-pointer rounded-md border px-2 py-2 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+              className={`box-border min-h-11 min-w-0 cursor-pointer rounded-md border px-2 py-2 text-center outline-2 -outline-offset-2 focus-visible:outline-primary ${
                 selected
-                  ? "border-primary bg-primary/10 font-semibold text-primary ring-2 ring-primary/30"
-                  : "border-border bg-background font-medium text-foreground"
+                  ? "border-primary bg-primary/10 font-semibold text-primary outline-primary/40"
+                  : "border-border bg-background font-medium text-foreground outline-transparent"
               }`}
               onClick={() => setMobileTier(plan.tier)}
               onKeyDown={(event) => onTierKeyDown(event, index)}
@@ -508,6 +509,12 @@ function PlanOptionCard({
   );
   const availabilityNote = formatCustomerFacingClocks(payload.customerAvailabilityNote || CUSTOMER_AVAILABILITY_NOTE);
   const recommendation = formatCustomerDurationText(formatCustomerFacingClocks(plan.customerFacingReason));
+  const budgetLine = budgetFitCustomerText({
+    code: payload.budgetExplanationCode,
+    differenceCents: payload.budgetDifferenceCents,
+    currency: displayCurrency,
+    preservedSelections: payload.budgetPreservedSelections === true,
+  });
   const durationNote = formatCustomerFacingClocks(payload.durationNote);
   const unavailable =
     plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE ||
@@ -517,8 +524,9 @@ function PlanOptionCard({
 
   return (
     <article
-      className={`flex h-full max-h-full min-h-0 flex-col overflow-hidden rounded-md border ${
-        recommended ? "border-primary ring-2 ring-primary/30" : "border-border"
+      data-plan-card
+      className={`box-border flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden rounded-md border outline-2 -outline-offset-2 ${
+        recommended ? "border-primary outline-primary/40" : "border-border outline-transparent"
       } ${selected ? "bg-muted/50" : "bg-background"}`}
     >
       <div data-plan-summary className="shrink-0 px-4 pt-3">
@@ -541,6 +549,7 @@ function PlanOptionCard({
           ? ` · ${formatMoneyFromCents(perPerson, displayCurrency)} per person`
           : ""}
       </p>
+      {budgetLine ? <p className="mt-0.5 text-xs leading-tight text-foreground/70">{budgetLine}</p> : null}
       {payload.depositPreviewCents != null && payload.pricingComplete ? (
         <p className="mt-0.5 text-xs leading-tight text-foreground/60">
           {formatEstimatedDepositLine(payload.depositPreviewCents, payload.depositPreviewPercent, displayCurrency)}
@@ -567,6 +576,19 @@ function PlanOptionCard({
       </PlanSection>
 
       <PlanSection title="Dining">{payload.dining.label}</PlanSection>
+
+      {payload.beverages && payload.beverages.length > 0 ? (
+        <PlanSection title="Beverages">
+          <ul className="list-disc space-y-1 pl-5">
+            {payload.beverages.map((item) => (
+              <li key={item.knowledgeItemId}>
+                {formatCustomerDurationText(item.name)}
+                {item.quantity ? ` · ${item.quantity}${item.unitLabel ? ` ${item.unitLabel}` : ""}` : ""}
+              </li>
+            ))}
+          </ul>
+        </PlanSection>
+      ) : null}
 
       {payload.includedItems && payload.includedItems.length > 0 ? (
         <PlanSection title="Included items">
@@ -614,7 +636,9 @@ function PlanOptionCard({
                   : null;
               return [space.name, reservation, window].filter(Boolean).join(" · ");
             }).join(", ")
-          : "Shared / to be confirmed"}
+          : payload.spaceUnconfirmed
+            ? "Private space could not be confirmed for this option."
+            : "Shared / to be confirmed"}
       </PlanSection>
 
       <PlanSection title="Event Length">

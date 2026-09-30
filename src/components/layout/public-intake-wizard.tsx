@@ -37,7 +37,7 @@ import { notify } from "@/lib/ui/notify";
 import { yieldToPaint } from "@/lib/ui/yield-to-paint";
 import { submitPublicInquiryAction } from "@/server/actions/public-inquiry";
 import { readPublicIntakeFields } from "@/server/inquiries/intake-validation";
-import { BUDGET_BAND_LABELS, BUDGET_BAND_VALUES } from "@/types/event-planner";
+import { BUDGET_BAND_LABELS, BUDGET_BAND_VALUES, PUBLIC_EVENT_LENGTH_OPTIONS } from "@/types/event-planner";
 import type { SecurityActionResult } from "@/types/security-action";
 
 export type PublicPlannerAttraction = { id: string; name: string; description?: string | null };
@@ -45,7 +45,7 @@ export type PublicPlannerAttraction = { id: string; name: string; description?: 
 const CARD_CLASS =
   "flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const INPUT_CLASS =
-  "mt-2 w-full rounded-xl border border-border bg-background px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed";
+  "mt-2 rounded-xl border border-border bg-background px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed";
 const BACK_CLASS =
   "inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-2 text-base font-medium text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed";
 
@@ -201,6 +201,13 @@ export function PublicIntakeWizard({
             name="budgetPreference"
             value={state.answers.budgetPreference === "FLEXIBLE" ? "FLEXIBLE" : ""}
           />
+          <input
+            type="hidden"
+            name="desiredDurationMinutes"
+            value={
+              state.answers.desiredDurationMinutes === "FLEXIBLE" ? "" : state.answers.desiredDurationMinutes
+            }
+          />
           {state.answers.attractionInterestIds.map((id) => (
             <input key={id} type="hidden" name="attractionInterestIds" value={id} />
           ))}
@@ -244,7 +251,7 @@ export function PublicIntakeWizard({
         data-planner-shell
         aria-busy={pending}
         inert={pending ? true : undefined}
-        className="flex min-h-0 flex-1 flex-col"
+        className="mx-auto flex h-fit max-h-full min-h-0 w-full max-w-272 flex-col overflow-hidden px-2"
       >
         <div className="flex shrink-0 items-center justify-between gap-4">
           <p className="text-sm font-medium text-foreground/70">
@@ -275,13 +282,13 @@ export function PublicIntakeWizard({
           </p>
         ) : null}
 
-        <div data-planner-scroll className="public-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain py-4">
+        <div data-planner-scroll className="public-scroll min-h-0 overflow-y-auto overscroll-contain pt-4">
           {scrollBody}
         </div>
 
         <div
           data-planner-actions
-          className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-background pt-3"
+          className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-background pt-6"
         >
           {state.step === "event" ? (
             <span />
@@ -351,6 +358,14 @@ function StepIntro({ step }: { step: PlannerStep }) {
       </p>
     );
   }
+  if (step === "length") {
+    return (
+      <p className="mt-3 text-sm text-foreground/70">
+        This is how long you&apos;d like to be here. We&apos;ll use it as a preference when we build options. It is not a
+        guaranteed schedule.
+      </p>
+    );
+  }
   if (step === "when") {
     return (
       <p className="mt-3 text-sm text-foreground/70">
@@ -404,17 +419,18 @@ function StepBody({
 
   if (step === "guests") {
     return (
-      <label className="block text-sm font-medium text-foreground" htmlFor="guest-count">
-        Guest count
+      <label className="block w-full text-sm font-medium text-foreground sm:max-w-xs" htmlFor="guest-count">
+        <span className="block">Guest count</span>
         <input
           id="guest-count"
           inputMode="numeric"
           autoComplete="off"
+          maxLength={3}
           value={answers.guestCount}
           aria-invalid={Boolean(errorId)}
           aria-describedby={errorId}
-          className={INPUT_CLASS}
-          onChange={(event) => onEdit({ guestCount: event.target.value })}
+          className={`${INPUT_CLASS} w-full`}
+          onChange={(event) => onEdit({ guestCount: event.target.value.replace(/\D/g, "").slice(0, 3) })}
         />
       </label>
     );
@@ -507,63 +523,84 @@ function StepBody({
     );
   }
 
+  if (step === "length") {
+    return (
+      <ChoiceGroup legend={PLANNER_STEP_TITLES.length} errorId={errorId}>
+        {PUBLIC_EVENT_LENGTH_OPTIONS.map((option) => (
+          <ChoiceCard
+            key={option.value}
+            label={option.label}
+            selected={answers.desiredDurationMinutes === option.value}
+            onClick={() => onEdit({ desiredDurationMinutes: option.value })}
+          />
+        ))}
+      </ChoiceGroup>
+    );
+  }
+
   if (step === "when") {
     return (
-      <fieldset className="grid gap-4" aria-describedby={errorId}>
+      <fieldset className="grid min-w-0 gap-6" aria-describedby={errorId}>
         <legend className="sr-only">{PLANNER_STEP_TITLES.when}</legend>
-        <label className="block text-sm font-medium text-foreground" htmlFor="event-date">
-          Event date
+        <label className="block w-full text-sm font-medium text-foreground sm:max-w-90" htmlFor="event-date">
+          <span className="block">Event date</span>
           <input
             id="event-date"
             type="date"
             value={answers.eventDate}
             aria-invalid={Boolean(errorId)}
-            className={INPUT_CLASS}
+            className={`${INPUT_CLASS} w-full min-w-0 max-w-full cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer`}
             onChange={(event) => onEdit({ eventDate: event.target.value })}
           />
         </label>
-        <div className="grid grid-cols-3 gap-3">
-          <TimeSelect
-            id="start-hour"
-            label="Hour"
-            value={answers.startHour}
-            onChange={(startHour) => onEdit({ startHour })}
-          >
-            {Array.from({ length: 12 }, (_, index) => String(index + 1)).map((hour) => (
-              <option key={hour} value={hour}>
-                {hour}
-              </option>
-            ))}
-          </TimeSelect>
-          <TimeSelect
-            id="start-minute"
-            label="Minute"
-            value={answers.startMinute}
-            onChange={(startMinute) => onEdit({ startMinute })}
-          >
-            {["00", "15", "30", "45"].map((minute) => (
-              <option key={minute} value={minute}>
-                {minute}
-              </option>
-            ))}
-          </TimeSelect>
-          <TimeSelect
-            id="start-period"
-            label="AM/PM"
-            value={answers.startPeriod}
-            onChange={(startPeriod) => onEdit({ startPeriod: startPeriod as "AM" | "PM" | "" })}
-          >
-            <option value="AM">AM</option>
-            <option value="PM">PM</option>
-          </TimeSelect>
-        </div>
+        <fieldset className="min-w-0">
+          <legend className="text-sm font-medium text-foreground">Preferred start time</legend>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <TimeSelect
+              id="start-hour"
+              label="Hour"
+              widthClass="w-[5.5rem]"
+              value={answers.startHour}
+              onChange={(startHour) => onEdit({ startHour })}
+            >
+              {Array.from({ length: 12 }, (_, index) => String(index + 1)).map((hour) => (
+                <option key={hour} value={hour}>
+                  {hour}
+                </option>
+              ))}
+            </TimeSelect>
+            <TimeSelect
+              id="start-minute"
+              label="Minute"
+              widthClass="w-[5.5rem]"
+              value={answers.startMinute}
+              onChange={(startMinute) => onEdit({ startMinute })}
+            >
+              {["00", "15", "30", "45"].map((minute) => (
+                <option key={minute} value={minute}>
+                  {minute}
+                </option>
+              ))}
+            </TimeSelect>
+            <TimeSelect
+              id="start-period"
+              label="AM/PM"
+              widthClass="w-24"
+              value={answers.startPeriod}
+              onChange={(startPeriod) => onEdit({ startPeriod: startPeriod as "AM" | "PM" | "" })}
+            >
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </TimeSelect>
+          </div>
+        </fieldset>
       </fieldset>
     );
   }
 
   if (step === "contact") {
     return (
-      <div className="grid gap-4 pb-2 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-4 pb-2 sm:grid-cols-2">
         <ContactField
           label="First name"
           name="firstName"
@@ -610,14 +647,14 @@ function StepBody({
           error={fieldErrors.customerGroupName}
           onChange={(value) => onEdit({ customerGroupName: value })}
         />
-        <label className="block text-sm font-medium text-foreground sm:col-span-2">
+        <label className="block min-w-0 text-sm font-medium text-foreground sm:col-span-2">
           Notes (optional)
           <textarea
             name="notes"
             value={answers.notes}
             disabled={disabled}
             rows={3}
-            className={INPUT_CLASS}
+            className={`${INPUT_CLASS} w-full`}
             onChange={(event) => onEdit({ notes: event.target.value })}
           />
         </label>
@@ -638,7 +675,7 @@ function ChoiceGroup({
   children: ReactNode;
 }) {
   return (
-    <fieldset className="grid gap-3 sm:grid-cols-2" aria-describedby={errorId}>
+    <fieldset className="grid min-w-0 gap-3 sm:grid-cols-2" aria-describedby={errorId}>
       <legend className="sr-only">{legend}</legend>
       {children}
     </fieldset>
@@ -672,21 +709,23 @@ function TimeSelect({
   label,
   value,
   onChange,
+  widthClass,
   children,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
+  widthClass: string;
   children: ReactNode;
 }) {
   return (
-    <label className="block text-sm font-medium text-foreground" htmlFor={id}>
+    <label className={`block text-xs font-medium tracking-wide text-foreground/70 uppercase ${widthClass}`} htmlFor={id}>
       {label}
       <select
         id={id}
         value={value}
-        className={`${INPUT_CLASS} cursor-pointer`}
+        className={`${INPUT_CLASS} w-full cursor-pointer`}
         onChange={(event) => onChange(event.target.value)}
       >
         <option value="">Choose</option>
@@ -717,7 +756,7 @@ function ContactField({
 }) {
   const errorId = `${name}-error`;
   return (
-    <div>
+    <div className="min-w-0">
       <label className="block text-sm font-medium text-foreground" htmlFor={name}>
         {label}
         <input
@@ -729,7 +768,7 @@ function ContactField({
           disabled={disabled}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
-          className={INPUT_CLASS}
+          className={`${INPUT_CLASS} w-full`}
           onChange={(event) => onChange(event.target.value)}
         />
       </label>
@@ -783,6 +822,12 @@ function ReviewList({
       label: "Budget",
       value: intakeBudgetLabel(answers),
       step: "budget",
+    },
+    {
+      label: "Event length",
+      value:
+        PUBLIC_EVENT_LENGTH_OPTIONS.find((option) => option.value === answers.desiredDurationMinutes)?.label ?? "",
+      step: "length",
     },
     { label: "Preferred date and time", value: formatPreferredDateTime(answers), step: "when" },
     { label: "Contact information", value: contactSummary(answers), step: "contact" },

@@ -92,7 +92,7 @@ export function optionExperienceSentence(addedNames: string[], fallback: string)
 export function eventDurationExplanation(input: {
   requestedMinutes: number | null;
   eventLengthMinutes: number;
-  sequenced: Array<{ name: string; durationMinutes: number }>;
+  sequenced: Array<{ name: string; durationMinutes: number; role?: string | null }>;
   roomMinutes: number;
   /** Scheduled names already on the requested/base option. Items in this list are not treated as the reason the option is longer. */
   baselineNames?: string[];
@@ -102,12 +102,15 @@ export function eventDurationExplanation(input: {
     return null;
   }
   const lengthLabel = formatDurationMinutes(input.eventLengthMinutes);
-  const sequencedTotal = input.sequenced.reduce((sum, row) => sum + row.durationMinutes, 0);
-  if (input.roomMinutes > requestedMinutes && sequencedTotal <= requestedMinutes) {
-    return `This option is ${lengthLabel} because the private room is reserved for ${formatDurationMinutes(input.roomMinutes)}.`;
+  const scheduledTotal = input.sequenced.reduce((sum, row) => sum + row.durationMinutes, 0);
+  // A longer room entitlement is not scheduled content, so it does not explain event length.
+  if (scheduledTotal <= requestedMinutes) {
+    return null;
   }
+  // A dining swap keeps the same block. Extra time comes from activities.
+  const activities = input.sequenced.filter((row) => row.role !== "DINING");
   const added = addedScheduledActivities({
-    sequenced: input.sequenced,
+    sequenced: activities,
     baselineNames: input.baselineNames ?? [],
   });
   const delta = input.eventLengthMinutes - requestedMinutes;

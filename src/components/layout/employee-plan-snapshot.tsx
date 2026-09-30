@@ -65,6 +65,12 @@ export function EmployeePlanSnapshot({
           <dt className="text-foreground/60">Dining</dt>
           <dd className="mt-1">{plan.dining.label || "—"}</dd>
         </div>
+        {plan.beverages && plan.beverages.length > 0 ? (
+          <div>
+            <dt className="text-foreground/60">Beverages</dt>
+            <dd className="mt-1">{plan.beverages.map((item) => item.name).join(", ")}</dd>
+          </div>
+        ) : null}
         <div>
           <dt className="text-foreground/60">Room / space</dt>
           <dd className="mt-1">

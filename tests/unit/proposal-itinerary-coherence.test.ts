@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { composeEventItinerary, itinerarySpanMinutes } from "@/server/catalog/itinerary";
@@ -146,6 +148,19 @@ describe("proposal itinerary coherence", () => {
         roomMinutes: 0,
       }),
     ).toBe("This option is 3 hours because it includes additional scheduled activities.");
+    expect(
+      eventDurationExplanation({
+        requestedMinutes: 120,
+        eventLengthMinutes: 180,
+        sequenced: [
+          { name: "Smokehouse BBQ", durationMinutes: 60, role: "DINING" },
+          { name: "Bowling - 1 Hour", durationMinutes: 60, role: "ACTIVITY" },
+          { name: "1 Hour Unlimited Arcade Play", durationMinutes: 60, role: "ACTIVITY" },
+        ],
+        roomMinutes: 180,
+        baselineNames: baseline,
+      }),
+    ).toBe("This option is 3 hours because it adds an hour of Unlimited Arcade Play.");
   });
 
   it("overlaps a room entitlement and does not schedule a non-timed card", () => {
@@ -202,6 +217,73 @@ describe("proposal itinerary coherence", () => {
       windowEndTime: "20:00",
     });
     expect(stamped.some((row) => row.productId === "card")).toBe(false);
+  });
+
+  it("keeps a longer room reservation off the customer event length", () => {
+    const good = composeEventItinerary({
+      startTime: "17:00",
+      foodFirst: true,
+      products: [
+        { id: "food", name: "Fajita Bar", kind: "FOOD", durationMinutes: 60 },
+        { id: "bowl", name: "Bowling - 1 Hour", kind: "ATTRACTION", durationMinutes: 60, hasResourceRequirements: true },
+        { id: "room", name: "Lower Event Room", kind: "RENTAL", durationMinutes: 180, hasResourceRequirements: true },
+      ],
+    });
+    expect(good.eventLengthMinutes).toBe(120);
+    expect(itinerarySpanMinutes(good.itinerary)).toBe(120);
+    const room = good.itinerary.find((row) => row.role === "SPACE");
+    expect(room?.startTime).toBe("17:00");
+    expect(room?.endTime).toBe("20:00");
+    expect(room?.durationMinutes).toBe(180);
+    expect(
+      eventDurationExplanation({
+        requestedMinutes: 120,
+        eventLengthMinutes: good.eventLengthMinutes,
+        sequenced: good.sequenced,
+        roomMinutes: good.roomMinutes,
+      }),
+    ).toBeNull();
+    expect(
+      eventDurationExplanation({
+        requestedMinutes: 120,
+        eventLengthMinutes: 180,
+        sequenced: good.sequenced,
+        roomMinutes: 180,
+      }),
+    ).toBeNull();
+
+    const recommended = composeEventItinerary({
+      startTime: "17:00",
+      foodFirst: true,
+      products: [
+        { id: "food", name: "Slider Bar", kind: "FOOD", durationMinutes: 60 },
+        { id: "bowl", name: "Bowling - 1 Hour", kind: "ATTRACTION", durationMinutes: 60, hasResourceRequirements: true },
+        { id: "room", name: "Lower Event Room", kind: "RENTAL", durationMinutes: 180, hasResourceRequirements: true },
+      ],
+    });
+    expect(recommended.eventLengthMinutes).toBe(120);
+
+    const premium = composeEventItinerary({
+      startTime: "17:00",
+      foodFirst: true,
+      products: [
+        { id: "food", name: "Smokehouse BBQ", kind: "FOOD", durationMinutes: 60 },
+        { id: "bowl", name: "Bowling - 1 Hour", kind: "ATTRACTION", durationMinutes: 60, hasResourceRequirements: true },
+        { id: "arcade", name: "Unlimited Arcade Play", kind: "ATTRACTION", durationMinutes: 60, hasResourceRequirements: true },
+        { id: "room", name: "Lower Event Room", kind: "RENTAL", durationMinutes: 180, hasResourceRequirements: true },
+      ],
+    });
+    expect(premium.eventLengthMinutes).toBe(180);
+    expect(itinerarySpanMinutes(premium.itinerary.filter((row) => row.role !== "SPACE"))).toBe(180);
+    const premiumRoom = premium.itinerary.find((row) => row.role === "SPACE");
+    expect(premiumRoom?.durationMinutes).toBe(180);
+    expect(premiumRoom?.endTime).toBe("20:00");
+  });
+
+  it("passes the inquiry's requested duration into proposal explanations", () => {
+    const source = readFileSync(path.join(process.cwd(), "src/server/services/proposal-engine.ts"), "utf8");
+    expect(source).toContain("requestedMinutes: input.inquiry.desiredDurationMinutes");
+    expect(source).toContain("fallbackMinutes: input.inquiry.desiredDurationMinutes ?? 60");
   });
 
   it("formats public clocks once from raw event-local times", () => {

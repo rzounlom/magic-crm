@@ -30,16 +30,30 @@ export const GUEST_MIX_LABELS: Record<GuestMix, string> = {
   mixed_ages: "Mix of Kids & Adults",
 };
 
-export const EVENT_DURATION_MINUTES = [120, 180, 240, 300] as const;
+export const EVENT_DURATION_MINUTES = [90, 120, 150, 180, 240, 300] as const;
 
 export type EventDurationMinutes = (typeof EVENT_DURATION_MINUTES)[number];
 
 export const EVENT_DURATION_LABELS: Record<EventDurationMinutes, string> = {
+  90: "1.5 hours",
   120: "2 hours",
+  150: "2.5 hours",
   180: "3 hours",
   240: "4 hours",
   300: "5+ hours",
 };
+
+/** Customer planner choices. Flexible stores no requested minutes. */
+export const PUBLIC_EVENT_LENGTH_OPTIONS = [
+  { value: "90", label: "1.5 hours" },
+  { value: "120", label: "2 hours" },
+  { value: "150", label: "2.5 hours" },
+  { value: "180", label: "3 hours" },
+  { value: "240", label: "4 hours" },
+  { value: "FLEXIBLE", label: "Flexible / recommend for me" },
+] as const;
+
+export type PublicEventLengthValue = (typeof PUBLIC_EVENT_LENGTH_OPTIONS)[number]["value"];
 
 export const EVENT_TYPE_OPTIONS = [
   "Corporate Event",
@@ -232,6 +246,8 @@ export type EventPlanPayload = {
   activities: EventPlanActivity[];
   includedItems?: EventPlanIncludedItem[];
   dining: EventPlanDining;
+  /** Separate beverage products. Empty or absent when the tenant did not configure any. */
+  beverages?: EventPlanIncludedItem[];
   spaces: EventPlanSpace[];
   /** Why this option is longer than the duration the customer requested. */
   durationNote?: string | null;
@@ -255,7 +271,12 @@ export type EventPlanPayload = {
   catalogBacked?: boolean;
   locationExclusive?: boolean;
   budgetFit?: import("@/types/catalog").BudgetFit;
+  budgetExplanationCode?: import("@/types/catalog").BudgetExplanationCode;
+  budgetDifferenceCents?: number | null;
+  budgetPreservedSelections?: boolean;
   spaceUnmet?: boolean;
+  /** A fitting room existed, but every configured alternative conflicted. The room is not listed. */
+  spaceUnconfirmed?: boolean;
   unfulfilledInterestSlugs?: string[];
   compositionDelta?: {
     comparedWithTier: string | null;

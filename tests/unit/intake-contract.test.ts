@@ -25,6 +25,7 @@ describe("public intake planner contract", () => {
       "food",
       "space",
       "budget",
+      "length",
       "when",
       "contact",
       "review",
@@ -52,6 +53,9 @@ describe("public intake planner contract", () => {
     expect(plannerStepError("guests", { ...emptyPlannerAnswers(), guestCount: "1e2" })).toMatch(/whole number/i);
     expect(plannerStepError("guests", { ...emptyPlannerAnswers(), guestCount: "20" })).toBeNull();
     expect(plannerStepError("attractions", emptyPlannerAnswers())).toBeNull();
+    expect(plannerStepError("length", emptyPlannerAnswers())).toMatch(/event length/i);
+    expect(plannerStepError("length", { ...emptyPlannerAnswers(), desiredDurationMinutes: "120" })).toBeNull();
+    expect(plannerStepError("length", { ...emptyPlannerAnswers(), desiredDurationMinutes: "FLEXIBLE" })).toBeNull();
   });
 
   it("requires contact details before review and clears them on start over", () => {

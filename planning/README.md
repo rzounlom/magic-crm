@@ -14,13 +14,13 @@ System architecture documents. Current implementation notes:
 - Phase 3B.4 — segment-level resource scheduling, availability-aware proposals, employee New Booking
 - Phase 3B.4a — booking cancellation, inquiry archive/unarchive, employee test-data cleanup
 - Phase 3B.4b — employee workspace truth: original vs working vs confirmed vs allocated vs legacy HOLD
-- Phase 3B.6 — proposal event length is the real itinerary span; rooms overlap; non-scheduled items stay off the sample itinerary; public times are 12-hour
+- Phase 3B.6 — proposal event length is the dining and activity span; a longer room reservation overlaps and is labeled separately; non-scheduled items stay off the sample itinerary; public times are 12-hour
 - Phase 3B.6b — customer time copy formats a raw clock once; deposit percent comes from `Organization.depositPercent`; duration copy names scheduled time added beyond the base option
 - Employee inquiry awareness — authenticated header polls about every 15 seconds; the bell and inquiry list update without a browser refresh
 - Public event intake redesign, phase 1 — guided planner and canonical preferences.
 - Inquiry lifecycle and public viewport — ended confirmed bookings leave the Active inquiry queue by query, the planner and proposal cards scroll inside the viewport, and page-critical mutations use a shared blocking state.
 - Public attraction interests — intake offers tenant-configured concepts, not duration SKUs. Narrow proposal widths show one Good / Recommended / Premium card at a time.
-- Deterministic recommendation composition — each tier is built from the tenant `RecommendationProfile.composition` strategy, explicit interests, catalog capacity, and total-event budget guidance. The model does not price, quantify, or check availability.
+- Deterministic recommendation composition — MagicCRM owns the algorithm. Tenants own dining, room, and add-on mappings. Explicit interests stay. Budget is advisory total-event guidance and never a discount. The model does not price, quantify, or check availability.
 - Phase 3C — Stripe/email. Not started.
 
 - `database.md`

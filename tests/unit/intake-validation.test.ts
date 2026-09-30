@@ -80,6 +80,43 @@ describe("public intake validation", () => {
     expect(parsed.data.budgetMin).toBe(90_000);
     expect(parsed.data.budgetMax).toBe(110_000);
     expect(parsed.data.desiredDurationMinutes).toBeNull();
+    const requested = publicIntakeSchema.safeParse({
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "ada@example.com",
+      eventType: "Birthday Party",
+      preferredDate: "2026-09-26",
+      startTime: "17:00",
+      guestCount: "20",
+      guestMix: "mostly_adults",
+      foodPreference: "WANTS_FOOD",
+      privateSpacePreference: "YES",
+      budgetBand: "1500_3000",
+      desiredDurationMinutes: "120",
+      submissionId: "sub_duration",
+    });
+    expect(requested.success).toBe(true);
+    if (requested.success) {
+      expect(requested.data.desiredDurationMinutes).toBe(120);
+    }
+    for (const minutes of ["90", "150", "240"]) {
+      const parsedMinutes = publicIntakeSchema.safeParse({
+        firstName: "Ada",
+        lastName: "Lovelace",
+        email: "ada@example.com",
+        eventType: "Birthday Party",
+        preferredDate: "2026-09-26",
+        startTime: "17:00",
+        guestCount: "20",
+        guestMix: "mostly_adults",
+        foodPreference: "WANTS_FOOD",
+        privateSpacePreference: "YES",
+        budgetBand: "1500_3000",
+        desiredDurationMinutes: minutes,
+        submissionId: "sub_duration",
+      });
+      expect(parsedMinutes.success).toBe(true);
+    }
     expect(parsed.data.eventGoal).toBe("Birthday Party");
     expect(parsed.data).not.toHaveProperty("organizationId");
     expect(parsed.data).not.toHaveProperty("locationId");

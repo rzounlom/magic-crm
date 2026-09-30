@@ -1,8 +1,11 @@
+import { customerActivityName } from "@/server/catalog/scheduling-behavior";
 import type { PlannerInquiryFacts } from "@/server/event-planner/build-event-plans";
 import {
   ATTRACTION_MODES,
+  BUDGET_EXPLANATION_CODES,
   BUDGET_FITS,
   PRODUCT_KINDS,
+  type BudgetAssessment,
   type BudgetFit,
   type FoodTierStrategy,
   type RecommendationProfilePayload,
@@ -54,6 +57,22 @@ function wantsPrivateSpace(spacePreference: string | null): boolean {
   return spacePreference === "private" || spacePreference === "semi_private";
 }
 
+export function spaceReservationConflicts(input: {
+  spaceProductId: string;
+  requirements: Array<{ productId?: string | null; resourceTypeSlug: string }>;
+  types: Array<{ resourceTypeSlug: string; conflict: boolean }>;
+}): boolean {
+  const slugs = new Set(
+    input.requirements
+      .filter((row) => row.productId === input.spaceProductId)
+      .map((row) => row.resourceTypeSlug),
+  );
+  if (slugs.size === 0) {
+    return false;
+  }
+  return input.types.some((row) => row.conflict && slugs.has(row.resourceTypeSlug));
+}
+
 export function readTierComposition(
   profile: RecommendationProfilePayload,
   tierKey: "good" | "better" | "best",
@@ -88,6 +107,48 @@ export function budgetFitForTotal(input: {
     return BUDGET_FITS.BELOW_RANGE;
   }
   return BUDGET_FITS.WITHIN_RANGE;
+}
+
+export function budgetAssessment(input: {
+  totalCents: number;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  flexible: boolean;
+}): BudgetAssessment {
+  const budgetFit = budgetFitForTotal(input);
+  if (budgetFit === BUDGET_FITS.FLEXIBLE) {
+    return {
+      budgetFit,
+      budgetExplanationCode: BUDGET_EXPLANATION_CODES.NO_BUDGET,
+      budgetDifferenceCents: null,
+    };
+  }
+  if (budgetFit === BUDGET_FITS.UNSPECIFIED) {
+    return {
+      budgetFit,
+      budgetExplanationCode: BUDGET_EXPLANATION_CODES.UNSPECIFIED,
+      budgetDifferenceCents: null,
+    };
+  }
+  if (budgetFit === BUDGET_FITS.ABOVE_RANGE && input.budgetMax != null) {
+    return {
+      budgetFit,
+      budgetExplanationCode: BUDGET_EXPLANATION_CODES.ABOVE_BUDGET,
+      budgetDifferenceCents: input.totalCents - input.budgetMax,
+    };
+  }
+  if (budgetFit === BUDGET_FITS.BELOW_RANGE && input.budgetMin != null) {
+    return {
+      budgetFit,
+      budgetExplanationCode: BUDGET_EXPLANATION_CODES.BELOW_BUDGET,
+      budgetDifferenceCents: input.totalCents - input.budgetMin,
+    };
+  }
+  return {
+    budgetFit,
+    budgetExplanationCode: BUDGET_EXPLANATION_CODES.WITHIN_BUDGET,
+    budgetDifferenceCents: 0,
+  };
 }
 
 export function selectFoodWithinBudget(input: {
@@ -142,13 +203,16 @@ function strategyFoodSlug<T extends CatalogProduct>(
   profile: RecommendationProfilePayload,
   productsBySlug: Map<string, T>,
   eventDate: string | null,
+  guestCount: number,
   isWeekend: (date: string) => boolean,
 ): string | null {
   const slugs = profile.composition?.foodStrategies[strategy] ?? [];
-  return slugs.find((slug) => {
-    const product = productsBySlug.get(slug);
-    return Boolean(product && usable(product, eventDate, isWeekend));
-  }) ?? null;
+  return (
+    slugs.find((slug) => {
+      const product = productsBySlug.get(slug);
+      return Boolean(product && fitsGuests(product, guestCount) && usable(product, eventDate, isWeekend));
+    }) ?? null
+  );
 }
 
 function chooseFulfillment<T extends CatalogProduct>(
@@ -176,6 +240,42 @@ function chooseFulfillment<T extends CatalogProduct>(
   );
 }
 
+function chooseSpace<T extends CatalogProduct>(input: {
+  tier: TierCompositionConfig;
+  profile: RecommendationProfilePayload;
+  inquiry: PlannerInquiryFacts;
+  productsBySlug: Map<string, T>;
+  isWeekend: (date: string) => boolean;
+  excludedSpaceSlugs?: string[];
+}): T | null {
+  const fits = (product: T | undefined): product is T =>
+    Boolean(
+      product &&
+        fitsGuests(product, input.inquiry.guestCount) &&
+        usable(product, input.inquiry.desiredDate, input.isWeekend),
+    );
+  const excluded = new Set(input.excludedSpaceSlugs ?? []);
+  const ordered = input.tier.spaceSlugOrder ?? [];
+  if (ordered.length > 0) {
+    for (const slug of ordered) {
+      if (excluded.has(slug)) {
+        continue;
+      }
+      const product = input.productsBySlug.get(slug);
+      if (fits(product)) {
+        return product;
+      }
+    }
+    return null;
+  }
+  const fitting = (input.profile.composition?.spaceSlugs ?? [])
+    .filter((slug) => !excluded.has(slug))
+    .map((slug) => input.productsBySlug.get(slug))
+    .filter((row): row is T => fits(row))
+    .sort((left, right) => (left.maxGuests ?? Number.MAX_SAFE_INTEGER) - (right.maxGuests ?? Number.MAX_SAFE_INTEGER));
+  return input.tier.spaceFit === "largest" ? (fitting[fitting.length - 1] ?? null) : (fitting[0] ?? null);
+}
+
 export function composeTierProducts<T extends CatalogProduct>(input: {
   tierKey: "good" | "better" | "best";
   tier: TierCompositionConfig;
@@ -188,6 +288,9 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
   productsById: Map<string, T>;
   isWeekend: (date: string) => boolean;
   foodSlugOverride?: string | null;
+  omitBudgetOptionalUpgrades?: boolean;
+  /** Rooms already rejected for this tier, usually because that room's resources conflict. */
+  excludedSpaceSlugs?: string[];
 }): TierCompositionResult<T> {
   const chosen: T[] = [];
   const seen = new Set<string>();
@@ -248,37 +351,55 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
     }
   }
 
+  const optionalUpgrades = new Set(input.tier.budgetOptionalUpgradeSlugs ?? []);
   for (const slug of input.tier.upgradeSlugs) {
+    if (input.omitBudgetOptionalUpgrades && optionalUpgrades.has(slug)) {
+      continue;
+    }
     const product = input.productsBySlug.get(slug);
     if (product && fitsGuests(product, input.inquiry.guestCount)) {
       push(product);
     }
   }
 
+  // Unknown or null diningPreference still follows the tier food strategy.
+  // Only an explicit "none" omits dining. Older rows stored not_sure for "yes".
   if (input.inquiry.diningPreference !== "none") {
     const explicitFood = explicitFoodSlug(input.inquiry, input.profile, input.productsBySlug);
     const foodSlug =
       explicitFood ??
       input.foodSlugOverride ??
-      strategyFoodSlug(input.tier.foodStrategy, input.profile, input.productsBySlug, input.inquiry.desiredDate, input.isWeekend);
+      strategyFoodSlug(
+        input.tier.foodStrategy,
+        input.profile,
+        input.productsBySlug,
+        input.inquiry.desiredDate,
+        input.inquiry.guestCount,
+        input.isWeekend,
+      );
     push(foodSlug ? input.productsBySlug.get(foodSlug) : null);
+    const optional = new Set(input.tier.budgetOptionalUpgradeSlugs ?? []);
+    for (const slug of input.tier.beverageSlugs ?? []) {
+      if (input.omitBudgetOptionalUpgrades && optional.has(slug)) {
+        continue;
+      }
+      const product = input.productsBySlug.get(slug);
+      if (product && fitsGuests(product, input.inquiry.guestCount)) {
+        push(product);
+      }
+    }
   }
 
   const privateRequested = wantsPrivateSpace(input.inquiry.spacePreference);
-  const fitting = (input.profile.composition?.spaceSlugs ?? [])
-    .map((slug) => input.productsBySlug.get(slug))
-    .filter((row): row is T => Boolean(row && fitsGuests(row, input.inquiry.guestCount) && usable(row, input.inquiry.desiredDate, input.isWeekend)))
-    .sort((left, right) => (left.maxGuests ?? Number.MAX_SAFE_INTEGER) - (right.maxGuests ?? Number.MAX_SAFE_INTEGER));
+  const room = chooseSpace(input);
   let spaceUnmet = false;
   if (privateRequested) {
-    const room = input.tier.spaceFit === "largest" ? fitting[fitting.length - 1] : fitting[0];
     if (!room) {
       spaceUnmet = true;
     } else {
       push(room);
     }
   } else if (input.tier.includeSpace) {
-    const room = input.tier.spaceFit === "largest" ? fitting[fitting.length - 1] : fitting[0];
     push(room);
   }
 
@@ -321,27 +442,101 @@ export function compositionDelta<T extends CatalogProduct>(previous: T[] | null,
   };
 }
 
-export function compositionReason(
-  delta: ReturnType<typeof compositionDelta>,
-  includedNames: string,
-): string {
-  const parts: string[] = [];
-  if (delta.foodFrom && delta.foodTo) {
-    parts.push(`Dining changes from ${delta.foodFrom} to ${delta.foodTo}.`);
+function englishList(items: string[]): string {
+  if (items.length <= 1) {
+    return items[0] ?? "";
   }
+  if (items.length === 2) {
+    return `${items[0]} and ${items[1]}`;
+  }
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+function sentence(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+  return `${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}.`;
+}
+
+function upgradePhrase(fromName: string, toName: string): string {
+  const fromParts = fromName.split(" - ");
+  const toParts = toName.split(" - ");
+  if (fromParts.length >= 2 && toParts.length >= 2 && fromParts[0] === toParts[0]) {
+    return `upgrades ${fromParts[0]} to ${toParts.slice(1).join(" - ")}`;
+  }
+  return `upgrades ${fromName} to ${toName}`;
+}
+
+function includedSentence(products: CompositionProduct[], explicitSelections: boolean): string {
+  const attractions = products.filter(
+    (row) => row.kind === PRODUCT_KINDS.ATTRACTION || row.kind === PRODUCT_KINDS.PACKAGE,
+  );
+  const food = products.find((row) => row.kind === PRODUCT_KINDS.FOOD) ?? null;
+  const space = products.find((row) => row.kind === PRODUCT_KINDS.RENTAL) ?? null;
+  const addOns = products.filter((row) => row.kind === PRODUCT_KINDS.ADD_ON);
+  const chunks: string[] = [];
+  if (attractions.length > 0) {
+    const names = englishList(attractions.map((row) => customerActivityName(row.name)));
+    chunks.push(explicitSelections ? `your selected ${names}` : names);
+  }
+  if (food) {
+    chunks.push(`${food.name} dining`);
+  }
+  if (addOns.length > 0) {
+    chunks.push(englishList(addOns.map((row) => customerActivityName(row.name))));
+  }
+  if (space) {
+    chunks.push(`private event space (${space.name})`);
+  }
+  if (chunks.length === 0) {
+    return "Includes this venue's configured option.";
+  }
+  return `Includes ${englishList(chunks)}.`;
+}
+
+export function compositionReason<T extends CatalogProduct>(input: {
+  current: T[];
+  previous: T[] | null;
+  explicitSelections: boolean;
+}): string {
+  if (!input.previous) {
+    return includedSentence(input.current, input.explicitSelections);
+  }
+  const delta = compositionDelta(input.previous, input.current);
+  const previousSpace = input.previous.find((row) => row.kind === PRODUCT_KINDS.RENTAL) ?? null;
+  const currentSpace = input.current.find((row) => row.kind === PRODUCT_KINDS.RENTAL) ?? null;
+  const changes: string[] = [];
   for (const change of delta.fulfillmentChanges) {
-    parts.push(`${change.toName} replaces ${change.fromName}.`);
+    changes.push(upgradePhrase(change.fromName, change.toName));
   }
-  if (delta.addedProductNames.length === 1) {
-    parts.push(`Adds ${delta.addedProductNames[0]}.`);
-  } else if (delta.addedProductNames.length > 1) {
-    parts.push(`Adds ${delta.addedProductNames.join(", ")}.`);
+  if (delta.foodTo) {
+    changes.push(`upgrades dining to ${delta.foodTo}`);
   }
-  if (delta.spaceAdded) {
-    parts.push(`Adds ${delta.spaceAdded}.`);
+  if (delta.addedProductNames.length > 0) {
+    changes.push(`adds ${englishList(delta.addedProductNames.map((name) => customerActivityName(name)))}`);
   }
-  if (parts.length === 0) {
-    return `Includes ${includedNames}.`;
+  if (currentSpace && !previousSpace) {
+    changes.push(`adds ${currentSpace.name}`);
+  } else if (currentSpace && previousSpace && currentSpace.id !== previousSpace.id) {
+    changes.push(`moves your group to ${currentSpace.name}`);
   }
-  return parts.join(" ");
+  if (changes.length === 0) {
+    return includedSentence(input.current, input.explicitSelections);
+  }
+  const keptSpace =
+    currentSpace && previousSpace && currentSpace.id === previousSpace.id ? currentSpace.name : null;
+  const keptAttractions = input.explicitSelections
+    ? input.current
+        .filter((row) => row.kind === PRODUCT_KINDS.ATTRACTION || row.kind === PRODUCT_KINDS.PACKAGE)
+        .filter((row) => input.previous?.some((previous) => previous.id === row.id))
+        .map((row) => customerActivityName(row.name))
+    : [];
+  const kept = [
+    keptSpace,
+    keptAttractions.length > 0 ? `your selected ${englishList(keptAttractions)}` : null,
+  ].filter((part): part is string => Boolean(part));
+  const body = kept.length > 0 ? `${englishList(changes)} while keeping ${englishList(kept)}` : englishList(changes);
+  return sentence(body);
 }

@@ -162,6 +162,36 @@ export const TENANT_BETA_PRODUCTS: LoadedCatalogProduct[] = [
     [centsPrice(PRODUCT_PRICE_STRATEGIES.FOOD_PER_COMBO, 1500, { unitLabel: "combo" })],
     { kind: PRODUCT_KINDS.FOOD, serving: { servesMin: 6, servesMax: 8, unitCount: null } },
   ),
+  attractionProduct(
+    "party-platter",
+    "Party Platter",
+    [centsPrice(PRODUCT_PRICE_STRATEGIES.FOOD_PER_COMBO, 2800, { unitLabel: "platter" })],
+    { kind: PRODUCT_KINDS.FOOD, serving: { servesMin: 8, servesMax: 10, unitCount: null } },
+  ),
+  attractionProduct(
+    "grill-platter",
+    "Grill Platter",
+    [centsPrice(PRODUCT_PRICE_STRATEGIES.FOOD_PER_COMBO, 4200, { unitLabel: "platter" })],
+    { kind: PRODUCT_KINDS.FOOD, serving: { servesMin: 8, servesMax: 10, unitCount: null } },
+  ),
+  attractionProduct(
+    "lane-side-room",
+    "Lane Side Room",
+    [centsPrice(PRODUCT_PRICE_STRATEGIES.FIXED_RENTAL, 8000, { unitLabel: "room" })],
+    { kind: PRODUCT_KINDS.RENTAL, durationMinutes: 120, maxGuests: 18 },
+  ),
+  attractionProduct(
+    "party-hall",
+    "Party Hall",
+    [centsPrice(PRODUCT_PRICE_STRATEGIES.FIXED_RENTAL, 18000, { unitLabel: "room" })],
+    { kind: PRODUCT_KINDS.RENTAL, durationMinutes: 180, maxGuests: 60 },
+  ),
+  attractionProduct(
+    "fountain-drinks",
+    "Fountain Drinks",
+    [centsPrice(PRODUCT_PRICE_STRATEGIES.PER_PERSON, 300, { unitLabel: "person" })],
+    { kind: PRODUCT_KINDS.ADD_ON },
+  ),
 ];
 
 export function tenantAlphaRequirements(): CatalogResourceRequirementRow[] {
@@ -227,18 +257,21 @@ export const TENANT_BETA_COMPOSITION_PROFILE: RecommendationProfilePayload = {
   composition: {
     foodStrategies: {
       value: ["snack-combo"],
-      standard: ["snack-combo"],
-      premium: ["snack-combo"],
+      standard: ["party-platter"],
+      premium: ["grill-platter"],
     },
-    spaceSlugs: ["full-venue"],
+    spaceSlugs: ["lane-side-room", "party-hall"],
     tiers: {
       good: {
         foodStrategy: "value",
         coreAttractionSlugs: ["bowling-1h"],
         upgradeSlugs: [],
+        beverageSlugs: ["fountain-drinks"],
+        budgetOptionalUpgradeSlugs: ["fountain-drinks"],
         fulfillmentByInterest: {},
         includeSpace: false,
         spaceFit: "tightest",
+        spaceSlugOrder: ["lane-side-room", "party-hall"],
       },
       better: {
         foodStrategy: "standard",
@@ -247,14 +280,17 @@ export const TENANT_BETA_COMPOSITION_PROFILE: RecommendationProfilePayload = {
         fulfillmentByInterest: {},
         includeSpace: false,
         spaceFit: "tightest",
+        spaceSlugOrder: ["lane-side-room", "party-hall"],
       },
       best: {
         foodStrategy: "premium",
-        coreAttractionSlugs: ["bowling-1h"],
+        coreAttractionSlugs: ["bowling-1h", "trampoline"],
         upgradeSlugs: [],
+        beverageSlugs: ["fountain-drinks"],
         fulfillmentByInterest: {},
         includeSpace: false,
-        spaceFit: "tightest",
+        spaceFit: "largest",
+        spaceSlugOrder: ["party-hall", "lane-side-room"],
       },
     },
   },
@@ -431,3 +467,53 @@ export const TENANT_BETA_DATASET: BookingCatalogDataset = {
     profileRow(INQUIRY_AUDIENCES.MIXED, TENANT_BETA_ADULT_PROFILE),
   ],
 };
+
+export function tenantBetaCompositionDataset(): BookingCatalogDataset {
+  const product = (slug: string) => {
+    const row = TENANT_BETA_PRODUCTS.find((item) => item.slug === slug);
+    if (!row) {
+      throw new Error(`Missing tenant B product ${slug}`);
+    }
+    return row;
+  };
+  return {
+    ...TENANT_BETA_DATASET,
+    categories: [
+      ...TENANT_BETA_DATASET.categories,
+      { slug: "add-ons", name: "Add-ons", sortOrder: 3 },
+      { slug: "spaces", name: "Spaces", sortOrder: 4 },
+    ],
+    resourceTypes: [
+      ...TENANT_BETA_DATASET.resourceTypes,
+      { slug: "lane-side-room", name: "Lane Side Room", count: 1, capacity: 18, schedulingMode: "SLOTTED" },
+      { slug: "party-hall", name: "Party Hall", count: 1, capacity: 60, schedulingMode: "SLOTTED" },
+    ],
+    products: [
+      ...TENANT_BETA_DATASET.products.filter((row) => row.slug !== "full-venue"),
+      datasetProduct(product("party-platter"), "food"),
+      datasetProduct(product("grill-platter"), "food"),
+      datasetProduct(product("fountain-drinks"), "add-ons"),
+      datasetProduct(product("lane-side-room"), "spaces", [
+        {
+          resourceTypeSlug: "lane-side-room",
+          quantityRule: PRODUCT_QUANTITY_RULES.FIXED,
+          quantity: 1,
+          exclusive: true,
+        },
+      ]),
+      datasetProduct(product("party-hall"), "spaces", [
+        {
+          resourceTypeSlug: "party-hall",
+          quantityRule: PRODUCT_QUANTITY_RULES.FIXED,
+          quantity: 1,
+          exclusive: true,
+        },
+      ]),
+    ],
+    recommendationProfiles: [
+      profileRow(INQUIRY_AUDIENCES.KIDS_YOUTH, TENANT_BETA_KIDS_COMPOSITION_PROFILE),
+      profileRow(INQUIRY_AUDIENCES.ADULTS, TENANT_BETA_COMPOSITION_PROFILE),
+      profileRow(INQUIRY_AUDIENCES.MIXED, TENANT_BETA_COMPOSITION_PROFILE),
+    ],
+  };
+}

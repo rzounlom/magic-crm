@@ -1,6 +1,12 @@
 import { usPhoneDigits } from "@/lib/inquiries/public-phone";
 import { PUBLIC_INTAKE_LIMITS } from "@/types/inquiry";
-import { BUDGET_BAND_LABELS, EVENT_TYPE_OPTIONS, type BudgetBand } from "@/types/event-planner";
+import {
+  BUDGET_BAND_LABELS,
+  EVENT_TYPE_OPTIONS,
+  PUBLIC_EVENT_LENGTH_OPTIONS,
+  type BudgetBand,
+  type PublicEventLengthValue,
+} from "@/types/event-planner";
 
 export const PLANNER_STEPS = [
   "event",
@@ -10,6 +16,7 @@ export const PLANNER_STEPS = [
   "food",
   "space",
   "budget",
+  "length",
   "when",
   "contact",
   "review",
@@ -25,6 +32,7 @@ export const PLANNER_STEP_TITLES: Record<PlannerStep, string> = {
   food: "Would you like food included?",
   space: "Would you like a private event space?",
   budget: "What budget should we plan around?",
+  length: "How long would you like the event to be?",
   when: "When would you like to start?",
   contact: "How can we reach you?",
   review: "Review your event",
@@ -100,6 +108,8 @@ export type PlannerAnswers = {
   privateSpacePreference: PrivateSpacePreference | "";
   budgetBand: BudgetBand | "";
   budgetPreference: BudgetPreference | "";
+  /** Minutes as a string, or FLEXIBLE when the customer wants a recommendation. */
+  desiredDurationMinutes: PublicEventLengthValue | "";
   eventDate: string;
   startHour: string;
   startMinute: string;
@@ -123,6 +133,7 @@ export function emptyPlannerAnswers(): PlannerAnswers {
     privateSpacePreference: "",
     budgetBand: "",
     budgetPreference: "",
+    desiredDurationMinutes: "",
     eventDate: "",
     startHour: "",
     startMinute: "",
@@ -183,6 +194,10 @@ export function plannerStepError(step: PlannerStep, answers: PlannerAnswers): st
       return answers.budgetBand || answers.budgetPreference === "FLEXIBLE"
         ? null
         : "Choose a total event budget.";
+    case "length":
+      return PUBLIC_EVENT_LENGTH_OPTIONS.some((option) => option.value === answers.desiredDurationMinutes)
+        ? null
+        : "Choose an event length.";
     case "when":
       if (!/^\d{4}-\d{2}-\d{2}$/.test(answers.eventDate)) {
         return "Choose a valid date.";
@@ -330,6 +345,10 @@ export function plannerAnswersToIntakeRecord(answers: PlannerAnswers, submission
     privateSpacePreference: answers.privateSpacePreference,
     budgetBand: answers.budgetBand,
     budgetPreference: answers.budgetPreference === "FLEXIBLE" ? "FLEXIBLE" : "",
+    desiredDurationMinutes:
+      answers.desiredDurationMinutes && answers.desiredDurationMinutes !== "FLEXIBLE"
+        ? answers.desiredDurationMinutes
+        : "",
     attractionInterestIds: answers.attractionInterestIds,
     notes: answers.notes.trim(),
     submissionId,

@@ -7,6 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PublicIntakeWizard } from "@/components/layout/public-intake-wizard";
+import { PLANNER_STEPS } from "@/lib/event-planner/intake-contract";
 import {
   PUBLIC_INQUIRY_PENDING_COPY,
 } from "@/components/layout/public-inquiry-pending";
@@ -110,7 +111,14 @@ describe("public intake wizard", () => {
     await continuePlanner(user);
     await choose(user, "$1,500–$3,000");
     await continuePlanner(user);
-    fireEvent.change(screen.getByLabelText("Event date"), { target: { value: "2026-09-26" } });
+    expect(screen.getByRole("heading", { name: "How long would you like the event to be?" })).toBeTruthy();
+    await choose(user, "2 hours");
+    await continuePlanner(user);
+    const eventDate = screen.getByLabelText("Event date");
+    expect(eventDate.className).toContain("cursor-pointer");
+    expect(eventDate.parentElement?.className).toContain("sm:max-w-90");
+    expect(screen.getByText("Preferred start time")).toBeTruthy();
+    fireEvent.change(eventDate, { target: { value: "2026-09-26" } });
     await user.selectOptions(screen.getByLabelText("Hour"), "5");
     await user.selectOptions(screen.getByLabelText("Minute"), "00");
     await user.selectOptions(screen.getByLabelText("AM/PM"), "PM");
@@ -123,6 +131,8 @@ describe("public intake wizard", () => {
     await continuePlanner(user);
 
     expect(screen.getByRole("heading", { name: "Review your event" })).toBe(document.activeElement);
+    expect(screen.getByText("2 hours")).toBeTruthy();
+    expect(document.querySelector('input[name="desiredDurationMinutes"]')).toHaveProperty("value", "120");
     expect(screen.getByText("September 26, 2026 at 5:00 PM")).toBeTruthy();
     expect(screen.queryByText("17:00")).toBeNull();
     expect(screen.getByText("Bowling, Axe Throwing")).toBeTruthy();
@@ -170,10 +180,17 @@ describe("public intake wizard", () => {
     expect(screen.getByRole("heading", { name: "Would you like food included?" })).toBeTruthy();
     const scroll = document.querySelector("[data-planner-scroll]");
     const actions = document.querySelector("[data-planner-actions]");
+    const shell = document.querySelector("[data-planner-shell]");
     expect(scroll?.contains(screen.getByRole("button", { name: "Yes" }))).toBe(true);
     expect(scroll?.contains(actions)).toBe(false);
     expect(actions?.textContent).toMatch(/Back/);
     expect(actions?.textContent).toMatch(/Continue/);
+    expect(shell?.className).toContain("max-h-full");
+    expect(shell?.className).toContain("h-fit");
+    expect(shell?.className).toContain("max-w-272");
+    expect(shell?.className).toContain("mx-auto");
+    expect(shell?.className).not.toMatch(/(?:^|\s)flex-1(?:\s|$)/);
+    expect(actions?.className).not.toMatch(/mt-auto|sticky|fixed/);
 
     await user.click(screen.getByRole("button", { name: "Start over" }));
     const dialog = screen.getByRole("dialog", { name: "Start over?" });
@@ -186,6 +203,26 @@ describe("public intake wizard", () => {
     expect(screen.getByRole("heading", { name: "What are you planning?" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Corporate Event" })).toHaveProperty("ariaPressed", "false");
     expect(screen.queryByDisplayValue("8")).toBeNull();
+  });
+
+  it("keeps the guest count to digits and rejects letters", async () => {
+    const user = userEvent.setup();
+    render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
+
+    await choose(user, "Birthday Party");
+    await continuePlanner(user);
+    const guests = screen.getByLabelText("Guest count");
+    expect(guests.className).toContain("w-full");
+    expect(guests.className).not.toContain("w-1/2");
+    expect(guests.parentElement?.className).toContain("sm:max-w-xs");
+    await user.type(guests, "2a0b");
+    expect(guests).toHaveProperty("value", "20");
+    await user.clear(guests);
+    await user.type(guests, "1234");
+    expect(guests).toHaveProperty("value", "123");
+    await user.clear(guests);
+    await continuePlanner(user);
+    expect(screen.getByRole("alert").textContent).toMatch(/whole number/i);
   });
 
   it("shows a guest-count error and a pending state without accepting a second submit", async () => {
@@ -218,6 +255,8 @@ describe("public intake wizard", () => {
     await continuePlanner(user);
     await choose(user, /Flexible/);
     await continuePlanner(user);
+    await choose(user, "Flexible / recommend for me");
+    await continuePlanner(user);
     fireEvent.change(screen.getByLabelText("Event date"), { target: { value: "2026-10-15" } });
     await user.selectOptions(screen.getByLabelText("Hour"), "5");
     await user.selectOptions(screen.getByLabelText("Minute"), "00");
@@ -233,6 +272,8 @@ describe("public intake wizard", () => {
     await user.type(screen.getByRole("textbox", { name: /email/i }), "ada@example.com");
     await continuePlanner(user);
     expect(screen.getByText("We'll recommend options")).toBeTruthy();
+    expect(screen.getByText("Flexible / recommend for me")).toBeTruthy();
+    expect(document.querySelector('input[name="desiredDurationMinutes"]')).toHaveProperty("value", "");
     expect(screen.queryByLabelText("First name")).toBeNull();
 
     const submitPromise = user.click(screen.getByRole("button", { name: "Build my event options" }));
@@ -253,5 +294,47 @@ describe("public intake wizard", () => {
       expect(screen.getByRole("button", { name: "Build my event options" })).toHaveProperty("disabled", false);
       expect(document.querySelector("[data-planner-shell]")).toHaveProperty("ariaBusy", "false");
     });
+  });
+
+  it("shows the requested event length on review and keeps an edit", async () => {
+    expect(PLANNER_STEPS.indexOf("length")).toBe(PLANNER_STEPS.indexOf("when") - 1);
+    const user = userEvent.setup();
+    render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
+
+    await choose(user, "Birthday Party");
+    await continuePlanner(user);
+    await user.type(screen.getByLabelText("Guest count"), "20");
+    await continuePlanner(user);
+    await choose(user, "Mostly Adults");
+    await continuePlanner(user);
+    await continuePlanner(user);
+    await choose(user, "Yes");
+    await continuePlanner(user);
+    await choose(user, "Yes");
+    await continuePlanner(user);
+    await choose(user, "$1,500–$3,000");
+    await continuePlanner(user);
+    await choose(user, "2 hours");
+    await continuePlanner(user);
+    fireEvent.change(screen.getByLabelText("Event date"), { target: { value: "2026-09-26" } });
+    await user.selectOptions(screen.getByLabelText("Hour"), "5");
+    await user.selectOptions(screen.getByLabelText("Minute"), "00");
+    await user.selectOptions(screen.getByLabelText("AM/PM"), "PM");
+    await continuePlanner(user);
+    await user.type(screen.getByLabelText("First name"), "Ada");
+    await user.type(screen.getByLabelText("Last name"), "Lovelace");
+    await user.type(screen.getByLabelText("Email"), "ada@example.com");
+    await continuePlanner(user);
+
+    expect(screen.getByText("2 hours")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Edit Event length" }));
+    expect(screen.getByRole("button", { name: /2 hours/ })).toHaveProperty("ariaPressed", "true");
+    await choose(user, "3 hours");
+    await continuePlanner(user);
+    await continuePlanner(user);
+    await continuePlanner(user);
+    expect(screen.getByRole("heading", { name: "Review your event" })).toBeTruthy();
+    expect(screen.getByText("3 hours")).toBeTruthy();
+    expect(document.querySelector('input[name="desiredDurationMinutes"]')).toHaveProperty("value", "180");
   });
 });

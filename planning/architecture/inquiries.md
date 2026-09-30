@@ -25,9 +25,10 @@ The customer walks a short planner. Answers stay in the browser until the last s
 5. Food — Yes / No, stored as `diningPreference` `WANTS_FOOD` or `NO_FOOD`. The customer does not pick a catering SKU.
 6. Private space — Yes / No preference, stored as `spacePreference` `private` or `no_preference`. The customer does not pick a room.
 7. Budget — total event ranges from `BUDGET_BAND_VALUES` (`Under $1,500` through `$7,500+`) plus Flexible / show me options. The band writes `budgetMin` / `budgetMax` in cents. It is recommendation guidance, not a quote, a cap, or a price override. Flexible leaves those cents null and stores `budgetPreference = FLEXIBLE`.
-8. Date and preferred start time — 12-hour controls. Stored as a date plus `HH:mm` in the location's event-local clock.
-9. Contact information — first name, last name, and email are required. Phone, group or company name, and notes are optional. The customer cannot continue with an invalid required field.
-10. Review — read-only summary of every answer, including contact, with an Edit link back to each step. **Build my event options** submits. The review screen does not contain contact inputs. There is still no inquiry until that submit.
+8. Event length — a customer preference, not a schedule guarantee. Choices are 1.5, 2, 2.5, 3, and 4 hours, plus Flexible / recommend for me. A chosen length is stored on the existing `desiredDurationMinutes` column. Flexible stores null. The proposal engine receives that value as a preference. Generated event length still comes from the dining and activity span.
+9. Date and preferred start time — 12-hour controls. Stored as a date plus `HH:mm` in the location's event-local clock.
+10. Contact information — first name, last name, and email are required. Phone, group or company name, and notes are optional. The customer cannot continue with an invalid required field.
+11. Review — read-only summary of every answer, including event length and contact, with an Edit link back to each step. **Build my event options** submits. The review screen does not contain contact inputs. There is still no inquiry until that submit.
 
 There is no dedicated beverage question. `beveragePreference` stays on older rows and still displays for staff. New submissions leave it null. Beverages can return later as package inclusions or catalog add-ons.
 
@@ -35,7 +36,7 @@ Attraction names that include a duration are formatted for display only (`60 Min
 
 The planner is a viewport shell: context and the step question stay put, the answer region scrolls, and Back / Continue / Build my event options stay in a footer. **Build my event options** covers the page with “Creating your event options…” until the request finishes or fails.
 
-The customer is not asked for a duration. `desiredDurationMinutes` stays null on new inquiries. Older inquiries that have it still display it.
+Event length is a preference. Flexible and older rows leave `desiredDurationMinutes` null. A selected length is stored on that same column and shown on Review.
 
 Canonical fields the server persists: `eventType`, `guestCount`, `guestMix` (audience), `attractionInterestIds`, `diningPreference` (food), `beveragePreference`, `budgetPreference` (plus derived `budgetMin` / `budgetMax` cents for the current engine), `desiredDate`, `desiredStartTime`, `spacePreference`. `eventGoal` is set from the event type when the customer does not send a separate goal, so older goal-based ranking still has a signal.
 
@@ -63,7 +64,7 @@ The engine tries to produce three *useful* choices, not three packages for their
 - **Recommended** — the tenant's preferred balance of food, activities, duration, and value
 - **Premium** — a configured upgrade with understandable extra value, which may sit above the stated budget
 
-On the catalog path, explicit attraction interests stay in every tier that can fulfill them. Food tier, fulfillment duration, upgrades, and private space come from that audience's `composition` block. The knowledge path still treats notes and checkboxes as ranking signals against `SalesKnowledgeItem` text. Neither path invents prices, hours, lane counts, food products, or availability. Guest-count and published age/capacity limits still apply. Internal `payload.ranking` scores stay off the customer UI. Catalog snapshots also store `budgetFit`, `spaceUnmet`, `unfulfilledInterestSlugs`, and `compositionDelta`.
+On the catalog path, explicit attraction interests stay in every tier that can fulfill them. Food tier, fulfillment duration, upgrades, and private space come from that audience's `composition` block. The knowledge path still treats notes and checkboxes as ranking signals against `SalesKnowledgeItem` text. Neither path invents prices, hours, lane counts, food products, or availability. Guest-count and published age/capacity limits still apply. Internal `payload.ranking` scores stay off the customer UI. Catalog snapshots also store `budgetFit`, `budgetExplanationCode`, `budgetDifferenceCents`, `spaceUnmet`, `unfulfilledInterestSlugs`, and `compositionDelta`. Budget copy on the public card is derived from those fields and stays separate from the recommendation sentence. A later catalog or profile edit does not rewrite an existing snapshot.
 
 If fewer than three valid options exist, persist what is feasible. If none exist, keep the inquiry and show the customer a staff-follow-up message.
 
