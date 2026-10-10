@@ -16,9 +16,11 @@ import {
   isValidIanaTimeZone,
   occupancyInstants,
   resolveOrganizationTimeZone,
+  resolveSchedulingTimeZone,
   resolveTenantTimezone,
   tenantLocalDayBounds,
 } from "@/lib/inquiries/tenant-datetime";
+import { weekdayKeyFromIsoDate } from "@/server/catalog/pricing";
 
 describe("tenant date/time display", () => {
   it("formats an event-local date and 19:00 without shifting the calendar day", () => {
@@ -153,5 +155,136 @@ describe("tenant date/time display", () => {
     });
     expect(before.toISOString()).toBe("2026-03-08T06:30:00.000Z");
     expect(after.toISOString()).toBe("2026-03-08T07:30:00.000Z");
+  });
+
+  it("prefers a valid location timezone over the organization timezone, including UTC", () => {
+    expect(
+      resolveSchedulingTimeZone({
+        locationTimeZone: "UTC",
+        organizationTimeZone: "America/Indiana/Indianapolis",
+      }),
+    ).toBe("UTC");
+    expect(
+      resolveSchedulingTimeZone({
+        locationTimeZone: "America/Indiana/Indianapolis",
+        organizationTimeZone: "UTC",
+      }),
+    ).toBe("America/Indiana/Indianapolis");
+    expect(
+      resolveSchedulingTimeZone({
+        locationTimeZone: null,
+        organizationTimeZone: "America/Chicago",
+      }),
+    ).toBe("America/Chicago");
+  });
+
+  it("does not globally reject UTC as a legitimate scheduling zone", () => {
+    const utcWindow = occupancyInstants({
+      slotDate: "2026-10-15",
+      startMinute: 18 * 60,
+      endMinute: 20 * 60,
+      timeZone: "UTC",
+    });
+    expect(utcWindow.startsAt.toISOString()).toBe("2026-10-15T18:00:00.000Z");
+  });
+
+  it("converts Indiana venue-local clocks to the correct UTC instants (EDT offset)", () => {
+    const indiana = occupancyInstants({
+      slotDate: "2026-10-15",
+      startMinute: 18 * 60,
+      endMinute: 20 * 60,
+      timeZone: "America/Indiana/Indianapolis",
+    });
+    const asUtc = occupancyInstants({
+      slotDate: "2026-10-15",
+      startMinute: 18 * 60,
+      endMinute: 20 * 60,
+      timeZone: "UTC",
+    });
+    expect(indiana.startsAt.toISOString()).toBe("2026-10-15T22:00:00.000Z");
+    expect(asUtc.startsAt.toISOString()).toBe("2026-10-15T18:00:00.000Z");
+    expect(
+      (asUtc.startsAt.getTime() - indiana.startsAt.getTime()) / 60000,
+    ).toBe(-240);
+  });
+
+  it("keeps near-midnight Indiana events on the correct UTC calendar day", () => {
+    const late = occupancyInstants({
+      slotDate: "2026-10-18",
+      startMinute: 23 * 60,
+      endMinute: 25 * 60,
+      timeZone: "America/Indiana/Indianapolis",
+    });
+    expect(late.startsAt.toISOString()).toBe("2026-10-19T03:00:00.000Z");
+    expect(late.endsAt.toISOString()).toBe("2026-10-19T05:00:00.000Z");
+  });
+
+  it("resolves spring-forward gap times by folding to the pre-transition offset", () => {
+    // 2026-03-08 02:30 does not exist in America/Indiana/Indianapolis.
+    const gap = eventLocalToUtc({
+      date: "2026-03-08",
+      minuteOfDay: 2 * 60 + 30,
+      timeZone: "America/Indiana/Indianapolis",
+    });
+    const pre = eventLocalToUtc({
+      date: "2026-03-08",
+      minuteOfDay: 90,
+      timeZone: "America/Indiana/Indianapolis",
+    });
+    expect(gap.toISOString()).toBe(pre.toISOString());
+    expect(formatTenantTimestamp(gap, "America/Indiana/Indianapolis")).toBe(
+      "Mar 8, 2026 at 1:30 AM",
+    );
+  });
+
+  it("resolves fall-back ambiguity to the first (daylight) occurrence", () => {
+    // 2026-11-01 01:30 occurs twice; converter picks the earlier UTC instant (EDT).
+    const ambiguous = eventLocalToUtc({
+      date: "2026-11-01",
+      minuteOfDay: 90,
+      timeZone: "America/Indiana/Indianapolis",
+    });
+    expect(ambiguous.toISOString()).toBe("2026-11-01T05:30:00.000Z");
+    expect(formatTenantTimestamp(ambiguous, "America/Indiana/Indianapolis")).toBe(
+      "Nov 1, 2026 at 1:30 AM",
+    );
+  });
+
+  it("keeps promotion weekdays on the civil event date across time zones", () => {
+    expect(weekdayKeyFromIsoDate("2026-10-15", "UTC")).toBe("thu");
+    expect(weekdayKeyFromIsoDate("2026-10-15", "America/Indiana/Indianapolis")).toBe("thu");
+    expect(weekdayKeyFromIsoDate("2026-10-16", "UTC")).toBe("fri");
+    // A Thursday 6pm Indiana event is still Friday in UTC, but promo weekday stays thu.
+    const indiana = eventLocalToUtc({
+      date: "2026-10-15",
+      minuteOfDay: 18 * 60,
+      timeZone: "America/Indiana/Indianapolis",
+    });
+    expect(indiana.toISOString()).toBe("2026-10-15T22:00:00.000Z");
+    expect(weekdayKeyFromIsoDate("2026-10-15")).toBe("thu");
+    expect(indiana.toISOString().slice(0, 10)).toBe("2026-10-15");
+  });
+
+  it("isolates multi-tenant and multi-location timezone conversion", () => {
+    const indiana = eventLocalToUtc({
+      date: "2026-10-15",
+      minuteOfDay: 18 * 60,
+      timeZone: "America/Indiana/Indianapolis",
+    });
+    const pacific = eventLocalToUtc({
+      date: "2026-10-15",
+      minuteOfDay: 18 * 60,
+      timeZone: "America/Los_Angeles",
+    });
+    const utcTenant = eventLocalToUtc({
+      date: "2026-10-15",
+      minuteOfDay: 18 * 60,
+      timeZone: "UTC",
+    });
+    expect(indiana.toISOString()).toBe("2026-10-15T22:00:00.000Z");
+    expect(pacific.toISOString()).toBe("2026-10-16T01:00:00.000Z");
+    expect(utcTenant.toISOString()).toBe("2026-10-15T18:00:00.000Z");
+    expect(indiana.toISOString()).not.toBe(pacific.toISOString());
+    expect(utcTenant.toISOString()).not.toBe(indiana.toISOString());
   });
 });

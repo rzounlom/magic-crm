@@ -1,0 +1,1801 @@
+{
+  "schemaVersion": "r2c3.1",
+  "draftOnly": true,
+  "notForDatabaseSeed": true,
+  "generatedAt": "2026-10-10",
+  "target": {
+    "organizationId": "mdutc2nkvpafezukeem8942v",
+    "organizationSlug": "generations-crm-test-1788129640704833684",
+    "locationId": "rysftywo62ve9sao10dk71si",
+    "locationSlug": "main"
+  },
+  "activation": {
+    "calculationEnabled": false,
+    "collectionEnabled": false
+  },
+  "venue": {
+    "streetLine1": "1018 West Edison Road",
+    "city": "Mishawaka",
+    "region": "IN",
+    "postalCode": "46545",
+    "country": "US",
+    "countyName": "St. Joseph",
+    "jurisdictionCode": "US-IN-ST-JOSEPH",
+    "jurisdictionResolved": false,
+    "taxTimeZoneProposed": "America/Indiana/Indianapolis",
+    "addressEvidenceStatus": "SOURCE_VERIFIED",
+    "addressSources": [
+      "https://generations-adventureplex.com/",
+      "https://generations-adventureplex.com/faq/"
+    ],
+    "notes": "Address verified from public site; not written to LocationTaxProfile. jurisdictionResolved remains false until management confirms tax registration location(s)."
+  },
+  "organizationTimezone": "America/Indiana/Indianapolis",
+  "locationTimezoneObserved": "UTC",
+  "locationTimezoneCorrection": {
+    "proposed": "America/Indiana/Indianapolis",
+    "authorizedToExecute": false,
+    "impactDoc": "docs/tax/R2C3_LOCATION_TIMEZONE_IMPACT.md"
+  },
+  "pricingMode": {
+    "proposed": null,
+    "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+    "notes": "Shoes advertised '+ tax' suggest exclusive for that component; package cents (e.g. 27599) and mixed site copy leave exclusive vs inclusive unresolved for most SKUs. Engine TAX_INCLUSIVE unsupported."
+  },
+  "rateSchedules": [
+    {
+      "taxType": "STATE_SALES",
+      "jurisdictionCode": "US-IN-ST-JOSEPH",
+      "rateBps": 700,
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": null,
+      "verificationStatus": "VERIFIED_RATE_ONLY",
+      "approvalStatus": "DRAFT_NOT_APPROVED_FOR_PRODUCT_APPLICATION",
+      "active": false,
+      "sourceUrl": "https://www.in.gov/dor/about/news-publications/our-team/tax-types/",
+      "sourceCitation": "Indiana DOR Tax Types — Sales Tax 7% (IC 6-2.5-4)",
+      "notes": "Rate existence is verified. Product-level applicability is NOT approved. Do not activate."
+    },
+    {
+      "taxType": "COUNTY_FAB",
+      "jurisdictionCode": "US-IN-ST-JOSEPH",
+      "rateBps": null,
+      "presentOnDorFabTableAsOf": "2026-10-10",
+      "listed": false,
+      "verificationStatus": "SOURCE_VERIFIED_ABSENT",
+      "approvalStatus": "DRAFT",
+      "active": false,
+      "sourceUrl": "https://www.in.gov/dor/i-am-a/business-corp/food-and-beverage-tax/",
+      "notes": "St. Joseph County and Mishawaka not on DOR FAB adopting table as of re-check 2026-10-10. Re-verify before any food-tax activation. Absence is not permanent exemption proof."
+    }
+  ],
+  "products": [
+    {
+      "productId": "yyla7m442hqyw1gwid5xlf52",
+      "slug": "have-a-ball-bowling",
+      "name": "Have a Ball Birthday Party (Bowling)",
+      "kind": "PACKAGE",
+      "categorySlug": "kids-birthday-packages",
+      "billingStrategies": [
+        "PACKAGE_BASE_PLUS_ADDITIONAL"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": null,
+      "includesRoomFacility": false,
+      "experienceGrants": [
+        {
+          "experienceKey": "bowling",
+          "kind": "ACTIVITY",
+          "participantRule": "ALL_GUESTS",
+          "optionalBenefit": false
+        }
+      ],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "bbnwluim2qzw4ratbkld7isy",
+      "slug": "have-a-ball-mini-golf",
+      "name": "Have a Ball Birthday Party (Mini Golf)",
+      "kind": "PACKAGE",
+      "categorySlug": "kids-birthday-packages",
+      "billingStrategies": [
+        "PACKAGE_BASE_PLUS_ADDITIONAL"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": null,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "l78xvm037bunkl7lrtna1fxz",
+      "slug": "have-a-blast",
+      "name": "Have a Blast Laser Tag Birthday Party",
+      "kind": "PACKAGE",
+      "categorySlug": "kids-birthday-packages",
+      "billingStrategies": [
+        "PACKAGE_BASE_PLUS_ADDITIONAL"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "pj9vppra43k3vui7urqhapsq",
+      "slug": "have-it-all",
+      "name": "Have It All / Taste of Adventure Birthday Party",
+      "kind": "PACKAGE",
+      "categorySlug": "kids-birthday-packages",
+      "billingStrategies": [
+        "PACKAGE_BASE_PLUS_ADDITIONAL"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "vww5ds59b7todanu09ahms2f",
+      "slug": "axe-throwing-30",
+      "name": "Axe Throwing - 30 Minutes",
+      "kind": "ATTRACTION",
+      "categorySlug": "timed-attractions",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [
+        {
+          "experienceKey": "axe-throwing",
+          "kind": "ACTIVITY",
+          "participantRule": "ALL_GUESTS",
+          "optionalBenefit": false
+        }
+      ],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ADMISSION_ACTIVITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Invoice labeling of activity fees"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "No FEC-specific admissions bulletin; general services rule (SIB #94) makes pure admission CONDITIONAL."
+    },
+    {
+      "productId": "ctjzj7amvkfzdhq3fqvdk7b0",
+      "slug": "axe-throwing-60",
+      "name": "Axe Throwing - 60 Minutes",
+      "kind": "ATTRACTION",
+      "categorySlug": "timed-attractions",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [
+        {
+          "experienceKey": "axe-throwing",
+          "kind": "ACTIVITY",
+          "participantRule": "ALL_GUESTS",
+          "optionalBenefit": false
+        }
+      ],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ADMISSION_ACTIVITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Invoice labeling of activity fees"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "No FEC-specific admissions bulletin; general services rule (SIB #94) makes pure admission CONDITIONAL."
+    },
+    {
+      "productId": "k5zseim40866z3rrp67tnabq",
+      "slug": "unlimited-arcade-1h",
+      "name": "1 Hour Unlimited Arcade Play",
+      "kind": "ATTRACTION",
+      "categorySlug": "timed-attractions",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": null,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "STORED_VALUE_OR_ADMISSION",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Legal form of card/credits"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "No FEC-specific admissions bulletin; general services rule (SIB #94) makes pure admission CONDITIONAL."
+    },
+    {
+      "productId": "t4i9xomw1tbun4wd1mojhhun",
+      "slug": "bowling-1h",
+      "name": "Bowling - 1 Hour",
+      "kind": "ATTRACTION",
+      "categorySlug": "timed-attractions",
+      "billingStrategies": [
+        "PER_LANE_WEEKDAY_WEEKEND"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": true,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [
+        {
+          "experienceKey": "bowling",
+          "kind": "ACTIVITY",
+          "participantRule": "ALL_GUESTS",
+          "optionalBenefit": false
+        }
+      ],
+      "shoeAddOnCents": 350,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ADMISSION_ACTIVITY + TPP_RENTAL(shoes)",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": [
+        {
+          "componentKey": "",
+          "proposedClassification": "ADMISSION_ACTIVITY",
+          "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED"
+        },
+        {
+          "componentKey": "shoes",
+          "proposedClassification": "TPP_RENTAL",
+          "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+          "sourceNote": "SIB #42 TPP rental + public '+tax' advertising — taxability still needs CPA sign-off for activation"
+        }
+      ],
+      "businessFactsRequired": [
+        "Confirm shoe list price and tax-exclusive advertising",
+        "Confirm lane fee characterization on invoices"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Lane/admission: CONDITIONAL under SIB #94 services rule. Shoes: likely TPP rental (SIB #42); site says +tax. Catalog shoeAddOnCents=350 vs site $4."
+    },
+    {
+      "productId": "kvsd93wihlhluocawshhpb4x",
+      "slug": "laser-plex-card",
+      "name": "Laser Plex Card",
+      "kind": "ATTRACTION",
+      "categorySlug": "timed-attractions",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": null,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "STORED_VALUE_OR_ADMISSION",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Legal form of card/credits"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "No FEC-specific admissions bulletin; general services rule (SIB #94) makes pure admission CONDITIONAL."
+    },
+    {
+      "productId": "q0jckh6bkiw7grnk3a82tuov",
+      "slug": "unlimited-laser-tag-90",
+      "name": "Unlimited Laser Tag - 90 Minutes",
+      "kind": "ATTRACTION",
+      "categorySlug": "timed-attractions",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ADMISSION_ACTIVITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Invoice labeling of activity fees"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "No FEC-specific admissions bulletin; general services rule (SIB #94) makes pure admission CONDITIONAL."
+    },
+    {
+      "productId": "c36eltt5tdetm1qbzx0hlzrr",
+      "slug": "all-access",
+      "name": "All Access Package",
+      "kind": "PACKAGE",
+      "categorySlug": "adult-packages",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "tbs7mjjt960az2tylsd5cpt7",
+      "slug": "axe-treme",
+      "name": "Axe-Treme Package",
+      "kind": "PACKAGE",
+      "categorySlug": "adult-packages",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "vtknd9d7k6n01zk5lgt855xh",
+      "slug": "laser-plex-package",
+      "name": "Laser Plex Package",
+      "kind": "PACKAGE",
+      "categorySlug": "adult-packages",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "tehyqfdd8yniv8vn4dhjl981",
+      "slug": "play-axtion",
+      "name": "Play Axtion Package",
+      "kind": "PACKAGE",
+      "categorySlug": "adult-packages",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "bfnikuny1otcpn97a9g0n3nm",
+      "slug": "climbers-cove-90",
+      "name": "Climbers Cove - 90 Minute Rental",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DAY_SPECIFIC_RENTAL",
+        "DAY_SPECIFIC_RENTAL",
+        "DAY_SPECIFIC_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY_OR_AMUSEMENT_MIX",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Exclusive attraction-area rentals need fact-specific accommodation vs amusement characterization."
+    },
+    {
+      "productId": "pi16w4id1dyw8lhuz8uxj867",
+      "slug": "bowling-lounge-1h",
+      "name": "Bowling Lanes & Lounge - 1 Hour Exclusive Rental",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "FIXED_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY_OR_AMUSEMENT_MIX",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Exclusive attraction-area rentals need fact-specific accommodation vs amusement characterization."
+    },
+    {
+      "productId": "e63ujeqc59whl5wjcqvtz4tu",
+      "slug": "bowling-lounge-2h",
+      "name": "Bowling Lanes & Lounge Area - 2 Hour Exclusive Rental",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "TIME_WINDOW_RENTAL",
+        "TIME_WINDOW_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY_OR_AMUSEMENT_MIX",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Exclusive attraction-area rentals need fact-specific accommodation vs amusement characterization."
+    },
+    {
+      "productId": "jhamdorz8tesxcf8qi6fcr8b",
+      "slug": "axe-den-2h",
+      "name": "The Axe Den - 2 Hour Rental",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DAY_SPECIFIC_RENTAL",
+        "DAY_SPECIFIC_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY_OR_AMUSEMENT_MIX",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Exclusive attraction-area rentals need fact-specific accommodation vs amusement characterization."
+    },
+    {
+      "productId": "ez3oeglln5n4q0a663fuqeit",
+      "slug": "laser-tag-arena-90",
+      "name": "Laser Tag Arena - 90 Minute Exclusive Rental",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DAY_SPECIFIC_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY_OR_AMUSEMENT_MIX",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Exclusive attraction-area rentals need fact-specific accommodation vs amusement characterization."
+    },
+    {
+      "productId": "luhhhpopm8ol16gsmqe81f1s",
+      "slug": "laser-tag-arena-sat-hourly",
+      "name": "Laser Tag Arena - Saturday Exclusive Rental",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DURATION_BASE_PLUS_ADDITIONAL_HOUR"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY_OR_AMUSEMENT_MIX",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Exclusive attraction-area rentals need fact-specific accommodation vs amusement characterization."
+    },
+    {
+      "productId": "oz46y0m8p8solhx9vq33n52a",
+      "slug": "skybox",
+      "name": "Skybox Private Event Room",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DURATION_BASE_PLUS_ADDITIONAL_HOUR"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "vw6b72nhsx1ny5t5y5ethsnl",
+      "slug": "lower-event-room",
+      "name": "Lower Event Room",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DURATION_BASE_PLUS_ADDITIONAL_HOUR"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [
+        {
+          "experienceKey": "lower-event-room",
+          "kind": "SPACE",
+          "participantRule": "ALL_GUESTS",
+          "optionalBenefit": false
+        }
+      ],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "g1xxkpjydmdk0bw9xe9kozn1",
+      "slug": "mezzanine-sun-thu",
+      "name": "Mezzanine Exclusive Rental - Sun-Thu",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DURATION_BASE_PLUS_ADDITIONAL_HOUR"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "yq9oijuauuymdnjj8x625a1i",
+      "slug": "mezzanine-friday",
+      "name": "Mezzanine Exclusive Rental - Friday",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DURATION_BASE_PLUS_ADDITIONAL_HOUR"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "qbgpa2amrt8z085tvvnkkxx4",
+      "slug": "mezzanine-saturday",
+      "name": "Mezzanine Exclusive Rental - Saturday",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "DURATION_BASE_PLUS_ADDITIONAL_HOUR"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "t47j1y6vrzaoyubub5qoywyq",
+      "slug": "mezzanine-2h-fri-sat",
+      "name": "Mezzanine 2-Hour Rental - Fri/Sat",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "FIXED_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "xnaavf984ekg7nsmuwvo7e3l",
+      "slug": "full-facility-before-4-sun-fri",
+      "name": "Full Facility Rental - Before 4 PM Sun-Fri",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "TIME_WINDOW_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "r48806yxructhb5avomnlm4t",
+      "slug": "full-facility-sat-after-4",
+      "name": "Full Facility Rental - Saturday after 4pm",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "TIME_WINDOW_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "v5oqm6ncsa7tz7f6hx9pwel9",
+      "slug": "full-facility-after-4-mon-thu",
+      "name": "Full Facility Rental - After 4 PM Mon-Thu",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "TIME_WINDOW_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "byh1ul13uhrph77upu61ul1v",
+      "slug": "full-facility-after-4-friday",
+      "name": "Full Facility Rental - After 4 PM Friday",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "TIME_WINDOW_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "h3j2gh044vjazhnvxlsrq21v",
+      "slug": "full-facility-after-4-saturday",
+      "name": "Full Facility Rental - After 4 PM Saturday",
+      "kind": "RENTAL",
+      "categorySlug": "exclusive-area-rentals",
+      "billingStrategies": [
+        "TIME_WINDOW_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "jnr8ij74dg9pol2jhiwzauwk",
+      "slug": "field-trip-laser-arcade",
+      "name": "Field Trip: Laser Tag & Arcade",
+      "kind": "FIELD_TRIP",
+      "categorySlug": "youth",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": null,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "x8p50jsm4lust89dnm2ehh4h",
+      "slug": "field-trip-laser-bowling",
+      "name": "Field Trip: Laser Tag & Bowling",
+      "kind": "FIELD_TRIP",
+      "categorySlug": "youth",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "s0av096lwpzeuru8dhtq8dcy",
+      "slug": "field-trip-laserplex",
+      "name": "Field Trip: LaserPlex Package",
+      "kind": "FIELD_TRIP",
+      "categorySlug": "youth",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "f85xg2v5605b836m51kqm26u",
+      "slug": "field-trip-bowling",
+      "name": "Field Trip: Bowling Package",
+      "kind": "FIELD_TRIP",
+      "categorySlug": "youth",
+      "billingStrategies": [
+        "PER_PERSON"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "g0oj8l1ycihtvf1ipj8btoj4",
+      "slug": "youth-group-lock-in",
+      "name": "Youth Group Lock-In",
+      "kind": "PACKAGE",
+      "categorySlug": "youth",
+      "billingStrategies": [
+        "FIXED_RENTAL"
+      ],
+      "isPackage": true,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "MIXED_PACKAGE",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": "UNRESOLVED",
+      "components": null,
+      "businessFactsRequired": [
+        "Exact inclusions",
+        "Whether food is separately stated",
+        "Component selling prices if any",
+        "Arcade credit treatment if included"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "Catalog shortDescription may mention inclusions; experience grants incomplete. SIB #7 applies if food is in a single ticket price. Do not invent allocations from grants."
+    },
+    {
+      "productId": "ltfbjkjsez36olbwhnzwxnmw",
+      "slug": "full-facility-additional-hour",
+      "name": "Full-Facility Additional Hours",
+      "kind": "ADD_ON",
+      "categorySlug": "add-on-hours",
+      "billingStrategies": [
+        "FIXED_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "bh563ftc88cqve20wtdkhw91",
+      "slug": "mezzanine-additional-hour",
+      "name": "Mezzanine Additional Hours",
+      "kind": "ADD_ON",
+      "categorySlug": "add-on-hours",
+      "billingStrategies": [
+        "DAY_SPECIFIC_RENTAL",
+        "DAY_SPECIFIC_RENTAL",
+        "DAY_SPECIFIC_RENTAL"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": true,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "ROOM_FACILITY",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "What the customer invoice describes",
+        "Whether rental is space occupancy vs activity access"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #41 includes banquet halls/gymnasiums/arenas as accommodations when rented <30 days."
+    },
+    {
+      "productId": "jby9q4c8n03662ta9x75yzcu",
+      "slug": "fajita-bar",
+      "name": "Fajita Bar",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "lrryw67qxb1lquj9b4hgs7n0",
+      "slug": "slider-bar",
+      "name": "Slider Bar",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "sf1xwoprslfaco86uvl7sby1",
+      "slug": "pizza-pitcher-combo",
+      "name": "Pizza & Pitcher Combination",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_COMBO"
+      ],
+      "isPackage": false,
+      "includesFood": true,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [
+        {
+          "experienceKey": "pizza-pitcher-combo",
+          "kind": "FOOD",
+          "participantRule": "ALL_GUESTS",
+          "optionalBenefit": false
+        }
+      ],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "upx6pf4q2lcj5xwgcka5ixqw",
+      "slug": "smokehouse-bbq",
+      "name": "Smokehouse BBQ",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "agpvh2708sxwu93u07kp7274",
+      "slug": "breakfast-bar",
+      "name": "Breakfast Bar",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PERSON"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "b50p9jorlypqyaruljd1ze05",
+      "slug": "boneless-wings-36",
+      "name": "Boneless Wings – 36 pc",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PLATTER"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "dmei8e0oohnwt3fnaf08bi73",
+      "slug": "traditional-wings-36",
+      "name": "Traditional Wings – 36 pc",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PLATTER"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "lif07z39pjcofrujngurt05w",
+      "slug": "pretzel-bite-platter",
+      "name": "Pretzel Bite – 45 pc Platter",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PLATTER"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "yz2evjz88mmbgpnoobfbzqow",
+      "slug": "chicken-strip-platter",
+      "name": "Chicken Strip Platter",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PLATTER"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "npz69hqns3e1yom2zlx6vzcv",
+      "slug": "salad-pan",
+      "name": "Salad Pan",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PLATTER"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "glnjj117r0xchfh4coicoiij",
+      "slug": "charcuterie-boards",
+      "name": "Seasonal Veggie, Fresh Fruit & Cheese Charcuterie Boards",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_FIXED_SET"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "kk4nu0pvu9jx8owhfgtbmp45",
+      "slug": "brownie-tray",
+      "name": "Brownie Tray",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PLATTER"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    },
+    {
+      "productId": "wa8ljhtdr6q8fqpj6sn9tlue",
+      "slug": "cookie-tray",
+      "name": "Assorted Cookie Tray",
+      "kind": "FOOD",
+      "categorySlug": "food",
+      "billingStrategies": [
+        "FOOD_PER_PLATTER"
+      ],
+      "isPackage": false,
+      "includesFood": null,
+      "includesEquipmentRental": null,
+      "includesStoredValue": false,
+      "includesRoomFacility": false,
+      "experienceGrants": [],
+      "shoeAddOnCents": null,
+      "evidenceStatus": "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+      "approvalStatus": "UNAPPROVED",
+      "proposedClassification": "PREPARED_FOOD",
+      "proposedTaxability": null,
+      "proposedBundleTreatment": null,
+      "components": null,
+      "businessFactsRequired": [
+        "Utensils/restaurant vs combination-business status",
+        "Alcohol vs soft drink in pitchers"
+      ],
+      "taxProfessionalApprovalRequired": true,
+      "activationReady": false,
+      "notes": "SIB #7/#11/#29 support prepared-food taxability in general; confirm restaurant/combination facts and alcohol in pitchers."
+    }
+  ],
+  "packagePolicies": [
+    {
+      "productId": "yyla7m442hqyw1gwid5xlf52",
+      "slug": "have-a-ball-bowling",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "bbnwluim2qzw4ratbkld7isy",
+      "slug": "have-a-ball-mini-golf",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "l78xvm037bunkl7lrtna1fxz",
+      "slug": "have-a-blast",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "pj9vppra43k3vui7urqhapsq",
+      "slug": "have-it-all",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "c36eltt5tdetm1qbzx0hlzrr",
+      "slug": "all-access",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "tbs7mjjt960az2tylsd5cpt7",
+      "slug": "axe-treme",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "vtknd9d7k6n01zk5lgt855xh",
+      "slug": "laser-plex-package",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "tehyqfdd8yniv8vn4dhjl981",
+      "slug": "play-axtion",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "jnr8ij74dg9pol2jhiwzauwk",
+      "slug": "field-trip-laser-arcade",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "x8p50jsm4lust89dnm2ehh4h",
+      "slug": "field-trip-laser-bowling",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "s0av096lwpzeuru8dhtq8dcy",
+      "slug": "field-trip-laserplex",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "f85xg2v5605b836m51kqm26u",
+      "slug": "field-trip-bowling",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    },
+    {
+      "productId": "g0oj8l1ycihtvf1ipj8btoj4",
+      "slug": "youth-group-lock-in",
+      "treatment": "UNRESOLVED",
+      "approvalStatus": "UNAPPROVED",
+      "evidenceStatus": "BUSINESS_FACTS_REQUIRED"
+    }
+  ],
+  "activationBlockers": [
+    "No OrganizationTaxSettings row (calculation/collection remain off)",
+    "No LocationTaxProfile",
+    "Location.timezone is UTC while org is America/Indiana/Indianapolis — scheduling currently prefers location UTC",
+    "Tax-inclusive vs exclusive unresolved for most SKUs; inclusive mode unsupported",
+    "No accountant-approved product taxabilities",
+    "All packages lack verified bundle tax treatment and component prices",
+    "Calculator applies STATE_SALES only; FAB stacking not implemented if later required",
+    "Deposit tax timing unresolved; sales knowledge says 25% non-refundable for large groups and $100 birthday deposit",
+    "Workbook universal 7% is not authority"
+  ],
+  "evidenceStatusesUsed": [
+    "SOURCE_VERIFIED",
+    "BUSINESS_FACTS_REQUIRED",
+    "TAX_PROFESSIONAL_REVIEW_REQUIRED",
+    "APPROVED",
+    "UNRESOLVED"
+  ],
+  "notes": [
+    "No entry has approvalStatus APPROVED.",
+    "Do not seed this file into DEV/TEST/PROD.",
+    "Pizza & Pins is not a persisted catalog SKU; mapping remains a catalog gap."
+  ]
+}

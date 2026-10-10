@@ -467,6 +467,53 @@ describe("calculateTax promotions and components", () => {
   });
 });
 
+describe("R2C.3 synthetic activation blockers", () => {
+  it("fails closed for TAX_INCLUSIVE pricing mode", () => {
+    const result = calculateTax(
+      baseInput({
+        settings: {
+          calculationEnabled: true,
+          collectionEnabled: false,
+          pricingMode: TAX_PRICING_MODES.TAX_INCLUSIVE,
+          roundingMode: TAX_ROUNDING_MODES.HALF_UP_LINE,
+          approvedAt: null,
+        },
+      }),
+    );
+    expect(result.status).toBe(TAX_CALCULATION_STATUSES.UNRESOLVED_RATE);
+    expect(result.taxTotalCents).toBeNull();
+    expect(result.unresolvedReasons.join(" ")).toMatch(/TAX_INCLUSIVE/);
+  });
+
+  it("fails closed for SEPARATELY_STATED opaque package lines", () => {
+    const result = calculateTax(
+      baseInput({
+        lineItems: [
+          {
+            productId: "pkg-1",
+            slug: "have-a-ball-bowling",
+            name: "Have a Ball",
+            kind: "PACKAGE",
+            quantity: 1,
+            totalCents: 27599,
+          },
+        ],
+        classifications: [],
+        bundlePolicies: [
+          {
+            id: "b1",
+            productId: "pkg-1",
+            treatment: "SEPARATELY_STATED" as const,
+            version: 1,
+          },
+        ],
+      }),
+    );
+    expect(result.status).toBe(TAX_CALCULATION_STATUSES.UNRESOLVED_BUNDLE);
+    expect(result.taxTotalCents).toBeNull();
+  });
+});
+
 describe("tax snapshot compatibility", () => {
   it("keeps legacy payloads readable without taxBreakdown", () => {
     const payload = readEventPlanPayload({
