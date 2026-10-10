@@ -44,6 +44,30 @@ const servingSchema = z.object({
   unitCount: z.number().int().positive().optional().nullable(),
 });
 
+const coverageGrantSchema = z.object({
+  experienceKey: z.string().trim().min(1).max(80),
+  kind: z.enum(["ACTIVITY", "FOOD", "PLAY_CREDIT", "EQUIPMENT", "SPACE"]),
+  durationMinutesPerParticipant: z.number().int().positive().optional().nullable(),
+  sessionsPerParticipant: z.number().int().positive().optional().nullable(),
+  servings: z.number().int().nonnegative().optional().nullable(),
+  participantRule: z.enum(["ALL_GUESTS", "FIXED"]).optional().default("ALL_GUESTS"),
+  fixedParticipants: z.number().int().positive().optional().nullable(),
+  creditCents: z.number().int().nonnegative().optional().nullable(),
+  simultaneousGuestCapacity: z.number().int().positive().optional().nullable(),
+  rotationMinutesPerParticipant: z.number().int().positive().optional().nullable(),
+  minAge: z.number().int().nonnegative().optional().nullable(),
+  minWeightLbs: z.number().int().positive().optional().nullable(),
+  requiresParticipantBreakdown: z.boolean().optional().default(false),
+  optionalBenefit: z.boolean().optional().default(false),
+});
+
+const intakeDeclarationsSchema = z
+  .object({
+    foodInclusion: z.enum(["NONE", "UNKNOWN"]).optional(),
+  })
+  .optional()
+  .nullable();
+
 const productSchema = z.object({
   slug: z.string().trim().min(1).max(80),
   name: z.string().trim().min(1).max(160),
@@ -60,9 +84,12 @@ const productSchema = z.object({
   weekendOnly: z.boolean().optional().default(false),
   fulfillmentGroup: z.string().trim().max(80).optional().nullable(),
   shortDescription: z.string().trim().max(500).optional().nullable(),
+  intakeDeclarations: intakeDeclarationsSchema,
   prices: z.array(priceSchema).min(1),
   requirements: z.array(requirementSchema).optional().default([]),
   serving: servingSchema.optional().nullable(),
+  /** Declared entitlements. Omitted means this product does not claim inclusions. */
+  coverage: z.array(coverageGrantSchema).optional(),
 });
 
 const categorySchema = z.object({

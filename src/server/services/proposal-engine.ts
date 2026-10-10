@@ -1,4 +1,19 @@
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
+import {
+  COVERAGE_FEASIBILITY,
+  PACKAGE_INTAKE_ELIGIBILITY,
+  applyPackageInclusions,
+  assessPackageDiningEligibility,
+  assessSimultaneousHosting,
+  compareCoverage,
+  coverageEntitlementsFromGrants,
+  coverageRequirementsFromSelection,
+  explicitAttractionSelectionMissing,
+  resolveCoverageFeasibility,
+  type ActivityMinimum,
+  type ExperienceGrant,
+  type FoodInclusion,
+} from "@/server/catalog/experience-coverage";
 import { composeEventItinerary, itinerarySpanMinutes, type ItineraryProduct } from "@/server/catalog/itinerary";
 import {
   addedScheduledActivities,
@@ -27,6 +42,7 @@ import { applyAvailabilityProvider, type PlanAvailabilityProvider } from "@/serv
 import type { PlannerInquiryFacts } from "@/server/event-planner/build-event-plans";
 import { searchViableStructuredItinerary } from "@/server/resources/itinerary-search";
 import { planAvailabilityStatusFromCheck } from "@/server/resources/plan-availability-status";
+import { applyInventoryFeasibility } from "@/server/resources/feasibility";
 import { stampPlanResourceWindows } from "@/server/resources/segment-windows";
 import {
   ATTRACTION_MODES,
@@ -56,6 +72,9 @@ export type LoadedCatalogProduct = CatalogProductInput & {
   weekendOnly: boolean;
   fulfillmentGroup: string | null;
   hasResourceRequirements?: boolean;
+  experienceGrants?: ExperienceGrant[];
+  experienceSessions?: number | null;
+  foodInclusion?: FoodInclusion | null;
 };
 
 export type LoadedRecommendationProfile = {
@@ -139,6 +158,14 @@ export function selectCatalogProductsForTier(input: {
     .map((id) => input.productsById.get(id) ?? input.productsBySlug.get(id))
     .filter((row): row is LoadedCatalogProduct => Boolean(row));
   const override = input.attractionMode === ATTRACTION_MODES.KNOWN && selected.length > 0;
+  if (
+    explicitAttractionSelectionMissing({
+      requireExplicitAttractions: input.profile.requireExplicitAttractions === true,
+      attractionCount: selected.length,
+    })
+  ) {
+    return [];
+  }
   const chosen: LoadedCatalogProduct[] = [];
   const seen = new Set<string>();
 
@@ -201,7 +228,12 @@ async function quoteSelection(input: {
   excludeInquiryId?: string | null;
 }) {
   const requirementIds = new Set(input.resourceRequirements.map((row) => row.productId));
-  const selectedProducts = input.selected.map((row) => toItineraryProduct(row, requirementIds));
+  const inclusion = applyPackageInclusions({
+    products: input.selected,
+    guestCount: input.inquiry.guestCount,
+  });
+  const selected = inclusion.products;
+  const selectedProducts = selected.map((row) => toItineraryProduct(row, requirementIds));
   const requestedStartTime = input.inquiry.desiredStartTime;
   const itineraryDraft = composeEventItinerary({
     startTime: requestedStartTime,
@@ -216,7 +248,12 @@ async function quoteSelection(input: {
     startTime: input.inquiry.desiredStartTime,
     durationMinutes,
   };
-  const quotes = input.selected.map((product) => priceProduct(product, pricingContext));
+  const quotes = selected.map((product) =>
+    priceProduct(product, {
+      ...pricingContext,
+      guestCount: inclusion.guestCountByProductId[product.id] ?? pricingContext.guestCount,
+    }),
+  );
   const lineItems: PricedLineItem[] = quotes.flatMap((quote) => quote.lineItems);
   const totalCents = quotes.reduce((sum, quote) => sum + quote.totalCents, 0);
   const pricingComplete = quotes.every((quote) => quote.pricingComplete);
@@ -224,12 +261,20 @@ async function quoteSelection(input: {
   const scheduledProductIds = selectedProducts
     .filter((row) => resolveSchedulingBehavior(row) !== PRODUCT_SCHEDULING_BEHAVIORS.NON_SCHEDULED)
     .map((row) => row.id);
-  const baseRequirements = deriveCatalogResourceRequirements({
+  const derivedRequirements = deriveCatalogResourceRequirements({
     productIds: scheduledProductIds,
     guestCount: input.inquiry.guestCount,
     durationMinutes,
     requirements: input.resourceRequirements,
   });
+  const inventory = [
+    ...new Map(
+      input.resourceRequirements
+        .filter((row) => row.resourceTypeId)
+        .map((row) => [row.resourceTypeId, { id: row.resourceTypeId, activeCount: row.activeCount }]),
+    ).values(),
+  ];
+  const baseRequirements = applyInventoryFeasibility(derivedRequirements, inventory);
   const resourceRequirements = stampPlanResourceWindows({
     itinerary,
     startTime: requestedStartTime,
@@ -237,10 +282,10 @@ async function quoteSelection(input: {
   });
   const roleOfSelected = (row: LoadedCatalogProduct) =>
     resolveSchedulingBehavior(toItineraryProduct(row, requirementIds));
-  const food = input.selected.find((row) => roleOfSelected(row) === "DINING");
-  const spaces = input.selected.filter((row) => roleOfSelected(row) === PRODUCT_SCHEDULING_BEHAVIORS.SPACE_WINDOW);
-  const activities = input.selected.filter((row) => roleOfSelected(row) === PRODUCT_SCHEDULING_BEHAVIORS.SCHEDULED);
-  const included = input.selected.filter((row) => roleOfSelected(row) === PRODUCT_SCHEDULING_BEHAVIORS.NON_SCHEDULED);
+  const food = selected.find((row) => roleOfSelected(row) === "DINING");
+  const spaces = selected.filter((row) => roleOfSelected(row) === PRODUCT_SCHEDULING_BEHAVIORS.SPACE_WINDOW);
+  const activities = selected.filter((row) => roleOfSelected(row) === PRODUCT_SCHEDULING_BEHAVIORS.SCHEDULED);
+  const included = selected.filter((row) => roleOfSelected(row) === PRODUCT_SCHEDULING_BEHAVIORS.NON_SCHEDULED);
   const availability = await applyAvailabilityProvider(
     {
       eventDate: input.inquiry.desiredDate,
@@ -288,6 +333,7 @@ async function quoteSelection(input: {
     activities,
     included,
     result,
+    pricedProducts: selected,
   };
 }
 
@@ -315,6 +361,7 @@ export async function buildCatalogEventPlans(input: {
   excludeInquiryId?: string | null;
   attractionSelections?: AttractionSelection[];
   directAttractionProductIds?: string[];
+  activityMinimums?: Record<string, ActivityMinimum>;
 }): Promise<EventPlanDraft[]> {
   const audience = audienceFromGuestMix(input.inquiry.guestMix);
   const attractionMode = attractionModeFromIntake({
@@ -340,6 +387,7 @@ export async function buildCatalogEventPlans(input: {
           productsBySlug,
           productsById,
           isWeekend: (date) => isWeekendKey(weekdayKeyFromIsoDate(date)),
+          activityMinimums: input.activityMinimums,
         })
       : null;
     let selected = composed
@@ -354,6 +402,15 @@ export async function buildCatalogEventPlans(input: {
           productsBySlug,
           productsById,
         });
+    selected = selected.filter(
+      (product) =>
+        assessPackageDiningEligibility({
+          productKind: product.kind,
+          diningPreference: input.inquiry.diningPreference,
+          experienceGrants: product.experienceGrants ?? [],
+          foodInclusion: product.foodInclusion ?? null,
+        }) !== PACKAGE_INTAKE_ELIGIBILITY.INELIGIBLE,
+    );
     let spaceUnmet = composed?.spaceUnmet ?? false;
     let unfulfilledInterestSlugs = composed?.unfulfilledInterestSlugs ?? [];
     let omittedBudgetUpgrades = false;
@@ -389,6 +446,7 @@ export async function buildCatalogEventPlans(input: {
           productsBySlug,
           productsById,
           isWeekend: (date) => isWeekendKey(weekdayKeyFromIsoDate(date)),
+          activityMinimums: input.activityMinimums,
           foodSlugOverride: slug,
         });
         totals.set(slug, priceTotal(alternate.products));
@@ -412,6 +470,7 @@ export async function buildCatalogEventPlans(input: {
           productsBySlug,
           productsById,
           isWeekend: (date) => isWeekendKey(weekdayKeyFromIsoDate(date)),
+          activityMinimums: input.activityMinimums,
           foodSlugOverride: chosenFood,
         });
         selected = swapped.products;
@@ -439,6 +498,7 @@ export async function buildCatalogEventPlans(input: {
         productsBySlug,
         productsById,
         isWeekend: (date) => isWeekendKey(weekdayKeyFromIsoDate(date)),
+        activityMinimums: input.activityMinimums,
         foodSlugOverride: selected.find((row) => row.kind === "FOOD")?.slug ?? null,
         omitBudgetOptionalUpgrades: true,
       });
@@ -486,6 +546,7 @@ export async function buildCatalogEventPlans(input: {
         productsBySlug,
         productsById,
         isWeekend: (date) => isWeekendKey(weekdayKeyFromIsoDate(date)),
+        activityMinimums: input.activityMinimums,
         foodSlugOverride: quote.food?.slug ?? null,
         omitBudgetOptionalUpgrades: omittedBudgetUpgrades,
         excludedSpaceSlugs,
@@ -512,6 +573,44 @@ export async function buildCatalogEventPlans(input: {
         break;
       }
     }
+
+    selected = quote.pricedProducts;
+    const hosting = assessSimultaneousHosting({
+      guestCount: input.inquiry.guestCount,
+      productIds: selected.map((row) => row.id),
+      rows: input.resourceRequirements,
+    });
+    const coverage = compareCoverage({
+      organizationId: input.organizationId,
+      requirements: coverageRequirementsFromSelection({
+        guestCount: input.inquiry.guestCount,
+        selections: input.attractionSelections ?? [],
+        minimums: input.activityMinimums,
+      }),
+      grants: selected.flatMap((row) => row.experienceGrants ?? []),
+    });
+    const minimumMissed = Boolean(input.activityMinimums && unfulfilledInterestSlugs.length > 0);
+    const packageDiningNeedsInfo = selected.some(
+      (product) =>
+        assessPackageDiningEligibility({
+          productKind: product.kind,
+          diningPreference: input.inquiry.diningPreference,
+          experienceGrants: product.experienceGrants ?? [],
+          foodInclusion: product.foodInclusion ?? null,
+        }) === PACKAGE_INTAKE_ELIGIBILITY.NEEDS_INFORMATION,
+    );
+    let coverageFeasibility = resolveCoverageFeasibility({
+      hosting: hosting.feasibility,
+      comparison: coverage,
+      minimumMissed,
+    });
+    if (packageDiningNeedsInfo && coverageFeasibility === COVERAGE_FEASIBILITY.FEASIBLE) {
+      coverageFeasibility = COVERAGE_FEASIBILITY.NEEDS_INFORMATION;
+    } else if (packageDiningNeedsInfo && coverageFeasibility === COVERAGE_FEASIBILITY.REQUIRES_ROTATION_PLAN) {
+      // Rotation remains the stricter operational label; Book Now stays blocked either way.
+      coverageFeasibility = COVERAGE_FEASIBILITY.REQUIRES_ROTATION_PLAN;
+    }
+    const coverageBlocksBooking = coverageFeasibility !== COVERAGE_FEASIBILITY.FEASIBLE;
 
     const selectedProducts = quote.selectedProducts;
     const requestedStartTime = quote.requestedStartTime;
@@ -608,6 +707,16 @@ export async function buildCatalogEventPlans(input: {
     const locationExclusive = resourceRequirements.some((row) => row.locationExclusive);
     const exclusiveNote = locationExclusive ? " Private use of the full facility." : "";
     const viable = result.validated && result.available;
+    const coverageNote =
+      coverageFeasibility === COVERAGE_FEASIBILITY.REQUIRES_ROTATION_PLAN
+        ? hosting.note
+        : coverageFeasibility === COVERAGE_FEASIBILITY.NEEDS_INFORMATION
+          ? packageDiningNeedsInfo
+            ? "This package’s food contents are not fully declared, so it needs confirmation before booking with No Food."
+            : "This option needs age or participant details before it can be booked."
+          : coverageFeasibility === COVERAGE_FEASIBILITY.INFEASIBLE
+            ? "This option does not cover every selected experience."
+            : null;
     const sampleItinerary = itinerary.filter(isSampleItinerarySegment);
     const spanMinutes = itinerarySpanMinutes(sampleItinerary);
     if (spanMinutes > durationMinutes) {
@@ -650,7 +759,7 @@ export async function buildCatalogEventPlans(input: {
       : spaceUnmet
         ? "No private space in this venue's catalog fits this group."
         : null;
-    const customerFacingReason = [added.length > 0 && !delta ? `${experience}${exclusiveNote}` : experience, durationNote, spaceNote]
+    const customerFacingReason = [coverageNote, added.length > 0 && !delta ? `${experience}${exclusiveNote}` : experience, durationNote, spaceNote]
       .filter(Boolean)
       .join(" ");
     const budget = budgetAssessment({
@@ -669,8 +778,8 @@ export async function buildCatalogEventPlans(input: {
       guestCount: input.inquiry.guestCount,
       durationMinutes,
       customerFacingReason,
-      availabilityValidated: viable,
-      availabilityNote: itineraryAdjusted && adjustmentNote ? adjustmentNote : result.note,
+      availabilityValidated: viable && !coverageBlocksBooking,
+      availabilityNote: coverageNote ?? (itineraryAdjusted && adjustmentNote ? adjustmentNote : result.note),
       availabilityStatus: viable
         ? PLAN_AVAILABILITY_STATUSES.AVAILABLE
         : availabilityStatus,
@@ -752,6 +861,25 @@ export async function buildCatalogEventPlans(input: {
         spaceUnmet,
         spaceUnconfirmed,
         unfulfilledInterestSlugs,
+        coverageFeasibility,
+        coverageAssessment: coverage.declared || coverageFeasibility !== COVERAGE_FEASIBILITY.FEASIBLE
+          ? {
+              declared: coverage.declared,
+              eligibleForPriceComparison: coverage.eligibleForPriceComparison && !hosting.rotationRequired,
+              rotationRequired: hosting.rotationRequired,
+              feasibility: coverageFeasibility,
+              missingKeys: coverage.missingKeys,
+              exceededKeys: coverage.exceededKeys,
+              outcomes: coverage.requirements.map((row) => ({
+                experienceKey: row.experienceKey,
+                outcome: row.outcome,
+                mandatory: row.mandatory,
+              })),
+              entitlements: coverageEntitlementsFromGrants(
+                selected.flatMap((row) => row.experienceGrants ?? []),
+              ),
+            }
+          : undefined,
         compositionDelta: delta
           ? { comparedWithTier: previousProducts ? drafts[drafts.length - 1]?.tier ?? null : null, ...delta }
           : undefined,
@@ -763,5 +891,46 @@ export async function buildCatalogEventPlans(input: {
     previousProducts = selected;
   }
 
-  return drafts;
+  return preferDistinctCustomerTiers(drafts);
+}
+
+function customerFacingFingerprint(draft: EventPlanDraft): string {
+  const items = (draft.payload.lineItems ?? [])
+    .map((row) => `${row.slug}:${row.quantity}`)
+    .sort()
+    .join("|");
+  const resources = (draft.payload.resourceRequirements ?? [])
+    .map((row) => `${row.resourceTypeSlug}:${row.quantity}:${row.guestBasedQuantity ?? ""}`)
+    .sort()
+    .join("|");
+  return JSON.stringify({
+    items,
+    total: draft.estimatedTotalCents,
+    minutes: draft.durationMinutes,
+    feasibility: draft.payload.coverageFeasibility ?? "FEASIBLE",
+    resources,
+  });
+}
+
+/** Keep Recommended over Good when the customer-visible configuration is identical. */
+function preferDistinctCustomerTiers(drafts: EventPlanDraft[]): EventPlanDraft[] {
+  const rank = (tier: string) => {
+    if (tier === EVENT_PLAN_TIERS.BEST_FIT) {
+      return 0;
+    }
+    if (tier === EVENT_PLAN_TIERS.PREMIUM) {
+      return 1;
+    }
+    return 2;
+  };
+  const winners = new Map<string, EventPlanDraft>();
+  for (const draft of drafts) {
+    const fingerprint = customerFacingFingerprint(draft);
+    const existing = winners.get(fingerprint);
+    if (!existing || rank(draft.tier) < rank(existing.tier)) {
+      winners.set(fingerprint, draft);
+    }
+  }
+  const kept = new Set(winners.values());
+  return drafts.filter((draft) => kept.has(draft));
 }

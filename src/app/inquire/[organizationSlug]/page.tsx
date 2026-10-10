@@ -40,6 +40,7 @@ export default async function PublicInquirePage({
           name: item.name,
           description: item.shortDescription,
         }))}
+        attractionRequiredGuestMixes={catalog.attractionRequiredGuestMixes}
       />
     </PublicInquiryView>
   );

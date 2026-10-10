@@ -314,4 +314,24 @@ describe("public intake wizard", () => {
       expect.objectContaining({ description: "Try again later." }),
     );
   });
+
+  it("requires an attraction when the tenant profile says a mixed group must choose one", async () => {
+    const user = userEvent.setup();
+    render(
+      <PublicIntakeWizard
+        organizationSlug="alpha"
+        attractions={ALPHA}
+        attractionRequiredGuestMixes={["mixed_ages"]}
+      />,
+    );
+    await choose(user, "Birthday Party");
+    await user.type(screen.getByLabelText("Guest count"), "20");
+    await choose(user, "Mix of Kids & Adults");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("alert").textContent).toContain("Choose at least one attraction.");
+    expect(screen.queryByRole("heading", { name: "Event preferences" })).toBeNull();
+    await choose(user, "Bowling");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("heading", { name: "Event preferences" })).toBeTruthy();
+  });
 });

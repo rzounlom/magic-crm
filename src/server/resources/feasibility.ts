@@ -35,13 +35,14 @@ export function applyInventoryFeasibility(
         rotationNote: null,
       };
     }
-    const waves = Math.ceil(guestBased / activeCount);
+    // Cap the reservable allocation at inventory. Demand stays on guestBasedQuantity.
+    // Do not invent rotation waves — a declared rotation is required before booking.
     return {
       ...requirement,
       guestBasedQuantity: guestBased,
       quantity: activeCount,
-      rotationWaves: waves,
-      rotationNote: `${guestBased} ${requirement.resourceTypeName}${guestBased === 1 ? "" : "s"} would be needed at once. Using ${activeCount} in ${waves} rotations.`,
+      rotationWaves: null,
+      rotationNote: `${guestBased} ${requirement.resourceTypeName}${guestBased === 1 ? "" : "s"} would be needed at once; this location has ${activeCount}. A rotation plan is required before booking.`,
     };
   });
 }

@@ -97,10 +97,13 @@ function sectionId(stage: PlannerStage): string {
 export function PublicIntakeWizard({
   organizationSlug,
   attractions = [],
+  attractionRequiredGuestMixes = [],
   action = submitPublicInquiryAction,
 }: {
   organizationSlug: string;
   attractions?: PublicPlannerAttraction[];
+  /** Guest mixes whose tenant profile refuses an empty attraction list. */
+  attractionRequiredGuestMixes?: Array<(typeof INTAKE_GUEST_MIX_VALUES)[number]>;
   action?: (formData: FormData) => Promise<SecurityActionResult>;
 }) {
   const router = useRouter();
@@ -112,6 +115,7 @@ export function PublicIntakeWizard({
   const [unlocked, setUnlocked] = useState<PlannerStage>("event");
   const [reviewing, setReviewing] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [attractionError, setAttractionError] = useState(false);
   const [confirmStartOver, setConfirmStartOver] = useState(false);
   const [pending, setPending] = useState(false);
   const [submissionId, setSubmissionId] = useState(() => crypto.randomUUID());
@@ -163,7 +167,23 @@ export function PublicIntakeWizard({
     previousStage.current = "event";
   }
 
+  function mixRequiresAttraction(mix: string) {
+    return (attractionRequiredGuestMixes as readonly string[]).includes(mix);
+  }
+
+  function attractionSelectionRequired() {
+    return mixRequiresAttraction(answers.guestMix) && answers.attractionInterestIds.length === 0;
+  }
+
   function openReview() {
+    if (attractionSelectionRequired()) {
+      setAttractionError(true);
+      setReviewing(false);
+      requestAnimationFrame(() => {
+        document.getElementById(sectionId("experience"))?.focus();
+      });
+      return;
+    }
     const fields = contactFieldErrors(answers);
     if (!contactReady || !whenReady || !preferencesReady || !groupReady) {
       setContactErrors(fields);
@@ -191,6 +211,11 @@ export function PublicIntakeWizard({
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (onSafeSubmitAttempt(pendingRef.current) === "block") {
+      return;
+    }
+    if (attractionSelectionRequired()) {
+      setAttractionError(true);
+      setReviewing(false);
       return;
     }
     const formData = new FormData(event.currentTarget);
@@ -385,7 +410,11 @@ export function PublicIntakeWizard({
                     <section id={sectionId("experience")} tabIndex={-1} className="planner-section outline-none">
                       <SectionHeading
                         title="Experience"
-                        detail="Choose anything your group is interested in. We'll use your preferences, group size, and availability to build the best options. You can continue without selecting any."
+                        detail={
+                          mixRequiresAttraction(answers.guestMix)
+                            ? "Choose at least one attraction for this group. Your selections stay on every option."
+                            : "Choose anything your group is interested in. We'll use your preferences, group size, and availability to build the best options. You can continue without selecting any."
+                        }
                       />
                       <ChoiceGroup legend={PLANNER_STEP_TITLES.attractions}>
                         {attractions.length === 0 ? (
@@ -402,18 +431,29 @@ export function PublicIntakeWizard({
                               selected={answers.attractionInterestIds.includes(item.id)}
                               onClick={() => {
                                 revealCause.current = "choice";
+                                setAttractionError(false);
                                 dispatch({ type: "toggleAttraction", id: item.id });
                               }}
                             />
                           ))
                         )}
                       </ChoiceGroup>
+                      {attractionError ? (
+                        <p role="alert" className="mt-4 text-sm text-destructive">
+                          Choose at least one attraction.
+                        </p>
+                      ) : null}
                       {STAGE_RANK[furthest] < STAGE_RANK.preferences ? (
                         <div className="planner-stage-actions flex justify-end">
                           <button
                             type="button"
                             className={PRIMARY_BUTTON}
                             onClick={() => {
+                              if (attractionSelectionRequired()) {
+                                setAttractionError(true);
+                                return;
+                              }
+                              setAttractionError(false);
                               revealCause.current = "choice";
                               setUnlocked((current) => laterStage(current, "preferences"));
                             }}

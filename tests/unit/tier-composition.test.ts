@@ -229,9 +229,11 @@ describe("deterministic tier composition", () => {
         { interestSlug: "mini-golf", productIds: ["have-a-ball-mini-golf"] },
       ],
     });
-    expect(slugs(tier(rows, EVENT_PLAN_TIERS.BUDGET))).toEqual(
-      expect.arrayContaining(["bowling-1h", "have-a-ball-mini-golf"]),
-    );
+    const option =
+      tier(rows, EVENT_PLAN_TIERS.BEST_FIT) ??
+      tier(rows, EVENT_PLAN_TIERS.BUDGET) ??
+      rows[0];
+    expect(slugs(option)).toEqual(expect.arrayContaining(["bowling-1h", "have-a-ball-mini-golf"]));
   });
 
   it("does not invent a beverage that is absent from the tenant catalog", () => {

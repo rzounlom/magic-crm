@@ -22,6 +22,7 @@ export async function deleteTestOrganizations(
   await database.productResourceRequirement.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productServing.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productPrice.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.productExperienceGrant.deleteMany({ where: { organizationId: { in: ids } } });
   await database.product.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productCategory.deleteMany({ where: { organizationId: { in: ids } } });
   await database.recommendationProfile.deleteMany({ where: { organizationId: { in: ids } } });

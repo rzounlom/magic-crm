@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
 import type { BookingCatalogDataset } from "@/server/catalog/dataset";
 import { validateCatalogProductRequirements } from "@/server/catalog/requirement-validation";
@@ -239,6 +239,7 @@ export async function importBookingCatalog(
           maxGuests: product.maxGuests ?? null,
           weekendOnly: product.weekendOnly,
           fulfillmentGroup: product.fulfillmentGroup ?? null,
+          intakeDeclarations: product.intakeDeclarations ?? undefined,
           active: true,
           sortOrder: input.dataset.products.findIndex((row) => row.slug === product.slug) || index,
         };
@@ -255,6 +256,7 @@ export async function importBookingCatalog(
     if (!categoryId) {
       throw new Error(`Unknown category slug "${product.categorySlug}" for product "${product.slug}".`);
     }
+    const nextDeclarations = product.intakeDeclarations ?? null;
     if (
       existing.name === product.name &&
       existing.kind === product.kind &&
@@ -266,6 +268,7 @@ export async function importBookingCatalog(
       existing.maxGuests === (product.maxGuests ?? null) &&
       existing.weekendOnly === product.weekendOnly &&
       existing.fulfillmentGroup === (product.fulfillmentGroup ?? null) &&
+      sameJson(existing.intakeDeclarations ?? null, nextDeclarations) &&
       existing.categoryId === categoryId
     ) {
       counts.productsUnchanged += 1;
@@ -285,6 +288,7 @@ export async function importBookingCatalog(
         maxGuests: product.maxGuests ?? null,
         weekendOnly: product.weekendOnly,
         fulfillmentGroup: product.fulfillmentGroup ?? null,
+        intakeDeclarations: nextDeclarations === null ? Prisma.DbNull : nextDeclarations,
         active: true,
         sortOrder: index,
       },
@@ -315,11 +319,13 @@ export async function importBookingCatalog(
       where: { organizationId, productId: { in: productIdList } },
     });
     await database.productServing.deleteMany({ where: { organizationId, productId: { in: productIdList } } });
+    await database.productExperienceGrant.deleteMany({ where: { organizationId, productId: { in: productIdList } } });
   }
 
   const priceRows: Prisma.ProductPriceCreateManyInput[] = [];
   const requirementRows: Prisma.ProductResourceRequirementCreateManyInput[] = [];
   const servingRows: Prisma.ProductServingCreateManyInput[] = [];
+  const grantRows: Prisma.ProductExperienceGrantCreateManyInput[] = [];
   for (const product of input.dataset.products) {
     const productId = productIds.get(product.slug);
     if (!productId) {
@@ -378,6 +384,26 @@ export async function importBookingCatalog(
         unitCount: product.serving.unitCount ?? null,
       });
     }
+    for (const grant of product.coverage ?? []) {
+      grantRows.push({
+        organizationId,
+        productId,
+        experienceKey: grant.experienceKey,
+        kind: grant.kind,
+        durationMinutesPerParticipant: grant.durationMinutesPerParticipant ?? null,
+        sessionsPerParticipant: grant.sessionsPerParticipant ?? null,
+        servings: grant.servings ?? null,
+        participantRule: grant.participantRule,
+        fixedParticipants: grant.fixedParticipants ?? null,
+        creditCents: grant.creditCents ?? null,
+        simultaneousGuestCapacity: grant.simultaneousGuestCapacity ?? null,
+        rotationMinutesPerParticipant: grant.rotationMinutesPerParticipant ?? null,
+        minAge: grant.minAge ?? null,
+        minWeightLbs: grant.minWeightLbs ?? null,
+        requiresParticipantBreakdown: grant.requiresParticipantBreakdown,
+        optionalBenefit: grant.optionalBenefit ?? false,
+      });
+    }
   }
   if (priceRows.length > 0) {
     await database.productPrice.createMany({ data: priceRows });
@@ -387,6 +413,9 @@ export async function importBookingCatalog(
   }
   if (servingRows.length > 0) {
     await database.productServing.createMany({ data: servingRows });
+  }
+  if (grantRows.length > 0) {
+    await database.productExperienceGrant.createMany({ data: grantRows });
   }
 
   const profilesToCreate = input.dataset.recommendationProfiles.filter(

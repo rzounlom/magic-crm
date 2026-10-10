@@ -519,8 +519,11 @@ function PlanOptionCard({
   const unavailable =
     plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE ||
     plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.NEEDS_ADJUSTMENT;
+  const coverageReady = !payload.coverageFeasibility || payload.coverageFeasibility === "FEASIBLE";
   const canBookNow =
-    !unavailable && plan.availabilityStatus !== PLAN_AVAILABILITY_STATUSES.AVAILABILITY_CHANGED;
+    coverageReady &&
+    !unavailable &&
+    plan.availabilityStatus !== PLAN_AVAILABILITY_STATUSES.AVAILABILITY_CHANGED;
 
   return (
     <article

@@ -1,3 +1,12 @@
+import {
+  PACKAGE_INTAKE_ELIGIBILITY,
+  assessPackageDiningEligibility,
+  explicitAttractionSelectionMissing,
+  productMeetsActivityMinimum,
+  type ActivityMinimum,
+  type ExperienceGrant,
+  type FoodInclusion,
+} from "@/server/catalog/experience-coverage";
 import { customerActivityName } from "@/server/catalog/scheduling-behavior";
 import type { PlannerInquiryFacts } from "@/server/event-planner/build-event-plans";
 import {
@@ -26,6 +35,10 @@ export type CompositionProduct = {
   maxGuests: number | null;
   weekendOnly: boolean;
   fulfillmentGroup: string | null;
+  durationMinutes?: number | null;
+  experienceSessions?: number | null;
+  experienceGrants?: ExperienceGrant[] | null;
+  foodInclusion?: FoodInclusion | null;
 };
 
 type CatalogProduct = CompositionProduct;
@@ -223,6 +236,7 @@ function chooseFulfillment<T extends CatalogProduct>(
   guestCount: number,
   eventDate: string | null,
   isWeekend: (date: string) => boolean,
+  minimum: ActivityMinimum | undefined,
 ): T | null {
   const preferredSlug = tier.fulfillmentByInterest[selection.interestSlug];
   const candidates = selection.productIds
@@ -235,7 +249,14 @@ function chooseFulfillment<T extends CatalogProduct>(
       : candidates;
   return (
     ordered.find(
-      (row) => fitsGuests(row, guestCount) && usable(row, eventDate, isWeekend),
+      (row) =>
+        fitsGuests(row, guestCount) &&
+        usable(row, eventDate, isWeekend) &&
+        productMeetsActivityMinimum({
+          durationMinutes: row.durationMinutes ?? null,
+          sessions: row.experienceSessions ?? null,
+          minimum,
+        }),
     ) ?? null
   );
 }
@@ -291,6 +312,8 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
   omitBudgetOptionalUpgrades?: boolean;
   /** Rooms already rejected for this tier, usually because that room's resources conflict. */
   excludedSpaceSlugs?: string[];
+  /** Per attraction-interest minimums. A shorter SKU does not satisfy a longer minimum. */
+  activityMinimums?: Record<string, ActivityMinimum>;
 }): TierCompositionResult<T> {
   const chosen: T[] = [];
   const seen = new Set<string>();
@@ -300,6 +323,16 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
       return;
     }
     if (!usable(product, input.inquiry.desiredDate, input.isWeekend)) {
+      return;
+    }
+    if (
+      assessPackageDiningEligibility({
+        productKind: product.kind,
+        diningPreference: input.inquiry.diningPreference,
+        experienceGrants: product.experienceGrants ?? [],
+        foodInclusion: product.foodInclusion ?? null,
+      }) === PACKAGE_INTAKE_ELIGIBILITY.INELIGIBLE
+    ) {
       return;
     }
     if (exclusiveGroup) {
@@ -315,6 +348,15 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
   };
 
   const explicit = input.attractionMode === ATTRACTION_MODES.KNOWN && (input.selections.length > 0 || input.directProductIds.length > 0);
+  if (
+    !explicit &&
+    explicitAttractionSelectionMissing({
+      requireExplicitAttractions: input.profile.requireExplicitAttractions === true,
+      attractionCount: input.selections.length + input.directProductIds.length,
+    })
+  ) {
+    return { products: [], unfulfilledInterestSlugs: [], spaceUnmet: false };
+  }
   if (explicit) {
     for (const selection of input.selections) {
       const product = chooseFulfillment(
@@ -325,6 +367,7 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
         input.inquiry.guestCount,
         input.inquiry.desiredDate,
         input.isWeekend,
+        input.activityMinimums?.[selection.interestSlug],
       );
       if (!product) {
         unfulfilled.push(selection.interestSlug);
@@ -335,6 +378,16 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
     for (const id of input.directProductIds) {
       const product = input.productsById.get(id) ?? input.productsBySlug.get(id);
       if (!product || !fitsGuests(product, input.inquiry.guestCount)) {
+        unfulfilled.push(id);
+        continue;
+      }
+      if (
+        !productMeetsActivityMinimum({
+          durationMinutes: product.durationMinutes ?? null,
+          sessions: product.experienceSessions ?? null,
+          minimum: input.activityMinimums?.[product.slug],
+        })
+      ) {
         unfulfilled.push(id);
         continue;
       }

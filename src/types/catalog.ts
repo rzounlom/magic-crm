@@ -253,6 +253,11 @@ export type RecommendationProfilePayload = {
   premiumSpaceSlug?: string | null;
   /** When present, each tier is composed from this strategy instead of stacking add-ons. */
   composition?: RecommendationCompositionConfig;
+  /**
+   * When true, an empty attraction selection does not use this profile's defaults.
+   * Another audience or another tenant can leave this unset and keep defaults.
+   */
+  requireExplicitAttractions?: boolean;
 };
 
 export type ItinerarySegment = {

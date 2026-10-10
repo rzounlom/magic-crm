@@ -39,6 +39,7 @@ export function deriveCatalogResourceRequirements(input: {
         resourceTypeName: row.resourceTypeName,
         quantityRule: toPlanQuantityRule(row.quantityRule),
         quantity,
+        guestBasedQuantity: quantity,
         guestsPerUnit: row.guestsPerUnit,
         durationMinutes: row.durationMinutes ?? input.durationMinutes,
         inventoryConfigured: row.inventoryConfigured,

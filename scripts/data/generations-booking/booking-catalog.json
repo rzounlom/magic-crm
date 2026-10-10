@@ -176,6 +176,14 @@
       "weekendOnly": false,
       "fulfillmentGroup": "have-a-ball",
       "shortDescription": "Birthday package with 1 hour bowling plus arcade credits.",
+      "coverage": [
+        {
+          "experienceKey": "bowling",
+          "kind": "ACTIVITY",
+          "durationMinutesPerParticipant": 60,
+          "participantRule": "ALL_GUESTS"
+        }
+      ],
       "prices": [
         {
           "strategy": "PACKAGE_BASE_PLUS_ADDITIONAL",
@@ -320,6 +328,14 @@
       "weekendOnly": false,
       "fulfillmentGroup": "axe-throwing",
       "shortDescription": "30 minutes of axe throwing.",
+      "coverage": [
+        {
+          "experienceKey": "axe-throwing",
+          "kind": "ACTIVITY",
+          "durationMinutesPerParticipant": 30,
+          "participantRule": "ALL_GUESTS"
+        }
+      ],
       "prices": [
         {
           "strategy": "PER_PERSON",
@@ -350,6 +366,14 @@
       "weekendOnly": false,
       "fulfillmentGroup": "axe-throwing",
       "shortDescription": "60 minutes of axe throwing.",
+      "coverage": [
+        {
+          "experienceKey": "axe-throwing",
+          "kind": "ACTIVITY",
+          "durationMinutesPerParticipant": 60,
+          "participantRule": "ALL_GUESTS"
+        }
+      ],
       "prices": [
         {
           "strategy": "PER_PERSON",
@@ -402,6 +426,14 @@
       "weekendOnly": false,
       "fulfillmentGroup": null,
       "shortDescription": "One hour of bowling with shoe rental.",
+      "coverage": [
+        {
+          "experienceKey": "bowling",
+          "kind": "ACTIVITY",
+          "durationMinutesPerParticipant": 60,
+          "participantRule": "ALL_GUESTS"
+        }
+      ],
       "prices": [
         {
           "strategy": "PER_LANE_WEEKDAY_WEEKEND",
@@ -864,6 +896,13 @@
       "weekendOnly": false,
       "fulfillmentGroup": null,
       "shortDescription": "Lower event / party room.",
+      "coverage": [
+        {
+          "experienceKey": "lower-event-room",
+          "kind": "SPACE",
+          "participantRule": "ALL_GUESTS"
+        }
+      ],
       "prices": [
         {
           "strategy": "DURATION_BASE_PLUS_ADDITIONAL_HOUR",
@@ -1624,6 +1663,13 @@
       "weekendOnly": false,
       "fulfillmentGroup": null,
       "shortDescription": "Combination: Pizza & Pitcher Combination.",
+      "coverage": [
+        {
+          "experienceKey": "pizza-pitcher-combo",
+          "kind": "FOOD",
+          "participantRule": "ALL_GUESTS"
+        }
+      ],
       "prices": [
         {
           "strategy": "FOOD_PER_COMBO",
@@ -2038,9 +2084,8 @@
           "better": "laser-plex-package",
           "best": "play-axtion"
         },
-        "defaultAttractionSlugs": [
-          "bowling-1h"
-        ],
+        "defaultAttractionSlugs": [],
+        "requireExplicitAttractions": true,
         "defaultFoodSlug": "pizza-pitcher-combo",
         "diningPreferenceMap": {
           "pizza_light": "pizza-pitcher-combo",
@@ -2066,7 +2111,7 @@
           "tiers": {
             "good": {
               "foodStrategy": "value",
-              "coreAttractionSlugs": ["bowling-1h"],
+              "coreAttractionSlugs": [],
               "upgradeSlugs": [],
               "fulfillmentByInterest": {},
               "includeSpace": false,
@@ -2075,7 +2120,7 @@
             },
             "better": {
               "foodStrategy": "standard",
-              "coreAttractionSlugs": ["bowling-1h", "unlimited-arcade-1h"],
+              "coreAttractionSlugs": [],
               "upgradeSlugs": [],
               "fulfillmentByInterest": {},
               "includeSpace": false,
@@ -2084,7 +2129,7 @@
             },
             "best": {
               "foodStrategy": "premium",
-              "coreAttractionSlugs": ["bowling-1h", "unlimited-arcade-1h"],
+              "coreAttractionSlugs": [],
               "upgradeSlugs": ["axe-throwing-60"],
               "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
               "includeSpace": true,

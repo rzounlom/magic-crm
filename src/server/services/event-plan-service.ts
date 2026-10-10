@@ -23,6 +23,7 @@ import {
 } from "@/server/catalog/attraction-interests";
 import { loadCatalogForProposal } from "@/server/catalog/load-for-proposal";
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
+import { profileRequiresExplicitAttractions } from "@/server/catalog/experience-coverage";
 import { depositPercentFromTenant } from "@/server/catalog/pricing";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
@@ -313,7 +314,27 @@ export async function listPublicPlannerCatalog(database: PlannerDb, organization
               )),
         );
 
-  return { organization, attractions, diningItems };
+  const profiles = await database.recommendationProfile.findMany({
+    where: { organizationId: organization.id },
+    select: { audience: true, payload: true },
+  });
+  const attractionRequiredGuestMixes = profiles.flatMap((row) => {
+    if (!profileRequiresExplicitAttractions(row.payload)) {
+      return [];
+    }
+    if (row.audience === "KIDS_YOUTH") {
+      return ["mostly_children" as const];
+    }
+    if (row.audience === "ADULTS") {
+      return ["mostly_adults" as const];
+    }
+    if (row.audience === "MIXED") {
+      return ["mixed_ages" as const];
+    }
+    return [];
+  });
+
+  return { organization, attractions, diningItems, attractionRequiredGuestMixes };
 }
 
 export async function generateEventPlansForInquiry(
@@ -811,6 +832,12 @@ export async function bookPublicEventPlan(
   }
 
   const planPayload = readEventPlanPayload(plan.payload);
+  if (planPayload.coverageFeasibility && planPayload.coverageFeasibility !== "FEASIBLE") {
+    throw new InquiryError(
+      "WORKING_PLAN_INVALID",
+      "This option needs a rotation plan or more coverage details before it can be booked.",
+    );
+  }
   const locationId = await resolveInquiryLocationId(database, conversation.inquiry);
   const inventory = await database.resourceType.findMany({
     where: { organizationId: conversation.organizationId },

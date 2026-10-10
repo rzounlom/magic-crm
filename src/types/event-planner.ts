@@ -278,6 +278,25 @@ export type EventPlanPayload = {
   /** A fitting room existed, but every configured alternative conflicted. The room is not listed. */
   spaceUnconfirmed?: boolean;
   unfulfilledInterestSlugs?: string[];
+  /** Older snapshots omit this and stay bookable when resource availability allows it. */
+  coverageFeasibility?: "FEASIBLE" | "REQUIRES_ROTATION_PLAN" | "INFEASIBLE" | "NEEDS_INFORMATION";
+  /** Present when a product declared coverage or simultaneous capacity was short. Older snapshots omit this. */
+  coverageAssessment?: {
+    declared: boolean;
+    eligibleForPriceComparison: boolean;
+    rotationRequired: boolean;
+    feasibility?: "FEASIBLE" | "REQUIRES_ROTATION_PLAN" | "INFEASIBLE" | "NEEDS_INFORMATION";
+    missingKeys: string[];
+    exceededKeys: string[];
+    outcomes: Array<{ experienceKey: string; outcome: string; mandatory: boolean }>;
+    /** Declared entitlements only. Never used as scheduled event length. */
+    entitlements?: Array<{
+      experienceKey: string;
+      kind: string;
+      durationMinutesPerParticipant: number | null;
+      sessionsPerParticipant: number | null;
+    }>;
+  };
   compositionDelta?: {
     comparedWithTier: string | null;
     addedProductNames: string[];

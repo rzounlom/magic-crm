@@ -45,6 +45,7 @@ model Organization {
   productPrices       ProductPrice[]
   productResourceRequirements ProductResourceRequirement[]
   productServings     ProductServing[]
+  productExperienceGrants ProductExperienceGrant[]
   recommendationProfiles RecommendationProfile[]
   resourceReservations ResourceReservation[]
   communicationEvents CommunicationEvent[]
@@ -599,6 +600,8 @@ model Product {
   maxGuests        Int?
   weekendOnly      Boolean  @default(false)
   fulfillmentGroup String?  @db.VarChar(80)
+  /// Optional tenant declarations such as { "foodInclusion": "NONE" | "UNKNOWN" }.
+  intakeDeclarations Json?
   active           Boolean  @default(true)
   sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())
@@ -610,6 +613,7 @@ model Product {
   prices       ProductPrice[]
   resourceRequirements ProductResourceRequirement[]
   servings     ProductServing[]
+  experienceGrants ProductExperienceGrant[]
   attractionInterestProducts AttractionInterestProduct[]
 
   @@unique([organizationId, id])
@@ -738,6 +742,40 @@ model ProductServing {
   @@unique([organizationId, id])
   @@unique([organizationId, productId])
   @@map("product_servings")
+}
+
+/// Declared entitlement for one catalog product. Absent rows are not guessed inclusions.
+model ProductExperienceGrant {
+  id                              String   @id @default(cuid(2))
+  organizationId                  String
+  productId                       String
+  experienceKey                   String   @db.VarChar(80)
+  /// ACTIVITY | FOOD | PLAY_CREDIT | EQUIPMENT | SPACE
+  kind                            String   @db.VarChar(24)
+  durationMinutesPerParticipant   Int?
+  sessionsPerParticipant          Int?
+  servings                        Int?
+  /// ALL_GUESTS | FIXED
+  participantRule                 String   @default("ALL_GUESTS") @db.VarChar(24)
+  fixedParticipants               Int?
+  creditCents                     Int?
+  simultaneousGuestCapacity       Int?
+  rotationMinutesPerParticipant   Int?
+  minAge                          Int?
+  minWeightLbs                    Int?
+  requiresParticipantBreakdown    Boolean  @default(false)
+  /// When true, the customer may decline this benefit without making the package ineligible.
+  optionalBenefit                 Boolean  @default(false)
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  product      Product      @relation(fields: [organizationId, productId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, productId, experienceKey, kind])
+  @@index([organizationId, productId])
+  @@map("product_experience_grants")
 }
 
 /// Per-audience proposal defaults for one tenant. JSON payload, not LLM arithmetic.

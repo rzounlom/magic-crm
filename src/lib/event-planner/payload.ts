@@ -60,6 +60,8 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     unfulfilledInterestSlugs: Array.isArray(payload.unfulfilledInterestSlugs)
       ? payload.unfulfilledInterestSlugs
       : [],
+    coverageFeasibility: payload.coverageFeasibility,
+    coverageAssessment: payload.coverageAssessment,
     compositionDelta: payload.compositionDelta,
     selectionAvailability: payload.selectionAvailability,
   };

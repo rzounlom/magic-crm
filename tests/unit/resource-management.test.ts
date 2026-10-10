@@ -38,8 +38,8 @@ describe("inventory feasibility", () => {
     );
     expect(next[0]?.quantity).toBe(8);
     expect(next[0]?.guestBasedQuantity).toBe(13);
-    expect(next[0]?.rotationWaves).toBe(2);
-    expect(next[0]?.rotationNote).toContain("rotations");
+    expect(next[0]?.rotationWaves).toBeNull();
+    expect(next[0]?.rotationNote).toContain("A rotation plan is required");
   });
 
   it("does not rotate exact composite allocation rules into partial quantities", () => {

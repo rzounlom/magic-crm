@@ -30,6 +30,10 @@ import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
 import { attractionSelectionLabels } from "@/server/catalog/attraction-interests";
 import { attractionInterestIdsFromJson } from "@/server/event-planner/build-event-plans";
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
+import {
+  explicitAttractionSelectionMissing,
+  profileRequiresExplicitAttractions,
+} from "@/server/catalog/experience-coverage";
 import { normalizeInvitationEmail } from "@/server/team/invitation-email";
 import { resolvePrimaryLocationId } from "@/server/locations/primary-location";
 import { assertSelectablePublicAttractions, generateEventPlansForInquiry } from "@/server/services/event-plan-service";
@@ -157,6 +161,7 @@ export async function createPublicInquiry(
   const locationId = await resolvePrimaryLocationId(database, organization.id);
   const attractionInterestIds = [...new Set(parsed.data.attractionInterestIds)];
   await assertSelectablePublicAttractions(database, organization.id, attractionInterestIds);
+  await assertExplicitAttractionsWhenRequired(database, organization.id, parsed.data.guestMix, attractionInterestIds);
   const emailNormalized = normalizePublicEmail(parsed.data.email);
   const { token, hash } = createPublicConversationToken();
   const desiredDate = parsed.data.preferredDate
@@ -761,6 +766,12 @@ export async function createEmployeeManualInquiry(
       throw new InquiryError("INVALID_INTAKE", "Choose a location in this organization.");
     }
   }
+  await assertExplicitAttractionsWhenRequired(
+    database,
+    ctx.organizationId,
+    input.guestMix,
+    input.attractionInterestIds ?? [],
+  );
   const desiredDate = new Date(`${input.preferredDate}T00:00:00.000Z`);
   const inquiry = await database.inquiry.create({
     data: {
@@ -837,6 +848,29 @@ export async function createEmployeeManualInquiry(
     await startWorkingInquiry(ctx, database, inquiry.id);
   }
   return { inquiryId: inquiry.id };
+}
+
+async function assertExplicitAttractionsWhenRequired(
+  database: InquiryDb,
+  organizationId: string,
+  guestMix: string | null | undefined,
+  attractionIds: string[],
+) {
+  if (!guestMix) {
+    return;
+  }
+  const profile = await database.recommendationProfile.findFirst({
+    where: { organizationId, audience: audienceFromGuestMix(guestMix) },
+    select: { payload: true },
+  });
+  if (
+    explicitAttractionSelectionMissing({
+      requireExplicitAttractions: profileRequiresExplicitAttractions(profile?.payload),
+      attractionCount: attractionIds.length,
+    })
+  ) {
+    throw new InquiryError("INVALID_INTAKE", "Choose at least one attraction.");
+  }
 }
 
 function formatIntakeMessage(input: {

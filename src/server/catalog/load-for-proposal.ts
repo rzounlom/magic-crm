@@ -3,6 +3,14 @@ import type { PrismaClient } from "@/generated/prisma/client";
 import { catalogPriceFromRow } from "@/server/catalog/pricing";
 import { PRODUCT_QUANTITY_RULES } from "@/types/catalog";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
+import {
+  COVERAGE_KINDS,
+  FOOD_INCLUSIONS,
+  PARTICIPANT_RULES,
+  type CoverageKind,
+  type ExperienceGrant,
+  type FoodInclusion,
+} from "@/server/catalog/experience-coverage";
 import type { LoadedCatalogProduct, LoadedRecommendationProfile } from "@/server/services/proposal-engine";
 import type { CatalogResourceRequirementRow } from "@/server/catalog/requirements";
 import type { RecommendationProfilePayload } from "@/types/catalog";
@@ -24,7 +32,7 @@ export async function loadCatalogForProposal(
           ? { OR: [{ locationId: null }, { locationId }] }
           : {}),
       },
-      include: { prices: { where: { active: true } }, servings: true },
+      include: { prices: { where: { active: true } }, servings: true, experienceGrants: true },
       orderBy: { sortOrder: "asc" },
     }),
     database.recommendationProfile.findMany({
@@ -83,6 +91,9 @@ export async function loadCatalogForProposal(
         }
       : null,
     guestsPerUnit: guestsPerUnitByProduct.get(product.id) ?? null,
+    experienceSessions: product.experienceGrants.find((grant) => grant.kind === COVERAGE_KINDS.ACTIVITY)?.sessionsPerParticipant ?? null,
+    experienceGrants: product.experienceGrants.map((grant) => grantFromRow(grant)),
+    foodInclusion: foodInclusionFromDeclarations(product.intakeDeclarations),
   }));
 
   const loadedProfiles: LoadedRecommendationProfile[] = profiles.map((row) => ({
@@ -115,4 +126,61 @@ export async function loadCatalogForProposal(
   });
 
   return { products: loadedProducts, profiles: loadedProfiles, resourceRequirements };
+}
+
+function isCoverageKind(value: string): value is CoverageKind {
+  return (
+    value === COVERAGE_KINDS.ACTIVITY ||
+    value === COVERAGE_KINDS.FOOD ||
+    value === COVERAGE_KINDS.PLAY_CREDIT ||
+    value === COVERAGE_KINDS.EQUIPMENT ||
+    value === COVERAGE_KINDS.SPACE
+  );
+}
+
+function foodInclusionFromDeclarations(value: unknown): FoodInclusion | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const foodInclusion = (value as { foodInclusion?: unknown }).foodInclusion;
+  if (foodInclusion === FOOD_INCLUSIONS.NONE || foodInclusion === FOOD_INCLUSIONS.UNKNOWN) {
+    return foodInclusion;
+  }
+  return null;
+}
+
+function grantFromRow(grant: {
+  organizationId: string;
+  experienceKey: string;
+  kind: string;
+  durationMinutesPerParticipant: number | null;
+  sessionsPerParticipant: number | null;
+  servings: number | null;
+  participantRule: string;
+  fixedParticipants: number | null;
+  creditCents: number | null;
+  simultaneousGuestCapacity: number | null;
+  rotationMinutesPerParticipant: number | null;
+  minAge: number | null;
+  minWeightLbs: number | null;
+  requiresParticipantBreakdown: boolean;
+  optionalBenefit?: boolean;
+}): ExperienceGrant {
+  return {
+    organizationId: grant.organizationId,
+    experienceKey: grant.experienceKey,
+    kind: isCoverageKind(grant.kind) ? grant.kind : COVERAGE_KINDS.ACTIVITY,
+    durationMinutesPerParticipant: grant.durationMinutesPerParticipant,
+    sessionsPerParticipant: grant.sessionsPerParticipant,
+    servings: grant.servings,
+    participantRule: grant.participantRule === PARTICIPANT_RULES.FIXED ? PARTICIPANT_RULES.FIXED : PARTICIPANT_RULES.ALL_GUESTS,
+    fixedParticipants: grant.fixedParticipants,
+    creditCents: grant.creditCents,
+    simultaneousGuestCapacity: grant.simultaneousGuestCapacity,
+    rotationMinutesPerParticipant: grant.rotationMinutesPerParticipant,
+    minAge: grant.minAge,
+    minWeightLbs: grant.minWeightLbs,
+    requiresParticipantBreakdown: grant.requiresParticipantBreakdown,
+    optionalBenefit: grant.optionalBenefit === true,
+  };
 }
