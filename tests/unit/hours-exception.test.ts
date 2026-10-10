@@ -94,6 +94,33 @@ describe("operating-hours staff exception matching", () => {
     );
     expect(result.ok).toBe(false);
   });
+
+  it("rejects CONFIRM_BOOKING vs PLACE_HOLD purpose mismatch and cross-org/location", () => {
+    expect(
+      assertHoursExceptionMatches(
+        {
+          ...baseException,
+          purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
+        },
+        fingerprint,
+        OPERATING_HOURS_EVALUATION_STATUSES.HOURS_UNCONFIGURED,
+      ).ok,
+    ).toBe(false);
+    expect(
+      assertHoursExceptionMatches(
+        { ...baseException, organizationId: "org-2" },
+        fingerprint,
+        OPERATING_HOURS_EVALUATION_STATUSES.HOURS_UNCONFIGURED,
+      ).ok,
+    ).toBe(false);
+    expect(
+      assertHoursExceptionMatches(
+        { ...baseException, locationId: "loc-2" },
+        fingerprint,
+        OPERATING_HOURS_EVALUATION_STATUSES.HOURS_UNCONFIGURED,
+      ).ok,
+    ).toBe(false);
+  });
 });
 
 describe("overnight occupancy windows", () => {

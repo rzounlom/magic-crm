@@ -24,7 +24,7 @@ Confirmed defect (R2D.2 era): same-day `slotDate` + minute exclusion alone does 
 
 Fix:
 - Application conflict checks also use `startsAt`/`endsAt` absolute overlap when a scheduling time zone is supplied.
-- Additive DB exclusion `resource_reservations_no_overlap_instants` on `tstzrange(startsAt, endsAt)`.
+- Additive DB exclusion `resource_reservations_no_overlap_instants` on `tsrange(startsAt, endsAt)` (Prisma `DateTime` → `TIMESTAMP WITHOUT TIME ZONE`; app stores UTC-normalized instants). See R2D.4 for contract verification.
 - Same-day int4range exclusion retained.
 
 ## Closure semantics for overnight hours

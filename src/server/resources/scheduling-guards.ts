@@ -7,7 +7,8 @@ import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { resolveStrictOccupancyInstants } from "@/lib/inquiries/strict-local-time";
 import { BookingError, ResourceError } from "@/server/errors";
 import {
-  loadAndConsumeHoursException,
+  assertHoursExceptionConsumable,
+  consumeHoursException,
   type HoursExceptionFingerprint,
 } from "@/server/resources/hours-exception";
 import {
@@ -34,7 +35,18 @@ export type OccupancyGuardSuccess = {
   endsAt: Date;
   aggregate: SchedulingAvailabilityAggregate;
   operatingHours: OperatingHoursEvaluation;
+  /** Present when a matching exception was validated (and consumed only if requested). */
   hoursExceptionId?: string;
+  /**
+   * When set, the caller must call {@link consumeValidatedHoursException} inside the
+   * occupancy write transaction before committing confirmed/HOLD writes.
+   */
+  pendingHoursException?: {
+    exceptionId: string;
+    authorizedByUserProfileId: string;
+    fingerprint: HoursExceptionFingerprint;
+    expectedStatus: string;
+  };
 };
 
 export type OccupancyGuardFailure = {
@@ -79,6 +91,12 @@ export async function evaluateWritableOccupancy(input: {
   exceptionPurpose?: OperatingHoursExceptionPurpose;
   inquiryId?: string | null;
   bookingId?: string | null;
+  /**
+   * When false (default), matching exceptions are validated but not consumed.
+   * Consumption must happen inside the occupancy write transaction via
+   * {@link consumeValidatedHoursException}.
+   */
+  consumeException?: boolean;
 }): Promise<OccupancyGuardResult> {
   const localTime = resolveStrictOccupancyInstants({
     slotDate: input.slotDate,
@@ -205,18 +223,44 @@ export async function evaluateWritableOccupancy(input: {
     inquiryId: input.inquiryId,
     bookingId: input.bookingId,
   };
-  const consumed = await loadAndConsumeHoursException(input.database, {
+  const asserted = await assertHoursExceptionConsumable(input.database, {
     exceptionId: input.hoursExceptionId,
     fingerprint,
     expectedStatus: operatingHours.status,
   });
-  if (!consumed.ok) {
+  if (!asserted.ok) {
     return {
       ok: false,
       aggregate,
       operatingHours,
-      reason: consumed.reason,
+      reason: asserted.reason,
       code: "HOURS_EXCEPTION_INVALID",
+    };
+  }
+
+  if (input.consumeException === true) {
+    const consumed = await consumeHoursException(input.database, {
+      exceptionId: asserted.exceptionId,
+      fingerprint,
+      expectedStatus: operatingHours.status,
+      authorizedByUserProfileId: asserted.authorizedByUserProfileId,
+    });
+    if (!consumed.ok) {
+      return {
+        ok: false,
+        aggregate,
+        operatingHours,
+        reason: consumed.reason,
+        code: "HOURS_EXCEPTION_INVALID",
+      };
+    }
+    return {
+      ok: true,
+      startsAt: localTime.startsAt,
+      endsAt: localTime.endsAt,
+      aggregate,
+      operatingHours,
+      hoursExceptionId: consumed.exceptionId,
     };
   }
 
@@ -226,8 +270,34 @@ export async function evaluateWritableOccupancy(input: {
     endsAt: localTime.endsAt,
     aggregate,
     operatingHours,
-    hoursExceptionId: consumed.exceptionId,
+    hoursExceptionId: asserted.exceptionId,
+    pendingHoursException: {
+      exceptionId: asserted.exceptionId,
+      authorizedByUserProfileId: asserted.authorizedByUserProfileId,
+      fingerprint,
+      expectedStatus: operatingHours.status,
+    },
   };
+}
+
+/** Consume a previously validated exception inside the occupancy write transaction. */
+export async function consumeValidatedHoursException(
+  database: GuardDb,
+  pending: NonNullable<OccupancyGuardSuccess["pendingHoursException"]>,
+  errorKind: "booking" | "resource",
+): Promise<void> {
+  const consumed = await consumeHoursException(database, {
+    exceptionId: pending.exceptionId,
+    fingerprint: pending.fingerprint,
+    expectedStatus: pending.expectedStatus,
+    authorizedByUserProfileId: pending.authorizedByUserProfileId,
+  });
+  if (!consumed.ok) {
+    if (errorKind === "booking") {
+      throw new BookingError("HOURS_EXCEPTION_INVALID", consumed.reason);
+    }
+    throw new ResourceError("HOURS_EXCEPTION_INVALID", consumed.reason);
+  }
 }
 
 /** Hard-fail for confirmed bookings and HOLDs that create occupancy. */
@@ -246,6 +316,8 @@ export async function assertWritableOccupancyOrThrow(input: {
   exceptionPurpose?: OperatingHoursExceptionPurpose;
   inquiryId?: string | null;
   bookingId?: string | null;
+  /** Default false — consume inside the occupancy write transaction. */
+  consumeException?: boolean;
 }): Promise<OccupancyGuardSuccess> {
   const result = await evaluateWritableOccupancy({
     ...input,

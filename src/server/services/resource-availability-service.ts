@@ -466,6 +466,8 @@ export async function reserveResourcesInTransaction(
     createdByUserProfileId?: string | null;
     now?: Date;
     locationExclusive?: boolean;
+    /** Runs after location lock, before reservation inserts (same transaction). */
+    beforeCreate?: (tx: Prisma.TransactionClient) => Promise<void>;
   },
 ) {
   if (input.endMinute <= input.startMinute) {
@@ -509,6 +511,9 @@ export async function reserveResourcesInTransaction(
           throw new ResourceError("RESOURCE_CONFLICT");
         }
       }
+    }
+    if (input.beforeCreate) {
+      await input.beforeCreate(tx);
     }
     await tx.resourceReservation.createMany({
       data: input.resourceIds.map((resourceId) => ({

@@ -2,7 +2,11 @@ import type { PrismaClient } from "@/generated/prisma/client";
 
 import { resolveStrictOccupancyInstants } from "@/lib/inquiries/strict-local-time";
 import { resolveSchedulingTimeZone } from "@/lib/inquiries/tenant-datetime";
-import { assertWritableOccupancyOrThrow } from "@/server/resources/scheduling-guards";
+import {
+  assertWritableOccupancyOrThrow,
+  consumeValidatedHoursException,
+  type OccupancyGuardSuccess,
+} from "@/server/resources/scheduling-guards";
 import { ResourceError } from "@/server/errors";
 import { LOCAL_TIME_RESOLUTION_STATUSES } from "@/types/operating-hours";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
@@ -153,8 +157,11 @@ export async function placeManualHold(
     hoursExceptionId: input.hoursExceptionId,
     exceptionPurpose: "PLACE_HOLD",
     inquiryId,
+    consumeException: false,
   });
   const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
+  const pendingHoursException: OccupancyGuardSuccess["pendingHoursException"] =
+    guarded.pendingHoursException;
   await releaseExpiredHolds(database, ctx.organizationId);
   const available = await listAvailableResourceIds(database, {
     organizationId: ctx.organizationId,
@@ -190,6 +197,11 @@ export async function placeManualHold(
       expiresAt,
       reason: input.reason?.trim() || "Staff hold",
       createdByUserProfileId: ctx.userId,
+      beforeCreate: pendingHoursException
+        ? async (tx) => {
+            await consumeValidatedHoursException(tx, pendingHoursException, "resource");
+          }
+        : undefined,
     });
   } catch (error) {
     await recordAuditEvent(database, {
@@ -345,6 +357,7 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
     hoursExceptionId: null,
     exceptionPurpose: "PLACE_HOLD",
     inquiryId: inquiry.id,
+    consumeException: false,
   });
   try {
     await database.$transaction(async (tx) => {

@@ -2,7 +2,10 @@ import type { PrismaClient } from "@/generated/prisma/client";
 
 import { resolveStrictOccupancyInstants } from "@/lib/inquiries/strict-local-time";
 import { occupancyInstants, resolveSchedulingTimeZone } from "@/lib/inquiries/tenant-datetime";
-import { assertWritableOccupancyOrThrow } from "@/server/resources/scheduling-guards";
+import {
+  assertWritableOccupancyOrThrow,
+  consumeValidatedHoursException,
+} from "@/server/resources/scheduling-guards";
 import { LOCAL_TIME_RESOLUTION_STATUSES } from "@/types/operating-hours";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
@@ -368,7 +371,7 @@ export async function placeProposalHold(
     locationTimeZone: inquiry.location?.timezone,
     organizationTimeZone: inquiry.organization.timezone,
   });
-  await assertWritableOccupancyOrThrow({
+  const guarded = await assertWritableOccupancyOrThrow({
     database,
     organizationId: input.organizationId,
     locationId,
@@ -381,7 +384,9 @@ export async function placeProposalHold(
     hoursExceptionId: input.hoursExceptionId,
     exceptionPurpose: "PLACE_HOLD",
     inquiryId: inquiry.id,
+    consumeException: false,
   });
+  const pendingHoursException = guarded.pendingHoursException;
   const inventory = await database.resourceType.findMany({
     where: { organizationId: input.organizationId },
     select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
@@ -427,6 +432,9 @@ export async function placeProposalHold(
       });
       if (lockedHolds.length > 0) {
         throw new ResourceError("INVALID_RESOURCE", "HOLD_ALREADY_EXISTS");
+      }
+      if (pendingHoursException) {
+        await consumeValidatedHoursException(tx, pendingHoursException, "resource");
       }
       const assignments = await assignExactResourcesForRequirements(tx as HoldDb, {
         organizationId: input.organizationId,

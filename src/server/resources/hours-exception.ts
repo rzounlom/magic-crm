@@ -224,7 +224,11 @@ export function assertHoursExceptionMatches(
   return { ok: true };
 }
 
-export async function loadAndConsumeHoursException(
+/**
+ * Validates a staff exception against the occupancy fingerprint without consuming it.
+ * Use before pre-checks; call {@link consumeHoursException} inside the same write transaction.
+ */
+export async function assertHoursExceptionConsumable(
   database: ExceptionDb,
   input: {
     exceptionId: string;
@@ -232,7 +236,7 @@ export async function loadAndConsumeHoursException(
     expectedStatus: string;
     now?: Date;
   },
-): Promise<{ ok: true; exceptionId: string } | { ok: false; reason: string }> {
+): Promise<{ ok: true; exceptionId: string; authorizedByUserProfileId: string } | { ok: false; reason: string }> {
   const now = input.now ?? new Date();
   const exception = await database.operatingHoursStaffException.findFirst({
     where: {
@@ -247,9 +251,32 @@ export async function loadAndConsumeHoursException(
   if (!match.ok) {
     return match;
   }
+  return {
+    ok: true,
+    exceptionId: exception.id,
+    authorizedByUserProfileId: exception.authorizedByUserProfileId,
+  };
+}
+
+/**
+ * One-time consume via conditional update. Must run inside the occupancy write transaction
+ * so reservation/booking failure rolls consumption back. Concurrent consumers race on
+ * `consumedAt IS NULL`; at most one updateMany count === 1.
+ */
+export async function consumeHoursException(
+  database: ExceptionDb,
+  input: {
+    exceptionId: string;
+    fingerprint: HoursExceptionFingerprint;
+    expectedStatus: string;
+    authorizedByUserProfileId: string;
+    now?: Date;
+  },
+): Promise<{ ok: true; exceptionId: string } | { ok: false; reason: string }> {
+  const now = input.now ?? new Date();
   const consumed = await database.operatingHoursStaffException.updateMany({
     where: {
-      id: exception.id,
+      id: input.exceptionId,
       organizationId: input.fingerprint.organizationId,
       consumedAt: null,
       revokedAt: null,
@@ -262,18 +289,41 @@ export async function loadAndConsumeHoursException(
   }
   await recordAuditEvent(database as PrismaClient, {
     organizationId: input.fingerprint.organizationId,
-    actorUserProfileId: exception.authorizedByUserProfileId,
+    actorUserProfileId: input.authorizedByUserProfileId,
     action: "scheduling.hours_exception_consumed",
     resourceType: "operating_hours_staff_exception",
-    resourceId: exception.id,
+    resourceId: input.exceptionId,
     metadata: {
-      locationId: exception.locationId,
-      purpose: exception.purpose,
-      overriddenStatus: exception.overriddenStatus,
+      locationId: input.fingerprint.locationId,
+      purpose: input.fingerprint.purpose,
+      overriddenStatus: input.expectedStatus,
       slotDate: input.fingerprint.slotDate,
       startMinute: input.fingerprint.startMinute,
       endMinute: input.fingerprint.endMinute,
     },
   });
-  return { ok: true, exceptionId: exception.id };
+  return { ok: true, exceptionId: input.exceptionId };
+}
+
+/** Validate + consume in one step. Prefer assert-then-consume across a shared write transaction. */
+export async function loadAndConsumeHoursException(
+  database: ExceptionDb,
+  input: {
+    exceptionId: string;
+    fingerprint: HoursExceptionFingerprint;
+    expectedStatus: string;
+    now?: Date;
+  },
+): Promise<{ ok: true; exceptionId: string } | { ok: false; reason: string }> {
+  const asserted = await assertHoursExceptionConsumable(database, input);
+  if (!asserted.ok) {
+    return asserted;
+  }
+  return consumeHoursException(database, {
+    exceptionId: asserted.exceptionId,
+    fingerprint: input.fingerprint,
+    expectedStatus: input.expectedStatus,
+    authorizedByUserProfileId: asserted.authorizedByUserProfileId,
+    now: input.now,
+  });
 }

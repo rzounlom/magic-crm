@@ -21,6 +21,7 @@ import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import {
   assertPendingOccupancyOrThrow,
   assertWritableOccupancyOrThrow,
+  consumeValidatedHoursException,
 } from "@/server/resources/scheduling-guards";
 import { shiftItineraryToStart, stampPlanResourceWindows } from "@/server/resources/segment-windows";
 import { localEventWindow, minutesToClock } from "@/server/resources/time-window";
@@ -362,7 +363,7 @@ export async function upsertPendingBookingFromPlan(
       },
     });
       return { booking, created };
-    });
+    }, { timeout: 20_000 });
     return result;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -555,6 +556,8 @@ export async function confirmPendingBooking(
     organizationTimeZone: inquiry.organization.timezone,
   });
   const { window, eventDate, startTime } = windowFields(payload, durationMinutes);
+  // Validate hours/exception without consuming. Consumption runs inside the write
+  // transaction only after availability succeeds so conflicts/rollback cannot burn it.
   const guarded = await assertWritableOccupancyOrThrow({
     database,
     organizationId: input.organizationId,
@@ -569,8 +572,10 @@ export async function confirmPendingBooking(
     exceptionPurpose: "CONFIRM_BOOKING",
     inquiryId: inquiry.id,
     bookingId: existing?.id ?? null,
+    consumeException: false,
   });
   const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
+  const pendingHoursException = guarded.pendingHoursException;
   const totalCents =
     (working ?? selected)?.estimatedTotalCents ?? existing?.totalCents ?? planPayloadTotal(payload);
   const items = lineItemsFromPayload(payload);
@@ -723,6 +728,10 @@ export async function confirmPendingBooking(
             note: availability.note || "Availability changed before this booking could be confirmed.",
           },
         };
+      }
+
+      if (pendingHoursException) {
+        await consumeValidatedHoursException(tx, pendingHoursException, "booking");
       }
 
       const activeHoldIds = holdIds;

@@ -15,6 +15,8 @@ export async function deleteTestOrganizations(
   await database.communicationEvent.deleteMany({ where: { organizationId: { in: ids } } });
   await database.bookingLineItem.deleteMany({ where: { organizationId: { in: ids } } });
   await database.resourceReservation.deleteMany({ where: { organizationId: { in: ids } } });
+  // Staff exceptions may reference bookings/inquiries — delete before those parents.
+  await database.operatingHoursStaffException.deleteMany({ where: { organizationId: { in: ids } } });
   await database.booking.deleteMany({ where: { organizationId: { in: ids } } });
   await database.organizationBookingSequence.deleteMany({ where: { organizationId: { in: ids } } });
   await database.attractionInterestProduct.deleteMany({ where: { organizationId: { in: ids } } });
@@ -32,7 +34,6 @@ export async function deleteTestOrganizations(
   await database.locationOperatingHoursException.deleteMany({ where: { organizationId: { in: ids } } });
   await database.locationOperatingHoursWindow.deleteMany({ where: { organizationId: { in: ids } } });
   await database.locationOperatingHoursPolicy.deleteMany({ where: { organizationId: { in: ids } } });
-  await database.operatingHoursStaffException.deleteMany({ where: { organizationId: { in: ids } } });
   await database.product.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productCategory.deleteMany({ where: { organizationId: { in: ids } } });
   await database.recommendationProfile.deleteMany({ where: { organizationId: { in: ids } } });
