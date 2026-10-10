@@ -440,6 +440,8 @@ export async function confirmPendingBooking(
     inquiryId: string;
     actorUserProfileId: string | null;
     attestExternalPayment?: boolean;
+    /** One-time staff exception id when hours are unresolved/closed. Not a client boolean bypass. */
+    hoursExceptionId?: string | null;
   },
 ): Promise<ConfirmPendingBookingResult> {
   const inquiry = await database.inquiry.findFirst({
@@ -563,6 +565,10 @@ export async function confirmPendingBooking(
     endMinute: window.endMinute,
     flow: "confirm_pending_booking",
     errorKind: "booking",
+    hoursExceptionId: input.hoursExceptionId,
+    exceptionPurpose: "CONFIRM_BOOKING",
+    inquiryId: inquiry.id,
+    bookingId: existing?.id ?? null,
   });
   const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
   const totalCents =

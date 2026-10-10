@@ -53,3 +53,18 @@ export type MinuteInterval = {
   startMinute: number;
   endMinute: number;
 };
+
+export const OPERATING_HOURS_EXCEPTION_PURPOSES = {
+  CONFIRM_BOOKING: "CONFIRM_BOOKING",
+  PLACE_HOLD: "PLACE_HOLD",
+} as const;
+
+export type OperatingHoursExceptionPurpose =
+  (typeof OPERATING_HOURS_EXCEPTION_PURPOSES)[keyof typeof OPERATING_HOURS_EXCEPTION_PURPOSES];
+
+/** Statuses that may be overridden by an explicit staff exception. */
+export const OPERATING_HOURS_OVERRIDABLE_STATUSES = [
+  OPERATING_HOURS_EVALUATION_STATUSES.OUTSIDE_HOURS,
+  OPERATING_HOURS_EVALUATION_STATUSES.HOURS_UNCONFIGURED,
+  OPERATING_HOURS_EVALUATION_STATUSES.HOURS_UNVERIFIED,
+] as const;

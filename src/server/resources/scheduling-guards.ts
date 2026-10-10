@@ -1,10 +1,15 @@
 /**
  * Final-write scheduling guards: strict local time + operating hours.
- * Does not rewrite historical records. Does not invent tenant hours.
+ * Confirmed occupancy / HOLDs fail closed when hours are unresolved or closed
+ * unless a matching one-time staff exception is provided and consumed.
  */
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { resolveStrictOccupancyInstants } from "@/lib/inquiries/strict-local-time";
 import { BookingError, ResourceError } from "@/server/errors";
+import {
+  loadAndConsumeHoursException,
+  type HoursExceptionFingerprint,
+} from "@/server/resources/hours-exception";
 import {
   aggregateSchedulingAvailability,
   evaluateOperatingHours,
@@ -16,7 +21,9 @@ import {
 import {
   LOCAL_TIME_RESOLUTION_STATUSES,
   OPERATING_HOURS_EVALUATION_STATUSES,
+  OPERATING_HOURS_EXCEPTION_PURPOSES,
   SCHEDULING_AVAILABILITY_STATUSES,
+  type OperatingHoursExceptionPurpose,
 } from "@/types/operating-hours";
 
 type GuardDb = PrismaClient | Prisma.TransactionClient;
@@ -27,6 +34,7 @@ export type OccupancyGuardSuccess = {
   endsAt: Date;
   aggregate: SchedulingAvailabilityAggregate;
   operatingHours: OperatingHoursEvaluation;
+  hoursExceptionId?: string;
 };
 
 export type OccupancyGuardFailure = {
@@ -34,10 +42,23 @@ export type OccupancyGuardFailure = {
   aggregate: SchedulingAvailabilityAggregate;
   operatingHours: OperatingHoursEvaluation;
   reason: string;
-  code: "INVALID_LOCAL_TIME" | "OUTSIDE_OPERATING_HOURS";
+  code:
+    | "INVALID_LOCAL_TIME"
+    | "OUTSIDE_OPERATING_HOURS"
+    | "OPERATING_HOURS_UNRESOLVED"
+    | "HOURS_EXCEPTION_REQUIRED"
+    | "HOURS_EXCEPTION_INVALID";
 };
 
 export type OccupancyGuardResult = OccupancyGuardSuccess | OccupancyGuardFailure;
+
+function unresolvedOrClosed(status: string): boolean {
+  return (
+    status === OPERATING_HOURS_EVALUATION_STATUSES.HOURS_UNCONFIGURED ||
+    status === OPERATING_HOURS_EVALUATION_STATUSES.HOURS_UNVERIFIED ||
+    status === OPERATING_HOURS_EVALUATION_STATUSES.OUTSIDE_HOURS
+  );
+}
 
 export async function evaluateWritableOccupancy(input: {
   database: GuardDb;
@@ -49,6 +70,15 @@ export async function evaluateWritableOccupancy(input: {
   endMinute: number;
   resourceAvailable?: boolean | null;
   flow: string;
+  /**
+   * When true (pending requests), unresolved hours are allowed without an exception.
+   * Confirmed occupancy and HOLDs must keep this false.
+   */
+  allowUnresolvedHours?: boolean;
+  hoursExceptionId?: string | null;
+  exceptionPurpose?: OperatingHoursExceptionPurpose;
+  inquiryId?: string | null;
+  bookingId?: string | null;
 }): Promise<OccupancyGuardResult> {
   const localTime = resolveStrictOccupancyInstants({
     slotDate: input.slotDate,
@@ -91,7 +121,42 @@ export async function evaluateWritableOccupancy(input: {
     };
   }
 
-  if (operatingHours.status === OPERATING_HOURS_EVALUATION_STATUSES.OUTSIDE_HOURS) {
+  if (operatingHours.status === OPERATING_HOURS_EVALUATION_STATUSES.WITHIN_HOURS) {
+    return {
+      ok: true,
+      startsAt: localTime.startsAt,
+      endsAt: localTime.endsAt,
+      aggregate,
+      operatingHours,
+    };
+  }
+
+  if (input.allowUnresolvedHours && unresolvedOrClosed(operatingHours.status)) {
+    if (operatingHours.status === OPERATING_HOURS_EVALUATION_STATUSES.OUTSIDE_HOURS) {
+      return {
+        ok: false,
+        aggregate,
+        operatingHours,
+        reason: operatingHours.reason,
+        code: "OUTSIDE_OPERATING_HOURS",
+      };
+    }
+    logLegacyHoursCompatibility({
+      organizationId: input.organizationId,
+      locationId: input.locationId,
+      flow: input.flow,
+      evaluation: operatingHours,
+    });
+    return {
+      ok: true,
+      startsAt: localTime.startsAt,
+      endsAt: localTime.endsAt,
+      aggregate,
+      operatingHours,
+    };
+  }
+
+  if (!unresolvedOrClosed(operatingHours.status)) {
     return {
       ok: false,
       aggregate,
@@ -101,13 +166,58 @@ export async function evaluateWritableOccupancy(input: {
     };
   }
 
-  if (aggregate.legacyCompatibilityAllow) {
-    logLegacyHoursCompatibility({
-      organizationId: input.organizationId,
-      locationId: input.locationId,
-      flow: input.flow,
-      evaluation: operatingHours,
-    });
+  if (!input.locationId) {
+    return {
+      ok: false,
+      aggregate,
+      operatingHours,
+      reason: "A location is required before authorizing an operating-hours exception.",
+      code: "HOURS_EXCEPTION_REQUIRED",
+    };
+  }
+
+  if (!input.hoursExceptionId) {
+    const code =
+      operatingHours.status === OPERATING_HOURS_EVALUATION_STATUSES.OUTSIDE_HOURS
+        ? "OUTSIDE_OPERATING_HOURS"
+        : "OPERATING_HOURS_UNRESOLVED";
+    return {
+      ok: false,
+      aggregate,
+      operatingHours,
+      reason:
+        operatingHours.status === OPERATING_HOURS_EVALUATION_STATUSES.OUTSIDE_HOURS
+          ? operatingHours.reason
+          : "Operating hours are not verified. Confirmed occupancy requires an authorized staff exception.",
+      code,
+    };
+  }
+
+  const purpose =
+    input.exceptionPurpose ?? OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING;
+  const fingerprint: HoursExceptionFingerprint = {
+    organizationId: input.organizationId,
+    locationId: input.locationId,
+    slotDate: input.slotDate,
+    startMinute: input.startMinute,
+    endMinute: input.endMinute,
+    purpose,
+    inquiryId: input.inquiryId,
+    bookingId: input.bookingId,
+  };
+  const consumed = await loadAndConsumeHoursException(input.database, {
+    exceptionId: input.hoursExceptionId,
+    fingerprint,
+    expectedStatus: operatingHours.status,
+  });
+  if (!consumed.ok) {
+    return {
+      ok: false,
+      aggregate,
+      operatingHours,
+      reason: consumed.reason,
+      code: "HOURS_EXCEPTION_INVALID",
+    };
   }
 
   return {
@@ -116,6 +226,7 @@ export async function evaluateWritableOccupancy(input: {
     endsAt: localTime.endsAt,
     aggregate,
     operatingHours,
+    hoursExceptionId: consumed.exceptionId,
   };
 }
 
@@ -131,8 +242,15 @@ export async function assertWritableOccupancyOrThrow(input: {
   resourceAvailable?: boolean | null;
   flow: string;
   errorKind: "booking" | "resource";
+  hoursExceptionId?: string | null;
+  exceptionPurpose?: OperatingHoursExceptionPurpose;
+  inquiryId?: string | null;
+  bookingId?: string | null;
 }): Promise<OccupancyGuardSuccess> {
-  const result = await evaluateWritableOccupancy(input);
+  const result = await evaluateWritableOccupancy({
+    ...input,
+    allowUnresolvedHours: false,
+  });
   if (result.ok) {
     return result;
   }
@@ -159,11 +277,18 @@ export async function assertPendingOccupancyOrThrow(input: {
   const result = await evaluateWritableOccupancy({
     ...input,
     resourceAvailable: null,
+    allowUnresolvedHours: true,
   });
   if (result.ok) {
     return result;
   }
-  if (result.code === "INVALID_LOCAL_TIME" || result.code === "OUTSIDE_OPERATING_HOURS") {
+  if (
+    result.code === "INVALID_LOCAL_TIME" ||
+    result.code === "OUTSIDE_OPERATING_HOURS" ||
+    result.code === "OPERATING_HOURS_UNRESOLVED" ||
+    result.code === "HOURS_EXCEPTION_REQUIRED" ||
+    result.code === "HOURS_EXCEPTION_INVALID"
+  ) {
     throw new BookingError(result.code, result.reason);
   }
   throw new BookingError("NOT_READY_TO_FINALIZE", result.reason);

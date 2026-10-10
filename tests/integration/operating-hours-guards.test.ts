@@ -99,6 +99,29 @@ async function seedVerifiedHours(
 }
 
 describe("operating-hours and local-time booking guards (TEST)", () => {
+  it("blocks confirmed occupancy when hours are unconfigured unless a staff exception is used", async () => {
+    const org = await createOrg({
+      name: "Indiana Fail Closed",
+      slug: "indiana-fail-closed",
+      timezone: "America/Indiana/Indianapolis",
+      locations: [{ name: "Main", slug: "main", timezone: "America/Indiana/Indianapolis" }],
+    });
+    const location = org.locations[0]!;
+    await expect(
+      assertWritableOccupancyOrThrow({
+        database: db,
+        organizationId: org.id,
+        locationId: location.id,
+        timeZone: "America/Indiana/Indianapolis",
+        slotDate: "2026-10-22",
+        startMinute: 14 * 60,
+        endMinute: 16 * 60,
+        flow: "test_confirm_unconfigured",
+        errorKind: "booking",
+      }),
+    ).rejects.toMatchObject({ code: "OPERATING_HOURS_UNRESOLVED" });
+  });
+
   it("allows pending bookings under legacy unconfigured hours without inventing open status", async () => {
     const org = await createOrg({
       name: "Indiana Unconfigured",

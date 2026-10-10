@@ -2,6 +2,8 @@
 
 Shared employee-app UX primitives. Product look-and-feel remains in `.cursor/rules/magiccrm.mdc`.
 
+Future product-wide visual direction (not implemented yet): [`design-north-star.md`](./design-north-star.md).
+
 ## Pointer cursor
 
 Every enabled clickable/tappable control must use cursor:pointer on desktop. Disabled interactive controls use cursor:not-allowed where appropriate. Display-only elements must not imply interactivity.

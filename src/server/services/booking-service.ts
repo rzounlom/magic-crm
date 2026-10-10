@@ -58,6 +58,7 @@ export async function confirmInquiryBooking(
   database: BookingDb,
   inquiryId: string,
   _expectedUpdatedAt?: string | null,
+  hoursExceptionId?: string | null,
 ) {
   void _expectedUpdatedAt;
   await requirePermission(ctx, PERMISSIONS.EVENTS_CONFIRM, database);
@@ -67,6 +68,7 @@ export async function confirmInquiryBooking(
     inquiryId,
     actorUserProfileId: ctx.userId,
     attestExternalPayment: true,
+    hoursExceptionId,
   });
 }
 

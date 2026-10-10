@@ -6,6 +6,7 @@
  */
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
+import { resolveOccupancyInstantsForConflict } from "@/server/resources/occupancy-windows";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import { PRODUCT_QUANTITY_RULES } from "@/types/catalog";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
@@ -25,13 +26,11 @@ function overlappingWhere(
     excludeInquiryId?: string | null;
     excludeBookingId?: string | null;
     excludeReservationId?: string | null;
+    timeZone?: string | null;
   },
   now = new Date(),
 ): Prisma.ResourceReservationWhereInput {
-  const and: Prisma.ResourceReservationWhereInput[] = [
-    { startMinute: { lt: window.endMinute } },
-    { endMinute: { gt: window.startMinute } },
-  ];
+  const and: Prisma.ResourceReservationWhereInput[] = [];
   if (exclude?.excludeInquiryId) {
     and.push({ OR: [{ inquiryId: null }, { inquiryId: { not: exclude.excludeInquiryId } }] });
   }
@@ -41,19 +40,50 @@ function overlappingWhere(
   if (exclude?.excludeReservationId) {
     and.push({ id: { not: exclude.excludeReservationId } });
   }
+  const absolute = exclude?.timeZone
+    ? resolveOccupancyInstantsForConflict({
+        slotDate: window.slotDate,
+        startMinute: window.startMinute,
+        endMinute: window.endMinute,
+        timeZone: exclude.timeZone,
+      })
+    : null;
+  const dayOrInstant: Prisma.ResourceReservationWhereInput[] = [
+    {
+      AND: [
+        { slotDate: new Date(`${window.slotDate}T00:00:00.000Z`) },
+        { startMinute: { lt: window.endMinute } },
+        { endMinute: { gt: window.startMinute } },
+      ],
+    },
+  ];
+  if (absolute) {
+    dayOrInstant.push({
+      AND: [
+        { startsAt: { not: null } },
+        { endsAt: { not: null } },
+        { startsAt: { lt: absolute.endsAt } },
+        { endsAt: { gt: absolute.startsAt } },
+      ],
+    });
+  }
   return {
     organizationId,
-    slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
     releasedAt: null,
     status: {
       in: [RESOURCE_RESERVATION_STATUSES.HOLD, RESOURCE_RESERVATION_STATUSES.BOOKED],
     },
-    OR: [
-      { status: RESOURCE_RESERVATION_STATUSES.BOOKED },
-      { expiresAt: null },
-      { expiresAt: { gt: now } },
+    AND: [
+      {
+        OR: [
+          { status: RESOURCE_RESERVATION_STATUSES.BOOKED },
+          { expiresAt: null },
+          { expiresAt: { gt: now } },
+        ],
+      },
+      { OR: dayOrInstant },
+      ...and,
     ],
-    AND: and,
   };
 }
 
@@ -101,6 +131,7 @@ export async function locationHasBlockingOccupancy(
     excludeBookingId?: string | null;
     excludeReservationId?: string | null;
     now?: Date;
+    timeZone?: string | null;
   },
 ): Promise<boolean> {
   const base = overlappingWhere(input.organizationId, input.window, input, input.now);
@@ -132,6 +163,7 @@ export async function locationHasExclusiveOccupancy(
     excludeBookingId?: string | null;
     excludeReservationId?: string | null;
     now?: Date;
+    timeZone?: string | null;
   },
 ): Promise<boolean> {
   const markerTypes = await database.productResourceRequirement.findMany({

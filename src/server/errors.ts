@@ -187,6 +187,9 @@ export const RESOURCE_ERROR_CODES = [
   "BOOKED_CANNOT_RELEASE",
   "INVALID_LOCAL_TIME",
   "OUTSIDE_OPERATING_HOURS",
+  "OPERATING_HOURS_UNRESOLVED",
+  "HOURS_EXCEPTION_REQUIRED",
+  "HOURS_EXCEPTION_INVALID",
 ] as const;
 
 export type ResourceErrorCode = (typeof RESOURCE_ERROR_CODES)[number];
@@ -200,6 +203,11 @@ const RESOURCE_USER_MESSAGES: Record<ResourceErrorCode, string> = {
   BOOKED_CANNOT_RELEASE: "Confirmed bookings cannot be released from this action.",
   INVALID_LOCAL_TIME: "That local event time is not valid for the venue time zone.",
   OUTSIDE_OPERATING_HOURS: "That time is outside the venue's verified operating hours.",
+  OPERATING_HOURS_UNRESOLVED:
+    "Operating hours are not verified for this location. Creating a hold requires an explicit staff exception.",
+  HOURS_EXCEPTION_REQUIRED:
+    "An authorized staff operating-hours exception is required before creating a resource hold.",
+  HOURS_EXCEPTION_INVALID: "The operating-hours exception is missing, expired, revoked, or does not match this event.",
 };
 
 export class ResourceError extends Error {
@@ -231,6 +239,9 @@ export const BOOKING_ERROR_CODES = [
   "AVAILABILITY_CONFLICT",
   "INVALID_LOCAL_TIME",
   "OUTSIDE_OPERATING_HOURS",
+  "OPERATING_HOURS_UNRESOLVED",
+  "HOURS_EXCEPTION_REQUIRED",
+  "HOURS_EXCEPTION_INVALID",
 ] as const;
 
 export type BookingErrorCode = (typeof BOOKING_ERROR_CODES)[number];
@@ -246,6 +257,11 @@ const BOOKING_USER_MESSAGES: Record<BookingErrorCode, string> = {
   AVAILABILITY_CONFLICT: "Availability changed before this booking could be confirmed.",
   INVALID_LOCAL_TIME: "That local event time is not valid for the venue time zone.",
   OUTSIDE_OPERATING_HOURS: "That time is outside the venue's verified operating hours.",
+  OPERATING_HOURS_UNRESOLVED:
+    "Operating hours are not verified for this location. Confirming occupancy requires an explicit staff exception.",
+  HOURS_EXCEPTION_REQUIRED:
+    "An authorized staff operating-hours exception is required before creating confirmed occupancy.",
+  HOURS_EXCEPTION_INVALID: "The operating-hours exception is missing, expired, revoked, or does not match this event.",
 };
 
 export class BookingError extends Error {

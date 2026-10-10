@@ -94,6 +94,8 @@ export type ResourceAvailabilityRequest = {
   excludeBookingId?: string | null;
   excludeReservationId?: string | null;
   now?: Date;
+  /** Venue scheduling time zone for overnight / cross-day absolute conflict checks. */
+  timeZone?: string | null;
 };
 
 export type ResourceTypeAvailability = {

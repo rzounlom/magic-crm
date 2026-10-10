@@ -65,6 +65,7 @@ model Organization {
   operatingHoursPolicies LocationOperatingHoursPolicy[]
   operatingHoursWindows  LocationOperatingHoursWindow[]
   operatingHoursExceptions LocationOperatingHoursException[]
+  operatingHoursStaffExceptions OperatingHoursStaffException[]
 
   @@index([onboardingStatus])
   @@map("organizations")
@@ -96,6 +97,7 @@ model Location {
   operatingHoursPolicy   LocationOperatingHoursPolicy?
   operatingHoursWindows  LocationOperatingHoursWindow[]
   operatingHoursExceptions LocationOperatingHoursException[]
+  operatingHoursStaffExceptions OperatingHoursStaffException[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
@@ -173,6 +175,47 @@ model LocationOperatingHoursException {
   @@index([organizationId, locationId, localDate])
   @@index([organizationId, policyId])
   @@map("location_operating_hours_exceptions")
+}
+
+/// One-time, event-scoped staff authorization to confirm/HOLD despite unresolved or closed hours.
+/// Cannot override invalid local time, resource conflicts, or tenant isolation.
+model OperatingHoursStaffException {
+  id                         String    @id @default(cuid(2))
+  organizationId             String
+  locationId                 String
+  /// CONFIRM_BOOKING | PLACE_HOLD
+  purpose                    String    @db.VarChar(24)
+  /// Exact occupancy fingerprint this exception authorizes.
+  slotDate                   DateTime  @db.Date
+  startMinute                Int
+  endMinute                  Int
+  /// HOURS_UNCONFIGURED | HOURS_UNVERIFIED | OUTSIDE_HOURS
+  overriddenStatus           String    @db.VarChar(32)
+  reason                     String    @db.VarChar(500)
+  authorizedByUserProfileId  String
+  authorizedAt               DateTime  @default(now())
+  expiresAt                  DateTime
+  revokedAt                  DateTime?
+  revokedByUserProfileId     String?
+  consumedAt                 DateTime?
+  inquiryId                  String?
+  bookingId                  String?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location     @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  authorizedBy UserProfile  @relation("OperatingHoursStaffExceptionAuthorizedBy", fields: [organizationId, authorizedByUserProfileId], references: [organizationId, id], onDelete: Restrict)
+  revokedBy    UserProfile? @relation("OperatingHoursStaffExceptionRevokedBy", fields: [organizationId, revokedByUserProfileId], references: [organizationId, id], onDelete: Restrict)
+  inquiry      Inquiry?     @relation(fields: [organizationId, inquiryId], references: [organizationId, id], onDelete: Restrict)
+  booking      Booking?     @relation(fields: [organizationId, bookingId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, locationId, slotDate])
+  @@index([organizationId, inquiryId])
+  @@index([organizationId, bookingId])
+  @@index([organizationId, consumedAt, revokedAt, expiresAt])
+  @@map("operating_hours_staff_exceptions")
 }
 
 /// Organization-level tax activation and pricing mode. Defaults keep tax inactive.
@@ -332,6 +375,8 @@ model UserProfile {
   cancelledBookings           Booking[]             @relation("BookingCancelledBy")
   resourceReservations        ResourceReservation[] @relation("ResourceReservationCreatedBy")
   inquirySeen                 InquirySeen[]
+  operatingHoursExceptionsAuthorized OperatingHoursStaffException[] @relation("OperatingHoursStaffExceptionAuthorizedBy")
+  operatingHoursExceptionsRevoked    OperatingHoursStaffException[] @relation("OperatingHoursStaffExceptionRevokedBy")
 
   @@unique([organizationId, id])
   @@unique([organizationId, clerkUserId])
@@ -552,6 +597,7 @@ model Inquiry {
   bookings             Booking[]
   aiUsage              AiUsage[]
   notificationSeen     InquirySeen[]
+  operatingHoursStaffExceptions OperatingHoursStaffException[]
 
   @@unique([organizationId, id])
   @@index([organizationId, status, createdAt])
@@ -1199,6 +1245,7 @@ model Booking {
   lineItems    BookingLineItem[]
   reservations ResourceReservation[]
   communicationEvents CommunicationEvent[]
+  operatingHoursStaffExceptions OperatingHoursStaffException[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, inquiryId])

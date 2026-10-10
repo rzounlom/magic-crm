@@ -306,6 +306,7 @@ export async function placeProposalHold(
     now?: Date;
     holdHours?: number;
     selectPlan?: boolean;
+    hoursExceptionId?: string | null;
   },
 ): Promise<ProposalHoldResult> {
   const now = input.now ?? new Date();
@@ -377,6 +378,9 @@ export async function placeProposalHold(
     endMinute: window.endMinute,
     flow: "place_proposal_hold",
     errorKind: "resource",
+    hoursExceptionId: input.hoursExceptionId,
+    exceptionPurpose: "PLACE_HOLD",
+    inquiryId: inquiry.id,
   });
   const inventory = await database.resourceType.findMany({
     where: { organizationId: input.organizationId },

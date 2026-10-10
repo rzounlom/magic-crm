@@ -37,6 +37,7 @@ System architecture documents. Current implementation notes:
 - `communications.md` — inquiry vs selected-plan vs booking-confirmed emails; `CommunicationEvent` log without a mailer
 - `ai-sales-agent.md`
 - `ui-conventions.md` — includes the planned **Employee shell polish / sticky authenticated header** follow-up
+- `design-north-star.md` — future Airbnb/PayPal-inspired MagicCRM design direction and UX1–UX6 sequence (**not authorized for implementation yet**)
 
 The product source of truth remains `MAGICCRM_SAAS_ARCHITECTURE.md`. Expected later examples:
 

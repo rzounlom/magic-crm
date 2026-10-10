@@ -97,6 +97,7 @@ export async function placeManualHold(
     inquiryId?: string | null;
     reason?: string | null;
     holdHours?: number;
+    hoursExceptionId?: string | null;
   },
 ) {
   await requirePermission(ctx, PERMISSIONS.EVENTS_CREATE, database);
@@ -149,6 +150,9 @@ export async function placeManualHold(
     endMinute,
     flow: "place_manual_hold",
     errorKind: "resource",
+    hoursExceptionId: input.hoursExceptionId,
+    exceptionPurpose: "PLACE_HOLD",
+    inquiryId,
   });
   const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
   await releaseExpiredHolds(database, ctx.organizationId);
@@ -157,6 +161,7 @@ export async function placeManualHold(
     resourceIds: [resource.id],
     window: { slotDate: input.date, startMinute, endMinute },
     excludeInquiryId: inquiryId,
+    timeZone,
   });
   if (available.length === 0) {
     await recordAuditEvent(database, {
@@ -337,6 +342,9 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
     endMinute: window.endMinute,
     flow: "update_inquiry_plan_hold",
     errorKind: "resource",
+    hoursExceptionId: null,
+    exceptionPurpose: "PLACE_HOLD",
+    inquiryId: inquiry.id,
   });
   try {
     await database.$transaction(async (tx) => {

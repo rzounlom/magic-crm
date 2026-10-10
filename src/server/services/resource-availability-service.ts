@@ -1,6 +1,10 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
 import { ResourceError } from "@/server/errors";
+import {
+  absoluteIntervalsOverlap,
+  resolveOccupancyInstantsForConflict,
+} from "@/server/resources/occupancy-windows";
 import { localEventWindow, requirementOccupancyWindow } from "@/server/resources/time-window";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import {
@@ -53,6 +57,7 @@ function occupancyWhere(
     excludeReservationId?: string | null;
   },
   now = new Date(),
+  absolute?: { startsAt: Date; endsAt: Date } | null,
 ): Prisma.ResourceReservationWhereInput {
   const and: Prisma.ResourceReservationWhereInput[] = [];
   if (exclude?.excludeInquiryId) {
@@ -68,20 +73,37 @@ function occupancyWhere(
   if (exclude?.excludeReservationId) {
     and.push({ id: { not: exclude.excludeReservationId } });
   }
+  const dayOrInstant: Prisma.ResourceReservationWhereInput[] = [
+    { slotDate: new Date(`${window.slotDate}T00:00:00.000Z`) },
+  ];
+  if (absolute) {
+    dayOrInstant.push({
+      AND: [
+        { startsAt: { not: null } },
+        { endsAt: { not: null } },
+        { startsAt: { lt: absolute.endsAt } },
+        { endsAt: { gt: absolute.startsAt } },
+      ],
+    });
+  }
   return {
     organizationId,
     resourceId: { in: resourceIds },
-    slotDate: new Date(`${window.slotDate}T00:00:00.000Z`),
     releasedAt: null,
     status: {
       in: [RESOURCE_RESERVATION_STATUSES.HOLD, RESOURCE_RESERVATION_STATUSES.BOOKED],
     },
-    OR: [
-      { status: RESOURCE_RESERVATION_STATUSES.BOOKED },
-      { expiresAt: null },
-      { expiresAt: { gt: now } },
+    AND: [
+      {
+        OR: [
+          { status: RESOURCE_RESERVATION_STATUSES.BOOKED },
+          { expiresAt: null },
+          { expiresAt: { gt: now } },
+        ],
+      },
+      { OR: dayOrInstant },
+      ...and,
     ],
-    ...(and.length > 0 ? { AND: and } : {}),
   };
 }
 
@@ -203,6 +225,7 @@ export async function checkResourceAvailability(
         excludeBookingId: input.excludeBookingId,
         excludeReservationId: input.excludeReservationId,
         now,
+        timeZone: input.timeZone,
       });
       const activeIds = await listActiveLocationResourceIds(database, input.organizationId, input.locationId);
       if (activeIds.length === 0) {
@@ -293,6 +316,7 @@ export async function checkResourceAvailability(
       excludeBookingId: input.excludeBookingId,
       excludeReservationId: input.excludeReservationId,
       now,
+      timeZone: input.timeZone,
     });
     const requestedQuantity = isAllOfTypeRule(requirement.quantityRule)
       ? scopedUnits.length
@@ -305,6 +329,7 @@ export async function checkResourceAvailability(
         organizationId: input.organizationId,
         locationId: input.locationId,
         window: requirementWindow,
+        timeZone: input.timeZone,
         excludeInquiryId: input.excludeInquiryId,
         excludeBookingId: input.excludeBookingId,
         excludeReservationId: input.excludeReservationId,
@@ -351,19 +376,49 @@ export async function listAvailableResourceIds(
     excludeBookingId?: string | null;
     excludeReservationId?: string | null;
     now?: Date;
+    /** When set, also detect cross-day / overnight conflicts via absolute UTC instants. */
+    timeZone?: string | null;
   },
 ): Promise<string[]> {
   if (input.resourceIds.length === 0) {
     return [];
   }
   const now = input.now ?? new Date();
+  const absolute = input.timeZone
+    ? resolveOccupancyInstantsForConflict({
+        slotDate: input.window.slotDate,
+        startMinute: input.window.startMinute,
+        endMinute: input.window.endMinute,
+        timeZone: input.timeZone,
+      })
+    : null;
   const busy = await database.resourceReservation.findMany({
-    where: occupancyWhere(input.organizationId, input.resourceIds, input.window, input, now),
-    select: { resourceId: true, startMinute: true, endMinute: true },
+    where: occupancyWhere(input.organizationId, input.resourceIds, input.window, input, now, absolute),
+    select: {
+      resourceId: true,
+      slotDate: true,
+      startMinute: true,
+      endMinute: true,
+      startsAt: true,
+      endsAt: true,
+    },
   });
+  const slotKey = input.window.slotDate;
   const occupied = new Set(
     busy
-      .filter((row) => row.startMinute < input.window.endMinute && input.window.startMinute < row.endMinute)
+      .filter((row) => {
+        const sameDay =
+          row.slotDate.toISOString().slice(0, 10) === slotKey &&
+          row.startMinute < input.window.endMinute &&
+          input.window.startMinute < row.endMinute;
+        if (sameDay) {
+          return true;
+        }
+        if (absolute && row.startsAt && row.endsAt) {
+          return absoluteIntervalsOverlap(absolute, { startsAt: row.startsAt, endsAt: row.endsAt });
+        }
+        return false;
+      })
       .map((row) => row.resourceId),
   );
   return input.resourceIds.filter((id) => !occupied.has(id));

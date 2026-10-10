@@ -64,7 +64,10 @@ export type AuditAction =
   | "resource.hold_extended"
   | "resource.hold_expired"
   | "resource.hold_conflict_rejected"
-  | "knowledge_requirement.updated";
+  | "knowledge_requirement.updated"
+  | "scheduling.hours_exception_authorized"
+  | "scheduling.hours_exception_revoked"
+  | "scheduling.hours_exception_consumed";
 
 type AuditMetadata = Record<string, string | number | boolean | null>;
 
