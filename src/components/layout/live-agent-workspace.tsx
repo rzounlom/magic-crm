@@ -10,6 +10,7 @@ import { InquiryArchiveActions } from "@/components/layout/inquiry-archive-actio
 import { InquiryFunnel } from "@/components/layout/inquiry-funnel";
 import { LiveAgentBookingActions } from "@/components/layout/live-agent-booking-actions";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
+import type { ConfirmationReadinessResult } from "@/types/confirmation-readiness";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { BOOKING_STATUSES } from "@/types/booking";
 import {
@@ -138,6 +139,7 @@ export function LiveAgentWorkspace({
   timeZone,
   recommendations = [],
   inventoryCounts = [],
+  confirmationReadiness = null,
 }: {
   inquiry: WorkspaceInquiry;
   selectedPlan: {
@@ -171,6 +173,7 @@ export function LiveAgentWorkspace({
   timeZone: string;
   recommendations?: Array<{ id: string; kind: string; title: string; tier: string }>;
   inventoryCounts?: ResourceTypeInventoryCount[];
+  confirmationReadiness?: ConfirmationReadinessResult | null;
 }) {
   const displayName =
     inquiry.customerGroupName ||
@@ -224,7 +227,7 @@ export function LiveAgentWorkspace({
         ...bookingConfirmationBlockers({
           inquiryStatus: inquiry.status,
           workflowStage: inquiry.workflowStage,
-        readyToFinalizeAt: inquiry.readyToFinalizeAt,
+          readyToFinalizeAt: inquiry.readyToFinalizeAt,
           selectedEventPlanId: inquiry.selectedEventPlanId,
           assignedUserProfileId: inquiry.assignedUserProfileId,
           workingPlan: workingPlan
@@ -272,6 +275,12 @@ export function LiveAgentWorkspace({
                 },
               },
             })))
+          : []),
+        // Surface hours/resource readiness in the sticky guide when confirm is not yet allowed.
+        ...(confirmationReadiness &&
+        !confirmationReadiness.confirmAttemptAllowed &&
+        confirmationReadiness.detail
+          ? [confirmationReadiness.detail]
           : []),
       ];
   const holdReadiness = liveAgentHoldReadiness({
@@ -332,6 +341,14 @@ export function LiveAgentWorkspace({
         availabilityChecked={
           (workingPlan?.availabilityStatus ?? selectedPlan.availabilityStatus ?? "NOT_VALIDATED") !==
           "NOT_VALIDATED"
+        }
+        hoursExceptionId={
+          confirmationReadiness?.activeException?.status === "ACTIVE"
+            ? confirmationReadiness.activeException.id
+            : null
+        }
+        confirmAttemptAllowed={
+          confirmationReadiness ? confirmationReadiness.confirmAttemptAllowed : true
         }
       />
 

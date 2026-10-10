@@ -48,6 +48,8 @@ export function LiveAgentBookingActions({
   availabilityChecked = false,
   cancelled = false,
   canCancel = false,
+  hoursExceptionId = null,
+  confirmAttemptAllowed = false,
 }: {
   inquiryId: string;
   expectedUpdatedAt: string;
@@ -69,6 +71,10 @@ export function LiveAgentBookingActions({
   availabilityChecked?: boolean;
   cancelled?: boolean;
   canCancel?: boolean;
+  /** Active matching hours exception id from server readiness (optional). */
+  hoursExceptionId?: string | null;
+  /** Server-derived: confirmation may be attempted (still revalidated transactionally). */
+  confirmAttemptAllowed?: boolean;
 }) {
   void canHold;
   void needsHold;
@@ -86,7 +92,14 @@ export function LiveAgentBookingActions({
     cancelled,
   });
   const steps = liveAgentBookingSteps();
-  const canSubmitConfirm = canConfirm && !booked && !cancelled && confirmBlockers.length === 0 && assigned && !needsInventory;
+  const canSubmitConfirm =
+    canConfirm &&
+    !booked &&
+    !cancelled &&
+    confirmBlockers.length === 0 &&
+    assigned &&
+    !needsInventory &&
+    confirmAttemptAllowed;
   const showStartWorking = canManage && !booked && !cancelled && !assigned;
   const showSetupInventory = canManage && !booked && !cancelled && assigned && needsInventory;
   const showWorkingActions = !booked && !cancelled;
@@ -198,6 +211,9 @@ export function LiveAgentBookingActions({
                 >
                   <input type="hidden" name="inquiryId" value={inquiryId} />
                   <input type="hidden" name="expectedUpdatedAt" value={expectedUpdatedAt} />
+                  {hoursExceptionId ? (
+                    <input type="hidden" name="hoursExceptionId" value={hoursExceptionId} />
+                  ) : null}
                   <PendingSubmitButton pendingLabel="Confirming…" className={PRIMARY_BUTTON}>
                     Confirm Payment & Book
                   </PendingSubmitButton>

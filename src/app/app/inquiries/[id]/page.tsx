@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ConfirmationReadinessPanel } from "@/components/layout/confirmation-readiness-panel";
 import { LiveAgentWorkspace } from "@/components/layout/live-agent-workspace";
 import { AcknowledgeInquiryView } from "@/components/layout/acknowledge-inquiry-view";
 import { EmployeeInquiryConversation } from "@/components/layout/employee-inquiry-conversation";
@@ -34,10 +35,12 @@ import { listInquiryActivity, listWorkspaceKnowledge } from "@/server/services/l
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
+import { getConfirmationReadiness } from "@/server/services/confirmation-readiness-service";
 import { getCurrentTenantTimezone, getInquiryDetail } from "@/server/services/inquiry-service";
 import { getInquiryPlanAvailabilitySnapshot } from "@/server/services/resource-hold-service";
 import { listActiveResourceTypeCounts } from "@/server/services/resource-schedule-service";
 import { BOOKING_STATUSES } from "@/types/booking";
+import type { ConfirmationReadinessResult } from "@/types/confirmation-readiness";
 import { PERMISSIONS } from "@/types/permissions";
 
 type InquiryDetailView =
@@ -57,6 +60,7 @@ type InquiryDetailView =
       activity: Awaited<ReturnType<typeof listInquiryActivity>>;
       currentUserId: string;
       inventoryCounts: Awaited<ReturnType<typeof listActiveResourceTypeCounts>>;
+      confirmationReadiness: ConfirmationReadinessResult | null;
     };
 
 async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
@@ -83,11 +87,12 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
     const skipAvailability =
       bookingStatus === BOOKING_STATUSES.CONFIRMED || bookingStatus === BOOKING_STATUSES.CANCELLED;
     const planForCheck = skipAvailability ? null : (workingPlan ?? selectedPlan);
-    const [resourceCheck, knowledge, activity, inventoryCounts] = await Promise.all([
+    const [resourceCheck, knowledge, activity, inventoryCounts, confirmationReadiness] = await Promise.all([
       planForCheck ? getInquiryPlanAvailabilitySnapshot(ctx, db, inquiry, planForCheck) : Promise.resolve(null),
       listWorkspaceKnowledge(ctx, db),
       listInquiryActivity(ctx, db, inquiry.id),
       listActiveResourceTypeCounts(db, ctx.organizationId, inquiry.locationId),
+      getConfirmationReadiness(ctx, db, inquiry.id).catch(() => null),
     ]);
     return {
       kind: "ready",
@@ -103,6 +108,7 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       activity,
       currentUserId: ctx.userId,
       inventoryCounts,
+      confirmationReadiness,
     };
   } catch (error) {
     if (isAuthorizationError(error) || isTenantContextError(error) || isInquiryError(error)) {
@@ -126,7 +132,21 @@ export default async function InquiryDetailPage({
     notFound();
   }
 
-  const { inquiry, canManage, canHold, canRelease, canConfirm, canCancel, timeZone, resourceCheck, knowledge, activity, currentUserId, inventoryCounts } = view;
+  const {
+    inquiry,
+    canManage,
+    canHold,
+    canRelease,
+    canConfirm,
+    canCancel,
+    timeZone,
+    resourceCheck,
+    knowledge,
+    activity,
+    currentUserId,
+    inventoryCounts,
+    confirmationReadiness,
+  } = view;
   const conversation = inquiry.conversations[0];
   const selectedPlan = inquiry.eventPlanRecommendations.find(
     (plan) => plan.id === inquiry.selectedEventPlanId,
@@ -150,6 +170,11 @@ export default async function InquiryDetailPage({
     return (
       <>
         <AcknowledgeInquiryView inquiryId={inquiry.id} />
+        {confirmationReadiness ? (
+          <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
+            <ConfirmationReadinessPanel readiness={confirmationReadiness} />
+          </div>
+        ) : null}
         <LiveAgentWorkspace
         inquiry={inquiry}
         selectedPlan={selectedPlan}
@@ -171,6 +196,7 @@ export default async function InquiryDetailPage({
           tier: row.tier,
         }))}
         inventoryCounts={inventoryCounts}
+        confirmationReadiness={confirmationReadiness}
       />
       </>
     );

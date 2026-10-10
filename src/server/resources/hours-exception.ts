@@ -224,6 +224,48 @@ export function assertHoursExceptionMatches(
   return { ok: true };
 }
 
+/** Find an unused, unexpired, unrevoked exception matching the occupancy fingerprint. */
+export async function findActiveHoursException(
+  database: ExceptionDb,
+  input: {
+    fingerprint: HoursExceptionFingerprint;
+    expectedStatus?: string;
+    now?: Date;
+  },
+) {
+  const now = input.now ?? new Date();
+  const candidates = await database.operatingHoursStaffException.findMany({
+    where: {
+      organizationId: input.fingerprint.organizationId,
+      locationId: input.fingerprint.locationId,
+      purpose: input.fingerprint.purpose,
+      slotDate: new Date(`${input.fingerprint.slotDate}T00:00:00.000Z`),
+      startMinute: input.fingerprint.startMinute,
+      endMinute: input.fingerprint.endMinute,
+      consumedAt: null,
+      revokedAt: null,
+      expiresAt: { gt: now },
+      OR: input.fingerprint.inquiryId
+        ? [{ inquiryId: input.fingerprint.inquiryId }, { inquiryId: null }]
+        : undefined,
+    },
+    orderBy: [{ inquiryId: "desc" }, { authorizedAt: "desc" }],
+    take: 8,
+  });
+  for (const row of candidates) {
+    const match = assertHoursExceptionMatches(
+      row,
+      input.fingerprint,
+      input.expectedStatus ?? row.overriddenStatus,
+      now,
+    );
+    if (match.ok) {
+      return row;
+    }
+  }
+  return null;
+}
+
 /**
  * Validates a staff exception against the occupancy fingerprint without consuming it.
  * Use before pre-checks; call {@link consumeHoursException} inside the same write transaction.

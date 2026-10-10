@@ -27,8 +27,10 @@ export async function confirmBookingAction(formData: FormData): Promise<Security
   const inquiryId = String(formData.get("inquiryId") ?? "").trim();
   try {
     const parsedInquiryId = z.string().trim().min(1).parse(inquiryId);
+    const hoursExceptionRaw = String(formData.get("hoursExceptionId") ?? "").trim();
+    const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     const ctx = await getRequestContext();
-    const result = await confirmInquiryBooking(ctx, db, parsedInquiryId);
+    const result = await confirmInquiryBooking(ctx, db, parsedInquiryId, null, hoursExceptionId);
     revalidatePath("/app/inquiries");
     revalidatePath(`/app/inquiries/${parsedInquiryId}`);
     revalidatePath("/app/bookings");
