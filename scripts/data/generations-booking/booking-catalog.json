@@ -2179,5 +2179,77 @@
       "productSlugs": ["have-a-ball-mini-golf"]
     }
   ],
-  "promotions": []
+  "promotions": [
+    {
+      "slug": "wed-regular-bowling-50",
+      "name": "Wednesday Regular Bowling 50% Off",
+      "type": "PERCENTAGE",
+      "version": 1,
+      "active": true,
+      "stackable": false,
+      "stackingGroup": null,
+      "priority": 10,
+      "allowsFurtherDiscount": false,
+      "productSlugs": ["bowling-1h"],
+      "categorySlugs": null,
+      "daysOfWeek": ["wed"],
+      "localStartMinute": null,
+      "localEndMinute": null,
+      "effectiveFrom": null,
+      "effectiveTo": null,
+      "minQuantity": null,
+      "maxQuantity": null,
+      "locationSlug": null,
+      "payload": { "percent": 50 }
+    },
+    {
+      "slug": "wed-regular-axe-50",
+      "name": "Wednesday Regular Axe 50% Off",
+      "type": "PERCENTAGE",
+      "version": 1,
+      "active": true,
+      "stackable": false,
+      "stackingGroup": null,
+      "priority": 10,
+      "allowsFurtherDiscount": false,
+      "productSlugs": ["axe-throwing-30", "axe-throwing-60"],
+      "categorySlugs": null,
+      "daysOfWeek": ["wed"],
+      "localStartMinute": null,
+      "localEndMinute": null,
+      "effectiveFrom": null,
+      "effectiveTo": null,
+      "minQuantity": null,
+      "maxQuantity": null,
+      "locationSlug": null,
+      "payload": { "percent": 50 }
+    },
+    {
+      "slug": "thu-axe-30-bogo",
+      "name": "Thursday Axe Throwing 30-Minute 2-for-1",
+      "type": "BUY_X_GET_Y",
+      "version": 1,
+      "active": true,
+      "stackable": false,
+      "stackingGroup": null,
+      "priority": 10,
+      "allowsFurtherDiscount": false,
+      "productSlugs": ["axe-throwing-30"],
+      "categorySlugs": null,
+      "daysOfWeek": ["thu"],
+      "localStartMinute": null,
+      "localEndMinute": null,
+      "effectiveFrom": null,
+      "effectiveTo": null,
+      "minQuantity": null,
+      "maxQuantity": null,
+      "locationSlug": null,
+      "payload": {
+        "buyQuantity": 1,
+        "getQuantity": 1,
+        "rewardPercent": 100,
+        "identicalProductsOnly": true
+      }
+    }
+  ]
 }

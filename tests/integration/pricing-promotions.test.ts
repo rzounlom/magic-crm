@@ -156,4 +156,117 @@ describe("pricing promotions and weekendDays", () => {
     expect(reloaded.promotions[0]?.active).toBe(false);
     expect(snapshottedTotal).toBe(2500);
   }, 90_000);
+
+  it("imports verified Generations day-special promotions without touching bowling weekendDays", async () => {
+    const generationsLike: BookingCatalogDataset = {
+      ...TENANT_ALPHA_DATASET,
+      promotions: [
+        {
+          slug: "wed-regular-bowling-50",
+          name: "Wednesday Regular Bowling 50% Off",
+          type: "PERCENTAGE",
+          version: 1,
+          active: true,
+          stackable: false,
+          stackingGroup: null,
+          priority: 10,
+          allowsFurtherDiscount: false,
+          productSlugs: ["bowling-1h"],
+          categorySlugs: null,
+          daysOfWeek: ["wed"],
+          localStartMinute: null,
+          localEndMinute: null,
+          effectiveFrom: null,
+          effectiveTo: null,
+          minQuantity: null,
+          maxQuantity: null,
+          locationSlug: null,
+          payload: { percent: 50 },
+        },
+        {
+          slug: "thu-axe-30-bogo",
+          name: "Thursday Axe 2-for-1",
+          type: "BUY_X_GET_Y",
+          version: 1,
+          active: true,
+          stackable: false,
+          stackingGroup: null,
+          priority: 10,
+          allowsFurtherDiscount: false,
+          productSlugs: ["axe-throwing"],
+          categorySlugs: null,
+          daysOfWeek: ["thu"],
+          localStartMinute: null,
+          localEndMinute: null,
+          effectiveFrom: null,
+          effectiveTo: null,
+          minQuantity: null,
+          maxQuantity: null,
+          locationSlug: null,
+          payload: { buyQuantity: 1, getQuantity: 1, rewardPercent: 100 },
+        },
+      ],
+      products: TENANT_ALPHA_DATASET.products.map((product) =>
+        product.slug === "bowling-1h"
+          ? {
+              ...product,
+              prices: product.prices.map((price) =>
+                price.strategy === PRODUCT_PRICE_STRATEGIES.PER_LANE_WEEKDAY_WEEKEND
+                  ? { ...price, weekendDays: ["fri", "sat", "sun"] }
+                  : price,
+              ),
+            }
+          : product,
+      ),
+    };
+
+    const provisioned = await provisionOrganization(
+      {
+        clerkUserId: `user_dayspecial_${crypto.randomUUID()}`,
+        clerkOrganizationId: `clerk_org_dayspecial_${crypto.randomUUID()}`,
+        organizationName: "Day Special Tenant",
+        organizationSlug: `dayspecial-${crypto.randomUUID()}`,
+        isClerkOrganizationAdmin: true,
+      },
+      db,
+    );
+    createdOrganizationIds.push(provisioned.organizationId);
+    const organization = await db.organization.findFirstOrThrow({
+      where: { id: provisioned.organizationId },
+      select: { id: true, slug: true },
+    });
+    await importBookingCatalog(db, { organizationSlug: organization.slug, dataset: generationsLike });
+    await importBookingCatalog(db, { organizationSlug: organization.slug, dataset: generationsLike });
+
+    const loaded = await loadCatalogForProposal(db, organization.id);
+    expect(loaded.promotions).toHaveLength(2);
+    expect(loaded.promotions.every((row) => row.active)).toBe(true);
+    expect(loaded.products.find((row) => row.slug === "bowling-1h")?.prices[0]?.weekendDays).toEqual([
+      "fri",
+      "sat",
+      "sun",
+    ]);
+
+    const axe = loaded.products.find((row) => row.slug === "axe-throwing")!;
+    const base = priceProduct(axe, {
+      guestCount: 4,
+      eventDate: "2026-10-15",
+      startTime: "18:00",
+      durationMinutes: 30,
+      organizationId: organization.id,
+    });
+    const promoted = applyPromotions({
+      quotes: [base],
+      context: {
+        guestCount: 4,
+        eventDate: "2026-10-15",
+        startTime: "18:00",
+        durationMinutes: 30,
+        organizationId: organization.id,
+      },
+      promotions: loaded.promotions,
+    });
+    expect(promoted.quotes[0]?.totalCents).toBe(5000);
+    expect(promoted.applied[0]?.slug).toBe("thu-axe-30-bogo");
+  }, 90_000);
 });
