@@ -358,6 +358,50 @@ describe("public event plan view", () => {
     expect(source).toContain("onSafeSubmitAttempt");
   });
 
+  it("does not claim current availability when status is NOT_VALIDATED, while still allowing Book Now", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="opaque-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 12,
+          eventGoal: "Celebration",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          {
+            id: "nv1",
+            tier: EVENT_PLAN_TIERS.BEST_FIT,
+            title: "Best Fit",
+            estimatedTotalCents: 12000,
+            currency: "USD",
+            durationMinutes: 120,
+            customerFacingReason: "Bowling plan.",
+            availabilityStatus: "NOT_VALIDATED",
+            payload: {
+              guestCount: 12,
+              eventDate: "2026-10-14",
+              startTime: "18:00",
+              durationMinutes: 120,
+              activities: [{ knowledgeItemId: "b", name: "Bowling", quantity: 2, priceCents: 6000 }],
+              dining: { label: "No food included", priceCents: 0 },
+              spaces: [],
+              schedule: [],
+              pricingComplete: true,
+              coverageFeasibility: "FEASIBLE",
+              customerAvailabilityNote: "Known published limits were applied. Live inventory still needs confirmation before booking.",
+            },
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain("Book Now");
+    expect(html).toContain("Live inventory still needs confirmation before booking.");
+    expect(html).not.toContain("Currently available for the sample itinerary shown.");
+  });
+
   it("hides Book Now on unavailable options and shows a persistent adjustment notice", () => {
     const html = renderToStaticMarkup(
       <PublicEventPlanView

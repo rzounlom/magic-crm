@@ -39,6 +39,7 @@ function asCatalogProduct(product: ReturnType<typeof loadBookingCatalogDataset>[
       weekdayAmountCents: price.weekdayAmountCents ?? null,
       weekendAmountCents: price.weekendAmountCents ?? null,
       daysOfWeek: price.daysOfWeek ?? null,
+      weekendDays: price.weekendDays ?? null,
       afterHour: price.afterHour ?? null,
       afterHourAmountCents: price.afterHourAmountCents ?? null,
       shoeAddOnCents: price.shoeAddOnCents ?? null,
