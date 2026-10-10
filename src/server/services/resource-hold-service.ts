@@ -232,7 +232,12 @@ export async function placeManualHold(
   });
 }
 
-export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb, inquiryId: string) {
+export async function placeInquiryPlanHold(
+  ctx: RequestContext,
+  database: HoldDb,
+  inquiryId: string,
+  hoursExceptionId?: string | null,
+) {
   await requirePermission(ctx, PERMISSIONS.EVENTS_CREATE, database);
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
   const inquiry = await database.inquiry.findFirst({
@@ -259,6 +264,7 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
     inquiryId: inquiry.id,
     planId: plan.id,
     actorUserProfileId: ctx.userId,
+    hoursExceptionId: hoursExceptionId ?? null,
   });
   return {
     resourceCount: hold.resourceCount,
@@ -268,7 +274,12 @@ export async function placeInquiryPlanHold(ctx: RequestContext, database: HoldDb
   };
 }
 
-export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldDb, inquiryId: string) {
+export async function updateInquiryPlanHold(
+  ctx: RequestContext,
+  database: HoldDb,
+  inquiryId: string,
+  hoursExceptionId?: string | null,
+) {
   await requirePermission(ctx, PERMISSIONS.EVENTS_CREATE, database);
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
   const inquiry = await database.inquiry.findFirst({
@@ -344,7 +355,7 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
     locationTimeZone: location?.timezone,
     organizationTimeZone: organization?.timezone,
   });
-  await assertWritableOccupancyOrThrow({
+  const guarded = await assertWritableOccupancyOrThrow({
     database,
     organizationId: ctx.organizationId,
     locationId,
@@ -354,14 +365,18 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
     endMinute: window.endMinute,
     flow: "update_inquiry_plan_hold",
     errorKind: "resource",
-    hoursExceptionId: null,
+    hoursExceptionId: hoursExceptionId ?? null,
     exceptionPurpose: "PLACE_HOLD",
     inquiryId: inquiry.id,
     consumeException: false,
   });
+  const pendingHoursException = guarded.pendingHoursException;
   try {
     await database.$transaction(async (tx) => {
       await lockLocationForScheduling(tx, ctx.organizationId, locationId);
+      if (pendingHoursException) {
+        await consumeValidatedHoursException(tx, pendingHoursException, "resource");
+      }
       const assignments = await assignExactResourcesForRequirements(tx as HoldDb, {
         organizationId: ctx.organizationId,
         locationId,

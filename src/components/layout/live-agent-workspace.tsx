@@ -11,6 +11,7 @@ import { InquiryFunnel } from "@/components/layout/inquiry-funnel";
 import { LiveAgentBookingActions } from "@/components/layout/live-agent-booking-actions";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import type { ConfirmationReadinessResult } from "@/types/confirmation-readiness";
+import type { HoldReadinessResult } from "@/types/hold-readiness";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { BOOKING_STATUSES } from "@/types/booking";
 import {
@@ -140,6 +141,7 @@ export function LiveAgentWorkspace({
   recommendations = [],
   inventoryCounts = [],
   confirmationReadiness = null,
+  holdReadiness = null,
 }: {
   inquiry: WorkspaceInquiry;
   selectedPlan: {
@@ -174,6 +176,7 @@ export function LiveAgentWorkspace({
   recommendations?: Array<{ id: string; kind: string; title: string; tier: string }>;
   inventoryCounts?: ResourceTypeInventoryCount[];
   confirmationReadiness?: ConfirmationReadinessResult | null;
+  holdReadiness?: HoldReadinessResult | null;
 }) {
   const displayName =
     inquiry.customerGroupName ||
@@ -283,11 +286,15 @@ export function LiveAgentWorkspace({
           ? [confirmationReadiness.detail]
           : []),
       ];
-  const holdReadiness = liveAgentHoldReadiness({
+  const holdGuide = liveAgentHoldReadiness({
     requirements: resourceCheck?.requirements ?? [],
     validated: resourceCheck?.result.validated ?? false,
     available: resourceCheck?.result.available ?? false,
+    hasActiveHold: classified.legacyHolds.length > 0,
+    serverHoldAttemptAllowed: holdReadiness?.holdAttemptAllowed ?? null,
   });
+  const holdHoursExceptionId =
+    holdReadiness?.activeException?.status === "ACTIVE" ? holdReadiness.activeException.id : null;
 
   return (
     <section className="w-full">
@@ -331,10 +338,10 @@ export function LiveAgentWorkspace({
         cancelled={cancelled}
         canCancel={canCancel}
         assigned={Boolean(inquiry.assignedUserProfileId)}
-        needsHold={holdReadiness.needsHold}
+        needsHold={holdGuide.needsHold}
         hasHold={classified.legacyHolds.length > 0}
-        canPlaceHold={holdReadiness.canPlaceHold}
-        needsInventory={holdReadiness.needsInventory}
+        canPlaceHold={holdGuide.canPlaceHold}
+        needsInventory={holdGuide.needsInventory}
         confirmBlockers={confirmBlockers}
         pendingPayment={pendingPayment}
         paymentConflict={paymentConflict}
@@ -430,6 +437,13 @@ export function LiveAgentWorkspace({
               canCheckAvailability={canManage && !booked && !cancelled && !assignedToOther}
               nearbyStartTimes={workingPayload.suggestedStartTimes ?? []}
               mode={resourceMode}
+              hoursExceptionId={holdHoursExceptionId}
+              holdAttemptAllowed={holdReadiness?.holdAttemptAllowed ?? false}
+              holdBlockedDetail={
+                holdReadiness && !holdReadiness.holdAttemptAllowed && !holdReadiness.activeHold
+                  ? holdReadiness.detail
+                  : null
+              }
             />
           ) : null}
           <EmployeeSelectedEventPlan

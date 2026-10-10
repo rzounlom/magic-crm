@@ -21,6 +21,7 @@ vi.mock("@/server/actions/live-agent", () => ({
 vi.mock("@/server/actions/resource-schedule", () => ({
   expireInquiryHoldNowAction: vi.fn(),
   extendInquiryHoldAction: vi.fn(),
+  placeInquiryHoldAction: vi.fn(),
   releaseInquiryHoldsAction: vi.fn(),
   updateInquiryHoldAction: vi.fn(),
 }));

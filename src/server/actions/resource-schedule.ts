@@ -37,6 +37,8 @@ function toResult(error: unknown, title: string): SecurityActionResult {
 export async function placeManualHoldAction(formData: FormData): Promise<SecurityActionResult> {
   try {
     const ctx = await getRequestContext();
+    const hoursExceptionRaw = String(formData.get("hoursExceptionId") ?? "").trim();
+    const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     await placeManualHold(ctx, db, {
       resourceId: String(formData.get("resourceId") ?? ""),
       date: String(formData.get("date") ?? ""),
@@ -45,6 +47,7 @@ export async function placeManualHoldAction(formData: FormData): Promise<Securit
       inquiryId: String(formData.get("inquiryId") ?? "") || null,
       reason: String(formData.get("reason") ?? "") || null,
       holdHours: Number(formData.get("holdHours") ?? 24) || 24,
+      hoursExceptionId,
     });
     await revalidateScheduleAndInquiry(String(formData.get("inquiryId") ?? "") || undefined);
     return { ok: true, title: "Hold placed", message: "The resource is temporarily unavailable on the Master Schedule." };
@@ -57,13 +60,16 @@ export async function placeManualHoldAction(formData: FormData): Promise<Securit
 export async function placeInquiryHoldAction(formData: FormData): Promise<SecurityActionResult> {
   try {
     const inquiryId = z.string().trim().min(1).parse(String(formData.get("inquiryId") ?? ""));
+    const hoursExceptionRaw = String(formData.get("hoursExceptionId") ?? "").trim();
+    const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     const ctx = await getRequestContext();
-    await placeInquiryPlanHold(ctx, db, inquiryId);
+    await placeInquiryPlanHold(ctx, db, inquiryId, hoursExceptionId);
     await revalidateScheduleAndInquiry(inquiryId);
     return {
       ok: true,
       title: "Resources held",
-      message: "Temporary holds were placed for the selected plan. They expire automatically if not converted to a booking.",
+      message:
+        "Temporary holds were placed for the selected plan. They expire after 24 hours if not converted to a booking.",
     };
   } catch (error) {
     unstable_rethrow(error);
@@ -100,8 +106,10 @@ export async function releaseInquiryHoldsAction(formData: FormData): Promise<Sec
 export async function updateInquiryHoldAction(formData: FormData): Promise<SecurityActionResult> {
   try {
     const inquiryId = z.string().trim().min(1).parse(String(formData.get("inquiryId") ?? ""));
+    const hoursExceptionRaw = String(formData.get("hoursExceptionId") ?? "").trim();
+    const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     const ctx = await getRequestContext();
-    await updateInquiryPlanHold(ctx, db, inquiryId);
+    await updateInquiryPlanHold(ctx, db, inquiryId, hoursExceptionId);
     await revalidateScheduleAndInquiry(inquiryId);
     return {
       ok: true,

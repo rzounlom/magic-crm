@@ -14,6 +14,7 @@ import { checkInquiryAvailabilityAction, applyWorkingPlanStartTimeAction } from 
 import {
   expireInquiryHoldNowAction,
   extendInquiryHoldAction,
+  placeInquiryHoldAction,
   releaseInquiryHoldsAction,
   updateInquiryHoldAction,
 } from "@/server/actions/resource-schedule";
@@ -36,6 +37,9 @@ export function EmployeeSelectedPlanResourceCheck({
   canCheckAvailability = false,
   nearbyStartTimes = [],
   mode = "pending",
+  hoursExceptionId = null,
+  holdAttemptAllowed = false,
+  holdBlockedDetail = null,
 }: {
   inquiryId: string;
   availabilityStatus: string;
@@ -58,6 +62,9 @@ export function EmployeeSelectedPlanResourceCheck({
   canCheckAvailability?: boolean;
   nearbyStartTimes?: string[];
   mode?: "pending" | "confirmed" | "cancelled";
+  hoursExceptionId?: string | null;
+  holdAttemptAllowed?: boolean;
+  holdBlockedDetail?: string | null;
 }) {
   const status = (availabilityStatus in PLAN_AVAILABILITY_STATUS_LABELS
     ? availabilityStatus
@@ -223,9 +230,54 @@ export function EmployeeSelectedPlanResourceCheck({
           </PendingSubmitButton>
         </SecurityActionForm>
       ) : null}
+      {mode === "pending" && holds.length === 0 && canHold ? (
+        <div className="mt-6 border-t border-border pt-4">
+          <h3 className="text-sm font-medium">Proposal HOLD</h3>
+          {holdAttemptAllowed ? (
+            <SecurityActionForm
+              action={placeInquiryHoldAction}
+              className="mt-3"
+              notice={{
+                successTitle: "Resources held",
+                errorTitle: "Unable to place resource hold",
+              }}
+              confirm={{
+                title: "Place a 24-hour proposal HOLD?",
+                description:
+                  "This reserves exact rooms and lanes for this plan. Availability is rechecked when the HOLD is placed. Duplicate active HOLDs for the same inquiry are rejected.",
+                confirmLabel: "Place HOLD",
+                confirmPendingLabel: "Placing…",
+              }}
+            >
+              <input type="hidden" name="inquiryId" value={inquiryId} />
+              {hoursExceptionId ? (
+                <input type="hidden" name="hoursExceptionId" value={hoursExceptionId} />
+              ) : null}
+              <PendingSubmitButton
+                pendingLabel="Placing…"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              >
+                Place HOLD
+              </PendingSubmitButton>
+            </SecurityActionForm>
+          ) : (
+            <p className="mt-2 text-sm text-foreground/70">
+              {holdBlockedDetail ?? (
+                <>
+                  HOLD placement is not available yet.{" "}
+                  <a href="#hold-readiness" className="text-primary">
+                    Review HOLD readiness
+                  </a>{" "}
+                  for blocking reasons or an authorized hours exception.
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      ) : null}
       {mode === "pending" && holds.length > 0 ? (
         <div className="mt-6 border-t border-border pt-4">
-          <h3 className="text-sm font-medium">Legacy hold</h3>
+          <h3 className="text-sm font-medium">Active HOLD</h3>
           <ul className="mt-2 space-y-2 text-sm text-foreground/80">
             {groupAllocatedResources(holds).map((group) => (
               <li key={group.key}>
@@ -283,6 +335,9 @@ export function EmployeeSelectedPlanResourceCheck({
               }}
             >
               <input type="hidden" name="inquiryId" value={inquiryId} />
+              {hoursExceptionId ? (
+                <input type="hidden" name="hoursExceptionId" value={hoursExceptionId} />
+              ) : null}
               <PendingSubmitButton pendingLabel="Updating…" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
                 Update Resource Hold
               </PendingSubmitButton>

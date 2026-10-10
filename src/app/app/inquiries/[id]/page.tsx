@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ConfirmationReadinessPanel } from "@/components/layout/confirmation-readiness-panel";
+import { HoldReadinessPanel } from "@/components/layout/hold-readiness-panel";
 import { LiveAgentWorkspace } from "@/components/layout/live-agent-workspace";
 import { AcknowledgeInquiryView } from "@/components/layout/acknowledge-inquiry-view";
 import { EmployeeInquiryConversation } from "@/components/layout/employee-inquiry-conversation";
@@ -36,11 +37,13 @@ import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/se
 import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
 import { getConfirmationReadiness } from "@/server/services/confirmation-readiness-service";
+import { getHoldReadiness } from "@/server/services/hold-readiness-service";
 import { getCurrentTenantTimezone, getInquiryDetail } from "@/server/services/inquiry-service";
 import { getInquiryPlanAvailabilitySnapshot } from "@/server/services/resource-hold-service";
 import { listActiveResourceTypeCounts } from "@/server/services/resource-schedule-service";
 import { BOOKING_STATUSES } from "@/types/booking";
 import type { ConfirmationReadinessResult } from "@/types/confirmation-readiness";
+import type { HoldReadinessResult } from "@/types/hold-readiness";
 import { PERMISSIONS } from "@/types/permissions";
 
 type InquiryDetailView =
@@ -61,6 +64,7 @@ type InquiryDetailView =
       currentUserId: string;
       inventoryCounts: Awaited<ReturnType<typeof listActiveResourceTypeCounts>>;
       confirmationReadiness: ConfirmationReadinessResult | null;
+      holdReadiness: HoldReadinessResult | null;
     };
 
 async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
@@ -87,13 +91,15 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
     const skipAvailability =
       bookingStatus === BOOKING_STATUSES.CONFIRMED || bookingStatus === BOOKING_STATUSES.CANCELLED;
     const planForCheck = skipAvailability ? null : (workingPlan ?? selectedPlan);
-    const [resourceCheck, knowledge, activity, inventoryCounts, confirmationReadiness] = await Promise.all([
-      planForCheck ? getInquiryPlanAvailabilitySnapshot(ctx, db, inquiry, planForCheck) : Promise.resolve(null),
-      listWorkspaceKnowledge(ctx, db),
-      listInquiryActivity(ctx, db, inquiry.id),
-      listActiveResourceTypeCounts(db, ctx.organizationId, inquiry.locationId),
-      getConfirmationReadiness(ctx, db, inquiry.id).catch(() => null),
-    ]);
+    const [resourceCheck, knowledge, activity, inventoryCounts, confirmationReadiness, holdReadiness] =
+      await Promise.all([
+        planForCheck ? getInquiryPlanAvailabilitySnapshot(ctx, db, inquiry, planForCheck) : Promise.resolve(null),
+        listWorkspaceKnowledge(ctx, db),
+        listInquiryActivity(ctx, db, inquiry.id),
+        listActiveResourceTypeCounts(db, ctx.organizationId, inquiry.locationId),
+        getConfirmationReadiness(ctx, db, inquiry.id).catch(() => null),
+        getHoldReadiness(ctx, db, inquiry.id).catch(() => null),
+      ]);
     return {
       kind: "ready",
       inquiry,
@@ -109,6 +115,7 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       currentUserId: ctx.userId,
       inventoryCounts,
       confirmationReadiness,
+      holdReadiness,
     };
   } catch (error) {
     if (isAuthorizationError(error) || isTenantContextError(error) || isInquiryError(error)) {
@@ -146,6 +153,7 @@ export default async function InquiryDetailPage({
     currentUserId,
     inventoryCounts,
     confirmationReadiness,
+    holdReadiness,
   } = view;
   const conversation = inquiry.conversations[0];
   const selectedPlan = inquiry.eventPlanRecommendations.find(
@@ -170,9 +178,14 @@ export default async function InquiryDetailPage({
     return (
       <>
         <AcknowledgeInquiryView inquiryId={inquiry.id} />
-        {confirmationReadiness ? (
-          <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
-            <ConfirmationReadinessPanel readiness={confirmationReadiness} />
+        {confirmationReadiness || holdReadiness ? (
+          <div className="mx-auto w-full max-w-6xl space-y-4 px-4 pt-4 sm:px-6">
+            {holdReadiness ? (
+              <HoldReadinessPanel readiness={holdReadiness} canHold={canHold && canManage} />
+            ) : null}
+            {confirmationReadiness ? (
+              <ConfirmationReadinessPanel readiness={confirmationReadiness} />
+            ) : null}
           </div>
         ) : null}
         <LiveAgentWorkspace
@@ -197,6 +210,7 @@ export default async function InquiryDetailPage({
         }))}
         inventoryCounts={inventoryCounts}
         confirmationReadiness={confirmationReadiness}
+        holdReadiness={holdReadiness}
       />
       </>
     );

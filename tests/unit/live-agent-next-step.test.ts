@@ -104,7 +104,7 @@ describe("live agent booking guide", () => {
     ]);
   });
 
-  it("does not treat missing inventory as a hold requirement", () => {
+  it("flags inventory gaps and HOLD eligibility from finite requirements", () => {
     expect(
       liveAgentHoldReadiness({
         requirements: [
@@ -118,6 +118,38 @@ describe("live agent booking guide", () => {
         validated: false,
         available: false,
       }),
-    ).toEqual({ needsHold: false, canPlaceHold: false, needsInventory: true });
+    ).toEqual({ needsHold: true, canPlaceHold: false, needsInventory: true });
+
+    expect(
+      liveAgentHoldReadiness({
+        requirements: [
+          {
+            quantity: 2,
+            inventoryConfigured: true,
+            requiresStaffConfiguration: false,
+            resourceTypeId: "type_1",
+          },
+        ],
+        validated: true,
+        available: true,
+        serverHoldAttemptAllowed: true,
+      }),
+    ).toEqual({ needsHold: true, canPlaceHold: true, needsInventory: false });
+
+    expect(
+      liveAgentHoldReadiness({
+        requirements: [
+          {
+            quantity: 2,
+            inventoryConfigured: true,
+            requiresStaffConfiguration: false,
+            resourceTypeId: "type_1",
+          },
+        ],
+        validated: true,
+        available: true,
+        hasActiveHold: true,
+      }),
+    ).toEqual({ needsHold: false, canPlaceHold: false, needsInventory: false });
   });
 });

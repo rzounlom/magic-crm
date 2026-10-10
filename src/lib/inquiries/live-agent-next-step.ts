@@ -22,15 +22,28 @@ export function liveAgentHoldReadiness(input: {
   }>;
   validated: boolean;
   available: boolean;
+  hasActiveHold?: boolean;
+  /** When provided by server HOLD readiness, prefer that over client-side availability alone. */
+  serverHoldAttemptAllowed?: boolean | null;
 }): { needsHold: boolean; canPlaceHold: boolean; needsInventory: boolean } {
   const needsInventory = input.requirements.some(
     (row) =>
-      !row.inventoryConfigured ||
-      row.requiresStaffConfiguration ||
-      !row.resourceTypeId ||
-      row.quantity == null,
+      row.quantity != null &&
+      row.quantity > 0 &&
+      (!row.inventoryConfigured ||
+        row.requiresStaffConfiguration ||
+        !row.resourceTypeId),
   );
-  return { needsHold: false, canPlaceHold: false, needsInventory };
+  const hasFiniteRequirements = input.requirements.some(
+    (row) => row.quantity != null && row.quantity > 0,
+  );
+  const needsHold = hasFiniteRequirements && !input.hasActiveHold;
+  const canPlaceHold =
+    needsHold &&
+    !needsInventory &&
+    (input.serverHoldAttemptAllowed === true ||
+      (input.serverHoldAttemptAllowed == null && input.validated && input.available));
+  return { needsHold, canPlaceHold, needsInventory };
 }
 
 export function liveAgentBookingGuide(input: {
