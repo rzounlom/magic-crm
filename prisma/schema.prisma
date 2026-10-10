@@ -62,6 +62,9 @@ model Organization {
   taxRateSchedules    TaxRateSchedule[]
   productTaxClassifications ProductTaxClassification[]
   productBundleTaxPolicies ProductBundleTaxPolicy[]
+  operatingHoursPolicies LocationOperatingHoursPolicy[]
+  operatingHoursWindows  LocationOperatingHoursWindow[]
+  operatingHoursExceptions LocationOperatingHoursException[]
 
   @@index([onboardingStatus])
   @@map("organizations")
@@ -90,12 +93,86 @@ model Location {
   pricingPromotions      PricingPromotion[]
   taxProfile             LocationTaxProfile?
   taxRateSchedules       TaxRateSchedule[]
+  operatingHoursPolicy   LocationOperatingHoursPolicy?
+  operatingHoursWindows  LocationOperatingHoursWindow[]
+  operatingHoursExceptions LocationOperatingHoursException[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
   @@index([organizationId])
   @@index([organizationId, active])
   @@map("locations")
+}
+
+/// Location operating-hours policy. Absence or UNCONFIGURED is not verified open.
+model LocationOperatingHoursPolicy {
+  id                 String    @id @default(cuid(2))
+  organizationId     String
+  locationId         String
+  /// UNCONFIGURED | DRAFT | VERIFIED
+  verificationStatus String    @default("UNCONFIGURED") @db.VarChar(24)
+  approvedAt         DateTime?
+  approvedByNote     String?   @db.VarChar(500)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location     @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  weeklyWindows LocationOperatingHoursWindow[]
+  exceptions    LocationOperatingHoursException[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, locationId])
+  @@index([organizationId])
+  @@map("location_operating_hours_policies")
+}
+
+/// Weekly open interval in venue-local minutes. endMinute may exceed 1440 for overnight.
+model LocationOperatingHoursWindow {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  locationId     String
+  policyId       String
+  /// 0 = Sunday … 6 = Saturday for the civil event date.
+  dayOfWeek      Int
+  startMinute    Int
+  endMinute      Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization                 @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location                     @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  policy       LocationOperatingHoursPolicy @relation(fields: [organizationId, policyId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, locationId, dayOfWeek])
+  @@index([organizationId, policyId])
+  @@map("location_operating_hours_windows")
+}
+
+/// Special closure or custom open intervals for one civil date. Overrides weekly windows.
+model LocationOperatingHoursException {
+  id             String    @id @default(cuid(2))
+  organizationId String
+  locationId     String
+  policyId       String
+  localDate      DateTime  @db.Date
+  /// CLOSED | CUSTOM
+  kind           String    @db.VarChar(16)
+  startMinute    Int?
+  endMinute      Int?
+  note           String?   @db.VarChar(500)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization                 @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location                     @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  policy       LocationOperatingHoursPolicy @relation(fields: [organizationId, policyId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, locationId, localDate])
+  @@index([organizationId, policyId])
+  @@map("location_operating_hours_exceptions")
 }
 
 /// Organization-level tax activation and pricing mode. Defaults keep tax inactive.

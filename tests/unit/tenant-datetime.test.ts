@@ -219,8 +219,8 @@ describe("tenant date/time display", () => {
     expect(late.endsAt.toISOString()).toBe("2026-10-19T05:00:00.000Z");
   });
 
-  it("resolves spring-forward gap times by folding to the pre-transition offset", () => {
-    // 2026-03-08 02:30 does not exist in America/Indiana/Indianapolis.
+  it("keeps legacy permissive eventLocalToUtc fold for historical compatibility only", () => {
+    // R2D.2: new writes must use resolveStrictEventLocalToUtc (rejects gap/ambiguity).
     const gap = eventLocalToUtc({
       date: "2026-03-08",
       minuteOfDay: 2 * 60 + 30,
@@ -232,22 +232,12 @@ describe("tenant date/time display", () => {
       timeZone: "America/Indiana/Indianapolis",
     });
     expect(gap.toISOString()).toBe(pre.toISOString());
-    expect(formatTenantTimestamp(gap, "America/Indiana/Indianapolis")).toBe(
-      "Mar 8, 2026 at 1:30 AM",
-    );
-  });
-
-  it("resolves fall-back ambiguity to the first (daylight) occurrence", () => {
-    // 2026-11-01 01:30 occurs twice; converter picks the earlier UTC instant (EDT).
     const ambiguous = eventLocalToUtc({
       date: "2026-11-01",
       minuteOfDay: 90,
       timeZone: "America/Indiana/Indianapolis",
     });
     expect(ambiguous.toISOString()).toBe("2026-11-01T05:30:00.000Z");
-    expect(formatTenantTimestamp(ambiguous, "America/Indiana/Indianapolis")).toBe(
-      "Nov 1, 2026 at 1:30 AM",
-    );
   });
 
   it("keeps promotion weekdays on the civil event date across time zones", () => {

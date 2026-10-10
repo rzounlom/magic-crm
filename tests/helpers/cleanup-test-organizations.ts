@@ -29,6 +29,9 @@ export async function deleteTestOrganizations(
   await database.taxRateSchedule.deleteMany({ where: { organizationId: { in: ids } } });
   await database.locationTaxProfile.deleteMany({ where: { organizationId: { in: ids } } });
   await database.organizationTaxSettings.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.locationOperatingHoursException.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.locationOperatingHoursWindow.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.locationOperatingHoursPolicy.deleteMany({ where: { organizationId: { in: ids } } });
   await database.product.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productCategory.deleteMany({ where: { organizationId: { in: ids } } });
   await database.recommendationProfile.deleteMany({ where: { organizationId: { in: ids } } });

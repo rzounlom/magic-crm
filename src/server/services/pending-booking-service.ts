@@ -7,10 +7,10 @@ import { planPayloadTotal } from "@/lib/inquiries/plan-diff";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import {
-  occupancyInstants,
   resolveOrganizationTimeZone,
   resolveSchedulingTimeZone,
 } from "@/lib/inquiries/tenant-datetime";
+import { resolveStrictOccupancyInstants } from "@/lib/inquiries/strict-local-time";
 import { BookingError, InquiryError, ResourceError } from "@/server/errors";
 import { emitDomainEvent } from "@/server/domain-events/emit";
 import { DOMAIN_EVENT_TYPES } from "@/server/domain-events/types";
@@ -18,8 +18,13 @@ import { depositPercentFromTenant, depositRequiredCents } from "@/server/catalog
 import { applyInventoryFeasibility } from "@/server/resources/feasibility";
 import { lockLocationForScheduling } from "@/server/resources/location-exclusivity";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
+import {
+  assertPendingOccupancyOrThrow,
+  assertWritableOccupancyOrThrow,
+} from "@/server/resources/scheduling-guards";
 import { shiftItineraryToStart, stampPlanResourceWindows } from "@/server/resources/segment-windows";
 import { localEventWindow, minutesToClock } from "@/server/resources/time-window";
+import { LOCAL_TIME_RESOLUTION_STATUSES } from "@/types/operating-hours";
 import { recordAuditEvent } from "@/server/services/audit";
 import {
   evaluateAvailabilitySnapshot,
@@ -172,7 +177,7 @@ async function nextBookingNumber(
   return formatBookingNumber(bookingNumberPrefix(slug), year, sequence.lastValue);
 }
 
-function windowFields(payload: ReturnType<typeof readEventPlanPayload>, durationMinutes: number, timeZone: string) {
+function windowFields(payload: ReturnType<typeof readEventPlanPayload>, durationMinutes: number) {
   const window = localEventWindow({
     date: payload.eventDate,
     startTime: payload.startTime,
@@ -181,8 +186,7 @@ function windowFields(payload: ReturnType<typeof readEventPlanPayload>, duration
   if (!window || !payload.eventDate || !payload.startTime) {
     throw new BookingError("NOT_READY_TO_FINALIZE", "A date and start time are required.");
   }
-  const instants = occupancyInstants({ ...window, timeZone });
-  return { window, instants, eventDate: payload.eventDate, startTime: payload.startTime };
+  return { window, eventDate: payload.eventDate, startTime: payload.startTime };
 }
 
 export async function upsertPendingBookingFromPlan(
@@ -231,7 +235,18 @@ export async function upsertPendingBookingFromPlan(
     organizationTimeZone: inquiry.organization.timezone,
   });
   const durationMinutes = plan.durationMinutes ?? payload.durationMinutes;
-  const { window, instants, eventDate, startTime } = windowFields(payload, durationMinutes, timeZone);
+  const { window, eventDate, startTime } = windowFields(payload, durationMinutes);
+  const guarded = await assertPendingOccupancyOrThrow({
+    database,
+    organizationId: input.organizationId,
+    locationId: inquiry.locationId,
+    timeZone,
+    slotDate: window.slotDate,
+    startMinute: window.startMinute,
+    endMinute: window.endMinute,
+    flow: input.source === "customer_book_now" ? "public_pending_booking" : "employee_pending_booking",
+  });
+  const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
   const totalCents = plan.estimatedTotalCents ?? planPayloadTotal(payload);
   const items = lineItemsFromPayload(payload);
   const depositPercent = depositPercentFromTenant(inquiry.organization.depositPercent);
@@ -537,7 +552,19 @@ export async function confirmPendingBooking(
     locationTimeZone: inquiry.location?.timezone,
     organizationTimeZone: inquiry.organization.timezone,
   });
-  const { window, instants, eventDate, startTime } = windowFields(payload, durationMinutes, timeZone);
+  const { window, eventDate, startTime } = windowFields(payload, durationMinutes);
+  const guarded = await assertWritableOccupancyOrThrow({
+    database,
+    organizationId: input.organizationId,
+    locationId: inquiry.locationId,
+    timeZone,
+    slotDate: window.slotDate,
+    startMinute: window.startMinute,
+    endMinute: window.endMinute,
+    flow: "confirm_pending_booking",
+    errorKind: "booking",
+  });
+  const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
   const totalCents =
     (working ?? selected)?.estimatedTotalCents ?? existing?.totalCents ?? planPayloadTotal(payload);
   const items = lineItemsFromPayload(payload);
@@ -934,12 +961,15 @@ async function insertBookedReservations(
   });
   await tx.resourceReservation.createMany({
     data: assignments.map((assignment) => {
-      const rowInstants = occupancyInstants({
+      const rowInstants = resolveStrictOccupancyInstants({
         slotDate: input.window.slotDate,
         startMinute: assignment.startMinute,
         endMinute: assignment.endMinute,
         timeZone: input.timeZone,
       });
+      if (rowInstants.status !== LOCAL_TIME_RESOLUTION_STATUSES.VALID) {
+        throw new BookingError("INVALID_LOCAL_TIME", rowInstants.reason);
+      }
       return {
         organizationId: input.organizationId,
         locationId: input.locationId,

@@ -1,7 +1,10 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
-import { occupancyInstants, resolveSchedulingTimeZone } from "@/lib/inquiries/tenant-datetime";
+import { resolveStrictOccupancyInstants } from "@/lib/inquiries/strict-local-time";
+import { resolveSchedulingTimeZone } from "@/lib/inquiries/tenant-datetime";
+import { assertWritableOccupancyOrThrow } from "@/server/resources/scheduling-guards";
 import { ResourceError } from "@/server/errors";
+import { LOCAL_TIME_RESOLUTION_STATUSES } from "@/types/operating-hours";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
@@ -136,12 +139,18 @@ export async function placeManualHold(
     locationTimeZone: location?.timezone,
     organizationTimeZone: organization?.timezone,
   });
-  const instants = occupancyInstants({
+  const guarded = await assertWritableOccupancyOrThrow({
+    database,
+    organizationId: ctx.organizationId,
+    locationId: resource.locationId,
+    timeZone,
     slotDate: input.date,
     startMinute,
     endMinute,
-    timeZone,
+    flow: "place_manual_hold",
+    errorKind: "resource",
   });
+  const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
   await releaseExpiredHolds(database, ctx.organizationId);
   const available = await listAvailableResourceIds(database, {
     organizationId: ctx.organizationId,
@@ -318,6 +327,17 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
     locationTimeZone: location?.timezone,
     organizationTimeZone: organization?.timezone,
   });
+  await assertWritableOccupancyOrThrow({
+    database,
+    organizationId: ctx.organizationId,
+    locationId,
+    timeZone,
+    slotDate: window.slotDate,
+    startMinute: window.startMinute,
+    endMinute: window.endMinute,
+    flow: "update_inquiry_plan_hold",
+    errorKind: "resource",
+  });
   try {
     await database.$transaction(async (tx) => {
       await lockLocationForScheduling(tx, ctx.organizationId, locationId);
@@ -335,12 +355,15 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
       if (toCreate.length > 0) {
         await tx.resourceReservation.createMany({
           data: toCreate.map((assignment) => {
-            const instants = occupancyInstants({
+            const instants = resolveStrictOccupancyInstants({
               slotDate: window.slotDate,
               startMinute: assignment.startMinute,
               endMinute: assignment.endMinute,
               timeZone,
             });
+            if (instants.status !== LOCAL_TIME_RESOLUTION_STATUSES.VALID) {
+              throw new ResourceError("INVALID_LOCAL_TIME", instants.reason);
+            }
             return {
               organizationId: ctx.organizationId,
               locationId,
@@ -366,12 +389,15 @@ export async function updateInquiryPlanHold(ctx: RequestContext, database: HoldD
           continue;
         }
         if (current.startMinute !== assignment.startMinute || current.endMinute !== assignment.endMinute) {
-          const instants = occupancyInstants({
+          const instants = resolveStrictOccupancyInstants({
             slotDate: window.slotDate,
             startMinute: assignment.startMinute,
             endMinute: assignment.endMinute,
             timeZone,
           });
+          if (instants.status !== LOCAL_TIME_RESOLUTION_STATUSES.VALID) {
+            throw new ResourceError("INVALID_LOCAL_TIME", instants.reason);
+          }
           await tx.resourceReservation.update({
             where: { id: current.id },
             data: {

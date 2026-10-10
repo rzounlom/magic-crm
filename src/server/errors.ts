@@ -185,6 +185,8 @@ export const RESOURCE_ERROR_CODES = [
   "RESOURCE_CONFLICT",
   "HOLD_NOT_FOUND",
   "BOOKED_CANNOT_RELEASE",
+  "INVALID_LOCAL_TIME",
+  "OUTSIDE_OPERATING_HOURS",
 ] as const;
 
 export type ResourceErrorCode = (typeof RESOURCE_ERROR_CODES)[number];
@@ -196,6 +198,8 @@ const RESOURCE_USER_MESSAGES: Record<ResourceErrorCode, string> = {
     "That resource is no longer available for the selected time. Please choose another resource or time.",
   HOLD_NOT_FOUND: "That hold is no longer active.",
   BOOKED_CANNOT_RELEASE: "Confirmed bookings cannot be released from this action.",
+  INVALID_LOCAL_TIME: "That local event time is not valid for the venue time zone.",
+  OUTSIDE_OPERATING_HOURS: "That time is outside the venue's verified operating hours.",
 };
 
 export class ResourceError extends Error {
@@ -225,6 +229,8 @@ export const BOOKING_ERROR_CODES = [
   "BOOKING_NOT_FOUND",
   "BOOKING_NOT_CANCELLABLE",
   "AVAILABILITY_CONFLICT",
+  "INVALID_LOCAL_TIME",
+  "OUTSIDE_OPERATING_HOURS",
 ] as const;
 
 export type BookingErrorCode = (typeof BOOKING_ERROR_CODES)[number];
@@ -238,6 +244,8 @@ const BOOKING_USER_MESSAGES: Record<BookingErrorCode, string> = {
   BOOKING_NOT_FOUND: "That booking could not be found.",
   BOOKING_NOT_CANCELLABLE: "This booking cannot be cancelled.",
   AVAILABILITY_CONFLICT: "Availability changed before this booking could be confirmed.",
+  INVALID_LOCAL_TIME: "That local event time is not valid for the venue time zone.",
+  OUTSIDE_OPERATING_HOURS: "That time is outside the venue's verified operating hours.",
 };
 
 export class BookingError extends Error {

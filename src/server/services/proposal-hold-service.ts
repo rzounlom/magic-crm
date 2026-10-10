@@ -1,6 +1,9 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
+import { resolveStrictOccupancyInstants } from "@/lib/inquiries/strict-local-time";
 import { occupancyInstants, resolveSchedulingTimeZone } from "@/lib/inquiries/tenant-datetime";
+import { assertWritableOccupancyOrThrow } from "@/server/resources/scheduling-guards";
+import { LOCAL_TIME_RESOLUTION_STATUSES } from "@/types/operating-hours";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { depositPercentFromTenant, depositRequiredCents } from "@/server/catalog/pricing";
@@ -364,6 +367,17 @@ export async function placeProposalHold(
     locationTimeZone: inquiry.location?.timezone,
     organizationTimeZone: inquiry.organization.timezone,
   });
+  await assertWritableOccupancyOrThrow({
+    database,
+    organizationId: input.organizationId,
+    locationId,
+    timeZone,
+    slotDate: window.slotDate,
+    startMinute: window.startMinute,
+    endMinute: window.endMinute,
+    flow: "place_proposal_hold",
+    errorKind: "resource",
+  });
   const inventory = await database.resourceType.findMany({
     where: { organizationId: input.organizationId },
     select: { id: true, _count: { select: { resources: { where: resourcesInLocationWhere(locationId) } } } },
@@ -429,12 +443,15 @@ export async function placeProposalHold(
       const locationByResource = new Map(units.map((row) => [row.id, row.locationId]));
       await tx.resourceReservation.createMany({
         data: assignments.map((assignment) => {
-          const assignmentInstants = occupancyInstants({
+          const assignmentInstants = resolveStrictOccupancyInstants({
             slotDate: window.slotDate,
             startMinute: assignment.startMinute,
             endMinute: assignment.endMinute,
             timeZone,
           });
+          if (assignmentInstants.status !== LOCAL_TIME_RESOLUTION_STATUSES.VALID) {
+            throw new ResourceError("INVALID_LOCAL_TIME", assignmentInstants.reason);
+          }
           return {
             organizationId: input.organizationId,
             locationId: locationByResource.get(assignment.resourceId) ?? locationId,
