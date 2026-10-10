@@ -163,73 +163,74 @@ export async function createPublicInquiry(
     ? new Date(`${parsed.data.preferredDate}T00:00:00.000Z`)
     : null;
 
-  const created = await database.$transaction(async (tx) => {
-    const inquiry = await tx.inquiry.create({
-      data: {
-        organizationId: organization.id,
-        locationId,
-        status: INQUIRY_STATUSES.NEW,
-        source: INQUIRY_SOURCES.WEB,
-        customerFirstName: parsed.data.firstName,
-        customerLastName: parsed.data.lastName,
-        customerGroupName: parsed.data.customerGroupName?.trim() || null,
-        customerEmail: parsed.data.email.trim(),
-        customerEmailNormalized: emailNormalized,
-        customerPhone: parsed.data.phone || null,
-        eventType: parsed.data.eventType,
-        occasion: parsed.data.eventGoal,
-        eventGoal: parsed.data.eventGoal,
-        desiredDate,
-        desiredStartTime: parsed.data.startTime?.trim() || null,
-        guestCount: parsed.data.guestCount,
-        guestMix: parsed.data.guestMix,
-        desiredDurationMinutes: parsed.data.desiredDurationMinutes,
-        budgetMin: parsed.data.budgetMin,
-        budgetMax: parsed.data.budgetMax,
-        budgetPreference: parsed.data.budgetPreference,
-        diningPreference: parsed.data.diningPreference,
-        beveragePreference: parsed.data.beveragePreference,
-        spacePreference: parsed.data.spacePreference,
-        attractionInterestIds,
-        customerNotes: parsed.data.notes?.trim() || null,
-        aiHandlingEnabled: false,
-        salesStage: INQUIRY_SALES_STAGES.INQUIRY,
-        audience: audienceFromGuestMix(parsed.data.guestMix),
-        attractionMode: attractionModeFromIntake({
-          attractionMode: parsed.data.attractionMode,
-          attractionInterestIds: parsed.data.attractionInterestIds,
-        }),
+  const intakeText = formatIntakeMessage(parsed.data);
+  // One nested write. Prisma commits the inquiry, conversation, and intake message
+  // together without an interactive transaction, so proposal generation cannot
+  // expire the 5s interactive timeout (P2028). Catalog reads and plan generation stay after this commit.
+  const createdInquiry = await database.inquiry.create({
+    data: {
+      organizationId: organization.id,
+      locationId,
+      status: INQUIRY_STATUSES.NEW,
+      source: INQUIRY_SOURCES.WEB,
+      customerFirstName: parsed.data.firstName,
+      customerLastName: parsed.data.lastName,
+      customerGroupName: parsed.data.customerGroupName?.trim() || null,
+      customerEmail: parsed.data.email.trim(),
+      customerEmailNormalized: emailNormalized,
+      customerPhone: parsed.data.phone || null,
+      eventType: parsed.data.eventType,
+      occasion: parsed.data.eventGoal,
+      eventGoal: parsed.data.eventGoal,
+      desiredDate,
+      desiredStartTime: parsed.data.startTime?.trim() || null,
+      guestCount: parsed.data.guestCount,
+      guestMix: parsed.data.guestMix,
+      desiredDurationMinutes: parsed.data.desiredDurationMinutes,
+      budgetMin: parsed.data.budgetMin,
+      budgetMax: parsed.data.budgetMax,
+      budgetPreference: parsed.data.budgetPreference,
+      diningPreference: parsed.data.diningPreference,
+      beveragePreference: parsed.data.beveragePreference,
+      spacePreference: parsed.data.spacePreference,
+      attractionInterestIds,
+      customerNotes: parsed.data.notes?.trim() || null,
+      aiHandlingEnabled: false,
+      salesStage: INQUIRY_SALES_STAGES.INQUIRY,
+      audience: audienceFromGuestMix(parsed.data.guestMix),
+      attractionMode: attractionModeFromIntake({
+        attractionMode: parsed.data.attractionMode,
+        attractionInterestIds: parsed.data.attractionInterestIds,
+      }),
+      conversations: {
+        create: {
+          channel: CONVERSATION_CHANNELS.WEB,
+          publicTokenHash: hash,
+          lastMessageAt: new Date(),
+          messages: {
+            create: {
+              direction: MESSAGE_DIRECTIONS.INBOUND,
+              senderType: MESSAGE_SENDER_TYPES.CUSTOMER,
+              content: intakeText,
+              clientSubmissionId: parsed.data.submissionId,
+            },
+          },
+        },
       },
-    });
-
-    const conversation = await tx.conversation.create({
-      data: {
-        organizationId: organization.id,
-        inquiryId: inquiry.id,
-        channel: CONVERSATION_CHANNELS.WEB,
-        publicTokenHash: hash,
-      },
-    });
-
-    const intakeText = formatIntakeMessage(parsed.data);
-    await tx.conversationMessage.create({
-      data: {
-        organizationId: organization.id,
-        conversationId: conversation.id,
-        direction: MESSAGE_DIRECTIONS.INBOUND,
-        senderType: MESSAGE_SENDER_TYPES.CUSTOMER,
-        content: intakeText,
-        clientSubmissionId: parsed.data.submissionId,
-      },
-    });
-
-    await tx.conversation.update({
-      where: { id: conversation.id },
-      data: { lastMessageAt: new Date() },
-    });
-
-    return { inquiry, conversation };
+    },
+    select: {
+      id: true,
+      conversations: { select: { id: true }, take: 1 },
+    },
   });
+  const createdConversation = createdInquiry.conversations[0];
+  if (!createdConversation) {
+    throw new InquiryError("INVALID_INTAKE");
+  }
+  const created = {
+    inquiry: { id: createdInquiry.id },
+    conversation: createdConversation,
+  };
 
   await recordAuditEvent(database, {
     organizationId: organization.id,

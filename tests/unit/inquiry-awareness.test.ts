@@ -7,6 +7,8 @@ import {
   inquiryNotificationDetail,
   isInquiryListPath,
   reduceInquiryAwareness,
+  unreadCountExcludingEnded,
+  visibleBellInquiries,
   type InquiryAwarenessSnapshot,
   type InquiryNotificationItem,
 } from "@/lib/inquiries/inquiry-awareness";
@@ -142,6 +144,22 @@ describe("inquiry awareness decisions", () => {
     expect(read.toastTitle).toBeNull();
     expect(read.refreshInquiryList).toBe(false);
     expect(read.session.unreadCount).toBe(1);
+  });
+
+  it("keeps the same unread set after dropping ended bookings from a lightweight id list", () => {
+    const ended = new Set(["ended"]);
+    expect(unreadCountExcludingEnded(["open", "ended", "other"], ended)).toBe(2);
+    expect(
+      visibleBellInquiries(
+        [
+          { id: "ended", label: "Past" },
+          { id: "open", label: "Ada" },
+          { id: "other", label: "Jake" },
+        ],
+        ended,
+        1,
+      ).map((row) => row.label),
+    ).toEqual(["Ada"]);
   });
 
   it("formats the badge, detail line, and relative age", () => {

@@ -1,6 +1,7 @@
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 import { SYSTEM_GROUP_KEYS } from "@/server/authorization/default-security-groups";
+import { BOOKING_STATUSES } from "@/types/booking";
 import { AuthorizationError } from "@/server/errors";
 import { resolveRequestContext } from "@/server/request-context";
 import { listInquiries } from "@/server/services/inquiry-service";
@@ -102,6 +103,38 @@ async function insertInquiry(
 }
 
 describe("inquiry notification awareness", () => {
+  it("omits an ended confirmed booking from the lightweight unread bell", async () => {
+    const tenant = await provisionTenant("ended");
+    const open = await insertInquiry(tenant.organizationId, "Ada", new Date("2026-09-26T17:00:00.000Z"));
+    const ended = await insertInquiry(tenant.organizationId, "Past", new Date("2026-09-26T17:05:00.000Z"));
+    const past = new Date(Date.now() - 60 * 60 * 1000);
+    await db.booking.create({
+      data: {
+        organizationId: tenant.organizationId,
+        inquiryId: ended.id,
+        bookingNumber: `N-${crypto.randomUUID().slice(0, 8)}`,
+        status: BOOKING_STATUSES.CONFIRMED,
+        eventDate: past,
+        startTime: "10:00",
+        endTime: "12:00",
+        startMinute: 600,
+        endMinute: 720,
+        startsAt: new Date(past.getTime() - 60 * 60 * 1000),
+        endsAt: past,
+        guestCount: 12,
+        subtotalCents: 10000,
+        totalCents: 10000,
+        currency: "USD",
+        customerEmail: "past@example.com",
+        payload: {},
+      },
+    });
+
+    const awareness = await getInquiryAwareness(tenant.ctx, db);
+    expect(awareness.unreadCount).toBe(1);
+    expect(awareness.notifications.map((item) => item.id)).toEqual([open.id]);
+  }, 60_000);
+
   it("keeps unread state per employee and per tenant", async () => {
     const tenantA = await provisionTenant("a");
     const tenantB = await provisionTenant("b");

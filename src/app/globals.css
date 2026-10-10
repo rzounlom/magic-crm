@@ -252,6 +252,59 @@ label:has(:disabled) {
   box-shadow: var(--shadow-card);
 }
 
+.choice-grid {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  gap: 1rem;
+  border: 0;
+  padding: 0;
+}
+
+@media (min-width: 40rem) {
+  .choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.choice-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px transparent;
+}
+
+.choice-card[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--primary) 10%, white);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.choice-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.choice-card:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.planner-section + .planner-section {
+  margin-top: 2.5rem;
+}
+
+.planner-stage-actions {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+
+.time-group select {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  min-height: 2.75rem;
+  box-shadow: none;
+}
+
 .record-row.flex {
   display: flex;
 }

@@ -70,6 +70,18 @@ export function inquiryNotificationDetail(
   return [guests, goal].filter(Boolean).join(" · ");
 }
 
+export function unreadCountExcludingEnded(unseenIds: readonly string[], endedInquiryIds: ReadonlySet<string>): number {
+  return unseenIds.filter((id) => !endedInquiryIds.has(id)).length;
+}
+
+export function visibleBellInquiries<T extends { id: string }>(
+  recent: readonly T[],
+  endedInquiryIds: ReadonlySet<string>,
+  limit: number,
+): T[] {
+  return recent.filter((row) => !endedInquiryIds.has(row.id)).slice(0, limit);
+}
+
 export function inquiryNotificationToast(customerLabel: string): string {
   if (!customerLabel.trim() || customerLabel === "A customer") {
     return "New inquiry received";

@@ -164,6 +164,7 @@ export type PlannerAction =
   | { type: "go"; step: PlannerStep }
   | { type: "startOver" };
 
+/** Validation units. The public UI groups these into stages instead of one screen per step. */
 export function plannerStepError(step: PlannerStep, answers: PlannerAnswers): string | null {
   switch (step) {
     case "event":
@@ -213,6 +214,20 @@ export function plannerStepError(step: PlannerStep, answers: PlannerAnswers): st
     default:
       return null;
   }
+}
+
+export function eventGroupComplete(answers: PlannerAnswers): boolean {
+  return (
+    plannerStepError("event", answers) == null &&
+    plannerStepError("guests", answers) == null &&
+    plannerStepError("mix", answers) == null
+  );
+}
+
+export function preferenceGroupComplete(answers: PlannerAnswers): boolean {
+  return (["food", "space", "budget", "length"] as const).every(
+    (step) => plannerStepError(step, answers) == null,
+  );
 }
 
 export function contactFieldErrors(answers: PlannerAnswers): Record<string, string> {
