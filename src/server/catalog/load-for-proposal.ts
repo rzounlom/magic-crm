@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
 import { catalogPriceFromRow } from "@/server/catalog/pricing";
+import { pricingPromotionFromRow, type PricingPromotionRule } from "@/server/catalog/promotions";
 import { PRODUCT_QUANTITY_RULES } from "@/types/catalog";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import {
@@ -23,7 +24,7 @@ export async function loadCatalogForProposal(
   locationId?: string | null,
 ) {
   const resourceWhere = resourcesInLocationWhere(locationId);
-  const [products, profiles, requirementRows] = await Promise.all([
+  const [products, profiles, requirementRows, promotionRows] = await Promise.all([
     database.product.findMany({
       where: {
         organizationId,
@@ -32,7 +33,12 @@ export async function loadCatalogForProposal(
           ? { OR: [{ locationId: null }, { locationId }] }
           : {}),
       },
-      include: { prices: { where: { active: true } }, servings: true, experienceGrants: true },
+      include: {
+        prices: { where: { active: true } },
+        servings: true,
+        experienceGrants: true,
+        category: { select: { slug: true } },
+      },
       orderBy: { sortOrder: "asc" },
     }),
     database.recommendationProfile.findMany({
@@ -53,6 +59,15 @@ export async function loadCatalogForProposal(
           },
         },
       },
+    }),
+    database.pricingPromotion.findMany({
+      where: {
+        organizationId,
+        ...(locationId
+          ? { OR: [{ locationId: null }, { locationId }] }
+          : {}),
+      },
+      orderBy: [{ priority: "asc" }, { slug: "asc" }],
     }),
   ]);
 
@@ -125,7 +140,20 @@ export async function loadCatalogForProposal(
     ];
   });
 
-  return { products: loadedProducts, profiles: loadedProfiles, resourceRequirements };
+  const categorySlugByProductId: Record<string, string> = {};
+  for (const product of products) {
+    categorySlugByProductId[product.id] = product.category.slug;
+  }
+
+  const promotions: PricingPromotionRule[] = promotionRows.map(pricingPromotionFromRow);
+
+  return {
+    products: loadedProducts,
+    profiles: loadedProfiles,
+    resourceRequirements,
+    promotions,
+    categorySlugByProductId,
+  };
 }
 
 function isCoverageKind(value: string): value is CoverageKind {

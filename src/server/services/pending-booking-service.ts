@@ -88,6 +88,31 @@ export function lineItemsFromPayload(payload: ReturnType<typeof readEventPlanPay
     sortOrder: number;
   }> = [];
   let sortOrder = 0;
+  // Prefer catalog quote line items so booking money matches the snapshotted proposal.
+  const snapshottedLines = payload.lineItems ?? [];
+  if (snapshottedLines.length > 0) {
+    for (const line of snapshottedLines) {
+      const kind =
+        line.kind === "FOOD"
+          ? BOOKING_LINE_ITEM_KINDS.DINING
+          : line.kind === "RENTAL" || line.kind === "SPACE"
+            ? BOOKING_LINE_ITEM_KINDS.SPACE
+            : BOOKING_LINE_ITEM_KINDS.ACTIVITY;
+      items.push({
+        kind,
+        knowledgeItemId: line.productId,
+        name: line.name,
+        quantity: line.quantity || 1,
+        unitPriceCents: line.unitPriceCents,
+        totalCents: line.totalCents,
+        startTime: payload.startTime,
+        endTime: null,
+        sortOrder,
+      });
+      sortOrder += 1;
+    }
+    return items;
+  }
   for (const activity of payload.activities) {
     items.push({
       kind: BOOKING_LINE_ITEM_KINDS.ACTIVITY,

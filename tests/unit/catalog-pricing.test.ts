@@ -91,6 +91,83 @@ describe("catalog pricing", () => {
     expect(weekend.totalCents).toBe(2 * 4000 + 12 * 350);
   });
 
+  it("uses price-row weekendDays so Friday can bill weekend without changing rates", () => {
+    const generationsStyle = product({
+      slug: "bowling-1h",
+      name: "Bowling - 1 Hour",
+      guestsPerUnit: 6,
+      prices: [
+        {
+          strategy: PRODUCT_PRICE_STRATEGIES.PER_LANE_WEEKDAY_WEEKEND,
+          amountCents: 3000,
+          additionalGuestCents: null,
+          includedGuests: null,
+          includedHours: null,
+          additionalHourCents: null,
+          minGuests: null,
+          weekdayAmountCents: 3000,
+          weekendAmountCents: 4000,
+          daysOfWeek: null,
+          weekendDays: ["fri", "sat", "sun"],
+          afterHour: null,
+          afterHourAmountCents: null,
+          shoeAddOnCents: 350,
+          unitLabel: "lane",
+        },
+      ],
+    });
+    const defaultTenant = product({
+      slug: "bowling-1h",
+      name: "Bowling - 1 Hour",
+      guestsPerUnit: 6,
+      prices: [
+        {
+          strategy: PRODUCT_PRICE_STRATEGIES.PER_LANE_WEEKDAY_WEEKEND,
+          amountCents: 3000,
+          additionalGuestCents: null,
+          includedGuests: null,
+          includedHours: null,
+          additionalHourCents: null,
+          minGuests: null,
+          weekdayAmountCents: 3000,
+          weekendAmountCents: 4000,
+          daysOfWeek: null,
+          afterHour: null,
+          afterHourAmountCents: null,
+          shoeAddOnCents: 350,
+          unitLabel: "lane",
+        },
+      ],
+    });
+    // 2026-10-16 is Friday; 2026-10-15 is Thursday.
+    expect(
+      priceProduct(generationsStyle, {
+        guestCount: 6,
+        eventDate: "2026-10-16",
+        startTime: "18:00",
+        durationMinutes: 60,
+        timeZone: "America/Chicago",
+      }).totalCents,
+    ).toBe(4000 + 6 * 350);
+    expect(
+      priceProduct(generationsStyle, {
+        guestCount: 6,
+        eventDate: "2026-10-15",
+        startTime: "18:00",
+        durationMinutes: 60,
+        timeZone: "America/Chicago",
+      }).totalCents,
+    ).toBe(3000 + 6 * 350);
+    expect(
+      priceProduct(defaultTenant, {
+        guestCount: 6,
+        eventDate: "2026-10-16",
+        startTime: "18:00",
+        durationMinutes: 60,
+      }).totalCents,
+    ).toBe(3000 + 6 * 350);
+  });
+
   it("uses pizza combo ceil(guestCount / 4)", () => {
     const quote = priceProduct(
       product({

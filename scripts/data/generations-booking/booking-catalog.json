@@ -440,6 +440,7 @@
           "amountCents": 3000,
           "weekdayAmountCents": 3000,
           "weekendAmountCents": 4000,
+          "weekendDays": ["fri", "sat", "sun"],
           "shoeAddOnCents": 350,
           "unitLabel": "lane"
         }
@@ -2177,5 +2178,6 @@
       "displayOrder": 4,
       "productSlugs": ["have-a-ball-mini-golf"]
     }
-  ]
+  ],
+  "promotions": []
 }

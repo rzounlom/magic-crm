@@ -423,6 +423,7 @@ export const TENANT_ALPHA_DATASET: BookingCatalogDataset = {
     profileRow(INQUIRY_AUDIENCES.ADULTS, TENANT_ALPHA_ADULT_PROFILE),
     profileRow(INQUIRY_AUDIENCES.MIXED, TENANT_ALPHA_ADULT_PROFILE),
   ],
+  promotions: [],
 };
 
 export const TENANT_BETA_DATASET: BookingCatalogDataset = {
@@ -466,6 +467,7 @@ export const TENANT_BETA_DATASET: BookingCatalogDataset = {
     profileRow(INQUIRY_AUDIENCES.ADULTS, TENANT_BETA_ADULT_PROFILE),
     profileRow(INQUIRY_AUDIENCES.MIXED, TENANT_BETA_ADULT_PROFILE),
   ],
+  promotions: [],
 };
 
 export function tenantBetaCompositionDataset(): BookingCatalogDataset {

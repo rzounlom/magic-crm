@@ -179,6 +179,9 @@ export type EventPlanLineItem = {
   unitLabel?: string | null;
   unitPriceCents: number;
   totalCents: number;
+  discountCents?: number;
+  originalUnitPriceCents?: number;
+  originalTotalCents?: number;
 };
 
 export type EventPlanItinerarySegment = {
@@ -259,6 +262,13 @@ export type EventPlanPayload = {
   rotations?: EventPlanRotation[];
   resourceRequirements?: PlanResourceRequirement[];
   lineItems?: EventPlanLineItem[];
+  /** Applied promotions snapshotted at quote time. Absent on older payloads. */
+  pricingBreakdown?: {
+    appliedPromotions: import("@/types/catalog").AppliedPromotionSnapshot[];
+    eventDate: string | null;
+    startTime: string | null;
+    timeZone: string | null;
+  };
   depositPreviewCents?: number | null;
   depositPreviewPercent?: number | null;
   depositPreviewNote?: string;

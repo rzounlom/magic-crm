@@ -22,10 +22,47 @@ const priceSchema = z.object({
   weekdayAmountCents: z.number().int().nonnegative().optional().nullable(),
   weekendAmountCents: z.number().int().nonnegative().optional().nullable(),
   daysOfWeek: z.array(weekdaySchema).optional().nullable(),
+  weekendDays: z.array(weekdaySchema).optional().nullable(),
   afterHour: z.number().int().min(0).max(23).optional().nullable(),
   afterHourAmountCents: z.number().int().nonnegative().optional().nullable(),
   shoeAddOnCents: z.number().int().nonnegative().optional().nullable(),
   unitLabel: z.string().trim().max(40).optional().nullable(),
+});
+
+const promotionPayloadSchema = z.object({
+  percent: z.number().int().min(0).max(100).optional(),
+  amountCents: z.number().int().nonnegative().optional(),
+  promotionalPriceCents: z.number().int().nonnegative().optional(),
+  application: z.enum(["PER_UNIT", "PER_LINE"]).optional(),
+  buyQuantity: z.number().int().positive().optional(),
+  getQuantity: z.number().int().positive().optional(),
+  rewardPercent: z.number().int().min(0).max(100).optional(),
+  maxApplications: z.number().int().positive().optional(),
+  identicalProductsOnly: z.boolean().optional(),
+  allowStoredValue: z.boolean().optional(),
+});
+
+const promotionSchema = z.object({
+  slug: z.string().trim().min(1).max(80),
+  name: z.string().trim().min(1).max(160),
+  type: z.enum(["PERCENTAGE", "FIXED_AMOUNT", "FIXED_PRICE", "BUY_X_GET_Y"]),
+  version: z.number().int().positive().optional().default(1),
+  active: z.boolean().optional().default(false),
+  stackable: z.boolean().optional().default(false),
+  stackingGroup: z.string().trim().max(80).optional().nullable(),
+  priority: z.number().int().optional().default(100),
+  allowsFurtherDiscount: z.boolean().optional().default(false),
+  productSlugs: z.array(z.string().trim().min(1).max(80)).optional().nullable(),
+  categorySlugs: z.array(z.string().trim().min(1).max(80)).optional().nullable(),
+  daysOfWeek: z.array(weekdaySchema).optional().nullable(),
+  localStartMinute: z.number().int().min(0).max(24 * 60).optional().nullable(),
+  localEndMinute: z.number().int().min(0).max(24 * 60).optional().nullable(),
+  effectiveFrom: z.string().trim().optional().nullable(),
+  effectiveTo: z.string().trim().optional().nullable(),
+  minQuantity: z.number().int().positive().optional().nullable(),
+  maxQuantity: z.number().int().positive().optional().nullable(),
+  locationSlug: z.string().trim().max(80).optional().nullable(),
+  payload: promotionPayloadSchema,
 });
 
 const requirementSchema = z.object({
@@ -137,6 +174,7 @@ export const bookingCatalogDatasetSchema = z.object({
   products: z.array(productSchema).min(1),
   recommendationProfiles: z.array(profileSchema).min(1),
   attractionInterests: z.array(attractionInterestSchema).optional(),
+  promotions: z.array(promotionSchema).optional().default([]),
 });
 
 export type BookingCatalogDataset = z.infer<typeof bookingCatalogDatasetSchema>;

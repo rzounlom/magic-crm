@@ -56,6 +56,7 @@ model Organization {
   inquirySeen         InquirySeen[]
   attractionInterests AttractionInterest[]
   attractionInterestProducts AttractionInterestProduct[]
+  pricingPromotions   PricingPromotion[]
 
   @@index([onboardingStatus])
   @@map("organizations")
@@ -81,6 +82,7 @@ model Location {
   products               Product[]
   bookings               Booking[]
   resourceReservations   ResourceReservation[]
+  pricingPromotions      PricingPromotion[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
@@ -680,6 +682,8 @@ model ProductPrice {
   weekendAmountCents   Int?
   /// JSON string array of weekday keys: sun, mon, tue, wed, thu, fri, sat
   daysOfWeek           Json?
+  /// Days that use weekendAmountCents for PER_LANE_WEEKDAY_WEEKEND. Null means sat+sun.
+  weekendDays          Json?
   afterHour            Int?
   afterHourAmountCents Int?
   shoeAddOnCents       Int?
@@ -694,6 +698,47 @@ model ProductPrice {
   @@unique([organizationId, id])
   @@index([organizationId, productId])
   @@map("product_prices")
+}
+
+/// Tenant-owned promotional rules. Inactive by default until the organization activates them.
+model PricingPromotion {
+  id                 String    @id @default(cuid(2))
+  organizationId     String
+  locationId         String?
+  slug               String    @db.VarChar(80)
+  name               String    @db.VarChar(160)
+  /// PERCENTAGE | FIXED_AMOUNT | FIXED_PRICE | BUY_X_GET_Y
+  type               String    @db.VarChar(32)
+  /// Monotonic rule version snapshotted onto quotes.
+  version            Int       @default(1)
+  active             Boolean   @default(false)
+  stackable          Boolean   @default(false)
+  stackingGroup      String?   @db.VarChar(80)
+  /// Lower values win deterministic ties after best-price selection.
+  priority           Int       @default(100)
+  allowsFurtherDiscount Boolean @default(false)
+  productSlugs       Json?
+  categorySlugs      Json?
+  daysOfWeek         Json?
+  /// Minutes from local midnight inclusive; null means all day.
+  localStartMinute   Int?
+  localEndMinute     Int?
+  effectiveFrom      DateTime? @db.Date
+  effectiveTo        DateTime? @db.Date
+  minQuantity        Int?
+  maxQuantity        Int?
+  /// Type-specific fields (percent, amountCents, buy/get, application).
+  payload            Json
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location?    @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId, active])
+  @@map("pricing_promotions")
 }
 
 /// How a catalog product consumes finite inventory. Composite packages are extra rows, not runtime name checks.

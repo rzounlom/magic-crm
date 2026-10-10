@@ -345,6 +345,7 @@ export async function importBookingCatalog(
         weekdayAmountCents: price.weekdayAmountCents ?? null,
         weekendAmountCents: price.weekendAmountCents ?? null,
         daysOfWeek: price.daysOfWeek ?? undefined,
+        weekendDays: price.weekendDays ?? undefined,
         afterHour: price.afterHour ?? null,
         afterHourAmountCents: price.afterHourAmountCents ?? null,
         shoeAddOnCents: price.shoeAddOnCents ?? null,
@@ -448,6 +449,7 @@ export async function importBookingCatalog(
   }
 
   await syncAttractionInterests(database, organizationId, input.dataset, productIds, counts);
+  await syncPricingPromotions(database, organizationId, locationId, input.dataset);
 
   return {
     ...counts,
@@ -456,6 +458,55 @@ export async function importBookingCatalog(
     organizationSlug: organization.slug,
     ambiguities: input.dataset.ambiguities,
   };
+}
+
+async function syncPricingPromotions(
+  database: ImportDb,
+  organizationId: string,
+  _locationId: string | null,
+  dataset: BookingCatalogDataset,
+) {
+  void _locationId;
+  const promotions = dataset.promotions ?? [];
+  if (promotions.length === 0) {
+    return;
+  }
+  const locationBySlug = await database.location.findMany({
+    where: { organizationId },
+    select: { id: true, slug: true },
+  });
+  const locationIds = new Map(locationBySlug.map((row) => [row.slug, row.id]));
+  const slugs = promotions.map((row) => row.slug);
+  await database.pricingPromotion.deleteMany({
+    where: { organizationId, slug: { in: slugs } },
+  });
+  await database.pricingPromotion.createMany({
+    data: promotions.map((promotion) => ({
+      organizationId,
+      locationId: promotion.locationSlug
+        ? (locationIds.get(promotion.locationSlug) ?? null)
+        : null,
+      slug: promotion.slug,
+      name: promotion.name,
+      type: promotion.type,
+      version: promotion.version,
+      active: promotion.active,
+      stackable: promotion.stackable,
+      stackingGroup: promotion.stackingGroup ?? null,
+      priority: promotion.priority,
+      allowsFurtherDiscount: promotion.allowsFurtherDiscount,
+      productSlugs: promotion.productSlugs ?? undefined,
+      categorySlugs: promotion.categorySlugs ?? undefined,
+      daysOfWeek: promotion.daysOfWeek ?? undefined,
+      localStartMinute: promotion.localStartMinute ?? null,
+      localEndMinute: promotion.localEndMinute ?? null,
+      effectiveFrom: promotion.effectiveFrom ? new Date(`${promotion.effectiveFrom.slice(0, 10)}T00:00:00.000Z`) : null,
+      effectiveTo: promotion.effectiveTo ? new Date(`${promotion.effectiveTo.slice(0, 10)}T00:00:00.000Z`) : null,
+      minQuantity: promotion.minQuantity ?? null,
+      maxQuantity: promotion.maxQuantity ?? null,
+      payload: promotion.payload as Prisma.InputJsonValue,
+    })),
+  });
 }
 
 async function syncAttractionInterests(

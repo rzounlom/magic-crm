@@ -93,6 +93,8 @@ export type CatalogPriceInput = {
   weekdayAmountCents: number | null;
   weekendAmountCents: number | null;
   daysOfWeek: WeekdayKey[] | null;
+  /** Days that use weekendAmountCents. Null/omitted means sat+sun. */
+  weekendDays?: WeekdayKey[] | null;
   afterHour: number | null;
   afterHourAmountCents: number | null;
   shoeAddOnCents: number | null;
@@ -129,6 +131,11 @@ export type PricingContext = {
   eventDate: string | null;
   startTime: string | null;
   durationMinutes: number;
+  /** IANA zone for local weekday/time eligibility. Event dates are venue calendar dates. */
+  timeZone?: string | null;
+  organizationId?: string;
+  locationId?: string | null;
+  categorySlugByProductId?: Record<string, string>;
 };
 
 export type PricedLineItem = {
@@ -140,6 +147,9 @@ export type PricedLineItem = {
   unitLabel: string | null;
   unitPriceCents: number;
   totalCents: number;
+  discountCents?: number;
+  originalUnitPriceCents?: number;
+  originalTotalCents?: number;
 };
 
 export type PriceQuote = {
@@ -149,6 +159,19 @@ export type PriceQuote = {
   totalCents: number;
   lineItems: PricedLineItem[];
   pricingComplete: boolean;
+  appliedPromotions?: AppliedPromotionSnapshot[];
+};
+
+export type AppliedPromotionSnapshot = {
+  promotionId: string;
+  slug: string;
+  version: number;
+  type: string;
+  productId: string;
+  originalTotalCents: number;
+  discountCents: number;
+  finalTotalCents: number;
+  stackingDecision: string;
 };
 
 export const FOOD_TIER_STRATEGIES = {

@@ -23,6 +23,7 @@ import {
   optionExperienceSentence,
   resolveSchedulingBehavior,
 } from "@/server/catalog/scheduling-behavior";
+import { applyPromotions, type PricingPromotionRule } from "@/server/catalog/promotions";
 import { percentOfCents, priceProduct, weekdayKeyFromIsoDate, isWeekendKey, depositPercentFromTenant, depositPreviewNote } from "@/server/catalog/pricing";
 import {
   budgetAssessment,
@@ -226,6 +227,11 @@ async function quoteSelection(input: {
   resourceRequirements: CatalogResourceRequirementRow[];
   availabilityProvider?: PlanAvailabilityProvider;
   excludeInquiryId?: string | null;
+  organizationId: string;
+  locationId?: string | null;
+  timeZone?: string | null;
+  promotions?: PricingPromotionRule[];
+  categorySlugByProductId?: Record<string, string>;
 }) {
   const requirementIds = new Set(input.resourceRequirements.map((row) => row.productId));
   const inclusion = applyPackageInclusions({
@@ -247,13 +253,24 @@ async function quoteSelection(input: {
     eventDate: input.inquiry.desiredDate,
     startTime: input.inquiry.desiredStartTime,
     durationMinutes,
+    timeZone: input.timeZone ?? null,
+    organizationId: input.organizationId,
+    locationId: input.locationId ?? null,
+    categorySlugByProductId: input.categorySlugByProductId,
   };
-  const quotes = selected.map((product) =>
+  const baseQuotes = selected.map((product) =>
     priceProduct(product, {
       ...pricingContext,
       guestCount: inclusion.guestCountByProductId[product.id] ?? pricingContext.guestCount,
     }),
   );
+  const promoted = applyPromotions({
+    quotes: baseQuotes,
+    context: pricingContext,
+    promotions: input.promotions ?? [],
+  });
+  const quotes = promoted.quotes;
+  const appliedPromotions = promoted.applied;
   const lineItems: PricedLineItem[] = quotes.flatMap((quote) => quote.lineItems);
   const totalCents = quotes.reduce((sum, quote) => sum + quote.totalCents, 0);
   const pricingComplete = quotes.every((quote) => quote.pricingComplete);
@@ -334,6 +351,7 @@ async function quoteSelection(input: {
     included,
     result,
     pricedProducts: selected,
+    appliedPromotions,
   };
 }
 
@@ -351,10 +369,13 @@ function toItineraryProduct(row: LoadedCatalogProduct, requirementIds: Set<strin
 export async function buildCatalogEventPlans(input: {
   organizationId: string;
   locationId?: string | null;
+  timeZone?: string | null;
   inquiry: PlannerInquiryFacts;
   products: LoadedCatalogProduct[];
   profiles: LoadedRecommendationProfile[];
   resourceRequirements: CatalogResourceRequirementRow[];
+  promotions?: PricingPromotionRule[];
+  categorySlugByProductId?: Record<string, string>;
   currency: string;
   depositPercent?: number;
   availabilityProvider?: PlanAvailabilityProvider;
@@ -417,13 +438,33 @@ export async function buildCatalogEventPlans(input: {
     if (selected.length === 0) {
       continue;
     }
-    const priceTotal = (rows: LoadedCatalogProduct[]) =>
-      rows.reduce((sum, product) => sum + priceProduct(product, {
+    const priceTotal = (rows: LoadedCatalogProduct[]) => {
+      const inclusion = applyPackageInclusions({
+        products: rows,
+        guestCount: input.inquiry.guestCount,
+      });
+      const pricingContext = {
         guestCount: input.inquiry.guestCount,
         eventDate: input.inquiry.desiredDate,
         startTime: input.inquiry.desiredStartTime,
         durationMinutes: input.inquiry.desiredDurationMinutes ?? 60,
-      }).totalCents, 0);
+        timeZone: input.timeZone ?? null,
+        organizationId: input.organizationId,
+        locationId: input.locationId ?? null,
+        categorySlugByProductId: input.categorySlugByProductId,
+      };
+      const baseQuotes = inclusion.products.map((product) =>
+        priceProduct(product, {
+          ...pricingContext,
+          guestCount: inclusion.guestCountByProductId[product.id] ?? pricingContext.guestCount,
+        }),
+      );
+      return applyPromotions({
+        quotes: baseQuotes,
+        context: pricingContext,
+        promotions: input.promotions ?? [],
+      }).quotes.reduce((sum, quote) => sum + quote.totalCents, 0);
+    };
     if (tierStrategy && config.key === "good" && input.inquiry.budgetMax != null && input.inquiry.diningPreference !== "none") {
       const primaryFood = selected.find((row) => row.kind === "FOOD");
       const alternates = profile.composition?.foodStrategies.value ?? [];
@@ -520,6 +561,11 @@ export async function buildCatalogEventPlans(input: {
       resourceRequirements: input.resourceRequirements,
       availabilityProvider: input.availabilityProvider,
       excludeInquiryId: input.excludeInquiryId,
+      organizationId: input.organizationId,
+      locationId: input.locationId,
+      timeZone: input.timeZone,
+      promotions: input.promotions,
+      categorySlugByProductId: input.categorySlugByProductId,
     });
     while (
       tierStrategy &&
@@ -568,6 +614,11 @@ export async function buildCatalogEventPlans(input: {
         resourceRequirements: input.resourceRequirements,
         availabilityProvider: input.availabilityProvider,
         excludeInquiryId: input.excludeInquiryId,
+        organizationId: input.organizationId,
+        locationId: input.locationId,
+        timeZone: input.timeZone,
+        promotions: input.promotions,
+        categorySlugByProductId: input.categorySlugByProductId,
       });
       if (!stillHasRoom) {
         break;
@@ -884,6 +935,15 @@ export async function buildCatalogEventPlans(input: {
           ? { comparedWithTier: previousProducts ? drafts[drafts.length - 1]?.tier ?? null : null, ...delta }
           : undefined,
         pricingComplete,
+        pricingBreakdown:
+          quote.appliedPromotions.length > 0
+            ? {
+                appliedPromotions: quote.appliedPromotions,
+                eventDate: input.inquiry.desiredDate,
+                startTime: viableStartTime,
+                timeZone: input.timeZone ?? null,
+              }
+            : undefined,
         customerAvailabilityNote: itineraryAdjusted && adjustmentNote ? adjustmentNote : CUSTOMER_AVAILABILITY_NOTE,
         resourceRequirements,
       },

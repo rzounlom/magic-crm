@@ -21,6 +21,7 @@ export function catalogPriceFromRow(row: {
   weekdayAmountCents: number | null;
   weekendAmountCents: number | null;
   daysOfWeek: unknown;
+  weekendDays?: unknown;
   afterHour: number | null;
   afterHourAmountCents: number | null;
   shoeAddOnCents: number | null;
@@ -28,6 +29,9 @@ export function catalogPriceFromRow(row: {
 }): CatalogPriceInput {
   const days = Array.isArray(row.daysOfWeek)
     ? row.daysOfWeek.filter((entry): entry is WeekdayKey => typeof entry === "string")
+    : [];
+  const weekendDays = Array.isArray(row.weekendDays)
+    ? row.weekendDays.filter((entry): entry is WeekdayKey => typeof entry === "string")
     : [];
   return {
     strategy: row.strategy,
@@ -40,6 +44,7 @@ export function catalogPriceFromRow(row: {
     weekdayAmountCents: row.weekdayAmountCents,
     weekendAmountCents: row.weekendAmountCents,
     daysOfWeek: days.length > 0 ? days : null,
+    weekendDays: weekendDays.length > 0 ? weekendDays : null,
     afterHour: row.afterHour,
     afterHourAmountCents: row.afterHourAmountCents,
     shoeAddOnCents: row.shoeAddOnCents,
@@ -47,13 +52,26 @@ export function catalogPriceFromRow(row: {
   };
 }
 
-export function weekdayKeyFromIsoDate(isoDate: string): WeekdayKey {
-  const day = new Date(`${isoDate}T00:00:00.000Z`).getUTCDay();
+const DEFAULT_WEEKEND_DAYS: WeekdayKey[] = ["sat", "sun"];
+
+/** Venue calendar date (YYYY-MM-DD) → weekday. Civil dates do not shift with IANA zones. */
+export function weekdayKeyFromIsoDate(isoDate: string, timeZone?: string | null): WeekdayKey {
+  void timeZone;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
+  if (!match) {
+    const day = new Date(`${isoDate}T00:00:00.000Z`).getUTCDay();
+    return WEEKDAY_KEYS[day] ?? "sun";
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const dayOfMonth = Number(match[3]);
+  const day = new Date(Date.UTC(year, month - 1, dayOfMonth)).getUTCDay();
   return WEEKDAY_KEYS[day] ?? "sun";
 }
 
-export function isWeekendKey(key: WeekdayKey): boolean {
-  return key === "sat" || key === "sun";
+export function isWeekendKey(key: WeekdayKey, weekendDays?: WeekdayKey[] | null): boolean {
+  const days = weekendDays && weekendDays.length > 0 ? weekendDays : DEFAULT_WEEKEND_DAYS;
+  return days.includes(key);
 }
 
 export function parseClockToHour(startTime: string | null): number | null {
@@ -140,7 +158,7 @@ export function selectProductPrice(
   prices: CatalogPriceInput[],
   context: PricingContext,
 ): CatalogPriceInput | null {
-  const weekday = context.eventDate ? weekdayKeyFromIsoDate(context.eventDate) : null;
+  const weekday = context.eventDate ? weekdayKeyFromIsoDate(context.eventDate, context.timeZone) : null;
   const startHour = parseClockToHour(context.startTime);
   const candidates = prices.filter((price) => {
     if (!daysMatch(price, weekday)) {
@@ -216,7 +234,7 @@ export function priceProduct(product: CatalogProductInput, context: PricingConte
     };
   }
 
-  const weekday = context.eventDate ? weekdayKeyFromIsoDate(context.eventDate) : null;
+  const weekday = context.eventDate ? weekdayKeyFromIsoDate(context.eventDate, context.timeZone) : null;
   const startHour = parseClockToHour(context.startTime);
   const guests = billedGuestCount(context.guestCount, price.minGuests ?? product.minGuests);
   const items: PricedLineItem[] = [];
@@ -251,7 +269,7 @@ export function priceProduct(product: CatalogProductInput, context: PricingConte
         };
       }
       const units = Math.max(1, Math.ceil(context.guestCount / guestsPerUnit));
-      const weekend = weekday ? isWeekendKey(weekday) : false;
+      const weekend = weekday ? isWeekendKey(weekday, price.weekendDays) : false;
       const unitRate =
         weekend && price.weekendAmountCents != null
           ? price.weekendAmountCents

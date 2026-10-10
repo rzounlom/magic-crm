@@ -40,6 +40,7 @@ function priceKey(price: {
   weekdayAmountCents?: number | null;
   weekendAmountCents?: number | null;
   daysOfWeek?: unknown;
+  weekendDays?: unknown;
   afterHour?: number | null;
   afterHourAmountCents?: number | null;
   shoeAddOnCents?: number | null;
@@ -56,6 +57,7 @@ function priceKey(price: {
     weekdayAmountCents: price.weekdayAmountCents ?? null,
     weekendAmountCents: price.weekendAmountCents ?? null,
     daysOfWeek: price.daysOfWeek ?? null,
+    weekendDays: price.weekendDays ?? null,
     afterHour: price.afterHour ?? null,
     afterHourAmountCents: price.afterHourAmountCents ?? null,
     shoeAddOnCents: price.shoeAddOnCents ?? null,

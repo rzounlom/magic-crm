@@ -355,10 +355,10 @@ export async function generateEventPlansForInquiry(
 
   const locationId = await resolveInquiryLocationId(database, inquiry);
   const resourceWhere = resourcesInLocationWhere(locationId);
-  const [organization, knowledge, resourceCatalog, storedRequirementRows] = await Promise.all([
+  const [organization, knowledge, resourceCatalog, storedRequirementRows, locationRow] = await Promise.all([
     database.organization.findFirstOrThrow({
       where: { id: input.organizationId },
-      select: { currency: true, depositPercent: true },
+      select: { currency: true, depositPercent: true, timezone: true },
     }),
     database.salesKnowledgeItem.findMany({
       where: { organizationId: input.organizationId, active: true },
@@ -381,7 +381,17 @@ export async function generateEventPlansForInquiry(
         },
       },
     }),
+    locationId
+      ? database.location.findFirst({
+          where: { id: locationId, organizationId: input.organizationId },
+          select: { timezone: true },
+        })
+      : Promise.resolve(null),
   ]);
+  const timeZone = resolveTenantTimezone({
+    organizationTimezone: organization.timezone,
+    locationTimezone: locationRow?.timezone,
+  });
 
   const storedRequirements = storedRequirementRows.flatMap((row) => {
     if (!row.resourceType.active || !isQuantityRule(row.quantityRule)) {
@@ -432,10 +442,13 @@ export async function generateEventPlansForInquiry(
     drafts = await buildCatalogEventPlans({
       organizationId: input.organizationId,
       locationId,
+      timeZone,
       inquiry: engineFacts,
       products: catalog.products,
       profiles: catalog.profiles,
       resourceRequirements: catalog.resourceRequirements,
+      promotions: catalog.promotions,
+      categorySlugByProductId: catalog.categorySlugByProductId,
       currency: organization.currency,
       depositPercent: depositPercentFromTenant(organization.depositPercent),
       availabilityProvider,

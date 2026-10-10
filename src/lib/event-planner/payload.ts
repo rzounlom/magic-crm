@@ -33,6 +33,15 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     ranking: payload.ranking,
     resourceRequirements: Array.isArray(payload.resourceRequirements) ? payload.resourceRequirements : [],
     lineItems: Array.isArray(payload.lineItems) ? payload.lineItems : [],
+    pricingBreakdown:
+      payload.pricingBreakdown && Array.isArray(payload.pricingBreakdown.appliedPromotions)
+        ? {
+            appliedPromotions: payload.pricingBreakdown.appliedPromotions,
+            eventDate: payload.pricingBreakdown.eventDate ?? null,
+            startTime: payload.pricingBreakdown.startTime ?? null,
+            timeZone: payload.pricingBreakdown.timeZone ?? null,
+          }
+        : undefined,
     depositPreviewCents: payload.depositPreviewCents ?? null,
     depositPreviewPercent: payload.depositPreviewPercent ?? null,
     depositPreviewNote: payload.depositPreviewNote,
