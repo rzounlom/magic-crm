@@ -253,6 +253,8 @@ export async function upsertPendingBookingFromPlan(
     eventType: inquiry.eventType,
     eventGoal: inquiry.eventGoal,
     diningLabel: payload.dining.label,
+    // R2C.2: taxCents remains 0 on amount due. taxBreakdown on payload is diagnostic only.
+    // Historical taxCents=0 means tax not implemented / not collected — not verified exemption.
     subtotalCents: totalCents,
     taxCents: 0,
     totalCents,
@@ -575,6 +577,7 @@ export async function confirmPendingBooking(
         eventType: inquiry.eventType,
         eventGoal: inquiry.eventGoal,
         diningLabel: payload.dining.label,
+        // R2C.2: amount-due tax remains 0; payload.taxBreakdown is diagnostic only.
         subtotalCents: totalCents,
         taxCents: 0,
         totalCents,

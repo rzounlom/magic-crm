@@ -24,6 +24,11 @@ export async function deleteTestOrganizations(
   await database.productPrice.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productExperienceGrant.deleteMany({ where: { organizationId: { in: ids } } });
   await database.pricingPromotion.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.productTaxClassification.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.productBundleTaxPolicy.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.taxRateSchedule.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.locationTaxProfile.deleteMany({ where: { organizationId: { in: ids } } });
+  await database.organizationTaxSettings.deleteMany({ where: { organizationId: { in: ids } } });
   await database.product.deleteMany({ where: { organizationId: { in: ids } } });
   await database.productCategory.deleteMany({ where: { organizationId: { in: ids } } });
   await database.recommendationProfile.deleteMany({ where: { organizationId: { in: ids } } });

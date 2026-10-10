@@ -57,6 +57,11 @@ model Organization {
   attractionInterests AttractionInterest[]
   attractionInterestProducts AttractionInterestProduct[]
   pricingPromotions   PricingPromotion[]
+  taxSettings         OrganizationTaxSettings?
+  locationTaxProfiles LocationTaxProfile[]
+  taxRateSchedules    TaxRateSchedule[]
+  productTaxClassifications ProductTaxClassification[]
+  productBundleTaxPolicies ProductBundleTaxPolicy[]
 
   @@index([onboardingStatus])
   @@map("organizations")
@@ -83,12 +88,141 @@ model Location {
   bookings               Booking[]
   resourceReservations   ResourceReservation[]
   pricingPromotions      PricingPromotion[]
+  taxProfile             LocationTaxProfile?
+  taxRateSchedules       TaxRateSchedule[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])
   @@index([organizationId])
   @@index([organizationId, active])
   @@map("locations")
+}
+
+/// Organization-level tax activation and pricing mode. Defaults keep tax inactive.
+model OrganizationTaxSettings {
+  organizationId       String   @id
+  /// When false, calculator returns DISABLED. Migration default false for all tenants.
+  calculationEnabled   Boolean  @default(false)
+  /// When false, tax never enters amount due. Independent of calculationEnabled.
+  collectionEnabled    Boolean  @default(false)
+  /// TAX_EXCLUSIVE | TAX_INCLUSIVE
+  pricingMode          String   @default("TAX_EXCLUSIVE") @db.VarChar(24)
+  /// HALF_UP_LINE
+  roundingMode         String   @default("HALF_UP_LINE") @db.VarChar(32)
+  approvedAt           DateTime?
+  approvedByNote       String?  @db.VarChar(500)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@map("organization_tax_settings")
+}
+
+/// Location-scoped venue address and jurisdiction binding for tax. Never inherited across locations.
+model LocationTaxProfile {
+  id                   String   @id @default(cuid(2))
+  organizationId       String
+  locationId           String
+  streetLine1          String?  @db.VarChar(200)
+  streetLine2          String?  @db.VarChar(200)
+  city                 String?  @db.VarChar(120)
+  region               String?  @db.VarChar(80)
+  postalCode           String?  @db.VarChar(32)
+  country              String?  @db.VarChar(2)
+  countyName           String?  @db.VarChar(120)
+  /// Explicit jurisdiction code (e.g. US-IN-ST-JOSEPH). Not inferred from ZIP alone.
+  jurisdictionCode     String?  @db.VarChar(64)
+  jurisdictionResolved Boolean  @default(false)
+  /// Explicit IANA zone for tax effective dates. Preferred over Location.timezone when set.
+  taxTimeZone          String?  @db.VarChar(64)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location     @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, locationId])
+  @@index([organizationId])
+  @@map("location_tax_profiles")
+}
+
+/// Effective-dated tax rate for one location + jurisdiction + tax type.
+model TaxRateSchedule {
+  id                 String    @id @default(cuid(2))
+  organizationId     String
+  locationId         String
+  /// STATE_SALES | COUNTY_FAB | MUNICIPAL_FAB | OTHER
+  taxType            String    @db.VarChar(32)
+  jurisdictionCode   String    @db.VarChar(64)
+  /// Basis points: 10_000 = 100%, 700 = 7.00%. Finer than 0.01% unsupported in R2C.2.
+  rateBps            Int
+  effectiveFrom      DateTime  @db.Date
+  effectiveTo        DateTime? @db.Date
+  sourceUrl          String?   @db.VarChar(500)
+  sourceCitation     String?   @db.VarChar(500)
+  /// UNVERIFIED | VERIFIED
+  verificationStatus String    @default("UNVERIFIED") @db.VarChar(24)
+  /// DRAFT | APPROVED | REVOKED
+  approvalStatus     String    @default("DRAFT") @db.VarChar(24)
+  /// Must be true in addition to APPROVED+VERIFIED to apply.
+  active             Boolean   @default(false)
+  version            Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  location     Location     @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, locationId, taxType, jurisdictionCode])
+  @@index([organizationId, locationId, active])
+  @@map("tax_rate_schedules")
+}
+
+/// Explicit product (component) tax classification. Never inferred from slug/category.
+model ProductTaxClassification {
+  id             String    @id @default(cuid(2))
+  organizationId String
+  productId      String
+  /// Empty string = primary line; e.g. "shoes" for shoe add-on. Empty avoids SQL NULL unique gaps.
+  componentKey   String    @default("") @db.VarChar(40)
+  /// ADMISSION_ACTIVITY | PREPARED_FOOD | BEVERAGE | TPP_RENTAL | ROOM_FACILITY | STORED_VALUE | GIFT_CARD | MIXED_PACKAGE | OTHER | UNCLASSIFIED
+  classification String    @db.VarChar(32)
+  /// TAXABLE | EXEMPT | UNRESOLVED — jurisdiction policy binding, not class name alone.
+  taxability     String    @default("UNRESOLVED") @db.VarChar(24)
+  effectiveFrom  DateTime? @db.Date
+  effectiveTo    DateTime? @db.Date
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  product      Product      @relation(fields: [organizationId, productId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, productId, componentKey])
+  @@index([organizationId, productId])
+  @@map("product_tax_classifications")
+}
+
+/// Bundle tax treatment. Experience grants are not tax allocations.
+model ProductBundleTaxPolicy {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  productId      String
+  /// FULLY_TAXABLE | FULLY_EXEMPT | SEPARATELY_STATED | UNRESOLVED
+  treatment      String   @default("UNRESOLVED") @db.VarChar(32)
+  version        Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  product      Product      @relation(fields: [organizationId, productId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, productId])
+  @@map("product_bundle_tax_policies")
 }
 
 /// Tenant employee membership. One Clerk user may have one profile per organization.
@@ -617,6 +751,8 @@ model Product {
   servings     ProductServing[]
   experienceGrants ProductExperienceGrant[]
   attractionInterestProducts AttractionInterestProduct[]
+  taxClassifications ProductTaxClassification[]
+  bundleTaxPolicy  ProductBundleTaxPolicy?
 
   @@unique([organizationId, id])
   @@unique([organizationId, slug])

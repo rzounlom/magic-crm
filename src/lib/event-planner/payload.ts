@@ -42,6 +42,10 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
             timeZone: payload.pricingBreakdown.timeZone ?? null,
           }
         : undefined,
+    taxBreakdown:
+      payload.taxBreakdown && typeof payload.taxBreakdown === "object"
+        ? payload.taxBreakdown
+        : undefined,
     depositPreviewCents: payload.depositPreviewCents ?? null,
     depositPreviewPercent: payload.depositPreviewPercent ?? null,
     depositPreviewNote: payload.depositPreviewNote,

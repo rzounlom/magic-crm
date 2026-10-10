@@ -25,6 +25,8 @@ import {
 } from "@/server/catalog/scheduling-behavior";
 import { applyPromotions, type PricingPromotionRule } from "@/server/catalog/promotions";
 import { percentOfCents, priceProduct, weekdayKeyFromIsoDate, isWeekendKey, depositPercentFromTenant, depositPreviewNote } from "@/server/catalog/pricing";
+import { type LoadedTaxConfig, toTaxCalculationInput } from "@/server/catalog/load-tax-config";
+import { calculateTax } from "@/server/catalog/tax";
 import {
   budgetAssessment,
   compositionDelta,
@@ -376,6 +378,8 @@ export async function buildCatalogEventPlans(input: {
   resourceRequirements: CatalogResourceRequirementRow[];
   promotions?: PricingPromotionRule[];
   categorySlugByProductId?: Record<string, string>;
+  /** Optional tax config. Absent/disabled → taxBreakdown status DISABLED; never changes totals in R2C.2. */
+  taxConfig?: LoadedTaxConfig | null;
   currency: string;
   depositPercent?: number;
   availabilityProvider?: PlanAvailabilityProvider;
@@ -754,6 +758,22 @@ export async function buildCatalogEventPlans(input: {
     });
     const depositPercent = depositPercentFromTenant(input.depositPercent);
     const depositPreviewCents = pricingComplete ? percentOfCents(totalCents, depositPercent) : null;
+    // Tax diagnostics only — commercial totalCents / depositPreview remain pre-tax in R2C.2.
+    const taxBreakdown = calculateTax(
+      toTaxCalculationInput({
+        organizationId: input.organizationId,
+        locationId: input.locationId ?? null,
+        taxDate: input.inquiry.desiredDate,
+        lineItems,
+        config: input.taxConfig ?? {
+          settings: null,
+          locationProfile: null,
+          classifications: [],
+          rates: [],
+          bundlePolicies: [],
+        },
+      }),
+    );
     const names = selected.map((row) => row.name).join(", ");
     const locationExclusive = resourceRequirements.some((row) => row.locationExclusive);
     const exclusiveNote = locationExclusive ? " Private use of the full facility." : "";
@@ -944,6 +964,7 @@ export async function buildCatalogEventPlans(input: {
                 timeZone: input.timeZone ?? null,
               }
             : undefined,
+        taxBreakdown,
         customerAvailabilityNote: itineraryAdjusted && adjustmentNote ? adjustmentNote : CUSTOMER_AVAILABILITY_NOTE,
         resourceRequirements,
       },

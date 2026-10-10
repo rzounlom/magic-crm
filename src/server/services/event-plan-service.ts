@@ -449,6 +449,7 @@ export async function generateEventPlansForInquiry(
       resourceRequirements: catalog.resourceRequirements,
       promotions: catalog.promotions,
       categorySlugByProductId: catalog.categorySlugByProductId,
+      taxConfig: catalog.taxConfig,
       currency: organization.currency,
       depositPercent: depositPercentFromTenant(organization.depositPercent),
       availabilityProvider,

@@ -2,6 +2,7 @@ import type { PrismaClient } from "@/generated/prisma/client";
 
 import { catalogPriceFromRow } from "@/server/catalog/pricing";
 import { pricingPromotionFromRow, type PricingPromotionRule } from "@/server/catalog/promotions";
+import { loadTaxConfigForProposal, type LoadedTaxConfig } from "@/server/catalog/load-tax-config";
 import { PRODUCT_QUANTITY_RULES } from "@/types/catalog";
 import { resourcesInLocationWhere } from "@/server/resources/location-scope";
 import {
@@ -24,7 +25,7 @@ export async function loadCatalogForProposal(
   locationId?: string | null,
 ) {
   const resourceWhere = resourcesInLocationWhere(locationId);
-  const [products, profiles, requirementRows, promotionRows] = await Promise.all([
+  const [products, profiles, requirementRows, promotionRows, taxConfig] = await Promise.all([
     database.product.findMany({
       where: {
         organizationId,
@@ -69,6 +70,7 @@ export async function loadCatalogForProposal(
       },
       orderBy: [{ priority: "asc" }, { slug: "asc" }],
     }),
+    loadTaxConfigForProposal(database, organizationId, locationId),
   ]);
 
   const productsWithRequirements = new Set(requirementRows.map((row) => row.productId));
@@ -153,6 +155,7 @@ export async function loadCatalogForProposal(
     resourceRequirements,
     promotions,
     categorySlugByProductId,
+    taxConfig: taxConfig satisfies LoadedTaxConfig,
   };
 }
 

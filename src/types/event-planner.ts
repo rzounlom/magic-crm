@@ -269,6 +269,12 @@ export type EventPlanPayload = {
     startTime: string | null;
     timeZone: string | null;
   };
+  /**
+   * Tax diagnostics snapshot. Absent on legacy payloads.
+   * Unresolved/disabled statuses must not be treated as verified zero tax.
+   * R2C.2 never adds taxBreakdown.taxTotalCents into amount due.
+   */
+  taxBreakdown?: import("@/types/tax").TaxBreakdownSnapshot;
   depositPreviewCents?: number | null;
   depositPreviewPercent?: number | null;
   depositPreviewNote?: string;
