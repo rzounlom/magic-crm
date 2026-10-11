@@ -66,20 +66,18 @@ Staff routes (`/app/*`) require a real Clerk session. The suite **never** bypass
 export PLAYWRIGHT_BASE_URL=http://localhost:3000
 export PLAYWRIGHT_STAFF_ORG_SLUG=magiccrm-test-center-b
 corepack pnpm test:e2e:staff:auth
-# Complete sign-in in the headed codegen window, land on /app, then close.
+# A headed Chromium window opens (no codegen/Inspector).
+# Sign in; when /app loads, storage is saved automatically.
 
 export PLAYWRIGHT_STORAGE_STATE="$PWD/playwright/.auth/staff.json"
 corepack pnpm test:e2e:staff:auth:verify
 git check-ignore -v playwright/.auth/staff.json   # must report ignored
 ```
 
-Manual equivalent:
-
-```bash
-mkdir -p playwright/.auth
-corepack pnpm exec playwright codegen "$PLAYWRIGHT_BASE_URL/app" \
-  --save-storage=playwright/.auth/staff.json
-```
+Do **not** use `playwright codegen` for staff auth. Codegen’s recorder injects
+`data-pw-cursor` on `<body>`, which races React hydration on Next.js `/sign-in`
+and produces a hydration mismatch warning. The bootstrap uses a normal headed
+browser session instead.
 
 ### Staff inquiry fixture (DEV database only)
 

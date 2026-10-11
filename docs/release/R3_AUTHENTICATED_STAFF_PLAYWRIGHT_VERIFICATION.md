@@ -48,11 +48,27 @@ Local Clerk is correctly configured as TEST, but no human has exported a storage
 export PLAYWRIGHT_BASE_URL=http://localhost:3000
 export PLAYWRIGHT_STAFF_ORG_SLUG=magiccrm-test-center-b
 corepack pnpm test:e2e:staff:auth
-# Sign in in the headed window, confirm /app loads, then close codegen.
+# Headed Chromium opens (no codegen). Sign in; storage saves when /app loads.
 export PLAYWRIGHT_STORAGE_STATE="$PWD/playwright/.auth/staff.json"
 corepack pnpm test:e2e:staff:auth:verify
 git check-ignore -v playwright/.auth/staff.json
 ```
+
+> Bootstrap uses headed Chromium without Playwright codegen/Inspector. Codegen
+> injects `data-pw-cursor` on `<body>` and can trigger a Next.js hydration warning
+> on `/sign-in`; that path is intentionally avoided.
+
+### Hydration warning root cause (confirmed)
+
+| Probe | `body[data-pw-cursor]` | Hydration risk on `/sign-in` |
+|---|---|---|
+| Normal Chrome / regular Playwright session | Absent | None from this attribute |
+| Playwright codegen / Inspector recorder | Present (`pointer` while recording tools are active) | Yes — attribute injected on `<body>` before React hydrates `src/app/layout.tsx` |
+| Headed bootstrap (`r3-bootstrap-staff-auth.mjs`) | Absent (refuses if present) | Avoided |
+
+Source: Playwright `Recorder._switchCurrentTool` in `playwright-core/lib/coreBundle.js` calls `document.body.setAttribute("data-pw-cursor", cursor)`. React then reports a mismatch against the SSR `<body className="min-h-full font-sans">` from `layout.tsx`. **Fix:** bootstrap no longer uses codegen; do not add `suppressHydrationWarning` for this.
+
+Diagnostic (no secrets): `node scripts/r3-prove-no-pw-cursor.mjs`
 
 6. Create inquiry fixture (once per refresh cycle):
 
@@ -147,15 +163,17 @@ No new product visual defects were observed in authenticated staff UI because au
 
 | Check | Result | Notes |
 |---|---|---|
-| `pnpm test:e2e:staff:auth:verify` | **FAILED** (expected) | Missing storage state; clear reason |
-| `pnpm test:e2e:staff:fixture` | **PASSED** | DEV inquiry + 3 plans |
-| `pnpm test:e2e:staff` | **BLOCKED** | 48 skipped without auth |
+| `node scripts/r3-bootstrap-staff-auth.mjs --dry-run` | **PASSED** | `usesCodegen: false`; TEST keys accepted |
+| Unreachable-app bootstrap | **FAILED** (expected) | Clear “App not reachable” message |
+| LIVE Clerk key refusal | **PASSED** | `pk_live_` refused before browser launch |
+| `node scripts/r3-prove-no-pw-cursor.mjs` | **PASSED** | Regular session clean; recorder injection reproduced via setAttribute |
+| `pnpm test:e2e:staff:auth:verify` | **PASSED** (local) | Existing gitignored storage present; cookie values not printed |
+| `pnpm test:e2e:staff:fixture` | **PASSED** | DEV inquiry + 3 plans (prior R3 run) |
+| `pnpm test:e2e:staff` | **BLOCKED** | Requires human storage state |
 | `pnpm lint` | **PASSED** | 0 errors; 1 pre-existing warning |
 | `pnpm typecheck` | **PASSED** | |
-| `pnpm test:unit` | **PASSED** | 604 tests |
-| `pnpm build` | **PASSED** | |
-| `pnpm test:e2e:public` | **PASSED** | **48/48** in 1.8 m against `next start` |
-| Full Neon integration (~52 min) | **NOT RUN** | Unchanged product rules; R2 already green — rerun not required for R3 Playwright infrastructure |
+| `pnpm test:unit` | **PASSED** | 608 tests |
+| Full Neon integration (~52 min) | **NOT RUN** | Unchanged product rules; R2 already green — rerun not required for auth-bootstrap tooling |
 
 ---
 
