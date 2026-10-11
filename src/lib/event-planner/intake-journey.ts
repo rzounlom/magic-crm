@@ -52,10 +52,14 @@ export function journeyStepError(
   }
 }
 
-/** Human-readable start times every 30 minutes, 9:00–21:00 venue-local wall clock. */
+/**
+ * Preferred start times every 30 minutes across a full civil day (venue-local wall clock).
+ * Public catalog does not expose operating-hours policies, so the menu must not silently
+ * exclude late-night / overnight preferences that the inquiry contract still accepts.
+ */
 export function publicStartTimeOptions(): Array<{ value: string; label: string }> {
   const options: Array<{ value: string; label: string }> = [];
-  for (let minutes = 9 * 60; minutes <= 21 * 60; minutes += 30) {
+  for (let minutes = 0; minutes < 24 * 60; minutes += 30) {
     const hour24 = Math.floor(minutes / 60);
     const minute = minutes % 60;
     const value = `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;

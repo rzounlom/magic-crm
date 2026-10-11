@@ -112,6 +112,6 @@ Admin Catalog (Sales knowledge, Resources) and Settings (Team, Security groups) 
 
 Do not invent POS, payments, tax, hours, or promotions settings screens. See `docs/design/UX6_CATALOG_AND_SETTINGS_EXPERIENCE.md`.
 
-## Browser verification (UX7)
+## Browser verification (UX7 / UX9)
 
-Public smoke lives under `tests/e2e/` (Playwright). Prefer `PLAYWRIGHT_PUBLIC_ORG_SLUG` + `pnpm test:e2e:public`. Staff journeys require a local `PLAYWRIGHT_STORAGE_STATE` — never commit it. Contrast math for UX2 tokens is covered by `tests/unit/brand-contrast.test.ts`. See `docs/design/UX7_BROWSER_ACCESSIBILITY_RELEASE_READINESS.md`.
+Public smoke lives under `tests/e2e/` (Playwright). Prefer `PLAYWRIGHT_PUBLIC_ORG_SLUG` + `pnpm test:e2e:public` (intake + journey + token + axe). Staff journeys require a local `PLAYWRIGHT_STORAGE_STATE` — never commit it; setup notes in `tests/e2e/README.md`. Contrast math for UX2 tokens is covered by `tests/unit/brand-contrast.test.ts`. See `docs/design/UX7_BROWSER_ACCESSIBILITY_RELEASE_READINESS.md` and `docs/design/UX9_INTAKE_REFINEMENT_AND_RELEASE_VERIFICATION.md`.

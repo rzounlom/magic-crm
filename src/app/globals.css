@@ -376,7 +376,7 @@ label:has(:disabled) {
   display: grid;
   min-width: 0;
   margin: 0;
-  gap: 1rem;
+  gap: 0.75rem;
   border: 0;
   padding: 0;
 }
@@ -384,7 +384,27 @@ label:has(:disabled) {
 @media (min-width: 40rem) {
   .choice-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
   }
+}
+
+/** Short Yes/No / length / mix options — two columns from narrow phones. */
+.choice-grid-compact {
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choice-grid-compact .choice-card {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
+}
+
+.preference-block {
+  margin-top: 1.25rem;
+}
+
+.preference-block:first-child {
+  margin-top: 0;
 }
 
 .choice-card {

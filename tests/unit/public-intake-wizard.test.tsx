@@ -105,7 +105,8 @@ describe("public intake wizard", () => {
     expect(source).not.toContain("max-w-272");
     expect(source).not.toContain("ring-2");
     expect(PLANNER_FRAME_CLASS).toContain("max-w-3xl");
-    expect(css).toMatch(/\.choice-grid[\s\S]*gap:\s*1rem/);
+    expect(css).toMatch(/\.choice-grid[\s\S]*gap:\s*0\.75rem/);
+    expect(css).toMatch(/\.choice-grid-compact/);
     expect(css).toMatch(/\.choice-card\[aria-pressed="true"\][\s\S]*box-shadow:\s*inset/);
 
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
@@ -119,7 +120,10 @@ describe("public intake wizard", () => {
     expect(within(progress).getByText("Event").getAttribute("aria-current")).toBe("step");
     expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
     expect(screen.getByRole("button", { name: "Continue" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Start over" }).className).toContain("min-h-11");
+    const startOver = screen.getByRole("button", { name: "Start over" });
+    expect(startOver.className).toContain("text-muted-foreground");
+    expect(startOver.className).not.toContain("border-destructive");
+    expect(startOver.className).not.toContain("w-full");
   });
 
   it("keeps Back/Continue navigation and tenant-scoped activities", async () => {

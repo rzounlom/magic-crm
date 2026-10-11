@@ -73,6 +73,10 @@ const PRIMARY_BUTTON =
 const SECONDARY_BUTTON =
   "inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[var(--radius-control)] border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] disabled:cursor-not-allowed";
 
+/** Secondary utility — never compete with Continue on mobile. */
+const START_OVER_BUTTON =
+  "inline-flex min-h-9 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-control)] px-2.5 py-1 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-destructive hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] disabled:cursor-not-allowed";
+
 const START_TIME_OPTIONS = publicStartTimeOptions();
 
 function journeySectionId(step: JourneyStepId): string {
@@ -220,6 +224,10 @@ export function PublicIntakeWizard({
     setJourneyStep(step);
     setShowError(false);
     setStepError(null);
+    const scroller = document.querySelector("[data-planner-scroll]");
+    if (scroller instanceof HTMLElement) {
+      scroller.scrollTop = 0;
+    }
     requestFocus(step, options);
   }
 
@@ -364,11 +372,11 @@ export function PublicIntakeWizard({
     <>
       <PendingActionProvider pending={pending}>
         <div data-planner-shell aria-busy={pending} inert={pending ? true : undefined} className="flex min-h-0 flex-1 flex-col">
-          <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex shrink-0 items-start justify-between gap-3">
             <JourneyProgress current={journeyStep} />
             <button
               type="button"
-              className={`${SECONDARY_BUTTON} shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 sm:min-h-10`}
+              className={START_OVER_BUTTON}
               onClick={() => setConfirmStartOver(true)}
               disabled={pending}
             >
@@ -380,16 +388,23 @@ export function PublicIntakeWizard({
             {progressLabel}
           </p>
 
-          {draftRestored ? (
-            <div
-              role="status"
-              className="mt-3 rounded-[var(--radius-control)] border border-border bg-muted/60 px-3 py-2 text-sm text-muted-foreground"
-            >
-              We restored your event preferences from this browser. Contact details were not saved for privacy.
-            </div>
-          ) : null}
-
-          <div data-planner-scroll className="public-scroll min-h-0 flex-1 overflow-y-auto pt-5 pr-2 pb-8">
+          <div data-planner-scroll className="public-scroll min-h-0 flex-1 overflow-y-auto pt-4 pr-2 pb-8">
+            {draftRestored ? (
+              <div
+                role="status"
+                data-draft-banner
+                className="mb-4 rounded-[var(--radius-control)] border border-border bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground"
+              >
+                <p>We restored your event preferences from this browser. Contact details were not saved for privacy.</p>
+                <button
+                  type="button"
+                  className="mt-1.5 cursor-pointer text-sm font-medium text-primary underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
+                  onClick={() => setDraftRestored(false)}
+                >
+                  Dismiss
+                </button>
+              </div>
+            ) : null}
             <form id="planner-review" aria-busy={pending} onSubmit={onSubmit} noValidate>
               <input type="hidden" name="organizationSlug" value={organizationSlug} />
               <input type="hidden" name="submissionId" value={submissionId} />
@@ -503,7 +518,7 @@ export function PublicIntakeWizard({
                       <div>
                         <h3 className="text-base font-semibold text-foreground">Who&apos;s coming?</h3>
                         <div className="mt-3">
-                          <ChoiceGroup legend="Who's coming?">
+                          <ChoiceGroup legend="Who's coming?" compact>
                             {INTAKE_GUEST_MIX_VALUES.map((value) => (
                               <ChoiceCard
                                 key={value}
@@ -568,8 +583,8 @@ export function PublicIntakeWizard({
                     </ChoiceGroup>
                   </PreferenceBlock>
 
-                  <PreferenceBlock title="Would you like food included?">
-                    <ChoiceGroup legend="Food">
+                  <PreferenceBlock title="Food" detail="Would you like food included?">
+                    <ChoiceGroup legend="Food" compact>
                       {FOOD_PREFERENCE_VALUES.map((value) => (
                         <ChoiceCard
                           key={value}
@@ -582,8 +597,8 @@ export function PublicIntakeWizard({
                     </ChoiceGroup>
                   </PreferenceBlock>
 
-                  <PreferenceBlock title="Would you like a private event space?">
-                    <ChoiceGroup legend="Private space">
+                  <PreferenceBlock title="Private space" detail="Would you like a private event space?">
+                    <ChoiceGroup legend="Private space" compact>
                       {PRIVATE_SPACE_PREFERENCE_VALUES.map((value) => (
                         <ChoiceCard
                           key={value}
@@ -597,10 +612,10 @@ export function PublicIntakeWizard({
                   </PreferenceBlock>
 
                   <PreferenceBlock
-                    title="What budget should we plan around?"
-                    detail="This is a total for the event, and it only guides recommendations. It is not a quote or a maximum price."
+                    title="Budget"
+                    detail="Total for the event — guides recommendations only, not a quote or cap."
                   >
-                    <ChoiceGroup legend="Budget">
+                    <ChoiceGroup legend="Budget" compact>
                       {BUDGET_BAND_VALUES.map((value) => (
                         <ChoiceCard
                           key={value}
@@ -618,10 +633,10 @@ export function PublicIntakeWizard({
                   </PreferenceBlock>
 
                   <PreferenceBlock
-                    title="How long would you like the event to be?"
-                    detail="We'll use this as a preference when we build options. It is not a guaranteed schedule."
+                    title="Event length"
+                    detail="A preference for building options — not a guaranteed schedule."
                   >
-                    <ChoiceGroup legend="Event length">
+                    <ChoiceGroup legend="Event length" compact>
                       {PUBLIC_EVENT_LENGTH_OPTIONS.map((option) => (
                         <ChoiceCard
                           key={option.value}
@@ -639,7 +654,7 @@ export function PublicIntakeWizard({
                 <section id={journeySectionId("when")} tabIndex={-1} className="planner-section outline-none">
                   <SectionHeading
                     title="When"
-                    detail="Pick a preferred date and start time at the venue. If that time is unavailable, we can look at nearby times — this is not a confirmed reservation."
+                    detail="Pick a preferred date and start time at the venue. Times are preferences only — not a reservation or confirmed availability."
                   />
                   <div className="grid gap-5 rounded-2xl border border-border bg-surface p-4 sm:p-5">
                     <label className="block text-sm font-medium text-foreground" htmlFor="event-date">
@@ -669,7 +684,8 @@ export function PublicIntakeWizard({
                       </select>
                     </label>
                     <p className="text-sm text-muted-foreground">
-                      Times are interpreted in the venue&apos;s local time, not your device timezone.
+                      Times are venue-local wall clock (including late evening and overnight preferences). Choosing a
+                      time does not mean it is available.
                     </p>
                   </div>
                 </section>
@@ -682,9 +698,7 @@ export function PublicIntakeWizard({
                     detail="We'll use this to send your event options. Submitting an inquiry does not reserve activities or collect payment."
                   />
 
-                  <ReviewList answers={answers} attractionNames={attractionNames} onEdit={editFromReview} />
-
-                  <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <ContactField
                       label="First name"
                       name="firstName"
@@ -731,9 +745,10 @@ export function PublicIntakeWizard({
                       error={contactErrors.customerGroupName}
                       onChange={(value) => edit({ customerGroupName: value })}
                     />
-                    <label className="block text-sm font-medium text-foreground sm:col-span-2">
+                    <label className="block text-sm font-medium text-foreground sm:col-span-2" htmlFor="notes">
                       Notes (optional)
                       <textarea
+                        id="notes"
                         name="notes"
                         value={answers.notes}
                         disabled={pending}
@@ -742,6 +757,14 @@ export function PublicIntakeWizard({
                         onChange={(event) => edit({ notes: event.target.value })}
                       />
                     </label>
+                  </div>
+
+                  <div className="mt-8">
+                    <h3 className="text-base font-semibold text-foreground">Review your answers</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Edit any section before you send.</p>
+                    <div className="mt-3">
+                      <ReviewList answers={answers} attractionNames={attractionNames} onEdit={editFromReview} />
+                    </div>
                   </div>
 
                   {submitError ? (
@@ -832,17 +855,25 @@ function SectionHeading({ title, detail }: { title: string; detail?: string }) {
 
 function PreferenceBlock({ title, detail, children }: { title: string; detail?: string; children: ReactNode }) {
   return (
-    <div className="mt-6 first:mt-0">
+    <div className="preference-block">
       <h3 className="text-base font-semibold text-foreground">{title}</h3>
       {detail ? <p className="mt-1 text-sm text-muted-foreground">{detail}</p> : null}
-      <div className="mt-3">{children}</div>
+      <div className="mt-2.5">{children}</div>
     </div>
   );
 }
 
-function ChoiceGroup({ legend, children }: { legend: string; children: ReactNode }) {
+function ChoiceGroup({
+  legend,
+  children,
+  compact = false,
+}: {
+  legend: string;
+  children: ReactNode;
+  compact?: boolean;
+}) {
   return (
-    <fieldset data-choice-grid className="choice-grid">
+    <fieldset data-choice-grid className={compact ? "choice-grid choice-grid-compact" : "choice-grid"}>
       <legend className="sr-only">{legend}</legend>
       {children}
     </fieldset>
@@ -1044,16 +1075,16 @@ function ReviewList({
   const contact = contactSummary(answers);
 
   return (
-    <dl className="divide-y divide-border rounded-2xl border border-border bg-surface">
+    <dl className="divide-y divide-border rounded-xl border border-border bg-surface">
       {rows.map((row) => (
-        <div key={row.label} className="flex items-start justify-between gap-4 px-4 py-3">
-          <div>
-            <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{row.label}</dt>
-            <dd className="mt-1 text-sm text-foreground">{row.value || "—"}</dd>
+        <div key={row.label} className="flex items-start justify-between gap-3 px-3 py-2.5">
+          <div className="min-w-0">
+            <dt className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">{row.label}</dt>
+            <dd className="mt-0.5 text-sm text-foreground">{row.value || "—"}</dd>
           </div>
           <button
             type="button"
-            className="cursor-pointer text-sm font-medium text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="shrink-0 cursor-pointer text-sm font-medium text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             onClick={() => onEdit(row.step)}
           >
             Edit {row.label}
@@ -1061,10 +1092,10 @@ function ReviewList({
         </div>
       ))}
       {contact ? (
-        <div className="flex items-start justify-between gap-4 px-4 py-3">
-          <div>
-            <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Contact information</dt>
-            <dd className="mt-1 text-sm text-foreground">{contact}</dd>
+        <div className="flex items-start justify-between gap-3 px-3 py-2.5">
+          <div className="min-w-0">
+            <dt className="text-[0.65rem] font-medium tracking-wide text-muted-foreground uppercase">Contact information</dt>
+            <dd className="mt-0.5 text-sm text-foreground">{contact}</dd>
           </div>
         </div>
       ) : null}

@@ -16,8 +16,11 @@ describe("intake journey helpers", () => {
 
   it("round-trips venue-local start times through planner answers", () => {
     const options = publicStartTimeOptions();
-    expect(options[0]).toEqual({ value: "09:00", label: "9:00 AM" });
+    expect(options[0]).toEqual({ value: "00:00", label: "12:00 AM" });
+    expect(options.at(-1)).toEqual({ value: "23:30", label: "11:30 PM" });
+    expect(options).toHaveLength(48);
     expect(options.some((row) => row.value === "18:00" && row.label === "6:00 PM")).toBe(true);
+    expect(options.some((row) => row.value === "01:00")).toBe(true);
 
     const patch = answersFromStartTime24("18:00");
     expect(patch).toEqual({ startHour: "6", startMinute: "00", startPeriod: "PM" });
