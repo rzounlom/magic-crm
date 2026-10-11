@@ -1,34 +1,20 @@
 import Link from "next/link";
 
 import {
+  BookingReadinessCard,
+  readinessToneFromState,
+} from "@/components/layout/booking-readiness-card";
+import {
   AuthorizePlaceHoldHoursExceptionForm,
   RevokePlaceHoldHoursExceptionForm,
 } from "@/components/layout/hold-hours-exception-form";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { buttonClassName } from "@/components/ui/button";
 import { formatEventLocalDate, formatEventLocalTime } from "@/lib/inquiries/tenant-datetime";
 import { placeInquiryHoldAction } from "@/server/actions/resource-schedule";
 import type { HoldReadinessResult } from "@/types/hold-readiness";
 import { HOLD_READINESS_STATES } from "@/types/hold-readiness";
-
-function statusTone(state: HoldReadinessResult["state"]): string {
-  switch (state) {
-    case HOLD_READINESS_STATES.ALREADY_HELD:
-    case HOLD_READINESS_STATES.READY_WITH_EXCEPTION:
-    case HOLD_READINESS_STATES.NEEDS_FINAL_VALIDATION:
-      return "border-primary/25 bg-primary/5";
-    case HOLD_READINESS_STATES.BLOCKED_RESOURCE_CONFLICT:
-    case HOLD_READINESS_STATES.BLOCKED_INVALID_LOCAL_TIME:
-    case HOLD_READINESS_STATES.ALREADY_BOOKED:
-      return "border-destructive/30 bg-destructive/5";
-    case HOLD_READINESS_STATES.BLOCKED_HOURS_UNCONFIGURED:
-    case HOLD_READINESS_STATES.BLOCKED_HOURS_UNVERIFIED:
-    case HOLD_READINESS_STATES.BLOCKED_OUTSIDE_HOURS:
-      return "border-warning/40 bg-warning/10";
-    default:
-      return "border-border bg-surface";
-  }
-}
 
 export function HoldReadinessPanel({
   readiness,
@@ -52,49 +38,31 @@ export function HoldReadinessPanel({
     readiness.activeException?.status === "ACTIVE" ? readiness.activeException.id : null;
 
   return (
-    <section
+    <BookingReadinessCard
       id="hold-readiness"
-      className={`mt-4 rounded-2xl border px-4 py-4 shadow-sm ${statusTone(readiness.state)}`}
+      purpose="PLACE_HOLD"
+      title="Proposal HOLD readiness"
+      headline={readiness.headline}
+      detail={readiness.detail}
+      tone={readinessToneFromState("hold", readiness.state)}
+      eventDateLabel={dateLabel}
+      eventTimeLabel={`${startLabel}–${endLabel}`}
+      locationLabel={`${readiness.locationName ?? "No location"} · ${readiness.timeZone}`}
+      operatingHoursStatus={readiness.operatingHoursStatus ?? "Not evaluated"}
+      blockers={readiness.blockers}
+      metaRows={[
+        {
+          label: "HOLD state",
+          value: readiness.activeHold
+            ? readiness.activeHold.expired
+              ? "Expired"
+              : `Active (${readiness.activeHold.resourceCount} resources)`
+            : "No active HOLD",
+        },
+      ]}
     >
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-base font-semibold">Proposal HOLD readiness</h2>
-          <p className="mt-1 text-sm font-medium">{readiness.headline}</p>
-          <p className="mt-1 text-sm text-foreground/70">{readiness.detail}</p>
-        </div>
-      </div>
-
-      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <div>
-          <dt className="text-foreground/55">Requested event</dt>
-          <dd className="font-medium">
-            {dateLabel} · {startLabel}–{endLabel}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-foreground/55">Location / time zone</dt>
-          <dd className="font-medium">
-            {readiness.locationName ?? "No location"} · {readiness.timeZone}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-foreground/55">Operating hours</dt>
-          <dd className="font-medium">{readiness.operatingHoursStatus ?? "Not evaluated"}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/55">HOLD state</dt>
-          <dd className="font-medium">
-            {readiness.activeHold
-              ? readiness.activeHold.expired
-                ? "Expired"
-                : `Active (${readiness.activeHold.resourceCount} resources)`
-              : "No active HOLD"}
-          </dd>
-        </div>
-      </dl>
-
       {readiness.activeHold && !readiness.activeHold.expired ? (
-        <div className="mt-3 rounded-md border border-border bg-background/70 px-3 py-2 text-sm">
+        <div className="mt-3 rounded-[var(--radius-control)] border border-border bg-background/70 px-3 py-2 text-sm">
           <p className="font-medium">Active HOLD resources</p>
           <ul className="mt-1 list-disc pl-5 text-foreground/80">
             {readiness.activeHold.resourceLabels.map((label) => (
@@ -102,12 +70,19 @@ export function HoldReadinessPanel({
             ))}
           </ul>
           {readiness.activeHold.expiresAt ? (
-            <p className="mt-2 text-foreground/70">
+            <p className="mt-2 text-muted-foreground">
               Expires {new Date(readiness.activeHold.expiresAt).toLocaleString()} (24-hour proposal HOLD
               policy)
             </p>
           ) : null}
         </div>
+      ) : null}
+
+      {readiness.activeHold?.expired ? (
+        <p className="mt-3 rounded-[var(--radius-control)] border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+          The previous HOLD has expired. Place a new HOLD if you need a temporary reservation, or confirm
+          when confirmation readiness allows it.
+        </p>
       ) : null}
 
       {readiness.resourceAssignments.length > 0 ? (
@@ -125,33 +100,16 @@ export function HoldReadinessPanel({
         </div>
       ) : null}
 
-      {readiness.blockers.length > 0 ? (
-        <div className="mt-4">
-          <h3 className="text-sm font-semibold">Blocking reasons</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground/80">
-            {readiness.blockers.map((blocker) => (
-              <li key={`${blocker.code}:${blocker.message}`}>
-                {blocker.message}
-                {blocker.overridableWithHoursException ? (
-                  <span className="text-foreground/55"> (hours exception may apply)</span>
-                ) : (
-                  <span className="text-foreground/55"> (not overridable by hours exception)</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
       {overridableHours || readiness.activeException ? (
-        <div className="mt-4 rounded-xl border border-border bg-background/70 px-3 py-3">
+        <div className="mt-4 rounded-[var(--radius-control)] border border-border bg-background/70 px-3 py-3">
           <h3 className="text-sm font-semibold">Authorized HOLD hours exception</h3>
-          <p className="mt-1 text-sm text-foreground/70">
-            Exceptions are one-time, event-scoped, and audited. They never bypass resource conflicts,
-            capacity limits, invalid local times, or tenant isolation.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Exceptions are one-time, event-scoped, and audited. A PLACE_HOLD exception never authorizes
+            confirmation. They never bypass resource conflicts, capacity limits, invalid local times, or
+            tenant isolation.
           </p>
           <p className="mt-2 text-sm">
-            <span className="text-foreground/55">Exact window: </span>
+            <span className="text-muted-foreground">Exact window: </span>
             <span className="font-medium">{eventSummary}</span>
           </p>
 
@@ -166,7 +124,7 @@ export function HoldReadinessPanel({
                   {new Date(readiness.activeException.expiresAt).toLocaleString()}
                 </span>
               </p>
-              <p className="text-foreground/70">Reason: {readiness.activeException.reason}</p>
+              <p className="text-muted-foreground">Reason: {readiness.activeException.reason}</p>
               {readiness.activeException.status === "ACTIVE" && readiness.canRevokeHoursException ? (
                 <RevokePlaceHoldHoursExceptionForm
                   inquiryId={readiness.inquiryId}
@@ -184,7 +142,7 @@ export function HoldReadinessPanel({
           ) : null}
 
           {!readiness.canAuthorizeHoursException && !readiness.activeException && overridableHours ? (
-            <p className="mt-2 text-xs text-foreground/55">
+            <p className="mt-2 text-xs text-muted-foreground">
               You need permission to confirm events before authorizing a HOLD hours exception.
             </p>
           ) : null}
@@ -213,7 +171,7 @@ export function HoldReadinessPanel({
           ) : null}
           <PendingSubmitButton
             pendingLabel="Placing…"
-            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            className={buttonClassName({ variant: "primary", size: "md", className: "w-full" })}
           >
             Place HOLD
           </PendingSubmitButton>
@@ -228,6 +186,6 @@ export function HoldReadinessPanel({
           to review occupancy.
         </p>
       ) : null}
-    </section>
+    </BookingReadinessCard>
   );
 }

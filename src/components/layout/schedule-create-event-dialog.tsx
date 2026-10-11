@@ -52,6 +52,8 @@ export function ScheduleCreateEventDialog({
   onComplete: (kind: ScheduleBookingCompletion, message: string) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const dirtyRef = useRef(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   const titleId = useId();
@@ -81,10 +83,13 @@ export function ScheduleCreateEventDialog({
       return;
     }
     if (open) {
+      const active = document.activeElement;
+      previousFocusRef.current = active instanceof HTMLElement ? active : null;
       if (!dialog.open) {
         dialog.showModal();
       }
       document.body.style.overflow = "hidden";
+      closeButtonRef.current?.focus();
       return () => {
         document.body.style.overflow = "";
       };
@@ -94,6 +99,8 @@ export function ScheduleCreateEventDialog({
     }
     document.body.style.overflow = "";
     dirtyRef.current = false;
+    previousFocusRef.current?.focus();
+    previousFocusRef.current = null;
     return undefined;
   }, [open]);
 
@@ -143,7 +150,12 @@ export function ScheduleCreateEventDialog({
                   {subtitle}
                 </p>
               </div>
-              <button type="button" className={`${CONTROL} border border-border`} onClick={requestClose}>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                className={`${CONTROL} min-h-11 border border-border`}
+                onClick={requestClose}
+              >
                 {outcome ? "Done" : "Close"}
               </button>
             </div>

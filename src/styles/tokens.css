@@ -61,6 +61,11 @@
   --header-offset: var(--header-height);
   --mobile-nav-height: 3.75rem;
   --mobile-nav-offset: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+  /* Mobile booking coach action bar sits above the UX3 bottom nav */
+  --booking-action-bar-height: 4.5rem;
+  --booking-action-bar-offset: calc(
+    var(--booking-action-bar-height) + var(--mobile-nav-offset)
+  );
 
   /* Type scale (Source Sans 3 via --font-source-sans) */
   --text-caption: 0.75rem;
@@ -80,5 +85,6 @@
     --header-offset: 4rem;
     /* Bottom nav is desktop-hidden; keep token at 0 so sticky coaches don't pad. */
     --mobile-nav-offset: 0px;
+    --booking-action-bar-offset: 0px;
   }
 }

@@ -47,7 +47,7 @@ export function liveAgentHoldReadiness(input: {
   return { needsHold, canPlaceHold, needsInventory };
 }
 
-export function liveAgentBookingGuide(input: {
+export type LiveAgentBookingGuideInput = {
   booked: boolean;
   assigned: boolean;
   needsHold?: boolean;
@@ -61,7 +61,58 @@ export function liveAgentBookingGuide(input: {
   cancelled?: boolean;
   /** Server-derived: confirmation may be attempted (still revalidated transactionally). */
   confirmAttemptAllowed?: boolean;
-}): {
+};
+
+export type LiveAgentStepStatus = "complete" | "current" | "upcoming" | "optional";
+
+export type LiveAgentBookingStepState = {
+  id: LiveAgentBookingStepId;
+  label: string;
+  status: LiveAgentStepStatus;
+  href?: string;
+};
+
+/**
+ * Presentation-only step strip for the Booking Coach.
+ * Does not authorize HOLD or confirmation — readiness services remain authoritative.
+ */
+export function liveAgentBookingStepStates(input: LiveAgentBookingGuideInput): LiveAgentBookingStepState[] {
+  const guide = liveAgentBookingGuide(input);
+  const order = LIVE_AGENT_BOOKING_STEPS.map((step) => step.id);
+  const currentIndex = Math.max(0, order.indexOf(guide.currentStepId));
+
+  return LIVE_AGENT_BOOKING_STEPS.map((step, index) => {
+    let status: LiveAgentStepStatus = "upcoming";
+    if (step.id === guide.currentStepId) {
+      status = "current";
+    } else if (index < currentIndex) {
+      status = "complete";
+    }
+
+    // Optional HOLD: when past the hold step without an active HOLD, mark optional — never force it.
+    if (
+      step.id === "hold" &&
+      status === "complete" &&
+      !input.hasHold &&
+      (guide.currentStepId === "confirm" || input.booked || input.cancelled)
+    ) {
+      status = "optional";
+    }
+
+    const href =
+      step.id === "hold"
+        ? "#hold-readiness"
+        : step.id === "confirm"
+          ? "#confirmation-readiness"
+          : step.id === "availability"
+            ? "#availability-resources"
+            : undefined;
+
+    return { id: step.id, label: step.label, status, href };
+  });
+}
+
+export function liveAgentBookingGuide(input: LiveAgentBookingGuideInput): {
   currentStepId: LiveAgentBookingStepId;
   nextTitle: string;
   nextDetail: string;

@@ -286,6 +286,25 @@ label:has(:disabled) {
   }
 }
 
+/* UX4: mobile booking actions sit above UX3 bottom nav — never stack under it */
+.booking-mobile-action-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: var(--mobile-nav-offset);
+  z-index: 25;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  padding: 0.65rem 0;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -8px 24px rgb(11 18 32 / 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-mobile-action-bar {
+    backdrop-filter: none;
+  }
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;

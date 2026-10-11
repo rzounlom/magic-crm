@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   liveAgentBookingGuide,
+  liveAgentBookingStepStates,
   liveAgentBookingSteps,
   liveAgentHoldReadiness,
 } from "@/lib/inquiries/live-agent-next-step";
@@ -137,6 +138,21 @@ describe("live agent booking guide", () => {
       "HOLD (optional)",
       "Confirm booking",
     ]);
+  });
+
+  it("marks optional HOLD as skipped when confirming without a HOLD", () => {
+    const steps = liveAgentBookingStepStates({
+      booked: false,
+      assigned: true,
+      hasHold: false,
+      needsHold: false,
+      confirmBlockers: [],
+      availabilityChecked: true,
+      confirmAttemptAllowed: true,
+    });
+    expect(steps.find((row) => row.id === "confirm")?.status).toBe("current");
+    expect(steps.find((row) => row.id === "hold")?.status).toBe("optional");
+    expect(steps.find((row) => row.id === "availability")?.status).toBe("complete");
   });
 
   it("flags inventory gaps and HOLD eligibility from finite requirements", () => {

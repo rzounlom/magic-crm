@@ -44,11 +44,14 @@ export function AgentWorkingPlanForm({
   const rotations = payload.rotations ?? [];
 
   return (
-    <section className="rounded-md border border-border px-5 py-5">
+    <section
+      id="working-plan"
+      className="scroll-mt-[calc(var(--header-offset)+0.75rem)] rounded-[var(--radius-card)] border border-border bg-surface px-5 py-5 shadow-[var(--shadow-card)]"
+    >
       <h2 className="text-lg font-semibold">Working booking plan</h2>
-      <p className="mt-1 text-sm text-foreground/70">
+      <p className="mt-1 text-sm text-muted-foreground">
         Edit date, guests, and activities. Saving recalculates price, itinerary, and resource requirements from
-        the catalog. The original customer selection stays unchanged.
+        the catalog — it does not reserve rooms or lanes. The original customer selection stays unchanged.
       </p>
       <p className="mt-3 text-2xl font-semibold">
         {total > 0 ? formatMoneyFromCents(total, working.currency || currency) : "Pricing to confirm"}

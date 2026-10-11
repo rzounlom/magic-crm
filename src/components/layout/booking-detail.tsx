@@ -114,8 +114,8 @@ export function BookingDetail({
       <Link href="/app/bookings" className="text-sm text-primary">
         Back to bookings
       </Link>
-      <p className="mt-3 text-sm font-semibold tracking-[0.18em] text-primary uppercase">Booking Summary</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{booking.bookingNumber}</h1>
+      <p className="page-eyebrow mt-3">Booking</p>
+      <h1 className="page-title">{booking.bookingNumber}</h1>
       <p className="mt-2 text-sm text-foreground/70">
         {status}
         {booking.confirmedAt

@@ -13,6 +13,7 @@ import { SecurityActionForm } from "@/components/layout/security-action-form";
 import type { ConfirmationReadinessResult } from "@/types/confirmation-readiness";
 import type { HoldReadinessResult } from "@/types/hold-readiness";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import type { ReactNode } from "react";
 import { BOOKING_STATUSES } from "@/types/booking";
 import {
   formatBeveragePreference,
@@ -142,6 +143,7 @@ export function LiveAgentWorkspace({
   inventoryCounts = [],
   confirmationReadiness = null,
   holdReadiness = null,
+  readinessSection = null,
 }: {
   inquiry: WorkspaceInquiry;
   selectedPlan: {
@@ -177,6 +179,8 @@ export function LiveAgentWorkspace({
   inventoryCounts?: ResourceTypeInventoryCount[];
   confirmationReadiness?: ConfirmationReadinessResult | null;
   holdReadiness?: HoldReadinessResult | null;
+  /** Server-rendered HOLD/confirmation readiness panels (keeps action imports out of this module). */
+  readinessSection?: ReactNode;
 }) {
   const displayName =
     inquiry.customerGroupName ||
@@ -366,7 +370,10 @@ export function LiveAgentWorkspace({
         }
       />
       {holdCoverageWarnings.length > 0 ? (
-        <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+        <div
+          className="mt-3 rounded-[var(--radius-control)] border border-warning/40 bg-warning/10 px-3 py-2 text-sm"
+          role="status"
+        >
           <p className="font-medium">Current HOLD no longer matches the working plan</p>
           <p className="mt-1 text-foreground/80">
             {holdCoverageWarnings[0]} Update or release the HOLD first, or confirm — confirmation
@@ -374,6 +381,8 @@ export function LiveAgentWorkspace({
           </p>
         </div>
       ) : null}
+
+      {readinessSection}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(16rem,0.7fr)]">
         <div className="space-y-6">

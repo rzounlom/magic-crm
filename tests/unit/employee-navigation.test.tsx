@@ -151,11 +151,13 @@ describe("sticky offset tokens", () => {
     const tokens = readFileSync(path.join(process.cwd(), "src/styles/tokens.css"), "utf8");
     expect(tokens).toContain("--header-offset");
     expect(tokens).toContain("--mobile-nav-offset");
+    expect(tokens).toContain("--booking-action-bar-offset");
     const actions = readFileSync(
       path.join(process.cwd(), "src/components/layout/live-agent-booking-actions.tsx"),
       "utf8",
     );
     expect(actions).toContain("top-[var(--header-offset)]");
+    expect(actions).toContain("data-booking-mobile-action-bar");
     expect(actions).not.toContain("top-20");
   });
 });

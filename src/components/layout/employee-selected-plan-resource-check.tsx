@@ -84,7 +84,10 @@ export function EmployeeSelectedPlanResourceCheck({
   const heading = mode === "confirmed" || mode === "cancelled" ? "Resources booked" : title;
 
   return (
-    <section className="mt-8 rounded-md border border-border px-5 py-5">
+    <section
+      id="availability-resources"
+      className="mt-8 scroll-mt-[calc(var(--header-offset)+0.75rem)] rounded-[var(--radius-card)] border border-border bg-surface px-5 py-5 shadow-[var(--shadow-card)]"
+    >
       <h2 className="text-lg font-semibold">{heading}</h2>
       {mode === "confirmed" ? (
         <p className="mt-1 text-sm text-foreground/70">Resources booked for this event.</p>

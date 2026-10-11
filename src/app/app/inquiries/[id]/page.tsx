@@ -178,40 +178,49 @@ export default async function InquiryDetailPage({
     return (
       <>
         <AcknowledgeInquiryView inquiryId={inquiry.id} />
-        {confirmationReadiness || holdReadiness ? (
-          <div className="mx-auto w-full max-w-6xl space-y-4 px-4 pt-4 sm:px-6">
-            {holdReadiness ? (
-              <HoldReadinessPanel readiness={holdReadiness} canHold={canHold && canManage} />
-            ) : null}
-            {confirmationReadiness ? (
-              <ConfirmationReadinessPanel readiness={confirmationReadiness} />
-            ) : null}
-          </div>
-        ) : null}
         <LiveAgentWorkspace
-        inquiry={inquiry}
-        selectedPlan={selectedPlan}
-        workingPlan={workingPlan}
-        resourceCheck={resourceCheck}
-        knowledge={knowledge}
-        activity={activity}
-        currentUserId={currentUserId}
-        canManage={canManage}
-        canHold={canHold}
-        canRelease={canRelease}
-        canConfirm={canConfirm}
-        canCancel={canCancel}
-        timeZone={timeZone}
-        recommendations={inquiry.eventPlanRecommendations.map((row) => ({
-          id: row.id,
-          kind: row.kind,
-          title: row.title,
-          tier: row.tier,
-        }))}
-        inventoryCounts={inventoryCounts}
-        confirmationReadiness={confirmationReadiness}
-        holdReadiness={holdReadiness}
-      />
+          inquiry={inquiry}
+          selectedPlan={selectedPlan}
+          workingPlan={workingPlan}
+          resourceCheck={resourceCheck}
+          knowledge={knowledge}
+          activity={activity}
+          currentUserId={currentUserId}
+          canManage={canManage}
+          canHold={canHold}
+          canRelease={canRelease}
+          canConfirm={canConfirm}
+          canCancel={canCancel}
+          timeZone={timeZone}
+          recommendations={inquiry.eventPlanRecommendations.map((row) => ({
+            id: row.id,
+            kind: row.kind,
+            title: row.title,
+            tier: row.tier,
+          }))}
+          inventoryCounts={inventoryCounts}
+          confirmationReadiness={confirmationReadiness}
+          holdReadiness={holdReadiness}
+          readinessSection={
+            holdReadiness || confirmationReadiness ? (
+              <div className="mt-6 space-y-4" aria-label="Booking readiness">
+                <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">
+                  HOLD and confirmation readiness
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  HOLD and confirmation stay separate. A PLACE_HOLD exception never authorizes
+                  confirmation, and a CONFIRM_BOOKING exception never authorizes HOLD placement.
+                </p>
+                {holdReadiness ? (
+                  <HoldReadinessPanel readiness={holdReadiness} canHold={canHold && canManage} />
+                ) : null}
+                {confirmationReadiness ? (
+                  <ConfirmationReadinessPanel readiness={confirmationReadiness} />
+                ) : null}
+              </div>
+            ) : null
+          }
+        />
       </>
     );
   }

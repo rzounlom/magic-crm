@@ -83,3 +83,14 @@ Authenticated employee chrome lives in `EmployeeShell` / `EmployeeHeaderBar` / `
 - Central route map: `src/lib/ui/employee-navigation.ts`.
 
 Prefer shared `Button` / `ButtonLink` for new chrome actions. Full shell notes: `docs/design/UX3_APP_SHELL_AND_NAVIGATION.md`.
+
+## Staff booking coach (UX4)
+
+Inquiry detail booking guidance lives in `LiveAgentBookingActions` (`#confirm-booking`):
+
+- Desktop: sticky under `--header-offset`
+- Mobile: in-flow coach + single primary action in `.booking-mobile-action-bar` above `--mobile-nav-offset` (never a second competing bottom nav)
+- HOLD and confirmation readiness stay separate server results, shared presentation via `BookingReadinessCard` (`PLACE_HOLD` vs `CONFIRM_BOOKING` purpose labels)
+- Optional HOLD must remain optional; confirmation stays payment-neutral
+
+See `docs/design/UX4_STAFF_BOOKING_EXPERIENCE.md`.

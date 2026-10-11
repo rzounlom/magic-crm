@@ -108,6 +108,8 @@ describe("live agent booking actions", () => {
     expect(html).toContain("Place an optional HOLD, or confirm");
     expect(html).toContain("#hold-readiness");
     expect(html).toContain("Confirm booking");
+    expect(html).toContain('aria-label="Booking coach"');
+    expect(html).toContain("data-booking-mobile-action-bar");
   });
 
   it("uses pending labels that disable duplicate booking mutations", () => {

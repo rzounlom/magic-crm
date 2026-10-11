@@ -203,6 +203,15 @@ function InquiryRow({
       ? PLAN_AVAILABILITY_STATUS_LABELS[availability as keyof typeof PLAN_AVAILABILITY_STATUS_LABELS]
       : PLAN_AVAILABILITY_STATUS_LABELS[PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED];
 
+  const assignedLabel = inquiry.assignedUser
+    ? `Assigned to ${employeeDisplayName(inquiry.assignedUser)}`
+    : "Unassigned";
+  const nextHint = priority
+    ? "Open to continue booking"
+    : holdCount > 0
+      ? "Review HOLD or confirm"
+      : "Open inquiry";
+
   return (
     <li>
       <Link
@@ -210,13 +219,13 @@ function InquiryRow({
         className={priority ? "record-row is-priority" : "record-row"}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="font-medium text-foreground">
+          <div className="min-w-0">
+            <p className="font-semibold text-foreground">
               {inquiry.customerGroupName ||
                 [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
                 inquiry.customerEmail}
             </p>
-            <p className="mt-1 text-sm text-foreground/70">
+            <p className="mt-1 text-sm text-muted-foreground">
               {inquiry.eventType || "Event"}
               {inquiry.desiredDate || inquiry.desiredStartTime
                 ? ` · ${formatEventLocalDateTime({ date: inquiry.desiredDate, time: inquiry.desiredStartTime })}`
@@ -224,14 +233,17 @@ function InquiryRow({
               {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
             </p>
           </div>
-          <Badge tone={priority ? "info" : "neutral"}>
-            {formatInquiryQueueLabel({
-              ...inquiry,
-              bookingNumber: inquiry.bookings?.[0]?.bookingNumber,
-              bookingStatus: inquiry.bookings?.[0]?.status,
-              salesStage: "salesStage" in inquiry ? String(inquiry.salesStage ?? "") : null,
-            })}
-          </Badge>
+          <div className="flex flex-col items-end gap-1.5">
+            <Badge tone={priority ? "info" : "neutral"}>
+              {formatInquiryQueueLabel({
+                ...inquiry,
+                bookingNumber: inquiry.bookings?.[0]?.bookingNumber,
+                bookingStatus: inquiry.bookings?.[0]?.status,
+                salesStage: "salesStage" in inquiry ? String(inquiry.salesStage ?? "") : null,
+              })}
+            </Badge>
+            <Badge tone={inquiry.assignedUser ? "neutral" : "warning"}>{assignedLabel}</Badge>
+          </div>
         </div>
         {priority ? (
           <p className="mt-3 text-xs font-semibold tracking-[0.14em] text-primary uppercase">
@@ -247,18 +259,22 @@ function InquiryRow({
             {` · ${availabilityLabel}`}
           </p>
         ) : null}
-        <p className="mt-2 text-xs text-foreground/55">
-          {stage ? INQUIRY_WORKFLOW_STAGE_LABELS[stage] : null}
-          {inquiry.assignedUser ? ` · Assigned to ${employeeDisplayName(inquiry.assignedUser)}` : " · Unassigned"}
-          {holdCount > 0 ? " · Legacy hold" : ""}
-          {soonest && holdExpiresSoon(soonest) ? ` · Hold expires ${formatHoldTimeRemaining(soonest)}` : ""}
-        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            {stage ? INQUIRY_WORKFLOW_STAGE_LABELS[stage] : null}
+            {holdCount > 0 ? " · Active HOLD" : ""}
+            {soonest && holdExpiresSoon(soonest) ? ` · Expires ${formatHoldTimeRemaining(soonest)}` : ""}
+          </p>
+          <p className="text-xs font-semibold text-primary">{nextHint}</p>
+        </div>
         {inquiry.customerSelectedAt ? (
-          <p className="mt-2 text-xs text-foreground/50">
+          <p className="mt-2 text-xs text-muted-foreground">
             Selected {formatOrganizationTimestamp(inquiry.customerSelectedAt, timeZone)}
           </p>
         ) : (
-          <p className="mt-2 text-xs text-foreground/50">{formatOrganizationTimestamp(inquiry.createdAt, timeZone)}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {formatOrganizationTimestamp(inquiry.createdAt, timeZone)}
+          </p>
         )}
       </Link>
     </li>

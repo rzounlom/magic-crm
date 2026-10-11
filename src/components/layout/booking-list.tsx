@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import { Badge, bookingBadgeTone } from "@/components/ui/badge";
+import { buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { cn } from "@/lib/ui/cn";
 
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
 import { formatEventLocalDateTime } from "@/lib/inquiries/tenant-datetime";
@@ -77,14 +79,11 @@ export function BookingList({
             className="mt-1 w-56 rounded-md border border-border bg-background px-3 py-2"
           />
         </label>
-        <button type="submit" className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
+        <button type="submit" className={buttonClassName({ variant: "primary", size: "sm" })}>
           Search
         </button>
         </form>
-        <Link
-          href="/app/bookings/new"
-          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
-        >
+        <Link href="/app/bookings/new" className={buttonClassName({ variant: "primary", size: "sm" })}>
           New Booking
         </Link>
       </div>
@@ -95,9 +94,14 @@ export function BookingList({
             <Link
               key={value}
               href={href}
-              className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
-                value === activeFilter ? "bg-primary text-primary-foreground" : "bg-surface text-foreground shadow-sm"
-              }`}
+              aria-current={value === activeFilter ? "page" : undefined}
+              className={cn(
+                buttonClassName({
+                  variant: value === activeFilter ? "primary" : "secondary",
+                  size: "sm",
+                  className: "rounded-full",
+                }),
+              )}
             >
               {FILTER_LABELS[value]}
             </Link>
@@ -124,9 +128,9 @@ export function BookingList({
                   className="record-row"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-foreground">{booking.bookingNumber}</p>
-                      <p className="mt-1 text-sm text-foreground/70">{name}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground">{booking.bookingNumber}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{name}</p>
                     </div>
                     <Badge tone={bookingBadgeTone(booking.status)}>{status}</Badge>
                   </div>
@@ -135,15 +139,18 @@ export function BookingList({
                     {` · ${booking.guestCount} guests`}
                     {booking.eventType ? ` · ${booking.eventType}` : ""}
                   </p>
-                  <p className="mt-2 text-sm text-foreground/70">
-                    {formatMoneyFromCents(booking.totalCents, booking.currency)}
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Preview {formatMoneyFromCents(booking.totalCents, booking.currency)}
                     {` · ${bookingResourceSummary(booking.reservations)}`}
                   </p>
-                  <p className="mt-2 text-xs text-foreground/55">
-                    {booking.confirmedBy
-                      ? `Confirmed by ${employeeDisplayName(booking.confirmedBy)}`
-                      : "Not confirmed yet"}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      {booking.confirmedBy
+                        ? `Confirmed by ${employeeDisplayName(booking.confirmedBy)}`
+                        : "Not confirmed yet · amounts are previews, not payments collected"}
+                    </p>
+                    <p className="text-xs font-semibold text-primary">Open booking</p>
+                  </div>
                 </Link>
               </li>
             );
