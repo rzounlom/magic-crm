@@ -44,6 +44,24 @@ const PURPOSE_LABEL: Record<BookingReadinessPurpose, string> = {
   CONFIRM_BOOKING: "Purpose: CONFIRM_BOOKING",
 };
 
+/** Staff-facing label for operating-hours evaluation codes (raw code kept as title for support). */
+function formatOperatingHoursStatus(status: string): string {
+  switch (status) {
+    case "HOURS_UNCONFIGURED":
+      return "Not configured for this location";
+    case "HOURS_UNVERIFIED":
+      return "Configured but not verified";
+    case "WITHIN_HOURS":
+      return "Within operating hours";
+    case "OUTSIDE_HOURS":
+      return "Outside operating hours";
+    case "INVALID_LOCAL_TIME":
+      return "Invalid local time";
+    default:
+      return status.replaceAll("_", " ");
+  }
+}
+
 /**
  * Shared presentation for HOLD and confirmation readiness.
  * Domain readiness remains in separate server services — this card only displays them.
@@ -69,7 +87,11 @@ export function BookingReadinessCard({
       id={id}
       variant="flat"
       padding="md"
-      className={cn("scroll-mt-[calc(var(--header-offset)+0.75rem)]", TONE_CLASS[tone])}
+      className={cn(
+        // Clear sticky header on desktop and mobile booking action bar + bottom nav.
+        "scroll-mt-[calc(var(--header-offset)+0.75rem)] scroll-mb-[calc(var(--booking-action-bar-offset)+0.75rem)]",
+        TONE_CLASS[tone],
+      )}
       data-readiness-purpose={purpose}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -97,7 +119,9 @@ export function BookingReadinessCard({
         </div>
         <div>
           <dt className="text-muted-foreground">Operating hours</dt>
-          <dd className="mt-0.5 font-medium">{operatingHoursStatus}</dd>
+          <dd className="mt-0.5 font-medium" title={operatingHoursStatus}>
+            {formatOperatingHoursStatus(operatingHoursStatus)}
+          </dd>
         </div>
         {metaRows.map((row) => (
           <div key={row.label}>

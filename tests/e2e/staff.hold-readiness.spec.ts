@@ -39,7 +39,7 @@ test.describe("Scenario C — Proposal and optional HOLD", { tag: "@staff-hold" 
     });
   });
 
-  test("places HOLD only when UI allows and mutations are opted in", async ({ page }) => {
+  test("places HOLD only when UI allows and mutations are opted in", async ({ page }, testInfo) => {
     test.skip(!staffMutationsEnabled(), "Set PLAYWRIGHT_STAFF_MUTATIONS=1 to exercise Place HOLD");
     if (!fixture.ok) return;
 
@@ -51,12 +51,29 @@ test.describe("Scenario C — Proposal and optional HOLD", { tag: "@staff-hold" 
     const holdCard = page.locator("#hold-readiness");
     await expect(holdCard).toBeVisible({ timeout: 15_000 });
     const placeHold = holdCard.getByRole("button", { name: /^Place HOLD$/i });
-    if ((await placeHold.count()) === 0 || !(await placeHold.isEnabled())) {
-      test.skip(true, "Place HOLD not enabled — fixture does not satisfy HOLD guards (expected for some tenants)");
+    const canPlace =
+      (await placeHold.count()) > 0 && (await placeHold.first().isEnabled().catch(() => false));
+
+    if (!canPlace) {
+      // Mutation opted in, but product guards correctly block — verify guidance, do not invent inventory/hours.
+      await expect(holdCard.getByText(/Purpose:\s*PLACE_HOLD/i)).toBeVisible();
+      await expect(
+        holdCard.getByText(/Inventory setup required|Operating hours|Blocking|not verified|cannot|required/i).first(),
+      ).toBeVisible();
+      testInfo.annotations.push({
+        type: "blocked",
+        description:
+          "Place HOLD disabled by product guards (inventory/hours/permissions). No occupancy created.",
+      });
+      fs.mkdirSync(evidenceDir, { recursive: true });
+      await page.screenshot({
+        path: path.join(evidenceDir, `hold-mutation-blocked-${testInfo.project.name}.png`),
+        fullPage: true,
+      });
+      return;
     }
 
-    await placeHold.click();
-    // Confirm dialog may appear for destructive/important actions.
+    await placeHold.first().click();
     const confirm = page.getByRole("button", { name: /^Place HOLD$/i }).last();
     if (await confirm.isVisible().catch(() => false)) {
       await confirm.click();
@@ -65,6 +82,7 @@ test.describe("Scenario C — Proposal and optional HOLD", { tag: "@staff-hold" 
     await expect(holdCard.getByText(/Active HOLD|Already|held/i).first()).toBeVisible({
       timeout: 20_000,
     });
+    await expect(page.getByText(/confirmed booking|Booking #/i)).toHaveCount(0);
 
     const release = page.getByRole("button", { name: /Release HOLD|Release hold/i }).first();
     if ((await release.count()) > 0 && (await release.isEnabled())) {

@@ -38,7 +38,7 @@ test.describe("Scenario D — Confirmation readiness", { tag: "@staff-confirm" }
     });
   });
 
-  test("confirms booking only when UI allows and mutations are opted in", async ({ page }) => {
+  test("confirms booking only when UI allows and mutations are opted in", async ({ page }, testInfo) => {
     test.skip(!staffMutationsEnabled(), "Set PLAYWRIGHT_STAFF_MUTATIONS=1 to exercise Confirm booking");
     if (!fixture.ok) return;
 
@@ -47,12 +47,34 @@ test.describe("Scenario D — Confirmation readiness", { tag: "@staff-confirm" }
       test.skip(true, "Storage state expired");
     }
 
+    const confirmCard = page.locator("#confirmation-readiness");
+    await expect(confirmCard).toBeVisible({ timeout: 15_000 });
+
     const confirmButton = page.getByRole("button", { name: /^Confirm booking$/i }).first();
-    if ((await confirmButton.count()) === 0 || !(await confirmButton.isEnabled())) {
-      test.skip(
-        true,
-        "Confirm booking not enabled — fixture does not satisfy confirmation guards (do not weaken product rules)",
-      );
+    const canConfirm =
+      (await confirmButton.count()) > 0 && (await confirmButton.isEnabled().catch(() => false));
+
+    if (!canConfirm) {
+      // Mutation opted in, but product guards correctly block — verify guidance, do not weaken rules.
+      await expect(confirmCard.getByText(/Purpose:\s*CONFIRM_BOOKING/i)).toBeVisible();
+      await expect(
+        confirmCard
+          .getByText(/Inventory setup required|Operating hours|Blocking|not verified|cannot|required/i)
+          .first(),
+      ).toBeVisible();
+      const body = (await page.locator("body").innerText()).toLowerCase();
+      expect(body).not.toMatch(/payment received|stripe|charged successfully|paid in full/);
+      testInfo.annotations.push({
+        type: "blocked",
+        description:
+          "Confirm booking disabled by product guards (inventory/hours/permissions). No booking created.",
+      });
+      fs.mkdirSync(evidenceDir, { recursive: true });
+      await page.screenshot({
+        path: path.join(evidenceDir, `confirm-mutation-blocked-${testInfo.project.name}.png`),
+        fullPage: true,
+      });
+      return;
     }
 
     await confirmButton.click();
@@ -61,8 +83,11 @@ test.describe("Scenario D — Confirmation readiness", { tag: "@staff-confirm" }
       await dialogConfirm.click();
     }
 
+    await expect(page).toHaveURL(/\/app\/bookings\/[^/]+/, { timeout: 25_000 });
     await expect(page.getByText(/confirmed|booking #|Master Schedule/i).first()).toBeVisible({
-      timeout: 25_000,
+      timeout: 10_000,
     });
+    const body = (await page.locator("body").innerText()).toLowerCase();
+    expect(body).not.toMatch(/payment received|stripe|charged successfully|paid in full/);
   });
 });

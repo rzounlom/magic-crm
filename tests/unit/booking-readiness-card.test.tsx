@@ -75,6 +75,30 @@ describe("BookingReadinessCard", () => {
     expect(confirm).toContain("(not overridable by hours exception)");
     expect(hold).not.toContain("Purpose: CONFIRM_BOOKING");
     expect(confirm).not.toContain("Purpose: PLACE_HOLD");
+    expect(hold).toContain("Outside operating hours");
+    expect(hold).not.toContain(">OUTSIDE_HOURS<");
+    expect(confirm).toContain("Within operating hours");
+  });
+
+  it("humanizes HOURS_UNCONFIGURED for staff without hiding the raw title", () => {
+    const html = renderToStaticMarkup(
+      <BookingReadinessCard
+        id="hold-readiness"
+        purpose="PLACE_HOLD"
+        title="Proposal HOLD readiness"
+        headline="Inventory setup required"
+        detail="Add numbered inventory."
+        tone="warning"
+        eventDateLabel="Nov 22, 2026"
+        eventTimeLabel="2:00 PM–4:00 PM"
+        locationLabel="Main · UTC"
+        operatingHoursStatus="HOURS_UNCONFIGURED"
+        blockers={[]}
+      />,
+    );
+    expect(html).toContain("Not configured for this location");
+    expect(html).toContain('title="HOURS_UNCONFIGURED"');
+    expect(html).not.toContain(">HOURS_UNCONFIGURED<");
   });
 });
 

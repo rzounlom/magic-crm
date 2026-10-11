@@ -233,6 +233,16 @@ label:has(:disabled) {
   backdrop-filter: blur(10px);
 }
 
+/*
+ * Unlayered `display: grid` above beats Tailwind `lg:hidden` otherwise —
+ * desktop must not show the mobile bottom nav beside the header module nav.
+ */
+@media (min-width: 1024px) {
+  .employee-mobile-nav {
+    display: none;
+  }
+}
+
 .employee-bottom-nav-link {
   display: inline-flex;
   min-height: 2.75rem;
@@ -310,6 +320,12 @@ label:has(:disabled) {
   padding: 0.65rem 0;
   backdrop-filter: blur(10px);
   box-shadow: 0 -8px 24px rgb(11 18 32 / 0.06);
+}
+
+@media (min-width: 1024px) {
+  .booking-mobile-action-bar {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

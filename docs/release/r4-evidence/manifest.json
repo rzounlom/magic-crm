@@ -1,0 +1,211 @@
+{
+  "createdAt": "2026-10-11T21:45:40.854Z",
+  "baseURL": "http://localhost:3000",
+  "organizationSlug": "magiccrm-test-center-b",
+  "inquiryPath": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+  "bookingPath": null,
+  "notes": [
+    "Skipped booking-detail: no existing booking row in list (expected on sparse DEV)"
+  ],
+  "inventory": [
+    {
+      "file": "app-overview-320w.png",
+      "route": "/app",
+      "viewport": "320",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "app-overview-390w.png",
+      "route": "/app",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "app-overview-390w-more-open.png",
+      "route": "/app",
+      "viewport": "390",
+      "state": "more-dialog-open",
+      "overflowPx": 0
+    },
+    {
+      "file": "app-overview-768w.png",
+      "route": "/app",
+      "viewport": "768",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "app-overview-1440w.png",
+      "route": "/app",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "inquiries-list-390w.png",
+      "route": "/app/inquiries",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "inquiries-list-768w.png",
+      "route": "/app/inquiries",
+      "viewport": "768",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "inquiries-list-1440w.png",
+      "route": "/app/inquiries",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "inquiry-detail-320w.png",
+      "route": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+      "viewport": "320",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "inquiry-detail-390w.png",
+      "route": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "inquiry-detail-768w.png",
+      "route": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+      "viewport": "768",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "inquiry-detail-1440w.png",
+      "route": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "bookings-list-390w.png",
+      "route": "/app/bookings",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "bookings-list-1440w.png",
+      "route": "/app/bookings",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "schedule-390w.png",
+      "route": "/app/schedule",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "schedule-768w.png",
+      "route": "/app/schedule",
+      "viewport": "768",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "schedule-1440w.png",
+      "route": "/app/schedule",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "admin-resources-390w.png",
+      "route": "/app/admin/resources",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "admin-resources-1440w.png",
+      "route": "/app/admin/resources",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "admin-team-390w.png",
+      "route": "/app/admin/team",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "admin-team-1440w.png",
+      "route": "/app/admin/team",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "admin-security-groups-390w.png",
+      "route": "/app/admin/security-groups",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "admin-security-groups-1440w.png",
+      "route": "/app/admin/security-groups",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "admin-knowledge-390w.png",
+      "route": "/app/admin/ai/knowledge",
+      "viewport": "390",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "admin-knowledge-1440w.png",
+      "route": "/app/admin/ai/knowledge",
+      "viewport": "1440",
+      "overflowPx": 0,
+      "httpStatus": 200
+    },
+    {
+      "file": "inquiry-hold-readiness-390w.png",
+      "route": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+      "viewport": "390",
+      "state": "hold-readiness"
+    },
+    {
+      "file": "inquiry-confirmation-readiness-390w.png",
+      "route": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+      "viewport": "390",
+      "state": "confirmation-readiness"
+    },
+    {
+      "file": "inquiry-hold-readiness-1440w.png",
+      "route": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+      "viewport": "1440",
+      "state": "hold-readiness"
+    },
+    {
+      "file": "inquiry-confirmation-readiness-1440w.png",
+      "route": "/app/inquiries/mccgzlbpbh92u0zxyve41iw3",
+      "viewport": "1440",
+      "state": "confirmation-readiness"
+    }
+  ]
+}

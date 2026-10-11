@@ -76,7 +76,7 @@ export function BookingList({
             name="search"
             defaultValue={search}
             placeholder="Booking number or customer"
-            className="mt-1 w-56 rounded-md border border-border bg-background px-3 py-2"
+            className="mt-1 w-full min-w-[12rem] max-w-sm rounded-md border border-border bg-background px-3 py-2 sm:w-56"
           />
         </label>
         <button type="submit" className={buttonClassName({ variant: "primary", size: "sm" })}>

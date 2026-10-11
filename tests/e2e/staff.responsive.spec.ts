@@ -39,18 +39,19 @@ test.describe("Scenario F — Responsive staff UX", { tag: "@staff-responsive" }
       });
       expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
 
-      if (viewport.width <= 390) {
-        const primaryNav = page.getByRole("navigation", { name: "Primary" });
-        if ((await primaryNav.count()) > 0) {
-          const { dialog } = await openStaffMoreMenu(page);
-          await expect(
-            dialog
-              .getByRole("link", { name: /public inquiry|sales knowledge|overview|team|resources/i })
-              .first(),
-          ).toBeVisible();
-          await page.keyboard.press("Escape");
-          await expect(dialog).toBeHidden();
-        }
+      const mobilePrimary = page.locator("[data-employee-mobile-nav]");
+      if (viewport.width >= 1024) {
+        await expect(mobilePrimary).toBeHidden();
+      } else if (viewport.width <= 390) {
+        await expect(mobilePrimary).toBeVisible();
+        const { dialog } = await openStaffMoreMenu(page);
+        await expect(
+          dialog
+            .getByRole("link", { name: /public inquiry|sales knowledge|overview|team|resources/i })
+            .first(),
+        ).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(dialog).toBeHidden();
       }
 
       fs.mkdirSync(evidenceDir, { recursive: true });

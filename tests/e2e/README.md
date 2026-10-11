@@ -116,7 +116,13 @@ Do not enable mutations against production tenants.
 
 Until a human produces a TEST storage-state file via `pnpm test:e2e:staff:auth`, authenticated staff browser coverage remains **BLOCKED**.
 
-Evidence screenshots (when auth works) land in `docs/release/r3-evidence/` (committed only when sanitized and intentional).
+Evidence screenshots (when auth works) land in `docs/release/r3-evidence/` and the R4 visual matrix in `docs/release/r4-evidence/` (committed only when sanitized and intentional).
+
+```bash
+# Capture authenticated staff visual matrix (requires storage state + running app)
+export PLAYWRIGHT_STORAGE_STATE="$PWD/playwright/.auth/staff.json"
+corepack pnpm test:e2e:staff:r4-evidence
+```
 
 ## Optional proposal token fixture
 

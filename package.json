@@ -22,6 +22,7 @@
     "test:e2e:staff:auth": "node scripts/r3-bootstrap-staff-auth.mjs",
     "test:e2e:staff:auth:verify": "node scripts/r3-verify-staff-auth.mjs",
     "test:e2e:staff:fixture": "tsx --tsconfig tsconfig.json scripts/r3-create-staff-browser-fixture.ts",
+    "test:e2e:staff:r4-evidence": "node scripts/r4-capture-staff-evidence.mjs",
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install chromium",
     "test:watch": "vitest --config vitest.config.mts",
