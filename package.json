@@ -13,7 +13,7 @@
     "test:unit": "vitest run --config vitest.config.mts",
     "test:integration": "node scripts/run-integration-tests.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:public": "playwright test tests/e2e/public-intake.smoke.spec.ts tests/e2e/public-intake.journey.spec.ts tests/e2e/public-token.smoke.spec.ts",
+    "test:e2e:public": "playwright test tests/e2e/public-intake.smoke.spec.ts tests/e2e/public-intake.journey.spec.ts tests/e2e/public-token.smoke.spec.ts tests/e2e/public-a11y.smoke.spec.ts",
     "test:e2e:install": "playwright install chromium",
     "test:watch": "vitest --config vitest.config.mts",
     "test:db:prepare": "node scripts/prepare-test-db.mjs",
