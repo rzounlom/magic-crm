@@ -1,78 +1,43 @@
 import type { ReactNode } from "react";
-import { Suspense } from "react";
 
 import {
   InquiryAwarenessProvider,
   InquiryNotificationControl,
 } from "@/components/layout/inquiry-awareness-provider";
 import { EmployeeHeaderBar } from "@/components/layout/employee-header-bar";
+import { EmployeeMobileNav } from "@/components/layout/employee-mobile-nav";
 import {
   EmployeeOrganizationSwitcher,
   EmployeeUserButton,
 } from "@/components/layout/employee-organization-controls";
-import { AiKnowledgeNavLink } from "@/components/layout/ai-knowledge-nav-link";
-import { BookingsNavLink } from "@/components/layout/bookings-nav-link";
-import { InquiryNavLink } from "@/components/layout/inquiry-nav-link";
-import { PublicInquiryNavLink } from "@/components/layout/public-inquiry-nav-link";
-import { ResourcesNavLink } from "@/components/layout/resources-nav-link";
-import { ScheduleNavLink } from "@/components/layout/schedule-nav-link";
-import { SecurityAdminNavLink } from "@/components/layout/security-admin-nav-link";
-import { TeamAdminNavLink } from "@/components/layout/team-admin-nav-link";
+import { loadEmployeeShellChrome } from "@/components/layout/employee-shell-chrome";
 
 type EmployeeShellProps = {
   children: ReactNode;
 };
 
-export function EmployeeShell({ children }: EmployeeShellProps) {
+export async function EmployeeShell({ children }: EmployeeShellProps) {
+  const chrome = await loadEmployeeShellChrome();
+
   return (
     <InquiryAwarenessProvider>
-      <div className="flex min-h-full flex-col overflow-x-hidden bg-background text-foreground">
+      <div className="employee-shell flex min-h-full flex-col overflow-x-hidden bg-background text-foreground">
         <EmployeeHeaderBar
+          visibleNavIds={chrome.visibleNavIds}
+          publicInquiryHref={chrome.publicInquiryHref}
+          organizationName={chrome.organizationName}
+          locationName={chrome.locationName}
           notifications={<InquiryNotificationControl />}
-          inquiriesNav={
-          <Suspense fallback={null}>
-            <InquiryNavLink />
-          </Suspense>
-        }
-        bookingsNav={
-          <Suspense fallback={null}>
-            <BookingsNavLink />
-          </Suspense>
-        }
-        scheduleNav={
-          <Suspense fallback={null}>
-            <ScheduleNavLink />
-          </Suspense>
-        }
-        resourcesNav={
-          <Suspense fallback={null}>
-            <ResourcesNavLink />
-          </Suspense>
-        }
-        teamNav={
-          <Suspense fallback={null}>
-            <TeamAdminNavLink />
-          </Suspense>
-        }
-        securityNav={
-          <Suspense fallback={null}>
-            <SecurityAdminNavLink />
-          </Suspense>
-        }
-        knowledgeNav={
-          <Suspense fallback={null}>
-            <AiKnowledgeNavLink />
-          </Suspense>
-        }
-        publicInquiryAction={
-          <Suspense fallback={null}>
-            <PublicInquiryNavLink />
-          </Suspense>
-        }
-        organizationSwitcher={<EmployeeOrganizationSwitcher />}
-        userButton={<EmployeeUserButton />}
-      />
-      <main className="mx-auto flex w-full max-w-[90rem] flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+          organizationSwitcher={<EmployeeOrganizationSwitcher />}
+          userButton={<EmployeeUserButton />}
+        />
+        <main className="employee-shell-main mx-auto flex w-full max-w-[90rem] flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          {children}
+        </main>
+        <EmployeeMobileNav
+          visibleNavIds={chrome.visibleNavIds}
+          publicInquiryHref={chrome.publicInquiryHref}
+        />
       </div>
     </InquiryAwarenessProvider>
   );

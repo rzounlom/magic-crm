@@ -4,11 +4,62 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-export function ModuleNavLink({ href, children }: { href: string; children: ReactNode }) {
+import { isEmployeeNavActive } from "@/lib/ui/employee-navigation";
+import { cn } from "@/lib/ui/cn";
+
+export type ModuleNavLinkVariant = "pill" | "bottom" | "menu";
+
+export function ModuleNavLink({
+  href,
+  children,
+  variant = "pill",
+  className,
+  onNavigate,
+}: {
+  href: string;
+  children: ReactNode;
+  variant?: ModuleNavLinkVariant;
+  className?: string;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
-  const active = pathname === href || pathname.startsWith(`${href}/`);
+  const active = isEmployeeNavActive(pathname, href);
+
+  if (variant === "bottom") {
+    return (
+      <Link
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={cn("employee-bottom-nav-link", active && "is-active", className)}
+        onClick={onNavigate}
+      >
+        <NavIcon href={href} />
+        <span>{children}</span>
+      </Link>
+    );
+  }
+
+  if (variant === "menu") {
+    return (
+      <Link
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={cn("employee-more-nav-link", active && "is-active", className)}
+        onClick={onNavigate}
+      >
+        <NavIcon href={href} />
+        <span>{children}</span>
+      </Link>
+    );
+  }
+
   return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={active ? "module-nav is-active" : "module-nav"}>
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn("module-nav", active && "is-active", className)}
+      onClick={onNavigate}
+    >
       <NavIcon href={href} />
       <span className="lg:max-xl:sr-only">{children}</span>
     </Link>
@@ -28,6 +79,9 @@ function NavIcon({ href }: { href: string }) {
 }
 
 function iconPath(href: string) {
+  if (href === "/app") {
+    return "M2.5 7.5 8 2.5l5.5 5M4 7v5.5h3V9.5h2V12.5h3V7";
+  }
   if (href.startsWith("/app/inquiries")) {
     return "M2.5 3.5h11v9h-11zM2.5 6.5h11";
   }

@@ -173,7 +173,7 @@ label:has(:disabled) {
 
 .module-nav {
   display: inline-flex;
-  min-height: 2.75rem;
+  min-height: 2.5rem;
   align-items: center;
   gap: 0.4rem;
   border-radius: var(--radius-pill);
@@ -196,10 +196,94 @@ label:has(:disabled) {
 }
 
 .module-nav:focus-visible,
+.employee-bottom-nav-link:focus-visible,
+.employee-more-nav-link:focus-visible,
 .btn:focus-visible,
 .status-badge:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+.employee-app-header-inner {
+  height: var(--header-height);
+}
+
+.employee-shell-main {
+  padding-bottom: calc(1.5rem + var(--mobile-nav-offset));
+}
+
+@media (min-width: 1024px) {
+  .employee-shell-main {
+    padding-bottom: 2rem;
+  }
+}
+
+.employee-mobile-nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 30;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.15rem;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  padding: 0.35rem 0.35rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+  backdrop-filter: blur(10px);
+}
+
+.employee-bottom-nav-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  border-radius: var(--radius-control);
+  padding: 0.35rem 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  line-height: 1.1;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.employee-bottom-nav-link.is-active {
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--primary);
+}
+
+.employee-bottom-nav-link:hover {
+  color: var(--foreground);
+}
+
+.employee-more-nav-link {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: var(--radius-control);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.employee-more-nav-link:hover {
+  background: var(--muted);
+}
+
+.employee-more-nav-link.is-active {
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .employee-mobile-nav,
+  .employee-app-header {
+    backdrop-filter: none;
+  }
 }
 
 .status-badge {

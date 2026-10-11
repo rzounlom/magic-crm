@@ -20,6 +20,6 @@ export async function AiKnowledgeNavLink() {
   }
 
   return (
-    <ModuleNavLink href="/app/admin/ai/knowledge">AI Knowledge</ModuleNavLink>
+    <ModuleNavLink href="/app/admin/ai/knowledge">Sales knowledge</ModuleNavLink>
   );
 }

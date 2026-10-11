@@ -71,13 +71,15 @@ Demo-critical booking/schedule copy:
 
 Prefer shared `Button` / `ButtonLink` / `buttonClassName` for new or migrated chrome. Existing call sites may keep local classes until UX3/UX4. `PendingSubmitButton` accepts an optional `variant` to opt into Button styles.
 
-## Employee shell header
+## Employee shell header and navigation
 
-The authenticated employee header is already `sticky` (`EmployeeHeaderBar`). UX3 should address:
+Authenticated employee chrome lives in `EmployeeShell` / `EmployeeHeaderBar` / `EmployeeMobileNav`.
 
-- reliable `--header-offset` for sticky page action bars (inquiry booking coach)
-- mobile bottom navigation / More menu (IA)
-- location context chip alongside organization switcher
-- no overlap with sticky page actions on small viewports
+- Sticky header height is tokenized: `--header-height` / `--header-offset` (see `src/styles/tokens.css`).
+- Sticky inquiry booking actions use `top: var(--header-offset)` — not a hard-coded `top-20`.
+- Mobile primary destinations use a bottom bar (`--mobile-nav-offset` clears main content). More holds Overview, Catalog, Settings, and Public inquiry.
+- Navigation visibility is resolved server-side from existing permissions (`loadEmployeeShellChrome`). Hiding a link is not authorization.
+- Organization context comes from Clerk; location context is the trusted `defaultLocationId` from request context (read-only in chrome).
+- Central route map: `src/lib/ui/employee-navigation.ts`.
 
-Do not implement that navigation redesign in UX2.
+Prefer shared `Button` / `ButtonLink` for new chrome actions. Full shell notes: `docs/design/UX3_APP_SHELL_AND_NAVIGATION.md`.

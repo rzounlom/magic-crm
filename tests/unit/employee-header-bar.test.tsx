@@ -1,107 +1,100 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { EmployeeHeaderBar } from "@/components/layout/employee-header-bar";
-import { PublicInquiryLink } from "@/components/layout/public-inquiry-link";
+import type { EmployeeNavItemId } from "@/lib/ui/employee-navigation";
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/app/inquiries",
+}));
 
 function renderHeader(options: {
-  showInquiriesNav?: boolean;
-  showBookingsNav?: boolean;
-  showScheduleNav?: boolean;
-  showTeamNav?: boolean;
-  showSecurityNav: boolean;
-  showKnowledgeNav?: boolean;
+  visibleNavIds?: EmployeeNavItemId[];
   publicInquiryHref?: string;
   organizationName?: string;
+  locationName?: string | null;
 }) {
   return renderToStaticMarkup(
     <EmployeeHeaderBar
-      inquiriesNav={options.showInquiriesNav === false ? null : <span>Inquiries</span>}
-      bookingsNav={options.showBookingsNav ? <span>Bookings</span> : null}
-      scheduleNav={options.showScheduleNav ? <span>Schedule</span> : null}
-      teamNav={options.showTeamNav ? <span>Team</span> : null}
-      securityNav={options.showSecurityNav ? <span>Security</span> : null}
-      knowledgeNav={options.showKnowledgeNav ? <span>AI Knowledge</span> : null}
-      publicInquiryAction={
-        options.publicInquiryHref ? <PublicInquiryLink href={options.publicInquiryHref} /> : null
+      visibleNavIds={
+        options.visibleNavIds ?? ["overview", "inquiries", "bookings", "schedule", "team", "security"]
       }
-      organizationSwitcher={
-        <span>{options.organizationName ?? "Generations Adventureplex"}</span>
-      }
+      publicInquiryHref={options.publicInquiryHref ?? null}
+      organizationName={options.organizationName ?? "Riverside Fun Center"}
+      locationName={options.locationName === undefined ? "North Campus" : options.locationName}
+      organizationSwitcher={<span>OrgSwitcher</span>}
       userButton={<span>Account</span>}
     />,
   );
 }
 
 function accountSlotIndex(html: string) {
-  return html.indexOf('data-employee-account');
+  return html.indexOf("data-employee-account");
 }
 
 describe("EmployeeHeaderBar", () => {
-  it("shows Bookings between Inquiries and Schedule", () => {
+  it("groups Bookings & Events with Inquiries before Bookings before Schedule", () => {
     const html = renderHeader({
-      showBookingsNav: true,
-      showScheduleNav: true,
-      showSecurityNav: false,
+      visibleNavIds: ["overview", "inquiries", "bookings", "schedule"],
     });
-    expect(html).toContain("Bookings");
-    expect(html.indexOf("Inquiries")).toBeLessThan(html.indexOf("Bookings"));
-    expect(html.indexOf("Bookings")).toBeLessThan(html.indexOf("Schedule"));
+    expect(html).toContain('aria-label="Bookings &amp; Events"');
+    expect(html.indexOf('href="/app/inquiries"')).toBeLessThan(html.indexOf('href="/app/bookings"'));
+    expect(html.indexOf('href="/app/bookings"')).toBeLessThan(html.indexOf('href="/app/schedule"'));
   });
 
   it("renders the UserButton slot for an authenticated employee", () => {
-    const html = renderHeader({ showSecurityNav: false });
+    const html = renderHeader({});
     expect(html).toContain("Account");
     expect(html).toContain("MagicCRM");
-    expect(html).toContain('data-employee-account');
+    expect(html).toContain("data-employee-account");
   });
 
-  it("shows Team before Security for an administrator", () => {
-    const html = renderHeader({ showTeamNav: true, showSecurityNav: true });
+  it("shows Team before Security under Settings for an administrator", () => {
+    const html = renderHeader({
+      visibleNavIds: ["overview", "inquiries", "team", "security"],
+    });
     expect(html).toContain("Inquiries");
     expect(html).toContain("Team");
     expect(html).toContain("Security");
-    expect(html.indexOf("Inquiries")).toBeLessThan(html.indexOf("Team"));
+    expect(html).toContain('aria-label="Settings"');
     expect(html.indexOf("Team")).toBeLessThan(html.indexOf("Security"));
-    expect(html.indexOf("Security")).toBeLessThan(html.indexOf("Generations Adventureplex"));
+    expect(html.indexOf("Security")).toBeLessThan(html.indexOf("OrgSwitcher"));
   });
 
   it("hides Security for a non-admin but keeps organization switcher and UserButton", () => {
-    const html = renderHeader({ showSecurityNav: false });
-    expect(html).not.toContain("Security");
-    expect(html).toContain("Generations Adventureplex");
-    expect(html).toContain("Account");
-  });
-
-  it("keeps UserButton when Security nav is absent or present", () => {
-    const withoutSecurity = renderHeader({ showSecurityNav: false });
-    const withSecurity = renderHeader({ showSecurityNav: true });
-    expect(withoutSecurity).toContain("Account");
-    expect(withSecurity).toContain("Account");
-    expect(accountSlotIndex(withoutSecurity)).toBeGreaterThan(-1);
-    expect(accountSlotIndex(withSecurity)).toBeGreaterThan(-1);
-  });
-
-  it("keeps UserButton when Inquiries and AI Knowledge nav are present", () => {
     const html = renderHeader({
-      showInquiriesNav: true,
-      showKnowledgeNav: true,
-      showSecurityNav: true,
+      visibleNavIds: ["overview", "inquiries"],
     });
-    expect(html).toContain("Inquiries");
-    expect(html).toContain("AI Knowledge");
+    expect(html).not.toContain(">Security<");
+    expect(html).toContain("OrgSwitcher");
     expect(html).toContain("Account");
-    expect(html.indexOf("AI Knowledge")).toBeLessThan(accountSlotIndex(html));
+  });
+
+  it("shows trusted location context without inventing a location", () => {
+    const withLocation = renderHeader({ locationName: "North Campus" });
+    expect(withLocation).toContain("data-employee-context");
+    expect(withLocation).toContain("North Campus");
+    expect(withLocation).toContain("Riverside Fun Center");
+
+    const withoutLocation = renderHeader({ locationName: null });
+    expect(withoutLocation).toContain("No location set");
+  });
+
+  it("renders Catalog labels for sales knowledge and resources", () => {
+    const html = renderHeader({
+      visibleNavIds: ["overview", "salesKnowledge", "resources"],
+    });
+    expect(html).toContain("Sales knowledge");
+    expect(html).toContain("Resources");
+    expect(html).toContain('aria-label="Catalog"');
+    expect(html).not.toContain("AI Knowledge");
   });
 
   it("renders a new-tab Public Inquiry action without displacing UserButton", () => {
     const html = renderHeader({
-      showInquiriesNav: true,
-      showTeamNav: true,
-      showSecurityNav: true,
-      showKnowledgeNav: true,
+      visibleNavIds: ["overview", "inquiries", "team", "security", "salesKnowledge"],
       publicInquiryHref: "/inquire/fun-center-a",
       organizationName: "Riverside Fun Center North Campus Events And Parties",
     });
@@ -110,26 +103,19 @@ describe("EmployeeHeaderBar", () => {
     expect(html).toContain('target="_blank"');
     expect(html).toContain("noopener noreferrer");
     expect(html).toContain("Account");
-    expect(html).toContain('data-employee-account');
+    expect(html).toContain("data-employee-account");
     expect(html.indexOf("Public Inquiry")).toBeLessThan(accountSlotIndex(html));
     expect(html).not.toContain("generations");
   });
 
   it("keeps UserButton when the organization name is long", () => {
     const html = renderHeader({
-      showInquiriesNav: true,
-      showTeamNav: true,
-      showSecurityNav: true,
-      showKnowledgeNav: true,
-      organizationName: "Generations Adventureplex North Campus Events And Parties",
+      organizationName: "Riverside Fun Center North Campus Events And Parties",
     });
     expect(html).toContain("Account");
-    expect(html).toContain("Generations Adventureplex North Campus Events And Parties");
+    expect(html).toContain("Riverside Fun Center North Campus Events And Parties");
     expect(html).toContain("min-w-0");
     expect(html).toContain("shrink-0");
-    expect(html.indexOf("Generations Adventureplex North Campus Events And Parties")).toBeLessThan(
-      accountSlotIndex(html),
-    );
   });
 
   it("does not gate the UserButton on application permissions", () => {
@@ -160,5 +146,14 @@ describe("EmployeeHeaderBar", () => {
     expect(controls).toContain("UserButton");
     expect(shell).toContain("EmployeeUserButton");
     expect(shell).toContain("userButton={<EmployeeUserButton />}");
+  });
+
+  it("keeps desktop module nav hidden below the lg breakpoint via class", () => {
+    const html = renderHeader({
+      visibleNavIds: ["overview", "inquiries", "bookings", "schedule"],
+    });
+    expect(html).toContain('aria-label="Modules"');
+    expect(html).toContain("hidden");
+    expect(html).toContain("lg:flex");
   });
 });

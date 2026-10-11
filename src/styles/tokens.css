@@ -51,6 +51,17 @@
   --space-section: 1.5rem;
   --control-height: 2.625rem;
 
+  /*
+   * Employee shell sticky offsets (UX3).
+   * Header is a fixed-height band per breakpoint so sticky coaches can use
+   * top: var(--header-offset) instead of brittle top-20.
+   * Mobile bottom nav clears main content via --mobile-nav-offset.
+   */
+  --header-height: 3.5rem;
+  --header-offset: var(--header-height);
+  --mobile-nav-height: 3.75rem;
+  --mobile-nav-offset: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+
   /* Type scale (Source Sans 3 via --font-source-sans) */
   --text-caption: 0.75rem;
   --text-label: 0.8125rem;
@@ -61,4 +72,13 @@
   --text-display: 1.75rem;
   --leading-tight: 1.2;
   --leading-body: 1.5;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --header-height: 4rem;
+    --header-offset: 4rem;
+    /* Bottom nav is desktop-hidden; keep token at 0 so sticky coaches don't pad. */
+    --mobile-nav-offset: 0px;
+  }
 }

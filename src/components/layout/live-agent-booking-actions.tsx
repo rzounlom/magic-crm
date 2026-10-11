@@ -115,7 +115,7 @@ export function LiveAgentBookingActions({
   return (
     <section
       id="confirm-booking"
-      className="sticky top-20 z-20 mt-6 rounded-2xl border border-primary/30 bg-surface px-4 py-4 shadow-sm"
+      className="sticky top-[var(--header-offset)] z-20 mt-6 rounded-2xl border border-primary/30 bg-surface px-4 py-4 shadow-sm"
     >
       {showWorkingActions ? (
         <ol className="flex flex-wrap gap-2 text-xs font-medium">
