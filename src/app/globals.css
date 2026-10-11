@@ -555,6 +555,20 @@ dialog::backdrop {
     linear-gradient(160deg, #00143f 0%, var(--navy-950) 40%, var(--brand-900) 100%);
 }
 
+/* Hero primary CTAs: action-600 + white inset highlight samples ~4.47:1 against white
+   on this gradient (axe serious). Use action-700 for a solid AA pass without changing
+   the global primary token used across staff chrome. */
+.marketing-hero a.bg-primary,
+.marketing-hero button.bg-primary {
+  background-color: var(--action-700);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.28);
+}
+
+.marketing-hero a.bg-primary:hover,
+.marketing-hero button.bg-primary:hover {
+  background-color: var(--action-800);
+}
+
 .marketing-hero-glow {
   pointer-events: none;
   position: absolute;

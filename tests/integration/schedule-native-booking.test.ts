@@ -8,9 +8,7 @@ import { createEmployeeManualInquiry } from "@/server/services/inquiry-service";
 import { savePendingEmployeeBooking } from "@/server/services/live-agent-service";
 import { provisionOrganization } from "@/server/services/provision-organization";
 import { getMasterScheduleBoard } from "@/server/services/resource-schedule-service";
-import { createSalesKnowledgeItem } from "@/server/services/sales-knowledge-service";
 import { BOOKING_STATUSES } from "@/types/booking";
-import { SALES_KNOWLEDGE_TYPES } from "@/types/inquiry";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 import { authorizeConfirmHoursForInquiry } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
@@ -48,20 +46,8 @@ describe("schedule-native booking", () => {
       organizationSlug: organization.slug,
       dataset: loadBookingCatalogDataset(),
     });
-    // Proposal generation still needs active sales-knowledge attractions.
-    for (const name of ["Bowling", "Laser Tag", "Arcade"] as const) {
-      await createSalesKnowledgeItem(ctx, db, {
-        type: SALES_KNOWLEDGE_TYPES.ATTRACTION,
-        name,
-        shortDescription: name,
-        details: `${name} for schedule-native fixture.`,
-        priceText: "$10/person",
-        durationMinutes: 60,
-        maxGuests: 12,
-        active: true,
-      });
-    }
-
+    // Catalog proposal path requires an audience profile. ADULTS does not require
+    // explicit attractions; MIXED does (see booking-catalog recommendationProfiles).
     const created = await createEmployeeManualInquiry(ctx, db, {
       firstName: "Ada",
       lastName: "Ng",
@@ -71,9 +57,14 @@ describe("schedule-native booking", () => {
       preferredDate: eventDate,
       startTime: "11:00",
       guestCount: 12,
+      guestMix: "mostly_adults",
       desiredDurationMinutes: 120,
       locationId: provisioned.locationId,
     });
+    const plans = await db.eventPlanRecommendation.count({
+      where: { inquiryId: created.inquiryId },
+    });
+    expect(plans).toBeGreaterThan(0);
     const pending = await savePendingEmployeeBooking(ctx, db, created.inquiryId);
     const listed = await listPendingBookingsForSchedule(ctx, db, eventDate);
     expect(listed.some((row) => row.id === pending.booking.id)).toBe(true);

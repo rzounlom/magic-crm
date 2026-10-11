@@ -152,6 +152,10 @@ describe("recommendation composition snapshots (postgres)", () => {
   }, 60_000);
 
   it("keeps explicit attractions and catalog prices when the event is above a low budget", async () => {
+    // Same civil date for both inquiries: Generations catalog prices are day-banded
+    // (e.g. Thu vs Fri axe/bowling units differ). Comparing totals across dates is not
+    // a budget-engine assertion — it is a pricing-calendar mismatch.
+    const sharedEventDate = "2026-11-05";
     const flexible = await createPublicInquiry(
       db,
       {
@@ -161,7 +165,7 @@ describe("recommendation composition snapshots (postgres)", () => {
         lastName: "Nguyen",
         email: `comp.base.${crypto.randomUUID()}@example.com`,
         eventType: "Birthday Party",
-        preferredDate: "2026-11-05",
+        preferredDate: sharedEventDate,
         startTime: "14:00",
         guestCount: 20,
         guestMix: "mostly_adults",
@@ -184,7 +188,7 @@ describe("recommendation composition snapshots (postgres)", () => {
         lastName: "Nguyen",
         email: `comp.low.${crypto.randomUUID()}@example.com`,
         eventType: "Birthday Party",
-        preferredDate: "2026-11-06",
+        preferredDate: sharedEventDate,
         startTime: "14:00",
         guestCount: 20,
         guestMix: "mostly_adults",

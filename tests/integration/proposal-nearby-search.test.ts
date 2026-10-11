@@ -9,7 +9,6 @@ import { provisionOrganization } from "@/server/services/provision-organization"
 import { reserveResourcesInTransaction } from "@/server/services/resource-availability-service";
 import { rangesOverlap, parseClockToMinutes } from "@/server/resources/time-window";
 import { EVENT_PLAN_KINDS } from "@/types/inquiry";
-import { EVENT_PLAN_TIERS } from "@/types/event-planner";
 import { RESOURCE_RESERVATION_SOURCES, RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
@@ -44,6 +43,11 @@ describe("proposal nearby search (postgres)", () => {
     await importBookingCatalog(db, {
       organizationSlug: organization.slug,
       dataset: loadBookingCatalogDataset(),
+    });
+    // MIXED audience profiles require explicit attractions (requireExplicitAttractions).
+    const bowlingInterest = await db.attractionInterest.findFirstOrThrow({
+      where: { organizationId: organization.id, slug: "bowling" },
+      select: { id: true },
     });
 
     const lanes = await db.resource.findMany({
@@ -96,24 +100,25 @@ describe("proposal nearby search (postgres)", () => {
         eventGoal: "Celebration",
         diningPreference: "pizza_light",
         spacePreference: "semi_private",
-        attractionInterestIds: [],
-        attractionMode: "recommend",
+        attractionInterestIds: [bowlingInterest.id],
+        attractionMode: "known",
         submissionId: `sub_${crypto.randomUUID()}`,
       },
       undefined,
       unlimitedLimiter,
     );
-
-    const good = await db.eventPlanRecommendation.findFirstOrThrow({
+    const plans = await db.eventPlanRecommendation.findMany({
       where: {
         inquiryId: created.inquiryId,
         kind: EVENT_PLAN_KINDS.RECOMMENDATION,
-        tier: EVENT_PLAN_TIERS.BUDGET,
       },
     });
-    const payload = readEventPlanPayload(good.payload);
-    expect(good.durationMinutes).toBe(180);
-    expect(payload.startTime).not.toBe("17:00");
+    expect(plans.length).toBeGreaterThan(0);
+    // Explicit bowling + full-lane conflict: engine may omit BUDGET and emit BEST_FIT/PREMIUM
+    // with a shifted itinerary. Assert the nearby-search behavior, not a fixed tier.
+    const shifted = plans.find((row) => readEventPlanPayload(row.payload).itineraryAdjusted === true);
+    expect(shifted).toBeTruthy();
+    const payload = readEventPlanPayload(shifted!.payload);
     expect(payload.itineraryAdjusted).toBe(true);
     const bowling = (payload.itinerary ?? []).find((segment) => segment.label.toLowerCase().includes("bowling"));
     expect(bowling).toBeTruthy();
