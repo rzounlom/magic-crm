@@ -2,7 +2,8 @@
 
 Shared employee-app UX primitives. Product look-and-feel remains in `.cursor/rules/magiccrm.mdc`.
 
-Future product-wide visual direction (not implemented yet): [`design-north-star.md`](./design-north-star.md).
+Visual direction: [`design-north-star.md`](./design-north-star.md).  
+Token foundation (UX2): `src/styles/tokens.css`, shared palette `src/lib/ui/brand-palette.ts`, primitives in `src/components/ui/` (`Button`, `Card`, `Field`). Full redesign phases: `docs/design/`.
 
 ## Pointer cursor
 
@@ -64,21 +65,19 @@ Demo-critical booking/schedule copy:
 - Submit inquiry → Submitting…
 - Start Working → Starting…
 - Check Availability → Checking…
-- Confirm Payment & Book → Confirming…
+- Confirm booking → Confirming…
 - Expire Hold (legacy rows only) → Expiring…
 - Master Schedule Previous / Today / Next / Go → Loading…; conflicting date and type controls disable until navigation completes. Keep the current grid visible.
 
-## Follow-up: Employee shell polish / sticky authenticated header
+Prefer shared `Button` / `ButtonLink` / `buttonClassName` for new or migrated chrome. Existing call sites may keep local classes until UX3/UX4. `PendingSubmitButton` accepts an optional `variant` to opt into Button styles.
 
-The authenticated employee header currently scrolls away with the page.
+## Employee shell header
 
-Desired later behavior:
+The authenticated employee header is already `sticky` (`EmployeeHeaderBar`). UX3 should address:
 
-- employee header remains accessible while scrolling
-- tenant switcher stays accessible
-- UserButton stays accessible
-- module navigation stays accessible
-- no overlap with page content
-- responsive behavior remains sane
+- reliable `--header-offset` for sticky page action bars (inquiry booking coach)
+- mobile bottom navigation / More menu (IA)
+- location context chip alongside organization switcher
+- no overlap with sticky page actions on small viewports
 
-This is **Employee shell polish / sticky authenticated header**. It is not part of the Live Agent Booking Workspace. Implement it in the employee shell (`EmployeeHeaderBar` / `EmployeeShell`), not as a per-page inquiry hack.
+Do not implement that navigation redesign in UX2.

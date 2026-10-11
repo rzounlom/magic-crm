@@ -1,26 +1,64 @@
+/**
+ * MagicCRM — Effortless Precision design tokens.
+ *
+ * Existing semantic names (--primary, --background, …) are preserved so Tailwind
+ * utilities (bg-primary, text-muted-foreground, …) keep working. Values migrate
+ * from the prior teal system to navy/action-blue.
+ *
+ * Hex sync for Clerk: `src/lib/ui/brand-palette.ts`
+ */
 :root {
-  --background: #eef2f6;
-  --foreground: #142033;
-  --muted: #e4ebf2;
-  --muted-foreground: #5c6b80;
-  --border: #d3dce6;
-  --border-subtle: #e5edf4;
+  /* Brand primitives (reference; prefer semantic tokens below in UI) */
+  --navy-950: #001c64;
+  --brand-900: #003087;
+  --action-600: #0070e0;
+  --action-700: #005bb5;
+  --action-800: #004a94;
+  --canvas-50: #f5f7fb;
+  --ink-900: #0b1220;
+  --ink-600: #5a6578;
+  --line-200: #d5deea;
+  --line-100: #e8eef6;
+
+  /* Semantic — mapped for existing consumers */
+  --background: var(--canvas-50);
+  --foreground: var(--ink-900);
+  --muted: #e8eef5;
+  --muted-foreground: var(--ink-600);
+  --border: var(--line-200);
+  --border-subtle: var(--line-100);
   --surface: #ffffff;
   --surface-elevated: #ffffff;
-  --primary: #1b6b93;
-  --primary-hover: #155776;
-  --primary-foreground: #f4fbff;
+  --primary: var(--action-600);
+  --primary-hover: var(--action-700);
+  --primary-foreground: #ffffff;
   --accent: #b8893a;
+  /* Status — independent from brand action blue */
   --success: #1f7a4d;
   --warning: #9a6708;
   --destructive: #b42318;
-  --info: #1b6b93;
-  --radius-control: 0.75rem;
-  --radius-card: 1rem;
-  --radius-dialog: 1.15rem;
+  --info: var(--action-600);
+  --focus-ring: var(--action-600);
+  --disabled-foreground: #8a94a6;
+  --disabled-background: #e8eef5;
+
+  --radius-control: 0.75rem; /* 12px */
+  --radius-card: 1rem; /* 16px */
+  --radius-dialog: 1.25rem; /* 20px */
   --radius-pill: 999px;
-  --shadow-card: 0 1px 2px rgb(20 32 51 / 0.04), 0 8px 24px rgb(20 32 51 / 0.04);
-  --shadow-overlay: 0 16px 48px rgb(20 32 51 / 0.18);
+  --shadow-card: 0 1px 2px rgb(11 18 32 / 0.04), 0 8px 24px rgb(11 18 32 / 0.05);
+  --shadow-overlay: 0 16px 48px rgb(11 18 32 / 0.18);
   --space-section: 1.5rem;
   --control-height: 2.625rem;
+
+  /* Type scale (Source Sans 3 via --font-source-sans) */
+  --text-caption: 0.75rem;
+  --text-label: 0.8125rem;
+  --text-body: 0.9375rem;
+  --text-body-lg: 1rem;
+  --text-title-sm: 1.125rem;
+  --text-title: 1.375rem;
+  --text-display: 1.75rem;
+  --leading-tight: 1.2;
+  --leading-body: 1.5;
 }

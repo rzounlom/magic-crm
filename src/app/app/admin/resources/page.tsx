@@ -1,12 +1,13 @@
 import Link from "next/link";
 
+import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-
-import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
-import { formatRequirementRule } from "@/server/resources/plan-availability-status";
 import { isAuthorizationError, isResourceError, isTenantContextError } from "@/server/errors";
+import { formatRequirementRule } from "@/server/resources/plan-availability-status";
 import { getRequestContext } from "@/server/get-request-context";
 import { listResourceTypesForAdmin } from "@/server/services/resource-admin-service";
 
@@ -39,13 +40,12 @@ export default async function AdminResourcesPage() {
         eyebrow="Admin"
         title="Resources"
         description="Configure tenant finite inventory. Lane and room counts are not hardcoded. Deactivate instead of deleting types that already have history."
+        actions={
+          <ButtonLink href="/app/admin/resources/new" variant="primary" size="md">
+            Add resource type
+          </ButtonLink>
+        }
       />
-      <Link
-        href="/app/admin/resources/new"
-        className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-      >
-        Add resource type
-      </Link>
       {view.types.length === 0 ? (
         <EmptyState title="No resource types yet." />
       ) : (
@@ -57,10 +57,8 @@ export default async function AdminResourcesPage() {
             const configured = type._count.resources > 0;
             return (
               <li key={type.id}>
-                <Link
-                  href={`/app/admin/resources/${type.id}`}
-                  className="record-row block"
-                >
+                <Link href={`/app/admin/resources/${type.id}`} className="block focus-visible:outline-none">
+                  <Card variant="default" padding="md" className="transition-colors hover:border-primary/40">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-foreground">{type.name}</p>
@@ -98,6 +96,7 @@ export default async function AdminResourcesPage() {
                       {formatRequirementRule(type.requirements[0])}
                     </p>
                   ) : null}
+                  </Card>
                 </Link>
               </li>
             );

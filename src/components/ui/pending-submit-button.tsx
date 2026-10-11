@@ -2,7 +2,9 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 
+import { buttonClassName, type ButtonSize, type ButtonVariant } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { cn } from "@/lib/ui/cn";
 
 const PendingActionContext = createContext(false);
 
@@ -21,11 +23,16 @@ export function PendingSubmitButton({
   children,
   className,
   form,
+  variant,
+  size = "md",
 }: {
   pendingLabel: string;
   children: ReactNode;
   className?: string;
   form?: string;
+  /** When set, applies shared Button visual styles (opt-in for gradual migration). */
+  variant?: ButtonVariant;
+  size?: ButtonSize;
 }) {
   const pending = useContext(PendingActionContext);
 
@@ -34,7 +41,11 @@ export function PendingSubmitButton({
       type="submit"
       form={form}
       disabled={pending}
-      className={`cursor-pointer disabled:cursor-not-allowed ${className ?? ""}`}
+      className={
+        variant
+          ? buttonClassName({ variant, size, className, loading: pending })
+          : cn("cursor-pointer disabled:cursor-not-allowed", className)
+      }
       aria-busy={pending}
     >
       {pending ? <LoadingIndicator label={pendingLabel} /> : children}

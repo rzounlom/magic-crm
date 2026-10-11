@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { readTrustedClerkAuth } from "@/lib/auth/trusted-clerk-auth";
 import { db } from "@/lib/db";
@@ -26,24 +27,30 @@ export default async function EmployeeHomePage() {
 
   return (
     <section className="max-w-xl">
-      <PageHeader eyebrow="MagicCRM" title="Employee application" />
-      <dl className="mt-8 space-y-4 rounded-2xl border border-border bg-surface p-5 text-sm shadow-sm">
-        <div>
-          <dt className="text-foreground/60">Organization</dt>
-          <dd className="mt-1 font-medium text-foreground">{view.organizationName}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Location</dt>
-          <dd className="mt-1 font-medium text-foreground">{view.locationName}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">User</dt>
-          <dd className="mt-1 font-medium text-foreground">{view.userLabel}</dd>
-        </div>
-      </dl>
-        <p className="mt-8 max-w-md text-sm text-foreground/70">
-          Administrators can open Team to invite employees, then Security to manage groups.
-        </p>
+      <PageHeader
+        eyebrow="MagicCRM"
+        title="Employee application"
+        description="Organization and location context for this session. Operational tools are in the module navigation."
+      />
+      <Card className="mt-8" variant="default" padding="md">
+        <dl className="space-y-4 text-sm">
+          <div>
+            <dt className="text-muted-foreground">Organization</dt>
+            <dd className="mt-1 font-medium text-foreground">{view.organizationName}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Location</dt>
+            <dd className="mt-1 font-medium text-foreground">{view.locationName}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">User</dt>
+            <dd className="mt-1 font-medium text-foreground">{view.userLabel}</dd>
+          </div>
+        </dl>
+      </Card>
+      <p className="mt-8 max-w-md text-sm text-muted-foreground">
+        Administrators can open Team to invite employees, then Security to manage groups.
+      </p>
     </section>
   );
 }

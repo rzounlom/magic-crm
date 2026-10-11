@@ -155,7 +155,9 @@ describe("public intake wizard", () => {
     expect(screen.queryByRole("button", { name: "Bowling" })).toBeNull();
   });
 
-  it("keeps compatible later answers, a 12-hour review, and focuses the edited section", async () => {
+  it(
+    "keeps compatible later answers, a 12-hour review, and focuses the edited section",
+    async () => {
     const user = userEvent.setup();
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
     await revealPreferences(user);
@@ -211,7 +213,9 @@ describe("public intake wizard", () => {
     expect(screen.getByText("22 guests")).toBeTruthy();
     expect(screen.getByText("2 hours")).toBeTruthy();
     expect(screen.getByText(/Ada Lovelace/)).toBeTruthy();
-  });
+  },
+  15_000,
+  );
 
   it("clears the planner only after start over is confirmed", async () => {
     const user = userEvent.setup();

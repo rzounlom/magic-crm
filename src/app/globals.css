@@ -7,16 +7,20 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
   --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-destructive: var(--destructive);
+  --color-info: var(--info);
   --font-sans: var(--font-source-sans);
   --radius-control: var(--radius-control);
   --radius-card: var(--radius-card);
+  --radius-dialog: var(--radius-dialog);
 }
 
 html {
@@ -137,33 +141,33 @@ label:has(:disabled) {
   height: 1.65rem;
   place-items: center;
   border-radius: 0.55rem;
-  background: var(--primary);
-  color: var(--primary-foreground);
+  background: var(--navy-950);
+  color: #ffffff;
   font-size: 0.85rem;
   line-height: 1;
 }
 
 .page-eyebrow {
-  font-size: 0.72rem;
+  font-size: var(--text-caption);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--primary);
+  color: var(--brand-900);
 }
 
 .page-title {
   margin-top: 0.35rem;
-  font-size: 1.75rem;
+  font-size: var(--text-display);
   font-weight: 650;
-  line-height: 1.15;
+  line-height: var(--leading-tight);
   color: var(--foreground);
 }
 
 .page-description {
   margin-top: 0.5rem;
   max-width: 40rem;
-  font-size: 0.925rem;
-  line-height: 1.55;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
   color: var(--muted-foreground);
 }
 
@@ -194,7 +198,7 @@ label:has(:disabled) {
 .module-nav:focus-visible,
 .btn:focus-visible,
 .status-badge:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -283,7 +287,7 @@ label:has(:disabled) {
 }
 
 .choice-card:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -336,7 +340,7 @@ select:focus-visible,
 textarea:focus-visible,
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 

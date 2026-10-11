@@ -1,11 +1,12 @@
 import Link from "next/link";
 
-import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
-
 import { LiveAgentInquiryQueue } from "@/components/layout/live-agent-inquiry-queue";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { buttonClassName, ButtonLink } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { db } from "@/lib/db";
+import { cn } from "@/lib/ui/cn";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import {
@@ -62,14 +63,15 @@ export default async function InquiriesPage({
         eyebrow="Sales"
         title="Inquiries"
         actions={
-          <a
+          <ButtonLink
             href={view.publicInquiryHref}
+            variant="secondary"
+            size="md"
             target="_blank"
             rel="noopener noreferrer"
-            className="cursor-pointer rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary/40"
           >
             Open Personal Event Planner
-          </a>
+          </ButtonLink>
         }
       />
       <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
@@ -80,17 +82,27 @@ export default async function InquiriesPage({
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Inquiry views">
         <Link
           href="/app/inquiries"
-          className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
-            !archived ? "bg-primary text-primary-foreground" : "bg-surface text-foreground shadow-sm"
-          }`}
+          className={cn(
+            buttonClassName({
+              variant: !archived ? "primary" : "secondary",
+              size: "sm",
+              className: "rounded-full",
+            }),
+          )}
+          aria-current={!archived ? "page" : undefined}
         >
           Active
         </Link>
         <Link
           href="/app/inquiries?view=archived"
-          className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
-            archived ? "bg-primary text-primary-foreground" : "bg-surface text-foreground shadow-sm"
-          }`}
+          className={cn(
+            buttonClassName({
+              variant: archived ? "primary" : "secondary",
+              size: "sm",
+              className: "rounded-full",
+            }),
+          )}
+          aria-current={archived ? "page" : undefined}
         >
           Archived
         </Link>
