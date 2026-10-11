@@ -624,3 +624,150 @@ dialog::backdrop {
   }
 }
 
+/* —— AUTH1 authentication transition —— */
+.auth-workspace-transition,
+.auth-sign-in-shell {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2rem 1.25rem;
+  color: #ffffff;
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 20%, rgb(0 112 224 / 0.45), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgb(0 48 135 / 0.55), transparent 50%),
+    linear-gradient(160deg, #00143f 0%, var(--navy-950) 40%, var(--brand-900) 100%);
+}
+
+.auth-workspace-transition-glow,
+.auth-sign-in-shell-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -20% -10% auto auto;
+  width: min(42rem, 80vw);
+  height: min(42rem, 80vw);
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(0 112 224 / 0.35), transparent 68%);
+  filter: blur(8px);
+}
+
+.auth-workspace-transition-panel,
+.auth-sign-in-shell-panel {
+  position: relative;
+  z-index: 1;
+  width: min(28rem, 100%);
+  text-align: center;
+}
+
+.auth-sign-in-shell-panel {
+  text-align: left;
+}
+
+.auth-workspace-transition-brand,
+.auth-sign-in-brand {
+  justify-content: center;
+  color: #ffffff;
+  margin-inline: auto;
+}
+
+.auth-sign-in-brand {
+  justify-content: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.auth-workspace-transition-brand .brand-mark-mark,
+.auth-sign-in-brand .brand-mark-mark {
+  background: color-mix(in srgb, #ffffff 18%, var(--navy-950));
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+
+.auth-workspace-transition-title {
+  margin-top: 1.75rem;
+  font-size: clamp(1.5rem, 2.5vw, 1.85rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.auth-workspace-transition-detail {
+  margin-top: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: rgb(255 255 255 / 0.82);
+}
+
+.auth-workspace-transition-progress {
+  margin: 2rem auto 0;
+  width: min(14rem, 70%);
+  height: 0.28rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.16);
+}
+
+.auth-workspace-transition-progress-bar {
+  display: block;
+  height: 100%;
+  width: 42%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.35), #ffffff, rgb(255 255 255 / 0.35));
+  animation: auth-progress-slide 1.4s ease-in-out infinite;
+}
+
+.auth-workspace-transition-recovery {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgb(255 255 255 / 0.18);
+}
+
+.auth-sign-in-eyebrow {
+  margin-bottom: 1rem;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.72);
+}
+
+.auth-sign-in-shell-panel .cl-rootBox,
+.auth-sign-in-shell-panel .cl-cardBox {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 28rem;
+}
+
+.auth-sign-in-clerk-pending {
+  min-height: 12rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+@keyframes auth-progress-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(280%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-workspace-transition-progress-bar {
+    width: 100%;
+    animation: none;
+    opacity: 0.85;
+  }
+
+  .auth-workspace-transition .marketing-reveal {
+    animation: none;
+  }
+}
+
+

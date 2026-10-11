@@ -10,9 +10,9 @@ import {
   filterEmployeeNavItems,
   type EmployeeNavItemId,
 } from "@/lib/ui/employee-navigation";
+import { markAuthTiming } from "@/lib/auth/auth-timing";
 import { isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
-import { ensureProvisionedTenant } from "@/server/services/provision-organization";
 
 type EmployeeHomeView =
   | { kind: "status"; title: string; body: string }
@@ -149,7 +149,7 @@ async function loadEmployeeHomeView(): Promise<EmployeeHomeView> {
   }
 
   try {
-    await ensureProvisionedTenant(clerkAuth, db);
+    // Layout already provisioned the tenant for this request (React cache).
     const ctx = await getRequestContext({ auth: clerkAuth });
     const chrome = await loadEmployeeShellChrome();
     const profile = await db.userProfile.findFirst({
@@ -163,6 +163,7 @@ async function loadEmployeeHomeView(): Promise<EmployeeHomeView> {
       },
     });
     const userLabel = profile ? formatUserDisplayLabel(profile) : "Signed in";
+    markAuthTiming("app_ready", { route: "/app" });
 
     return {
       kind: "ready",

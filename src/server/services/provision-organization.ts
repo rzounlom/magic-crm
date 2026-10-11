@@ -3,6 +3,7 @@ import type { TrustedClerkAuth } from "@/lib/auth/trusted-clerk-auth";
 import type { UserIdentitySnapshot } from "@/lib/identity/user-display";
 import { TenantContextError } from "@/server/errors";
 import { logTenantEvent } from "@/server/logging";
+import { DEFAULT_SECURITY_GROUPS } from "@/server/authorization/default-security-groups";
 import {
   ensureDefaultSecurityGroups,
   isClerkOrganizationAdminRole,
@@ -105,12 +106,21 @@ export async function provisionOrganization(
     });
   }
 
-  const existingLocation = await database.location.findFirst({
-    where: {
-      organizationId: organization.id,
-      slug: PRIMARY_LOCATION_SLUG,
-    },
-  });
+  // Parallelize location + profile lookups for the common already-provisioned path.
+  const [existingLocation, existingProfile] = await Promise.all([
+    database.location.findFirst({
+      where: {
+        organizationId: organization.id,
+        slug: PRIMARY_LOCATION_SLUG,
+      },
+    }),
+    database.userProfile.findFirst({
+      where: {
+        organizationId: organization.id,
+        clerkUserId: input.clerkUserId,
+      },
+    }),
+  ]);
 
   const location =
     existingLocation ??
@@ -118,13 +128,6 @@ export async function provisionOrganization(
       organizationId: organization.id,
       timezone: organization.timezone,
     }));
-
-  const existingProfile = await database.userProfile.findFirst({
-    where: {
-      organizationId: organization.id,
-      clerkUserId: input.clerkUserId,
-    },
-  });
 
   const userProfile =
     existingProfile ??
@@ -144,10 +147,38 @@ export async function provisionOrganization(
     });
   }
 
+  // Hot path: established tenants already have system security groups. Skip the
+  // per-request permission-definition sync + group upsert loop (AUTH1 latency).
+  // New orgs / incomplete tenants still run the full ensure.
+  const organizationCreated = !existing;
+  const locationCreated = !existingLocation;
+  const userProfileCreated = !existingProfile;
+  if (!organizationCreated && !locationCreated && !userProfileCreated) {
+    const systemGroupCount = await database.securityGroup.count({
+      where: {
+        organizationId: organization.id,
+        systemKey: { not: null },
+      },
+    });
+    if (systemGroupCount >= DEFAULT_SECURITY_GROUPS.length) {
+      if (input.identity) {
+        await persistUserIdentitySnapshot(database, input.clerkUserId, input.identity);
+      }
+      return {
+        organizationId: organization.id,
+        locationId: location.id,
+        userProfileId: userProfile.id,
+        organizationCreated,
+        locationCreated,
+        userProfileCreated,
+      };
+    }
+  }
+
   await ensureDefaultSecurityGroups(database, {
     organizationId: organization.id,
     userProfileId: userProfile.id,
-    organizationCreated: !existing,
+    organizationCreated,
     isClerkOrganizationAdmin: input.isClerkOrganizationAdmin ?? false,
   });
 
@@ -159,9 +190,9 @@ export async function provisionOrganization(
     organizationId: organization.id,
     locationId: location.id,
     userProfileId: userProfile.id,
-    organizationCreated: !existing,
-    locationCreated: !existingLocation,
-    userProfileCreated: !existingProfile,
+    organizationCreated,
+    locationCreated,
+    userProfileCreated,
   };
 }
 

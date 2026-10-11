@@ -18,7 +18,8 @@ export PLAYWRIGHT_PUBLIC_ORG_SLUG=magiccrm-test-center-b
 
 ```bash
 corepack pnpm test:e2e          # all projects (staff skips without auth)
-corepack pnpm test:e2e:public   # public intake + journey + token + axe + marketing home
+corepack pnpm test:e2e:public   # public intake + journey + token + axe + marketing home + AUTH1
+corepack pnpm test:e2e:auth1    # authentication transition smoke (signed-out; auth scenarios skip)
 corepack pnpm test:e2e:staff    # authenticated staff scenarios (skip without auth)
 corepack pnpm test:e2e:report   # open HTML report
 ```

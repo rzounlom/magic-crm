@@ -40,22 +40,34 @@ export const loadEmployeeShellChrome = cache(async (): Promise<EmployeeShellChro
       locationName = location?.name ?? null;
     }
 
-    for (const item of EMPLOYEE_NAV_ITEMS) {
+    const permissionChecks = EMPLOYEE_NAV_ITEMS.flatMap((item) => {
       if (item.id === "overview" || !item.permission) {
-        continue;
+        return [];
       }
-      if (await hasPermission(ctx, item.permission, db)) {
-        visibleNavIds.push(item.id);
-      }
-    }
+      const permission = item.permission;
+      return [
+        hasPermission(ctx, permission, db).then((allowed) => (allowed ? item.id : null)),
+      ];
+    });
 
-    try {
-      publicInquiryHref = await getCurrentTenantPublicInquiryPath(ctx, db);
-    } catch (error) {
-      if (!(isAuthorizationError(error) || isTenantContextError(error) || isInquiryError(error))) {
-        throw error;
+    const [permissionResults, inquiryPathResult] = await Promise.all([
+      Promise.all(permissionChecks),
+      getCurrentTenantPublicInquiryPath(ctx, db)
+        .then((href) => ({ ok: true as const, href }))
+        .catch((error: unknown) => {
+          if (isAuthorizationError(error) || isTenantContextError(error) || isInquiryError(error)) {
+            return { ok: false as const, href: null };
+          }
+          throw error;
+        }),
+    ]);
+
+    for (const id of permissionResults) {
+      if (id) {
+        visibleNavIds.push(id);
       }
     }
+    publicInquiryHref = inquiryPathResult.href;
   } catch (error) {
     if (!(isAuthorizationError(error) || isTenantContextError(error))) {
       throw error;
