@@ -13,6 +13,7 @@ describe("PublicStatusPanel", () => {
       />,
     );
     expect(html).toContain("data-public-status");
+    expect(html).toContain("<h1");
     expect(html).toContain("This event plan link is unavailable");
     expect(html).toContain("Contact the venue");
     expect(html).not.toContain("organizationId");

@@ -109,3 +109,7 @@ Admin Catalog (Sales knowledge, Resources) and Settings (Team, Security groups) 
 - Permission matrix may scroll inside `[data-permission-matrix]`; do not change permission keys or defaults
 
 Do not invent POS, payments, tax, hours, or promotions settings screens. See `docs/design/UX6_CATALOG_AND_SETTINGS_EXPERIENCE.md`.
+
+## Browser verification (UX7)
+
+Public smoke lives under `tests/e2e/` (Playwright). Prefer `PLAYWRIGHT_PUBLIC_ORG_SLUG` + `pnpm test:e2e:public`. Staff journeys require a local `PLAYWRIGHT_STORAGE_STATE` — never commit it. Contrast math for UX2 tokens is covered by `tests/unit/brand-contrast.test.ts`. See `docs/design/UX7_BROWSER_ACCESSIBILITY_RELEASE_READINESS.md`.
