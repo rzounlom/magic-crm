@@ -50,22 +50,56 @@ describe("live agent booking guide", () => {
     });
   });
 
-  it("moves to confirm payment after availability is checked", () => {
+  it("surfaces optional HOLD before confirm when finite resources need reservation", () => {
     expect(
       liveAgentBookingGuide({
         booked: false,
         assigned: true,
         hasHold: false,
+        needsHold: true,
+        canPlaceHold: true,
+        confirmBlockers: [],
+        availabilityChecked: true,
+      }),
+    ).toMatchObject({
+      currentStepId: "hold",
+      nextTitle: "Place an optional HOLD, or confirm",
+    });
+  });
+
+  it("moves to confirm after HOLD is placed", () => {
+    expect(
+      liveAgentBookingGuide({
+        booked: false,
+        assigned: true,
+        hasHold: true,
+        needsHold: false,
         confirmBlockers: [],
         availabilityChecked: true,
       }),
     ).toMatchObject({
       currentStepId: "confirm",
-      nextTitle: "Confirm payment and booking",
+      nextTitle: "Resources held — confirm booking",
     });
   });
 
-  it("flags a payment received availability conflict", () => {
+  it("moves to confirm booking after availability when HOLD is not needed", () => {
+    expect(
+      liveAgentBookingGuide({
+        booked: false,
+        assigned: true,
+        hasHold: false,
+        needsHold: false,
+        confirmBlockers: [],
+        availabilityChecked: true,
+      }),
+    ).toMatchObject({
+      currentStepId: "confirm",
+      nextTitle: "Confirm booking",
+    });
+  });
+
+  it("flags a pending confirmation availability conflict", () => {
     expect(
       liveAgentBookingGuide({
         booked: false,
@@ -77,7 +111,7 @@ describe("live agent booking guide", () => {
       }),
     ).toMatchObject({
       currentStepId: "confirm",
-      nextTitle: "Payment received — availability conflict",
+      nextTitle: "Pending confirmation — availability conflict",
     });
   });
 
@@ -96,11 +130,12 @@ describe("live agent booking guide", () => {
     });
   });
 
-  it("labels the new workflow without Place Hold", () => {
+  it("labels the staff journey with optional HOLD and payment-neutral confirm", () => {
     expect(liveAgentBookingSteps().map((row) => row.label)).toEqual([
       "Review",
       "Check Availability",
-      "Confirm Payment & Book",
+      "HOLD (optional)",
+      "Confirm booking",
     ]);
   });
 

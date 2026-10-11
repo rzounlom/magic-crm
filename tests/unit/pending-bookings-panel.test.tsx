@@ -36,7 +36,7 @@ describe("pending bookings panel", () => {
     expect(html).toContain("Pending bookings");
     expect(html).toContain("Apex Robotics");
     expect(html).toContain("Recommended");
-    expect(html).toContain("Pending payment");
+    expect(html).toContain("Pending confirmation");
     expect(html).toContain("do not occupy lanes");
     expect(html).toContain("/app/bookings/bk_pending");
     expect(html).toContain("/app/inquiries/inq_1");

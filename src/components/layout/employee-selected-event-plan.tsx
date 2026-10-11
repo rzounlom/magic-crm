@@ -188,9 +188,9 @@ export function EmployeeSelectedEventPlan({
       ) : null}
       <p className="mt-4 text-xs text-foreground/55">
         {salesStage === "DEPOSIT_PENDING"
-          ? "The customer requested this booking. Inventory is not reserved until payment is received and the booking is confirmed."
+          ? "The customer requested this booking. Inventory is not reserved until the booking is confirmed."
           : salesStage === "HOLD_PLACED"
-          ? "A legacy 24-hour hold is on the exact resources below. New bookings do not place holds."
+          ? "A 24-hour proposal HOLD is on the exact resources below. Confirmation may convert matching HOLD rows or allocate fresh occupancy."
           : "The original customer selection is kept for reference. Inventory is reserved only after a booking is confirmed."}
       </p>
       {salesStage === "HOLD_PLACED" && holdExpiresAt && timeZone ? (

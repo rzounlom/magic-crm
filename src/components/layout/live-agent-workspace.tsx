@@ -224,6 +224,29 @@ export function LiveAgentWorkspace({
     : "/app/schedule";
   const conversation = inquiry.conversations[0];
   const mailto = `mailto:${inquiry.customerEmail}`;
+  // HOLD coverage mismatches are advisory: confirmation rechecks availability, converts
+  // matching HOLDs, and releases stale HOLDs in the same transaction (see confirmPendingBooking).
+  const holdCoverageWarnings =
+    !booked && workingPlan && resourceCheck && classified.legacyHolds.length > 0
+      ? holdCoverageErrors(
+          workingPayload,
+          resourceCheck.requirements,
+          classified.legacyHolds.map((row) => ({
+            id: row.id,
+            status: row.status ?? "HOLD",
+            expiresAt: row.expiresAt,
+            releasedAt: row.releasedAt ?? null,
+            startMinute: row.startMinute,
+            endMinute: row.endMinute,
+            resource: {
+              resourceType: {
+                id: row.resource.resourceType.id ?? "",
+                name: row.resource.resourceType.name,
+              },
+            },
+          })),
+        )
+      : [];
   const confirmBlockers = booked
     ? []
     : [
@@ -263,22 +286,6 @@ export function LiveAgentWorkspace({
             resourceCheck?.requirements.some((row) => row.quantity != null && row.quantity > 0),
           ),
         }),
-        ...(workingPlan && resourceCheck && classified.legacyHolds.length > 0
-          ? holdCoverageErrors(workingPayload, resourceCheck.requirements, classified.legacyHolds.map((row) => ({
-              id: row.id,
-              status: row.status ?? "HOLD",
-              expiresAt: row.expiresAt,
-              releasedAt: row.releasedAt ?? null,
-              startMinute: row.startMinute,
-              endMinute: row.endMinute,
-              resource: {
-                resourceType: {
-                  id: row.resource.resourceType.id ?? "",
-                  name: row.resource.resourceType.name,
-                },
-              },
-            })))
-          : []),
         // Surface hours/resource readiness in the sticky guide when confirm is not yet allowed.
         ...(confirmationReadiness &&
         !confirmationReadiness.confirmAttemptAllowed &&
@@ -358,6 +365,15 @@ export function LiveAgentWorkspace({
           confirmationReadiness ? confirmationReadiness.confirmAttemptAllowed : true
         }
       />
+      {holdCoverageWarnings.length > 0 ? (
+        <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+          <p className="font-medium">Current HOLD no longer matches the working plan</p>
+          <p className="mt-1 text-foreground/80">
+            {holdCoverageWarnings[0]} Update or release the HOLD first, or confirm — confirmation
+            rechecks availability and releases unmatched HOLD rows.
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(16rem,0.7fr)]">
         <div className="space-y-6">

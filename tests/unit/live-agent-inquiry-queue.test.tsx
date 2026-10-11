@@ -208,7 +208,7 @@ describe("live agent inquiry queue", () => {
     expect(html).toContain("Apex Robotics");
   });
 
-  it("keeps Book Now requests in Pending payment instead of Ready for Live Agent", () => {
+  it("keeps Book Now requests in Pending confirmation instead of Ready for Live Agent", () => {
     const html = renderToStaticMarkup(
       <LiveAgentInquiryQueue
         timeZone="UTC"
@@ -250,7 +250,7 @@ describe("live agent inquiry queue", () => {
       />,
     );
 
-    expect(html).toContain("Pending payment");
+    expect(html).toContain("Pending confirmation");
     expect(html).toContain("Pending Party");
     expect(html).not.toContain("Ready for Live Agent");
   });

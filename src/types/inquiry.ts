@@ -56,7 +56,8 @@ export const INQUIRY_SALES_STAGE_LABELS: Record<InquirySalesStage, string> = {
   [INQUIRY_SALES_STAGES.PROPOSAL_READY]: "Proposal ready",
   [INQUIRY_SALES_STAGES.READY_TO_BOOK]: "Ready for live agent",
   [INQUIRY_SALES_STAGES.HOLD_PLACED]: "Legacy hold",
-  [INQUIRY_SALES_STAGES.DEPOSIT_PENDING]: "Pending payment",
+  /** DB value remains DEPOSIT_PENDING (legacy); staff copy is payment-neutral. */
+  [INQUIRY_SALES_STAGES.DEPOSIT_PENDING]: "Pending confirmation",
   [INQUIRY_SALES_STAGES.BOOKED]: "Confirmed booking",
   [INQUIRY_SALES_STAGES.CLOSED]: "Closed",
   [INQUIRY_SALES_STAGES.LOST]: "Lost",

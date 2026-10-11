@@ -71,7 +71,7 @@ export function ScheduleCreateEventDialog({
         chooseStartTime: true,
       };
   const subtitle = showingReview
-    ? "Review the plan, save a pending booking, or confirm payment. You stay on this schedule."
+    ? "Review the plan, save a pending booking, or confirm the booking. You stay on this schedule."
     : (slotHint ??
       "Date and location come from this schedule. Choose a start time and the customer details. Nothing is reserved yet.");
 

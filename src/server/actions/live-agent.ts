@@ -298,7 +298,7 @@ export async function savePendingBookingAction(formData: FormData): Promise<Secu
     return {
       ok: true,
       title: "Pending booking saved",
-      message: `${pending.booking.bookingNumber} is saved as pending payment. Inventory is not reserved.`,
+      message: `${pending.booking.bookingNumber} is saved as pending confirmation. Inventory is not reserved until confirmed.`,
     };
   } catch (error) {
     unstable_rethrow(error);

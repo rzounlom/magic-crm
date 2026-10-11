@@ -51,7 +51,7 @@ describe("inquiry status display", () => {
         salesStage: "DEPOSIT_PENDING",
         bookingStatus: "PENDING_PAYMENT",
       }),
-    ).toBe("Pending payment");
+    ).toBe("Pending confirmation");
   });
 
   it("labels a converted inquiry with the booking reference", () => {

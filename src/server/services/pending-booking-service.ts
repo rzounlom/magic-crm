@@ -764,6 +764,19 @@ export async function confirmPendingBooking(
           );
         }
         if (converted.count === 0 && requirements.some((row) => row.quantity != null && row.quantity > 0)) {
+          // HOLD rows raced away; release any leftover active HOLDs then allocate fresh BOOKED.
+          if (activeHoldIds.length > 0) {
+            await tx.resourceReservation.updateMany({
+              where: {
+                id: { in: activeHoldIds },
+                organizationId: input.organizationId,
+                inquiryId: inquiry.id,
+                status: RESOURCE_RESERVATION_STATUSES.HOLD,
+                releasedAt: null,
+              },
+              data: { releasedAt: now },
+            });
+          }
           await insertBookedReservations(tx as BookingDb, {
             organizationId: input.organizationId,
             locationId: inquiry.locationId,
@@ -777,6 +790,19 @@ export async function confirmPendingBooking(
           });
         }
       } else if (requirements.some((row) => row.quantity != null && row.quantity > 0)) {
+        // Stale or mismatched HOLDs must not remain as orphan occupancy beside fresh BOOKED rows.
+        if (activeHoldIds.length > 0) {
+          await tx.resourceReservation.updateMany({
+            where: {
+              id: { in: activeHoldIds },
+              organizationId: input.organizationId,
+              inquiryId: inquiry.id,
+              status: RESOURCE_RESERVATION_STATUSES.HOLD,
+              releasedAt: null,
+            },
+            data: { releasedAt: now },
+          });
+        }
         await insertBookedReservations(tx as BookingDb, {
           organizationId: input.organizationId,
           locationId: inquiry.locationId,

@@ -50,15 +50,16 @@ describe("live agent booking actions", () => {
 
     expect(html).toContain("Set up inventory");
     expect(html).toContain("/app/admin/resources");
-    expect(html).toContain("Confirm Payment &amp; Book");
+    expect(html).toContain("Confirm booking");
     expect(html).toContain("Set up rooms and lanes");
     expect(html).toContain("Check Availability");
+    expect(html).toContain("HOLD (optional)");
     expect(html).not.toContain("Place Hold");
     expect(html).not.toContain("Place Resource Hold");
     expect(html).not.toContain("Mark Ready to Finalize");
   });
 
-  it("enables Confirm Payment & Book without a hold", () => {
+  it("enables Confirm booking without a hold", () => {
     const html = renderToStaticMarkup(
       <LiveAgentBookingActions
         inquiryId="inq_1"
@@ -74,15 +75,39 @@ describe("live agent booking actions", () => {
         needsInventory={false}
         confirmBlockers={[]}
         availabilityChecked
+        confirmAttemptAllowed
       />,
     );
 
-    expect(html).toContain("Confirm payment and booking");
-    expect(html).toContain("Confirm Payment &amp; Book");
-    expect(html).toContain("received outside MagicCRM");
+    expect(html).toContain("Confirm booking");
+    expect(html).toContain("does not process payment");
     expect(html).toContain('type="submit"');
     expect(html).not.toContain("Place Hold");
-    expect(html).not.toContain("Resources are currently held");
+  });
+
+  it("cues optional HOLD readiness when finite resources are not yet held", () => {
+    const html = renderToStaticMarkup(
+      <LiveAgentBookingActions
+        inquiryId="inq_1"
+        expectedUpdatedAt="2026-09-09T12:00:00.000Z"
+        booked={false}
+        canManage
+        canHold
+        canConfirm
+        assigned
+        needsHold
+        hasHold={false}
+        canPlaceHold
+        needsInventory={false}
+        confirmBlockers={[]}
+        availabilityChecked
+        confirmAttemptAllowed
+      />,
+    );
+
+    expect(html).toContain("Place an optional HOLD, or confirm");
+    expect(html).toContain("#hold-readiness");
+    expect(html).toContain("Confirm booking");
   });
 
   it("uses pending labels that disable duplicate booking mutations", () => {
@@ -98,7 +123,7 @@ describe("live agent booking actions", () => {
     expect(source).not.toContain('pendingLabel="Placing hold…"');
   });
 
-  it("lets a payment-conflict pending booking be saved, retried, and cancelled", () => {
+  it("lets a conflict pending booking be saved, retried, and cancelled", () => {
     const html = renderToStaticMarkup(
       <LiveAgentBookingActions
         inquiryId="inq_1"
@@ -119,12 +144,13 @@ describe("live agent booking actions", () => {
         paymentConflict
         availabilityChecked
         canCancel
+        confirmAttemptAllowed
       />,
     );
 
-    expect(html).toContain("Payment received — availability conflict");
+    expect(html).toContain("Pending confirmation — availability conflict");
     expect(html).toContain("Save Pending Booking");
-    expect(html).toContain("Confirm Payment &amp; Book");
+    expect(html).toContain("Confirm booking");
     expect(html).toContain("Cancel this booking request?");
     expect(html).toContain("Cancel Booking");
   });
@@ -153,7 +179,8 @@ describe("live agent booking actions", () => {
     expect(html).toContain("Cancel this booking?");
     expect(html).toContain("Cancel Booking");
     expect(html).toContain("This event is booked");
+    expect(html).toContain("Master Schedule");
     expect(html).not.toContain("Save Pending Booking");
-    expect(html).not.toContain("Confirm payment and booking?");
+    expect(html).not.toContain("Confirm this booking?");
   });
 });

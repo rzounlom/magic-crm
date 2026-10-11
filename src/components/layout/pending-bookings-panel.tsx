@@ -64,7 +64,7 @@ export function PendingBookingsPanel({
                   <span className="text-xs font-medium tracking-wide text-foreground/60">
                     {booking.paymentConfirmedExternallyAt && booking.availabilityConflictAt
                       ? "Payment received — availability conflict"
-                      : "Pending payment"}
+                      : "Pending confirmation"}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-foreground/55">{booking.bookingNumber}</p>

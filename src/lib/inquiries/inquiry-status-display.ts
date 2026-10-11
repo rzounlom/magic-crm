@@ -56,7 +56,7 @@ export function formatInquiryQueueLabel(inquiry: {
     inquiry.bookingStatus === "PENDING_PAYMENT" ||
     inquiry.salesStage === "DEPOSIT_PENDING"
   ) {
-    return "Pending payment";
+    return "Pending confirmation";
   }
   if (isCustomerSelectedPlanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)) {
     return CUSTOMER_SELECTED_PLAN_BANNER;

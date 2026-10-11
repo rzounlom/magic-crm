@@ -71,25 +71,25 @@ export function LiveAgentBookingActions({
   availabilityChecked?: boolean;
   cancelled?: boolean;
   canCancel?: boolean;
-  /** Active matching hours exception id from server readiness (optional). */
+  /** Active matching CONFIRM_BOOKING hours exception id from server readiness (optional). */
   hoursExceptionId?: string | null;
   /** Server-derived: confirmation may be attempted (still revalidated transactionally). */
   confirmAttemptAllowed?: boolean;
 }) {
   void canHold;
-  void needsHold;
-  void hasHold;
-  void canPlaceHold;
   const guide = liveAgentBookingGuide({
     booked,
     assigned,
+    needsHold,
+    hasHold,
+    canPlaceHold,
     needsInventory,
     confirmBlockers,
     pendingPayment,
     paymentConflict,
     availabilityChecked,
-    hasHold: false,
     cancelled,
+    confirmAttemptAllowed,
   });
   const steps = liveAgentBookingSteps();
   const canSubmitConfirm =
@@ -104,6 +104,13 @@ export function LiveAgentBookingActions({
   const showSetupInventory = canManage && !booked && !cancelled && assigned && needsInventory;
   const showWorkingActions = !booked && !cancelled;
   const showCancel = canCancel && (pendingPayment || booked);
+  const showHoldCue =
+    showWorkingActions &&
+    assigned &&
+    !needsInventory &&
+    availabilityChecked &&
+    needsHold &&
+    !hasHold;
 
   return (
     <section
@@ -111,21 +118,21 @@ export function LiveAgentBookingActions({
       className="sticky top-20 z-20 mt-6 rounded-2xl border border-primary/30 bg-surface px-4 py-4 shadow-sm"
     >
       {showWorkingActions ? (
-      <ol className="flex flex-wrap gap-2 text-xs font-medium">
-        {steps.map((step, index) => {
-          const current = step.id === guide.currentStepId;
-          return (
-            <li key={step.id} className={current ? "text-primary" : "text-foreground/45"}>
-              {index + 1}. {step.label}
-              {index < steps.length - 1 ? (
-                <span className="ml-2 text-foreground/30" aria-hidden>
-                  →
-                </span>
-              ) : null}
-            </li>
-          );
-        })}
-      </ol>
+        <ol className="flex flex-wrap gap-2 text-xs font-medium">
+          {steps.map((step, index) => {
+            const current = step.id === guide.currentStepId;
+            return (
+              <li key={step.id} className={current ? "text-primary" : "text-foreground/45"}>
+                {index + 1}. {step.label}
+                {index < steps.length - 1 ? (
+                  <span className="ml-2 text-foreground/30" aria-hidden>
+                    →
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
       ) : null}
       <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
@@ -133,13 +140,29 @@ export function LiveAgentBookingActions({
           <p className="mt-1 text-sm text-foreground/70">{guide.nextDetail}</p>
           {paymentConflict ? (
             <p className="mt-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
-              Payment received — availability conflict. This booking stays pending.
+              Pending confirmation — availability conflict. This booking stays pending until resources
+              can be allocated.
             </p>
+          ) : null}
+          {showHoldCue ? (
+            <p className="mt-2 text-sm">
+              <a href="#hold-readiness" className="text-primary">
+                Review HOLD readiness
+              </a>
+              {canPlaceHold ? " to place an optional 24-hour HOLD, or confirm below when ready." : "."}
+            </p>
+          ) : null}
+          {hasHold && showWorkingActions ? (
+            <p className="mt-2 text-sm text-foreground/70">Resources are currently held for this inquiry.</p>
           ) : null}
           {booked && bookingHref && bookingNumber ? (
             <p className="mt-2 text-sm">
               <Link href={bookingHref} className="text-primary">
                 Open {bookingNumber}
+              </Link>
+              {" · "}
+              <Link href="/app/schedule" className="text-primary">
+                Master Schedule
               </Link>
             </p>
           ) : cancelled && bookingHref && bookingNumber ? (
@@ -202,10 +225,10 @@ export function LiveAgentBookingActions({
                   blockingLabel="Confirming the booking…"
                   notice={{ successTitle: "Booking confirmed", errorTitle: "Unable to confirm booking" }}
                   confirm={{
-                    title: "Confirm payment and booking?",
+                    title: "Confirm this booking?",
                     description:
-                      "Use this only after the required payment has been received outside MagicCRM. MagicCRM will recheck availability and allocate the required resources. This will create a confirmed booking on the Master Schedule.",
-                    confirmLabel: "Confirm Payment & Book",
+                      "MagicCRM will recheck availability and allocate the required resources on the Master Schedule. MagicCRM does not collect payment — complete any venue payment process outside MagicCRM before confirming if your policy requires it.",
+                    confirmLabel: "Confirm booking",
                     confirmPendingLabel: "Confirming…",
                   }}
                 >
@@ -215,11 +238,11 @@ export function LiveAgentBookingActions({
                     <input type="hidden" name="hoursExceptionId" value={hoursExceptionId} />
                   ) : null}
                   <PendingSubmitButton pendingLabel="Confirming…" className={PRIMARY_BUTTON}>
-                    Confirm Payment & Book
+                    Confirm booking
                   </PendingSubmitButton>
                 </ScheduleBookingActionForm>
               ) : (
-                <DisabledStatusButton>Confirm Payment & Book</DisabledStatusButton>
+                <DisabledStatusButton>Confirm booking</DisabledStatusButton>
               )
             ) : null}
             {showCancel ? (

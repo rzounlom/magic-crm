@@ -47,7 +47,7 @@ export default async function BookingsPage({
       <PageHeader
         eyebrow="Operations"
         title="Bookings"
-        description="Confirmed events occupy the Master Schedule. Pending payment bookings are listed separately and do not block inventory. Payment collection is not part of this list."
+        description="Confirmed events occupy the Master Schedule. Pending confirmation bookings are listed separately and do not block inventory. MagicCRM does not collect payment in this list."
       />
       <BookingList bookings={view.bookings} filter={view.filter} search={view.search} />
     </section>

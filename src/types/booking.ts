@@ -8,7 +8,8 @@ export const BOOKING_STATUSES = {
 export type BookingStatus = (typeof BOOKING_STATUSES)[keyof typeof BOOKING_STATUSES];
 
 export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
-  [BOOKING_STATUSES.PENDING_PAYMENT]: "Pending payment",
+  /** DB value remains PENDING_PAYMENT (legacy); staff copy is payment-neutral. */
+  [BOOKING_STATUSES.PENDING_PAYMENT]: "Pending confirmation",
   [BOOKING_STATUSES.CONFIRMED]: "Confirmed",
   [BOOKING_STATUSES.CANCELLED]: "Cancelled",
   [BOOKING_STATUSES.COMPLETED]: "Completed",

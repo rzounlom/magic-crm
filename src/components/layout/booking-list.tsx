@@ -34,7 +34,7 @@ type BookingListRow = {
 };
 
 const FILTER_LABELS: Record<BookingListFilter, string> = {
-  [BOOKING_LIST_FILTERS.PENDING]: "Pending payment",
+  [BOOKING_LIST_FILTERS.PENDING]: "Pending confirmation",
   [BOOKING_LIST_FILTERS.UPCOMING]: "Upcoming",
   [BOOKING_LIST_FILTERS.TODAY]: "Today",
   [BOOKING_LIST_FILTERS.WEEK]: "This Week",

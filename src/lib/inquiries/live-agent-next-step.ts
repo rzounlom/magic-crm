@@ -1,7 +1,8 @@
 export const LIVE_AGENT_BOOKING_STEPS = [
   { id: "review", label: "Review" },
   { id: "availability", label: "Check Availability" },
-  { id: "confirm", label: "Confirm Payment & Book" },
+  { id: "hold", label: "HOLD (optional)" },
+  { id: "confirm", label: "Confirm booking" },
 ] as const;
 
 export type LiveAgentBookingStepId = (typeof LIVE_AGENT_BOOKING_STEPS)[number]["id"];
@@ -58,6 +59,8 @@ export function liveAgentBookingGuide(input: {
   paymentConflict?: boolean;
   availabilityChecked?: boolean;
   cancelled?: boolean;
+  /** Server-derived: confirmation may be attempted (still revalidated transactionally). */
+  confirmAttemptAllowed?: boolean;
 }): {
   currentStepId: LiveAgentBookingStepId;
   nextTitle: string;
@@ -75,7 +78,7 @@ export function liveAgentBookingGuide(input: {
     return {
       currentStepId: "confirm",
       nextTitle: "This event is booked",
-      nextDetail: "Open the booking for the confirmed record.",
+      nextDetail: "Open the booking for the confirmed record, or view it on the Master Schedule.",
     };
   }
   if (!input.assigned) {
@@ -95,9 +98,9 @@ export function liveAgentBookingGuide(input: {
   if (input.paymentConflict) {
     return {
       currentStepId: "confirm",
-      nextTitle: "Payment received — availability conflict",
+      nextTitle: "Pending confirmation — availability conflict",
       nextDetail:
-        "Availability changed before this booking could be confirmed. The booking stays pending. Recheck times, then try Confirm Payment & Book again. Payment recovery is not handled in this phase.",
+        "Availability changed before this booking could be confirmed. The booking stays pending. Recheck times, then try Confirm booking again. MagicCRM does not collect or recover payment.",
     };
   }
   if (input.confirmBlockers.length > 0) {
@@ -115,10 +118,29 @@ export function liveAgentBookingGuide(input: {
         "Check whether the required resources are free. Availability is not a guarantee — it will be rechecked when the booking is confirmed.",
     };
   }
+  if (input.needsHold && !input.hasHold) {
+    return {
+      currentStepId: "hold",
+      nextTitle: "Place an optional HOLD, or confirm",
+      nextDetail: input.canPlaceHold
+        ? "A temporary proposal HOLD can reserve rooms and lanes for 24 hours. Confirmation does not require a HOLD — it rechecks availability and allocates resources when you confirm."
+        : "Review HOLD readiness below if you need a temporary reservation. You can also confirm without a HOLD when confirmation readiness allows it.",
+    };
+  }
+  if (input.hasHold) {
+    return {
+      currentStepId: "confirm",
+      nextTitle: "Resources held — confirm booking",
+      nextDetail:
+        "An active HOLD is in place. Confirm when ready; matching HOLD rows convert to booked occupancy. MagicCRM does not process payment.",
+    };
+  }
   return {
     currentStepId: "confirm",
-    nextTitle: input.pendingPayment ? "Confirm payment and booking" : "Confirm payment and booking",
+    nextTitle: input.pendingPayment ? "Confirm booking" : "Confirm booking",
     nextDetail:
-      "Use this only after the required payment has been received outside MagicCRM. Availability will be rechecked when the booking is confirmed.",
+      input.confirmAttemptAllowed === false
+        ? "Review confirmation readiness below for blocking reasons or an authorized hours exception before confirming."
+        : "Confirm when ready. Availability will be rechecked and resources allocated. MagicCRM does not process payment.",
   };
 }

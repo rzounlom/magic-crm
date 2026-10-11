@@ -247,10 +247,12 @@ export const BOOKING_ERROR_CODES = [
 export type BookingErrorCode = (typeof BOOKING_ERROR_CODES)[number];
 
 const BOOKING_USER_MESSAGES: Record<BookingErrorCode, string> = {
-  NOT_READY_TO_FINALIZE: "Mark this inquiry Ready to Finalize before confirming a booking.",
-  HOLD_MISSING: "Place a resource hold for every required finite resource before confirming.",
-  HOLD_EXPIRED: "A resource hold has expired. Recheck availability and place a new hold.",
-  HOLD_MISMATCH: "The current resource holds do not match the working event plan. Update the hold first.",
+  NOT_READY_TO_FINALIZE:
+    "Finish the required booking details (plan, date, time, guests, and pricing) before confirming.",
+  HOLD_MISSING: "Place a resource hold for every required finite resource before marking ready to finalize.",
+  HOLD_EXPIRED: "A resource hold has expired. Recheck availability and place a new hold if needed.",
+  HOLD_MISMATCH:
+    "The current resource holds do not match the working event plan. Update or release the hold, then confirm.",
   ALREADY_BOOKED: "This inquiry has already been converted to a booking.",
   BOOKING_NOT_FOUND: "That booking could not be found.",
   BOOKING_NOT_CANCELLABLE: "This booking cannot be cancelled.",

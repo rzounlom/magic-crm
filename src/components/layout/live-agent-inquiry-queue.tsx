@@ -115,7 +115,7 @@ export function LiveAgentInquiryQueue({
     <div className="mt-8 space-y-10">
       {pendingPayment.length > 0 ? (
         <section>
-          <h2 className="text-lg font-semibold">Pending payment</h2>
+          <h2 className="text-lg font-semibold">Pending confirmation</h2>
           <p className="mt-1 text-sm text-foreground/70">
             Customers who clicked Book Now. These requests do not occupy the Master Schedule until confirmed.
           </p>

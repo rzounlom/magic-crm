@@ -54,12 +54,14 @@ export async function confirmBookingAction(formData: FormData): Promise<Security
         ok: true,
         title: "Already booked",
         message: `This inquiry has already been converted to Booking ${result.booking.bookingNumber}.`,
+        redirectTo: `/app/bookings/${result.booking.id}`,
       };
     }
     return {
       ok: true,
       title: "Booking confirmed",
       message: `${result.booking.bookingNumber} is confirmed. Required resources are booked on the Master Schedule.`,
+      redirectTo: `/app/bookings/${result.booking.id}`,
     };
   } catch (error) {
     unstable_rethrow(error);
@@ -111,7 +113,7 @@ export async function createEmployeeManualBookingAction(formData: FormData): Pro
     return {
       ok: true,
       title: "Booking started",
-      message: "Review the generated plan, check availability, then save pending or confirm payment.",
+      message: "Review the generated plan, check availability, then save a pending booking or confirm.",
       redirectTo: `/app/inquiries/${created.inquiryId}`,
     };
   } catch (error) {
