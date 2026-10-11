@@ -103,6 +103,21 @@ export PLAYWRIGHT_STAFF_MUTATIONS=1
 corepack pnpm exec playwright test --grep '@staff-hold|@staff-confirm' --headed --project=chromium-desktop
 ```
 
+### R5 isolated TEST venue + lifecycle (DEV only)
+
+```bash
+# Synthetic hours + numbered inventory (refuses non-DEV hosts / MAGICCRM_DATABASE_ROLE=test)
+corepack pnpm test:e2e:staff:r5-venue
+# Disposable HOLD + confirm inquiry fixtures (unique event dates)
+corepack pnpm test:e2e:staff:r5-fixture
+# Opt-in successful lifecycle mutations
+export PLAYWRIGHT_STORAGE_STATE="$PWD/playwright/.auth/staff.json"
+export PLAYWRIGHT_STAFF_MUTATIONS=1
+corepack pnpm test:e2e:staff:lifecycle
+# Post-fix nav screenshots (390 / 768 / 1024 / 1440)
+corepack pnpm test:e2e:staff:r5-nav-evidence
+```
+
 Do not enable mutations against production tenants.
 
 ### Session hygiene

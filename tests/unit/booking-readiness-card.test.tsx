@@ -1,6 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  unstable_rethrow: (error: unknown) => {
+    throw error;
+  },
+}));
+
 vi.mock("@/server/actions/resource-schedule", () => ({
   placeInquiryHoldAction: vi.fn(),
 }));
@@ -176,6 +183,49 @@ describe("Hold and confirmation readiness panels", () => {
     );
     expect(expired).toContain("previous HOLD has expired");
     expect(expired).toContain("Expired");
+  });
+
+  it("collapses HOLD hours exception forms until expanded (no active exception)", () => {
+    const html = renderToStaticMarkup(
+      <HoldReadinessPanel
+        canHold
+        readiness={{
+          inquiryId: "inq_1",
+          state: HOLD_READINESS_STATES.BLOCKED_OUTSIDE_HOURS,
+          headline: "Outside hours",
+          detail: "Needs exception.",
+          locationId: "loc_1",
+          locationName: "Main",
+          timeZone: "America/Chicago",
+          eventDate: "2026-10-15",
+          startTime: "18:00",
+          endTime: "21:00",
+          startMinute: 18 * 60,
+          endMinute: 21 * 60,
+          operatingHoursStatus: "OUTSIDE_HOURS",
+          blockers: [
+            {
+              code: "OUTSIDE_HOURS",
+              message: "Outside verified hours",
+              overridableWithHoursException: true,
+            },
+          ],
+          activeException: null,
+          activeHold: null,
+          resourceAssignments: [],
+          canAuthorizeHoursException: true,
+          canRevokeHoursException: false,
+          canHoldWithCurrentException: false,
+          holdAttemptAllowed: false,
+        }}
+      />,
+    );
+    expect(html).toContain("<details");
+    expect(html).toContain("Exception path");
+    expect(html).toContain("Authorize HOLD hours exception");
+    expect(html).toContain("Blocking reasons");
+    expect(html).toContain("Outside verified hours");
+    expect(html).not.toMatch(/<details[^>]*\sopen[\s>]/);
   });
 
   it("keeps confirmation panel payment-neutral and purpose-labeled", () => {

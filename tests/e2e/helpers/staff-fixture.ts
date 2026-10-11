@@ -48,3 +48,52 @@ export function resolveStaffInquiryFixture(filePath?: string): StaffFixtureResol
 export function staffMutationsEnabled(): boolean {
   return process.env.PLAYWRIGHT_STAFF_MUTATIONS === "1";
 }
+
+export const DEFAULT_R5_LIFECYCLE_FIXTURE = path.join("playwright", ".fixtures", "r5-lifecycle.json");
+
+export type R5LifecycleFixture = {
+  createdAt: string;
+  databaseHost: string;
+  organizationSlug: string;
+  hold: {
+    inquiryId: string;
+    inquiryPath: string;
+    selectedPlanId?: string;
+    email: string;
+    preferredDate?: string;
+  };
+  confirm: {
+    inquiryId: string;
+    inquiryPath: string;
+    selectedPlanId?: string;
+    email: string;
+    preferredDate?: string;
+  };
+  note?: string;
+};
+
+export type R5LifecycleResolution =
+  | { ok: true; fixture: R5LifecycleFixture }
+  | { ok: false; reason: string };
+
+export function resolveR5LifecycleFixture(filePath?: string): R5LifecycleResolution {
+  const resolvedPath =
+    filePath ?? process.env.PLAYWRIGHT_R5_LIFECYCLE_FIXTURE ?? DEFAULT_R5_LIFECYCLE_FIXTURE;
+
+  if (!fs.existsSync(resolvedPath)) {
+    return {
+      ok: false,
+      reason: `R5 lifecycle fixture missing at ${resolvedPath}. Run: corepack pnpm test:e2e:staff:r5-fixture`,
+    };
+  }
+
+  try {
+    const fixture = JSON.parse(fs.readFileSync(resolvedPath, "utf8")) as R5LifecycleFixture;
+    if (!fixture.hold?.inquiryPath || !fixture.confirm?.inquiryPath || !fixture.organizationSlug) {
+      return { ok: false, reason: `R5 lifecycle fixture at ${resolvedPath} is incomplete.` };
+    }
+    return { ok: true, fixture };
+  } catch {
+    return { ok: false, reason: `R5 lifecycle fixture at ${resolvedPath} is not valid JSON.` };
+  }
+}

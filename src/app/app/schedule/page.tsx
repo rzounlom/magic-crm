@@ -37,6 +37,7 @@ type View =
       pendingBookings: Awaited<ReturnType<typeof listPendingBookingsForSchedule>>;
       canCreate: boolean;
       canRelease: boolean;
+      canManageInventory: boolean;
       timeZone: string;
       bookingCatalog: {
         locations: Array<{ id: string; name: string }>;
@@ -50,11 +51,13 @@ async function loadView(search: { date?: string; focus?: string }): Promise<View
     const ctx = await getRequestContext();
     const timeZone = await getCurrentTenantTimezone(ctx, db);
     const date = /^\d{4}-\d{2}-\d{2}$/.test(search.date ?? "") ? search.date! : calendarDateInTimeZone(new Date(), timeZone);
-    const [board, canCreateEvent, canManageInquiries, canRelease, pendingBookings] = await Promise.all([
+    const [board, canCreateEvent, canManageInquiries, canRelease, canManageInventory, pendingBookings] =
+      await Promise.all([
       getMasterScheduleBoard(ctx, db, { date }),
       hasPermission(ctx, PERMISSIONS.EVENTS_CREATE, db),
       hasPermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_EDIT, db),
+      hasPermission(ctx, PERMISSIONS.INVENTORY_MANAGE, db),
       listPendingBookingsForSchedule(ctx, db, date),
     ]);
     const canCreate = canCreateEvent && canManageInquiries;
@@ -90,6 +93,7 @@ async function loadView(search: { date?: string; focus?: string }): Promise<View
       pendingBookings,
       canCreate,
       canRelease,
+      canManageInventory,
       timeZone,
       bookingCatalog,
     };
@@ -136,11 +140,21 @@ export default async function MasterSchedulePage({
         focus={view.focus}
       />
       {groups.length === 0 ? (
-        <p className="mt-8 text-sm text-foreground/70">
+        <p
+          className="mt-8 text-sm text-foreground/70"
+          {...(!view.canManageInventory ? { "data-permission-guidance": "admin-required" } : {})}
+        >
           No resources are configured for this location.{" "}
-          <Link href="/app/admin/resources" className="cursor-pointer text-primary">
-            Configure resources
-          </Link>
+          {view.canManageInventory ? (
+            <Link href="/app/admin/resources" className="cursor-pointer text-primary">
+              Configure resources
+            </Link>
+          ) : (
+            <span>
+              Ask an authorized administrator to configure numbered inventory in Resources before the
+              schedule can show lanes and rooms.
+            </span>
+          )}
         </p>
       ) : (
         <MasterScheduleBoard

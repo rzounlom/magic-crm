@@ -53,7 +53,13 @@ export default async function SecurityGroupsPage() {
   const view = await loadSecurityGroupsView();
 
   if (view.kind === "status") {
-    return <SecurityStatusPanel title={view.title} body={view.body} />;
+    return (
+      <SecurityStatusPanel
+        title={view.title}
+        body={view.body}
+        guidance="Security groups and elevated permissions are managed by an authorized administrator. Navigation stays aligned with server authorization — this screen does not unlock admin controls."
+      />
+    );
   }
 
   return (

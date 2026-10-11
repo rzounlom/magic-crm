@@ -46,7 +46,9 @@ const blockedInventory = {
 
 describe("live agent booking actions", () => {
   it("keeps confirm at the top while inventory is missing and does not require Place Hold", () => {
-    const html = renderToStaticMarkup(<LiveAgentBookingActions {...blockedInventory} />);
+    const html = renderToStaticMarkup(
+      <LiveAgentBookingActions {...blockedInventory} canManageInventory />,
+    );
 
     expect(html).toContain("Set up inventory");
     expect(html).toContain("/app/admin/resources");
@@ -57,6 +59,16 @@ describe("live agent booking actions", () => {
     expect(html).not.toContain("Place Hold");
     expect(html).not.toContain("Place Resource Hold");
     expect(html).not.toContain("Mark Ready to Finalize");
+  });
+
+  it("asks for an administrator when inventory is missing but the role cannot manage Resources", () => {
+    const html = renderToStaticMarkup(
+      <LiveAgentBookingActions {...blockedInventory} canManageInventory={false} />,
+    );
+    expect(html).toContain("authorized administrator");
+    expect(html).toContain('data-permission-guidance');
+    expect(html).not.toContain("Set up inventory");
+    expect(html).not.toContain('href="/app/admin/resources"');
   });
 
   it("enables Confirm booking without a hold", () => {

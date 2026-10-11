@@ -1,0 +1,77 @@
+{
+  "createdAt": "2026-10-11T22:36:44.973Z",
+  "inventory": [
+    {
+      "file": "shell-390w.png",
+      "route": "/app",
+      "name": "390",
+      "width": 390,
+      "height": 844,
+      "mobileDisplay": "grid",
+      "desktopPresent": true,
+      "actionBarDisplay": null,
+      "overflow": 0
+    },
+    {
+      "file": "inquiry-390w.png",
+      "route": "/app/inquiries/kpwy9vkrrzwto3pbxsa6bigk",
+      "name": "390",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "shell-768w.png",
+      "route": "/app",
+      "name": "768",
+      "width": 768,
+      "height": 1024,
+      "mobileDisplay": "grid",
+      "desktopPresent": true,
+      "actionBarDisplay": null,
+      "overflow": 0
+    },
+    {
+      "file": "inquiry-768w.png",
+      "route": "/app/inquiries/kpwy9vkrrzwto3pbxsa6bigk",
+      "name": "768",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "shell-1024w.png",
+      "route": "/app",
+      "name": "1024",
+      "width": 1024,
+      "height": 768,
+      "mobileDisplay": "none",
+      "desktopPresent": true,
+      "actionBarDisplay": null,
+      "overflow": 0
+    },
+    {
+      "file": "inquiry-1024w.png",
+      "route": "/app/inquiries/kpwy9vkrrzwto3pbxsa6bigk",
+      "name": "1024",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "shell-1440w.png",
+      "route": "/app",
+      "name": "1440",
+      "width": 1440,
+      "height": 900,
+      "mobileDisplay": "none",
+      "desktopPresent": true,
+      "actionBarDisplay": null,
+      "overflow": 0
+    },
+    {
+      "file": "inquiry-1440w.png",
+      "route": "/app/inquiries/kpwy9vkrrzwto3pbxsa6bigk",
+      "name": "1440",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

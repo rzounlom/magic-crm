@@ -32,7 +32,13 @@ async function loadView(): Promise<View> {
 export default async function AdminResourcesPage() {
   const view = await loadView();
   if (view.kind === "status") {
-    return <SecurityStatusPanel title={view.title} body={view.body} />;
+    return (
+      <SecurityStatusPanel
+        title={view.title}
+        body={view.body}
+        guidance="Numbered inventory and resource types must be configured by an authorized administrator. Booking readiness will stay blocked until inventory is set up for this location."
+      />
+    );
   }
 
   return (

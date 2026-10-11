@@ -50,6 +50,7 @@ export function LiveAgentBookingActions({
   canPlaceHold,
   needsInventory,
   confirmBlockers,
+  canManageInventory = false,
   resourcesHref = "/app/admin/resources",
   pendingPayment = false,
   paymentConflict = false,
@@ -73,6 +74,8 @@ export function LiveAgentBookingActions({
   canPlaceHold: boolean;
   needsInventory: boolean;
   confirmBlockers: string[];
+  /** When false, inventory setup guidance asks for an administrator instead of linking to Resources. */
+  canManageInventory?: boolean;
   resourcesHref?: string;
   pendingPayment?: boolean;
   paymentConflict?: boolean;
@@ -138,12 +141,22 @@ export function LiveAgentBookingActions({
   ) : null;
 
   const inventoryAction = showSetupInventory ? (
-    <Link
-      href={resourcesHref}
-      className={buttonClassName({ variant: "primary", size: "md", className: "w-full text-center" })}
-    >
-      Set up inventory
-    </Link>
+    canManageInventory ? (
+      <Link
+        href={resourcesHref}
+        className={buttonClassName({ variant: "primary", size: "md", className: "w-full text-center" })}
+      >
+        Set up inventory
+      </Link>
+    ) : (
+      <p
+        className="rounded-[var(--radius-control)] border border-border bg-muted/40 px-3 py-2 text-sm text-foreground/80"
+        data-permission-guidance
+      >
+        Numbered inventory must be configured by an authorized administrator before availability and
+        booking can proceed. Your role cannot change Resources.
+      </p>
+    )
   ) : null;
 
   const savePendingAction = showSavePending ? (

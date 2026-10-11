@@ -42,7 +42,13 @@ export default async function TeamEmployeesPage() {
   const view = await loadTeamEmployeesView();
 
   if (view.kind === "status") {
-    return <SecurityStatusPanel title={view.title} body={view.body} />;
+    return (
+      <SecurityStatusPanel
+        title={view.title}
+        body={view.body}
+        guidance="Team membership and invitations are managed by an authorized administrator. Your current role can continue booking work within the permissions you already have."
+      />
+    );
   }
 
   return (

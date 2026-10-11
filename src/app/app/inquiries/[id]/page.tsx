@@ -53,6 +53,7 @@ type InquiryDetailView =
       kind: "ready";
       inquiry: NonNullable<Awaited<ReturnType<typeof getInquiryDetail>>>;
       canManage: boolean;
+      canManageInventory: boolean;
       canHold: boolean;
       canRelease: boolean;
       canConfirm: boolean;
@@ -70,9 +71,11 @@ type InquiryDetailView =
 async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
   try {
     const ctx = await getRequestContext();
-    const [inquiry, canManage, canHold, canRelease, canConfirm, canCancel, timeZone] = await Promise.all([
+    const [inquiry, canManage, canManageInventory, canHold, canRelease, canConfirm, canCancel, timeZone] =
+      await Promise.all([
       getInquiryDetail(ctx, db, id),
       hasPermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, db),
+      hasPermission(ctx, PERMISSIONS.INVENTORY_MANAGE, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CREATE, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_EDIT, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CONFIRM, db),
@@ -104,6 +107,7 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       kind: "ready",
       inquiry,
       canManage,
+      canManageInventory,
       canHold,
       canRelease,
       canConfirm,
@@ -142,6 +146,7 @@ export default async function InquiryDetailPage({
   const {
     inquiry,
     canManage,
+    canManageInventory,
     canHold,
     canRelease,
     canConfirm,
@@ -187,6 +192,7 @@ export default async function InquiryDetailPage({
           activity={activity}
           currentUserId={currentUserId}
           canManage={canManage}
+          canManageInventory={canManageInventory}
           canHold={canHold}
           canRelease={canRelease}
           canConfirm={canConfirm}

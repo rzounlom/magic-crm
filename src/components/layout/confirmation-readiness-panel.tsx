@@ -8,6 +8,7 @@ import {
   AuthorizeHoursExceptionForm,
   RevokeHoursExceptionForm,
 } from "@/components/layout/confirmation-hours-exception-form";
+import { HoursExceptionSection } from "@/components/layout/hours-exception-section";
 import { formatEventLocalDate, formatEventLocalTime } from "@/lib/inquiries/tenant-datetime";
 import { BOOKING_STATUS_LABELS } from "@/types/booking";
 import type { ConfirmationReadinessResult } from "@/types/confirmation-readiness";
@@ -51,18 +52,12 @@ export function ConfirmationReadinessPanel({
       }
     >
       {overridableHours || readiness.activeException ? (
-        <div className="mt-4 rounded-[var(--radius-control)] border border-border bg-background/70 px-3 py-3">
-          <h3 className="text-sm font-semibold">Authorized confirmation hours exception</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Exceptions are one-time, event-scoped, and audited. A CONFIRM_BOOKING exception never
-            authorizes HOLD placement. They never bypass resource conflicts, capacity limits, invalid
-            local times, or tenant isolation.
-          </p>
-          <p className="mt-2 text-sm">
-            <span className="text-muted-foreground">Exact window: </span>
-            <span className="font-medium">{eventSummary}</span>
-          </p>
-
+        <HoursExceptionSection
+          title="Authorized confirmation hours exception"
+          purposeNote="Exceptions are one-time, event-scoped, and audited. A CONFIRM_BOOKING exception never authorizes HOLD placement. They never bypass resource conflicts, capacity limits, invalid local times, or tenant isolation."
+          eventSummary={eventSummary}
+          defaultOpen={Boolean(readiness.activeException)}
+        >
           {readiness.activeException ? (
             <div className="mt-3 space-y-1 text-sm">
               <p>
@@ -93,7 +88,7 @@ export function ConfirmationReadinessPanel({
               You need permission to confirm events before authorizing an hours exception.
             </p>
           ) : null}
-        </div>
+        </HoursExceptionSection>
       ) : null}
 
       {nonOverridable.some((row) => row.code === "RESOURCE_CONFLICT") ? (

@@ -37,6 +37,12 @@ test.describe("Scenario E — Guarded failure", { tag: "@staff-guard" }, () => {
       (await confirmBooking.count()) > 0 &&
       (await confirmBooking.first().isEnabled().catch(() => false));
 
+    // Purpose separation must always hold, whether actions are enabled or blocked.
+    await expect(holdCard.getByText(/Purpose:\s*PLACE_HOLD/i)).toBeVisible();
+    await expect(confirmCard.getByText(/Purpose:\s*CONFIRM_BOOKING/i)).toBeVisible();
+    await expect(holdCard.getByText(/Purpose:\s*CONFIRM_BOOKING/i)).toHaveCount(0);
+    await expect(confirmCard.getByText(/Purpose:\s*PLACE_HOLD/i)).toHaveCount(0);
+
     // Prefer asserting a genuine blocked path. If both actions are enabled, the fixture
     // is ready — still verify readiness copy is present and no payment claims appear.
     if (!holdEnabled || !confirmEnabled) {
@@ -51,7 +57,7 @@ test.describe("Scenario E — Guarded failure", { tag: "@staff-guard" }, () => {
       test.info().annotations.push({
         type: "note",
         description:
-          "Fixture currently enables both HOLD and confirm — guarded-failure assertion limited to payment-neutral copy.",
+          "Fixture currently enables both HOLD and confirm — guarded-failure assertion limited to purpose separation + payment-neutral copy.",
       });
       const body = await page.locator("body").innerText();
       expect(body.toLowerCase()).not.toMatch(/payment received|charged successfully/);

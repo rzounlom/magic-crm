@@ -134,6 +134,7 @@ export function LiveAgentWorkspace({
   activity,
   currentUserId,
   canManage,
+  canManageInventory = false,
   canHold,
   canRelease,
   canConfirm = false,
@@ -170,6 +171,7 @@ export function LiveAgentWorkspace({
   }>;
   currentUserId: string;
   canManage: boolean;
+  canManageInventory?: boolean;
   canHold: boolean;
   canRelease: boolean;
   canConfirm?: boolean;
@@ -353,6 +355,7 @@ export function LiveAgentWorkspace({
         hasHold={classified.legacyHolds.length > 0}
         canPlaceHold={holdGuide.canPlaceHold}
         needsInventory={holdGuide.needsInventory}
+        canManageInventory={canManageInventory}
         confirmBlockers={confirmBlockers}
         pendingPayment={pendingPayment}
         paymentConflict={paymentConflict}
