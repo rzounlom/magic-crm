@@ -67,6 +67,29 @@ describe("public customer shell", () => {
     expect(html).not.toContain("Employee sign in");
     expect(html).toContain("Personal Event Planner");
     expect(html).toContain("MagicCRM");
+    expect(html).toContain("data-public-shell");
+  });
+
+  it("keeps MagicCRM platform brand and optional host name separate", () => {
+    const html = renderToStaticMarkup(
+      <PublicCustomerShell brand="MagicCRM" organizationName={DISPLAY_NAME}>
+        <p>Content</p>
+      </PublicCustomerShell>,
+    );
+    expect(html).toContain("MagicCRM");
+    expect(html).toContain("data-public-host");
+    expect(html).toContain(DISPLAY_NAME);
+    expect(html).not.toContain(GENERATED_SLUG);
+  });
+
+  it("falls back to MagicCRM branding without a host name", () => {
+    const html = renderToStaticMarkup(
+      <PublicCustomerShell>
+        <p>Content</p>
+      </PublicCustomerShell>,
+    );
+    expect(html).toContain("MagicCRM");
+    expect(html).not.toContain("data-public-host");
   });
 
   it("does not show Employee sign in on the public event plan route", () => {
@@ -143,9 +166,11 @@ describe("public customer shell", () => {
     const planPage = readFileSync(path.join(process.cwd(), "src/app/plan/[token]/page.tsx"), "utf8");
     const appLayout = readFileSync(path.join(process.cwd(), "src/app/app/layout.tsx"), "utf8");
 
-    expect(inquireLayout).toContain("PublicCustomerShell");
+    expect(inquirePage).toContain("PublicCustomerShell");
+    expect(planPage).toContain("PublicCustomerShell");
     expect(conversationLayout).toContain("PublicCustomerShell");
-    expect(planLayout).toContain("PublicCustomerShell");
+    expect(inquireLayout).not.toContain("SiteShell");
+    expect(planLayout).not.toContain("SiteShell");
     expect(inquirePage).not.toContain("SiteShell");
     expect(inquirePage).not.toContain("Employee sign in");
     expect(conversationPage).toContain("redirect(`/plan/${token}`)");

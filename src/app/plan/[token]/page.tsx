@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { PublicCustomerShell } from "@/components/layout/public-customer-shell";
 import { PublicEventPlanView } from "@/components/layout/public-event-plan-view";
 import { db } from "@/lib/db";
 import { customerFacingOrganizationName } from "@/lib/inquiries/organization-display-name";
@@ -28,17 +29,21 @@ export default async function PublicEventPlanPage({
     notFound();
   }
 
+  const organizationName = customerFacingOrganizationName(view.organizationName);
+
   return (
-    <PublicEventPlanView
-      organizationName={customerFacingOrganizationName(view.organizationName)}
-      currency={view.currency}
-      inquiry={view.inquiry}
-      plans={view.plans}
-      token={token}
-      booking={view.booking}
-      pendingBooking={view.pendingBooking}
-      hold={view.hold}
-      timeZone={view.timeZone}
-    />
+    <PublicCustomerShell contained organizationName={organizationName}>
+      <PublicEventPlanView
+        organizationName={organizationName}
+        currency={view.currency}
+        inquiry={view.inquiry}
+        plans={view.plans}
+        token={token}
+        booking={view.booking}
+        pendingBooking={view.pendingBooking}
+        hold={view.hold}
+        timeZone={view.timeZone}
+      />
+    </PublicCustomerShell>
   );
 }

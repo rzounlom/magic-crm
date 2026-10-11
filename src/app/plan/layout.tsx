@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
-import { PublicCustomerShell } from "@/components/layout/public-customer-shell";
-
+/** Shell is composed per-page so trusted organization names can reach PublicCustomerShell. */
 export default function PublicPlanLayout({ children }: { children: ReactNode }) {
-  return <PublicCustomerShell contained>{children}</PublicCustomerShell>;
+  return children;
 }

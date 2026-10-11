@@ -103,13 +103,18 @@ export function PublicConversationForm({
 
   return (
     <PendingActionProvider pending={pending}>
-      <form className="mt-6 space-y-3" aria-busy={pending} onSubmit={onSubmit}>
+      <form
+        className="sticky bottom-0 space-y-3 border-t border-border-subtle bg-background/95 pt-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/90"
+        aria-busy={pending}
+        data-conversation-composer
+        onSubmit={onSubmit}
+      >
         {!aiHandlingEnabled ? (
-          <p className="text-sm text-foreground/70">{PUBLIC_CONVERSATION_HANDOFF_COPY}</p>
+          <p className="text-sm text-muted-foreground">{PUBLIC_CONVERSATION_HANDOFF_COPY}</p>
         ) : null}
         <input type="hidden" name="token" value={token} />
         <label className="block text-sm">
-          <span className="text-foreground/70">Your message</span>
+          <span className="font-semibold text-foreground">Your message</span>
           <textarea
             name="message"
             required
@@ -118,15 +123,21 @@ export function PublicConversationForm({
             disabled={pending}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 disabled:cursor-not-allowed"
+            aria-describedby={pending ? "conversation-send-status" : undefined}
+            className="mt-1.5 w-full min-h-24 rounded-[var(--radius-control)] border border-border bg-surface px-3 py-3 text-base shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] disabled:cursor-not-allowed sm:text-sm"
           />
         </label>
         <PendingSubmitButton
           pendingLabel={PUBLIC_CONVERSATION_SENDING_COPY}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[var(--radius-control)] bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] disabled:cursor-not-allowed sm:w-auto"
         >
           Send message
         </PendingSubmitButton>
+        {pending ? (
+          <p id="conversation-send-status" className="sr-only" role="status">
+            {PUBLIC_CONVERSATION_SENDING_COPY}
+          </p>
+        ) : null}
         <div ref={endRef} />
       </form>
     </PendingActionProvider>

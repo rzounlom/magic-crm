@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { PublicCustomerShell } from "@/components/layout/public-customer-shell";
 import { PublicIntakeWizard } from "@/components/layout/public-intake-wizard";
 import { PublicInquiryView } from "@/components/layout/public-inquiry-view";
 import { db } from "@/lib/db";
@@ -32,16 +33,18 @@ export default async function PublicInquirePage({
   const organizationName = customerFacingOrganizationName(catalog.organization.name);
 
   return (
-    <PublicInquiryView organizationName={organizationName}>
-      <PublicIntakeWizard
-        organizationSlug={catalog.organization.slug}
-        attractions={catalog.attractions.map((item) => ({
-          id: item.id,
-          name: item.name,
-          description: item.shortDescription,
-        }))}
-        attractionRequiredGuestMixes={catalog.attractionRequiredGuestMixes}
-      />
-    </PublicInquiryView>
+    <PublicCustomerShell contained organizationName={organizationName}>
+      <PublicInquiryView organizationName={organizationName}>
+        <PublicIntakeWizard
+          organizationSlug={catalog.organization.slug}
+          attractions={catalog.attractions.map((item) => ({
+            id: item.id,
+            name: item.name,
+            description: item.shortDescription,
+          }))}
+          attractionRequiredGuestMixes={catalog.attractionRequiredGuestMixes}
+        />
+      </PublicInquiryView>
+    </PublicCustomerShell>
   );
 }

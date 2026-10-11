@@ -64,10 +64,13 @@ const STAGE_RANK: Record<PlannerStage, number> = {
 };
 
 const INPUT_CLASS =
-  "mt-2 w-full rounded-xl border border-border bg-surface px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed";
+  "mt-2 w-full min-h-11 rounded-[var(--radius-control)] border border-border bg-surface px-3 py-3 text-base sm:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] disabled:cursor-not-allowed";
 
 const PRIMARY_BUTTON =
-  "cursor-pointer rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed";
+  "inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[var(--radius-control)] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] disabled:cursor-not-allowed sm:w-auto";
+
+const SECONDARY_BUTTON =
+  "inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[var(--radius-control)] border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] disabled:cursor-not-allowed";
 
 function laterStage(current: PlannerStage, next: PlannerStage): PlannerStage {
   return STAGE_RANK[next] > STAGE_RANK[current] ? next : current;
@@ -111,6 +114,7 @@ export function PublicIntakeWizard({
   const pendingRef = useRef(false);
   const revealCause = useRef<"choice" | "type">("choice");
   const previousStage = useRef<PlannerStage>("event");
+  const pendingFocus = useRef<{ stage: PlannerStage; scroll?: boolean } | null>(null);
   const [state, dispatch] = useReducer(reducePlanner, undefined, initialPlannerState);
   const [unlocked, setUnlocked] = useState<PlannerStage>("event");
   const [reviewing, setReviewing] = useState(false);
@@ -120,6 +124,7 @@ export function PublicIntakeWizard({
   const [pending, setPending] = useState(false);
   const [submissionId, setSubmissionId] = useState(() => crypto.randomUUID());
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
+  const [focusTick, setFocusTick] = useState(0);
   const attractionNames = useMemo(
     () => new Map(attractions.map((item) => [item.id, item.name])),
     [attractions],
@@ -132,6 +137,11 @@ export function PublicIntakeWizard({
   const startTime = to24HourTime(answers.startHour, answers.startMinute, answers.startPeriod) ?? "";
   const furthest = deriveFurthest(unlocked, { groupReady, preferencesReady, whenReady });
   const currentStage: PlannerStage = reviewing ? "review" : furthest;
+
+  function requestPlannerFocus(stage: PlannerStage, options?: { scroll?: boolean }) {
+    pendingFocus.current = { stage, scroll: options?.scroll };
+    setFocusTick((tick) => tick + 1);
+  }
 
   useEffect(() => {
     if (previousStage.current === furthest) {
@@ -148,6 +158,16 @@ export function PublicIntakeWizard({
       block: "nearest",
     });
   }, [furthest]);
+
+  // Focus after commit so review (and remounted edit sections) exist in the DOM.
+  useEffect(() => {
+    const request = pendingFocus.current;
+    if (!request) {
+      return;
+    }
+    pendingFocus.current = null;
+    focusPlannerSection(request.stage, { scroll: request.scroll });
+  }, [focusTick, reviewing]);
 
   function edit(patch: Partial<PlannerAnswers>, cause: "choice" | "type" = "choice") {
     revealCause.current = cause;
@@ -179,9 +199,7 @@ export function PublicIntakeWizard({
     if (attractionSelectionRequired()) {
       setAttractionError(true);
       setReviewing(false);
-      requestAnimationFrame(() => {
-        document.getElementById(sectionId("experience"))?.focus();
-      });
+      requestPlannerFocus("experience");
       return;
     }
     const fields = contactFieldErrors(answers);
@@ -193,19 +211,12 @@ export function PublicIntakeWizard({
     setContactErrors({});
     setReviewing(true);
     revealCause.current = "choice";
-    requestAnimationFrame(() => {
-      document.getElementById(sectionId("review"))?.focus();
-    });
+    requestPlannerFocus("review");
   }
 
   function editSection(step: PlannerStep) {
     setReviewing(false);
-    const stage = stageForStep(step);
-    requestAnimationFrame(() => {
-      const node = document.getElementById(sectionId(stage));
-      node?.focus();
-      node?.scrollIntoView?.({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "nearest" });
-    });
+    requestPlannerFocus(stageForStep(step), { scroll: true });
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -289,11 +300,11 @@ export function PublicIntakeWizard({
     <>
       <PendingActionProvider pending={pending}>
         <div data-planner-shell aria-busy={pending} inert={pending ? true : undefined} className="flex min-h-0 flex-1 flex-col">
-          <div className="flex shrink-0 items-start justify-between gap-4">
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <PlannerProgress current={currentStage} />
             <button
               type="button"
-              className="cursor-pointer rounded-xl border border-destructive/40 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed"
+              className={`${SECONDARY_BUTTON} shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 sm:min-h-10`}
               onClick={() => setConfirmStartOver(true)}
               disabled={pending}
             >
@@ -711,9 +722,31 @@ function isTypingField(node: Element | null): boolean {
   return node instanceof HTMLInputElement && node.type !== "date" && node.type !== "checkbox" && node.type !== "radio";
 }
 
+/** Synchronous focus — callers must run after the target section is committed. */
+function focusPlannerSection(stage: PlannerStage, options?: { scroll?: boolean }) {
+  const node = document.getElementById(sectionId(stage));
+  if (!(node instanceof HTMLElement)) {
+    return;
+  }
+  if (!node.hasAttribute("tabindex")) {
+    node.tabIndex = -1;
+  }
+  node.focus({ preventScroll: !options?.scroll });
+  if (options?.scroll) {
+    node.scrollIntoView?.({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "nearest",
+    });
+  }
+}
+
 function PlannerProgress({ current }: { current: PlannerStage }) {
   return (
-    <ol data-planner-progress className="flex min-w-0 flex-1 flex-wrap gap-x-3 gap-y-1" aria-label="Planner progress">
+    <ol
+      data-planner-progress
+      className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:gap-2"
+      aria-label="Planner progress"
+    >
       {PLANNER_STAGES.map((stage) => {
         const active = stage.id === current;
         const done = STAGE_RANK[stage.id] < STAGE_RANK[current];
@@ -721,8 +754,12 @@ function PlannerProgress({ current }: { current: PlannerStage }) {
           <li
             key={stage.id}
             aria-current={active ? "step" : undefined}
-            className={`text-xs font-semibold tracking-wide uppercase ${
-              active ? "text-primary" : done ? "text-foreground" : "text-muted-foreground"
+            className={`rounded-full px-2.5 py-1 text-[0.65rem] font-bold tracking-[0.08em] uppercase sm:text-xs ${
+              active
+                ? "bg-primary/10 text-primary"
+                : done
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground"
             }`}
           >
             {stage.label}
@@ -779,7 +816,7 @@ function ChoiceCard({
       type="button"
       aria-pressed={selected}
       aria-label={accessibleName}
-      className="choice-card flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3 text-left"
+      className="choice-card flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-control)] px-4 py-3.5 text-left"
       onClick={onClick}
     >
       <span className="min-w-0">

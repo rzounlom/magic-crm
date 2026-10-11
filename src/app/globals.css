@@ -281,8 +281,21 @@ label:has(:disabled) {
 
 @media (prefers-reduced-motion: reduce) {
   .employee-mobile-nav,
-  .employee-app-header {
+  .employee-app-header,
+  .public-customer-header {
     backdrop-filter: none;
+  }
+}
+
+.public-customer-shell {
+  background:
+    radial-gradient(1200px 480px at 10% -10%, color-mix(in srgb, var(--primary) 8%, transparent), transparent),
+    var(--background);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-customer-shell {
+    background: var(--background);
   }
 }
 

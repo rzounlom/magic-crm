@@ -94,3 +94,7 @@ Inquiry detail booking guidance lives in `LiveAgentBookingActions` (`#confirm-bo
 - Optional HOLD must remain optional; confirmation stays payment-neutral
 
 See `docs/design/UX4_STAFF_BOOKING_EXPERIENCE.md`.
+
+## Public customer surfaces (UX5)
+
+Public inquire/plan/conversation chrome uses `PublicCustomerShell` with the MagicCRM platform mark and optional host `organizationName` from trusted loaders. Proposal money display uses `PriceBreakdown` (authoritative cents only). Intake wizard presentation may change; question sequence and payload contracts must not. Deeper intake optimization is UX8 — see `docs/design/UX5_CUSTOMER_FACING_EXPERIENCE.md`.

@@ -10,6 +10,7 @@ import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pend
 import { formatCustomerDurationText, formatEventDuration, personalEventPlannerTitle } from "@/lib/event-planner/labels";
 import { budgetFitCustomerText } from "@/lib/event-planner/budget-fit";
 import { formatEstimatedDepositLine, formatMoneyFromCents, perPersonCents } from "@/lib/event-planner/money";
+import { PriceBreakdown } from "@/components/ui/price-breakdown";
 import { isBestFitTier, readEventPlanPayload } from "@/lib/event-planner/payload";
 import { formatAdjustedEventWindow, formatCustomerFacingClocks, formatEventLocalDateTime, formatEventLocalTime, formatItineraryLine, formatItineraryRange, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
@@ -100,10 +101,8 @@ export function PublicEventPlanView({
     .find((payload) => payload.itineraryAdjusted && payload.adjustmentNote)?.adjustmentNote;
 
   return (
-    <section className={`${PUBLIC_CONTENT_CLASS} flex h-full min-h-0 flex-col overflow-hidden py-3`}>
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">
-        {organizationName}
-      </p>
+    <section className={`${PUBLIC_CONTENT_CLASS} flex h-full min-h-0 flex-col overflow-hidden py-3 sm:py-5`}>
+      <p className="page-eyebrow">{organizationName}</p>
       {confirmed && booking ? (
         <ConfirmedBookingPanel organizationName={organizationName} booking={booking} />
       ) : pending && pendingBooking ? (
@@ -148,22 +147,26 @@ export function PublicEventPlanView({
         )
       ) : (
         <>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className="page-title mt-1 text-[1.5rem] sm:text-[length:var(--text-display)]">
             Your Personal Event Plan
           </h1>
-          <p className="mt-1 max-w-3xl text-sm text-foreground/70">
+          <p className="page-description mt-2 max-w-3xl">
             {personalEventPlannerTitle(organizationName)} prepared options for {firstName}
             {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
-            {inquiry.eventGoal ? ` · ${inquiry.eventGoal}` : ""}. Book now to continue toward payment, or
-            submit an inquiry for follow-up. Inventory is not reserved until payment is received.
+            {inquiry.eventGoal ? ` · ${inquiry.eventGoal}` : ""}. Choose a package to continue, or submit
+            an inquiry for follow-up. Selecting a package does not guarantee inventory — availability is
+            rechecked when the venue confirms.
           </p>
           <AdjustmentNotice note={adjustmentNote ? formatCustomerFacingClocks(adjustmentNote) : undefined} />
         </>
       )}
       {plans.length === 0 ? (
-        <div className="public-scroll mt-6 overflow-y-auto rounded-md border border-border px-5 py-6">
+        <div
+          className="public-scroll mt-6 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-surface px-5 py-6 shadow-[var(--shadow-card)]"
+          data-public-status
+        >
           <h2 className="text-lg font-semibold">We&apos;re putting the finishing touches on your event plan</h2>
-          <p className="mt-2 text-sm text-foreground/70">
+          <p className="mt-2 text-sm text-muted-foreground">
             A member of our team will follow up with your best options. You do not need to fill this
             out again.
           </p>
@@ -528,36 +531,32 @@ function PlanOptionCard({
   return (
     <article
       data-plan-card
-      className={`box-border flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden rounded-md border outline-2 -outline-offset-2 ${
+      aria-current={selected ? "true" : undefined}
+      className={`box-border flex h-full max-h-full min-h-0 w-full flex-col overflow-hidden rounded-[var(--radius-card)] border outline-2 -outline-offset-2 ${
         recommended ? "border-primary outline-primary/40" : "border-border outline-transparent"
-      } ${selected ? "bg-muted/50" : "bg-background"}`}
+      } ${selected ? "bg-primary/5" : "bg-surface"}`}
     >
-      <div data-plan-summary className="shrink-0 px-4 pt-3">
+      <div data-plan-summary className="shrink-0 px-4 pt-4">
       {recommended ? (
-        <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">RECOMMENDED</p>
+        <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">Recommended</p>
       ) : (
-        <p className="text-xs font-semibold tracking-[0.16em] text-foreground/55 uppercase">
+        <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
           {plan.tier === EVENT_PLAN_TIERS.BUDGET ? "Good" : "Premium"}
         </p>
       )}
       <h2 className="mt-1 text-lg font-semibold">{plan.title}</h2>
-      <p className="mt-1 text-2xl font-semibold tracking-tight">
-        {payload.pricingComplete || total > 0
-          ? formatMoneyFromCents(total, displayCurrency)
-          : "Pricing to confirm"}
-      </p>
-      <p className="mt-0.5 text-xs leading-tight text-foreground/60">
-        Estimated total
-        {perPerson != null && total > 0
-          ? ` · ${formatMoneyFromCents(perPerson, displayCurrency)} per person`
-          : ""}
-      </p>
-      {budgetLine ? <p className="mt-0.5 text-xs leading-tight text-foreground/70">{budgetLine}</p> : null}
-      {payload.depositPreviewCents != null && payload.pricingComplete ? (
-        <p className="mt-0.5 text-xs leading-tight text-foreground/60">
-          {formatEstimatedDepositLine(payload.depositPreviewCents, payload.depositPreviewPercent, displayCurrency)}
-        </p>
-      ) : null}
+      <PriceBreakdown
+        className="mt-2"
+        density="compact"
+        currency={displayCurrency}
+        totalCents={total}
+        pricingComplete={payload.pricingComplete === true}
+        guestCount={guestCount}
+        perPersonCents={perPerson}
+        depositPreviewCents={payload.depositPreviewCents}
+        depositPreviewPercent={payload.depositPreviewPercent}
+        budgetLine={budgetLine}
+      />
       </div>
       <div data-plan-details className="public-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4">
 

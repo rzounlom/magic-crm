@@ -110,10 +110,10 @@ describe("public event plan view", () => {
 
     expect(html).toContain("Your Personal Event Plan");
     expect(html).toContain("Riverside Fun Center Personal Event Planner");
-    expect(html).toContain("RECOMMENDED");
+    expect(html).toContain("Recommended");
     expect(html).toContain("Why We Recommend This");
     expect(html).toContain("Good");
-    expect(html).toContain("RECOMMENDED");
+    expect(html).toContain("Recommended");
     expect(html).toContain("Premium");
     expect(html).toContain("$3,800");
     expect(html).toContain("$2,300 above your preferred range");
@@ -187,6 +187,7 @@ describe("public event plan view", () => {
     expect(html).toContain("Thanks — your inquiry has been submitted.");
     expect(html).toContain("events team will follow up");
     expect(html).toContain("Inventory is not reserved");
+    expect(html).toContain("The time is not held");
     expect(html).not.toContain("Book Now");
   });
 
