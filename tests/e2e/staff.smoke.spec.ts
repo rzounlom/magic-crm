@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { resolveStaffAuth, staffAuthSkipReason } from "./helpers/staff-auth";
+import { openStaffMoreMenu } from "./helpers/staff-mobile-nav";
 
 const auth = resolveStaffAuth();
 
@@ -25,9 +26,16 @@ test.describe("staff shell smoke (authenticated)", { tag: "@staff-smoke" }, () =
     if (page.url().includes("sign-in")) {
       test.skip(true, "Storage state expired");
     }
-    const more = page.getByRole("button", { name: /more/i });
-    test.skip((await more.count()) === 0, "More control not visible for this session");
-    await more.first().click();
-    await expect(page.getByText(/catalog|settings|public inquiry/i).first()).toBeVisible();
+    const primaryNav = page.getByRole("navigation", { name: "Primary" });
+    test.skip((await primaryNav.count()) === 0, "More control not visible for this session");
+
+    const { more, dialog } = await openStaffMoreMenu(page);
+    await expect(
+      dialog.getByRole("link", { name: /public inquiry|sales knowledge|overview|team|resources/i }).first(),
+    ).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(more).toBeFocused();
   });
 });

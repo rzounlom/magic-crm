@@ -67,7 +67,7 @@ describe("Badge status semantics", () => {
 
 describe("brand palette", () => {
   it("exposes Effortless Precision action and navy values for Clerk sync", () => {
-    expect(BRAND_PALETTE.action).toBe("#0070E0");
+    expect(BRAND_PALETTE.action).toBe("#005BB5");
     expect(BRAND_PALETTE.navy).toBe("#001C64");
     expect(BRAND_PALETTE.canvas).toBe("#F5F7FB");
     expect(BRAND_PALETTE.danger).toBe("#B42318");

@@ -11,9 +11,10 @@
   /* Brand primitives (reference; prefer semantic tokens below in UI) */
   --navy-950: #001c64;
   --brand-900: #003087;
-  --action-600: #0070e0;
-  --action-700: #005bb5;
-  --action-800: #004a94;
+  /* Action blue sized for AA normal-text on canvas/surface (was #0070e0 @ ~4.45:1). */
+  --action-600: #005bb5;
+  --action-700: #004a94;
+  --action-800: #003d7a;
   --canvas-50: #f5f7fb;
   --ink-900: #0b1220;
   --ink-600: #5a6578;
@@ -35,7 +36,8 @@
   --accent: #b8893a;
   /* Status — independent from brand action blue */
   --success: #1f7a4d;
-  --warning: #9a6708;
+  /* Darkened for AA on warning badge tint (~#efe7d7); was #9a6708 @ ~3.95:1. */
+  --warning: #7a5206;
   --destructive: #b42318;
   --info: var(--action-600);
   --focus-ring: var(--action-600);

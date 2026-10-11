@@ -12,6 +12,8 @@ export type StaffInquiryFixture = {
   inquiryPath: string;
   publicToken: string | null;
   planCount: number;
+  /** Present when fixture selects a plan so Live Agent readiness panels render. */
+  selectedPlanId?: string;
   email: string;
   note: string;
 };

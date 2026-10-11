@@ -16,7 +16,10 @@ import { config } from "dotenv";
 import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
 import { createPrismaClient } from "@/lib/db/create-client";
 import { parseRuntimeEnv } from "@/lib/env/validation";
-import { getPublicEventPlanByToken } from "@/server/services/event-plan-service";
+import {
+  getPublicEventPlanByToken,
+  selectPublicEventPlan,
+} from "@/server/services/event-plan-service";
 import { createPublicInquiry } from "@/server/services/inquiry-service";
 
 const DEV_HOST_FRAGMENT = "ep-bold-art-avjy5nt4";
@@ -106,6 +109,23 @@ async function main() {
     if (view.organizationSlug !== organization.slug) {
       throw new Error("Fixture token resolved to the wrong organization.");
     }
+    if (view.plans.length === 0) {
+      throw new Error("Fixture inquiry has no event plans; cannot select a plan for staff readiness UI.");
+    }
+
+    // Staff HOLD/confirmation readiness panels render only after a plan is selected
+    // (Live Agent workspace). Select the first recommendation without placing HOLD
+    // or confirming a booking.
+    const selectedPlanId = view.plans[0]!.id;
+    await selectPublicEventPlan(
+      database,
+      {
+        token: created.publicToken,
+        planId: selectedPlanId,
+        rateLimitKey: `r3-staff-select:${email}`,
+      },
+      limiter,
+    );
 
     mkdirSync(FIXTURE_DIR, { recursive: true });
     const outPath = path.join(FIXTURE_DIR, "staff-inquiry.json");
@@ -118,8 +138,9 @@ async function main() {
       inquiryPath: `/app/inquiries/${created.inquiryId}`,
       publicToken: created.publicToken,
       planCount: view.plans.length,
+      selectedPlanId,
       email,
-      note: "Nonproduction disposable staff fixture. Do not commit. Do not confirm payment.",
+      note: "Nonproduction disposable staff fixture with a selected plan. Do not commit. Do not confirm payment.",
     };
     writeFileSync(outPath, `${JSON.stringify(payload, null, 2)}\n`, { mode: 0o600 });
 
@@ -131,6 +152,7 @@ async function main() {
           organizationSlug: organization.slug,
           inquiryId: created.inquiryId,
           planCount: view.plans.length,
+          selectedPlanId,
           inquiryPath: payload.inquiryPath,
           exportHint: `export PLAYWRIGHT_STAFF_INQUIRY_FIXTURE="$PWD/${outPath}"`,
         },

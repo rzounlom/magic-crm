@@ -42,8 +42,8 @@ describe("UX2 brand contrast (WCAG 2.2 AA reference)", () => {
       { name: "muted on canvas", fg: BRAND_PALETTE.inkMuted, bg: BRAND_PALETTE.canvas, min: 4.5 },
       { name: "muted on surface", fg: BRAND_PALETTE.inkMuted, bg: BRAND_PALETTE.surface, min: 4.5 },
       { name: "white on action (button label)", fg: BRAND_PALETTE.primaryForeground, bg: BRAND_PALETTE.action, min: 4.5 },
-      // Action blue as link/text on white is UI chrome; AA large-text / non-text UI minimum is 3:1.
-      { name: "action on white (link/UI)", fg: BRAND_PALETTE.action, bg: BRAND_PALETTE.surface, min: 3 },
+      { name: "action on white (link/UI)", fg: BRAND_PALETTE.action, bg: BRAND_PALETTE.surface, min: 4.5 },
+      { name: "action on canvas (link/UI)", fg: BRAND_PALETTE.action, bg: BRAND_PALETTE.canvas, min: 4.5 },
       { name: "success on white", fg: BRAND_PALETTE.success, bg: BRAND_PALETTE.surface, min: 4.5 },
       { name: "warning on white", fg: BRAND_PALETTE.warning, bg: BRAND_PALETTE.surface, min: 4.5 },
       { name: "danger on white", fg: BRAND_PALETTE.danger, bg: BRAND_PALETTE.surface, min: 4.5 },

@@ -21,11 +21,13 @@ export function InquiryFunnel({
   return (
     <ol className="mt-3 flex flex-col gap-2 text-sm">
       {stages.map((stage) => (
-        <li key={stage.id} className={stage.complete ? "text-foreground" : "text-foreground/45"}>
-          <span className="mr-2">{stage.complete ? "●" : "○"}</span>
+        <li key={stage.id} className={stage.complete ? "text-foreground" : "text-muted-foreground"}>
+          <span className="mr-2" aria-hidden>
+            {stage.complete ? "●" : "○"}
+          </span>
           {stage.label}
           {stage.complete && stage.at ? (
-            <span className="ml-2 text-xs text-foreground/55">
+            <span className="ml-2 text-xs text-muted-foreground">
               {formatOrganizationTimestamp(stage.at, timeZone)}
             </span>
           ) : null}

@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { resolveStaffAuth, staffAuthSkipReason } from "./helpers/staff-auth";
 import { resolveStaffInquiryFixture } from "./helpers/staff-fixture";
+import { openStaffMoreMenu } from "./helpers/staff-mobile-nav";
 
 const auth = resolveStaffAuth();
 const fixture = resolveStaffInquiryFixture();
@@ -39,10 +40,16 @@ test.describe("Scenario F — Responsive staff UX", { tag: "@staff-responsive" }
       expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
 
       if (viewport.width <= 390) {
-        const more = page.getByRole("button", { name: /more/i });
-        if ((await more.count()) > 0) {
-          await more.first().click();
-          await expect(page.getByText(/catalog|settings|public inquiry|inquir|schedule/i).first()).toBeVisible();
+        const primaryNav = page.getByRole("navigation", { name: "Primary" });
+        if ((await primaryNav.count()) > 0) {
+          const { dialog } = await openStaffMoreMenu(page);
+          await expect(
+            dialog
+              .getByRole("link", { name: /public inquiry|sales knowledge|overview|team|resources/i })
+              .first(),
+          ).toBeVisible();
+          await page.keyboard.press("Escape");
+          await expect(dialog).toBeHidden();
         }
       }
 
