@@ -1,4 +1,8 @@
+import { AdminFormSection, AdminSectionHeader, FormActionBar } from "@/components/layout/admin-form-chrome";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { FieldInput, FieldSelect } from "@/components/ui/field";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatRequirementRule } from "@/server/resources/plan-availability-status";
 import type { SecurityActionResult } from "@/types/security-action";
@@ -23,20 +27,25 @@ export function KnowledgeRequirementForm({
   }>;
 }) {
   return (
-    <div className="mt-8">
-      <h2 className="text-lg font-semibold">Sales knowledge requirements</h2>
+    <div className="mt-10 space-y-4">
+      <AdminSectionHeader
+        title="Sales knowledge requirements"
+        description="Link offerings that need this resource type for availability checks."
+      />
       {existing.length === 0 ? (
-        <p className="mt-2 text-sm text-foreground/70">No offerings are linked yet.</p>
+        <p className="text-sm text-muted-foreground">No offerings are linked yet.</p>
       ) : (
-        <ul className="mt-3 space-y-2 text-sm">
+        <ul className="space-y-2">
           {existing.map((row) => (
-            <li key={row.salesKnowledgeItem.id} className="rounded-md border border-border px-3 py-2">
-              <p className="font-medium">{row.salesKnowledgeItem.name}</p>
-              <p className="text-foreground/70">
-                {formatRequirementRule(row)}
-                {row.salesKnowledgeItem.active ? "" : " · Inactive knowledge"}
-              </p>
-              {row.notes ? <p className="mt-1 text-foreground/60">{row.notes}</p> : null}
+            <li key={row.salesKnowledgeItem.id}>
+              <Card variant="flat" padding="sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <p className="font-medium text-foreground">{row.salesKnowledgeItem.name}</p>
+                  {!row.salesKnowledgeItem.active ? <Badge tone="neutral">Inactive knowledge</Badge> : null}
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">{formatRequirementRule(row)}</p>
+                {row.notes ? <p className="mt-1 text-sm text-muted-foreground">{row.notes}</p> : null}
+              </Card>
             </li>
           ))}
         </ul>
@@ -44,69 +53,47 @@ export function KnowledgeRequirementForm({
       {knowledgeItems.length > 0 ? (
         <SecurityActionForm
           action={action}
-          className="mt-4 space-y-3 rounded-md border border-border px-4 py-4"
           notice={{ successTitle: "Requirement saved", errorTitle: "Unable to save requirement" }}
         >
           <input type="hidden" name="resourceTypeId" value={resourceTypeId} />
-          <label className="block text-sm">
-            <span className="text-foreground/70">Offering</span>
-            <select
-              name="salesKnowledgeItemId"
-              required
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-            >
+          <AdminFormSection title="Add or update requirement">
+            <FieldSelect label="Offering" name="salesKnowledgeItemId" required>
               {knowledgeItems.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
               ))}
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="text-foreground/70">Quantity rule</span>
-            <select
+            </FieldSelect>
+            <FieldSelect
+              label="Quantity rule"
               name="quantityRule"
               defaultValue={RESOURCE_QUANTITY_RULES.UNKNOWN}
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
             >
               <option value={RESOURCE_QUANTITY_RULES.PER_GUESTS}>1 per N guests</option>
               <option value={RESOURCE_QUANTITY_RULES.FIXED}>Fixed quantity</option>
               <option value={RESOURCE_QUANTITY_RULES.UNKNOWN}>Unknown — configuration required</option>
-            </select>
-          </label>
-          <label className="block text-sm">
-            <span className="text-foreground/70">Guests per unit (for 1 per N)</span>
-            <input
-              name="guestsPerUnit"
-              type="number"
-              min={1}
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="text-foreground/70">Fixed quantity</span>
-            <input
-              name="quantity"
-              type="number"
-              min={1}
-              defaultValue={1}
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="requiresStaffConfiguration" />
-            <span>Still needs staff configuration</span>
-          </label>
-          <label className="block text-sm">
-            <span className="text-foreground/70">Notes</span>
-            <input name="notes" className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2" />
-          </label>
-          <PendingSubmitButton
-            pendingLabel="Saving…"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            Save requirement
-          </PendingSubmitButton>
+            </FieldSelect>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FieldInput
+                label="Guests per unit"
+                name="guestsPerUnit"
+                type="number"
+                min={1}
+                hint="For the 1 per N guests rule."
+              />
+              <FieldInput label="Fixed quantity" name="quantity" type="number" min={1} defaultValue={1} />
+            </div>
+            <label className="flex min-h-11 items-center gap-2.5 text-sm font-medium text-foreground">
+              <input type="checkbox" name="requiresStaffConfiguration" className="size-4 accent-primary" />
+              Still needs staff configuration
+            </label>
+            <FieldInput label="Notes" name="notes" />
+            <FormActionBar className="border-0 pt-0">
+              <PendingSubmitButton pendingLabel="Saving…" variant="primary">
+                Save requirement
+              </PendingSubmitButton>
+            </FormActionBar>
+          </AdminFormSection>
         </SecurityActionForm>
       ) : null}
     </div>

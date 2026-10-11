@@ -98,3 +98,14 @@ See `docs/design/UX4_STAFF_BOOKING_EXPERIENCE.md`.
 ## Public customer surfaces (UX5)
 
 Public inquire/plan/conversation chrome uses `PublicCustomerShell` with the MagicCRM platform mark and optional host `organizationName` from trusted loaders. Proposal money display uses `PriceBreakdown` (authoritative cents only). Intake wizard presentation may change; question sequence and payload contracts must not. Deeper intake optimization is UX8 — see `docs/design/UX5_CUSTOMER_FACING_EXPERIENCE.md`.
+
+## Catalog and Settings admin (UX6)
+
+Admin Catalog (Sales knowledge, Resources) and Settings (Team, Security groups) use:
+
+- `PageHeader` eyebrows `Catalog` / `Settings`
+- Shared chrome in `admin-form-chrome.tsx` (`AdminBackLink`, `AdminSectionHeader`, `AdminFormSection`, `FormActionBar`, `AdminChoiceRow`)
+- UX2 `Field*` / `Button` / `ButtonLink` / `Badge` / `Card` / `PendingSubmitButton variant`
+- Permission matrix may scroll inside `[data-permission-matrix]`; do not change permission keys or defaults
+
+Do not invent POS, payments, tax, hours, or promotions settings screens. See `docs/design/UX6_CATALOG_AND_SETTINGS_EXPERIENCE.md`.

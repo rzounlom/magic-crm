@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -37,7 +38,7 @@ export default async function AdminResourcesPage() {
   return (
     <section className="max-w-3xl">
       <PageHeader
-        eyebrow="Admin"
+        eyebrow="Catalog"
         title="Resources"
         description="Configure tenant finite inventory. Lane and room counts are not hardcoded. Deactivate instead of deleting types that already have history."
         actions={
@@ -59,43 +60,45 @@ export default async function AdminResourcesPage() {
               <li key={type.id}>
                 <Link href={`/app/admin/resources/${type.id}`} className="block focus-visible:outline-none">
                   <Card variant="default" padding="md" className="transition-colors hover:border-primary/40">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-foreground">{type.name}</p>
-                      <p className="mt-1 text-sm text-foreground/70">
-                        {type._count.resources} active resource{type._count.resources === 1 ? "" : "s"}
-                        {usedBy.length > 0 ? ` · Used by: ${usedBy.join(", ")}` : " · No knowledge links"}
-                      </p>
-                      {type.requirements.some((row) => row.requiresStaffConfiguration) ? (
-                        <p className="mt-1 text-sm text-warning">Resource configuration required</p>
-                      ) : null}
-                      {!configured && type.requirements.length > 0 ? (
-                        <p className="mt-1 text-sm text-warning">
-                          {usedBy[0] ?? "An offering"} is linked to {type.name}, but no {type.name} resources
-                          have been configured. Personal Event Planner availability cannot be validated.
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground">{type.name}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {type._count.resources} active resource{type._count.resources === 1 ? "" : "s"}
+                          {usedBy.length > 0 ? ` · Used by: ${usedBy.join(", ")}` : " · No knowledge links"}
                         </p>
-                      ) : null}
+                        {type.requirements.some((row) => row.requiresStaffConfiguration) ? (
+                          <p className="mt-1 text-sm text-warning">Resource configuration required</p>
+                        ) : null}
+                        {!configured && type.requirements.length > 0 ? (
+                          <p className="mt-1 text-sm text-warning">
+                            {usedBy[0] ?? "An offering"} is linked to {type.name}, but no {type.name} resources
+                            have been configured. Personal Event Planner availability cannot be validated.
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <Badge tone={configured ? "success" : "warning"}>
+                          {configured ? "Configured" : "Configuration required"}
+                        </Badge>
+                        {!type.active ? <Badge tone="neutral">Inactive</Badge> : null}
+                      </div>
                     </div>
-                    <span className="text-xs text-foreground/60">
-                      {configured ? "Configured" : "Configuration required"}
-                      {type.active ? "" : " · Inactive"}
-                    </span>
-                  </div>
-                  {!configured && type.requirements.length > 0 ? (
-                    <p className="mt-2 text-sm font-medium text-primary">Configure {type.name}s</p>
-                  ) : null}
-                  {type.defaultDurationMinutes ? (
-                    <p className="mt-2 text-xs text-foreground/55">
-                      Default duration {type.defaultDurationMinutes} minutes · {type.schedulingMode}
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-xs text-foreground/55">{type.schedulingMode}</p>
-                  )}
-                  {type.requirements[0] ? (
-                    <p className="mt-1 text-xs text-foreground/55">
-                      {formatRequirementRule(type.requirements[0])}
-                    </p>
-                  ) : null}
+                    {!configured && type.requirements.length > 0 ? (
+                      <p className="mt-2 text-sm font-medium text-primary">Configure {type.name}s</p>
+                    ) : null}
+                    {type.defaultDurationMinutes ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Default duration {type.defaultDurationMinutes} minutes · {type.schedulingMode}
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-xs text-muted-foreground">{type.schedulingMode}</p>
+                    )}
+                    {type.requirements[0] ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {formatRequirementRule(type.requirements[0])}
+                      </p>
+                    ) : null}
                   </Card>
                 </Link>
               </li>

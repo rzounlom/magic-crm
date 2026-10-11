@@ -1,7 +1,10 @@
-import Link from "next/link";
-
+import { AdminBackLink, AdminFormSection, AdminSectionHeader, FormActionBar } from "@/components/layout/admin-form-chrome";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { FieldSelect } from "@/components/ui/field";
+import { PageHeader } from "@/components/ui/page-header";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
   addEmployeeSecurityGroupAction,
@@ -56,59 +59,76 @@ export default async function TeamEmployeePage({
 
   return (
     <section className="max-w-xl">
-      <Link href="/app/admin/team" className="text-sm text-primary">
-        Back to team
-      </Link>
-      <div className="mt-4 flex items-center gap-3">
+      <AdminBackLink href="/app/admin/team">Back to team</AdminBackLink>
+      <div className="mt-3 flex items-start gap-3">
         {employee.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={employee.avatarUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
-        ) : null}
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            {employee.displayName ?? employee.email ?? "Unknown employee"}
-          </h1>
-          {employee.displayName && employee.email ? (
-            <p className="mt-1 text-sm text-foreground/70">{employee.email}</p>
-          ) : null}
-        </div>
+        ) : (
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-base font-medium text-foreground">
+            {(employee.displayName ?? employee.email ?? "?").slice(0, 1).toUpperCase()}
+          </span>
+        )}
+        <PageHeader
+          eyebrow="Settings"
+          title={employee.displayName ?? employee.email ?? "Unknown employee"}
+          description={
+            employee.displayName && employee.email
+              ? employee.email
+              : "Security group membership for this employee."
+          }
+        />
       </div>
-      <h2 className="mt-10 text-lg font-semibold text-foreground">Security groups</h2>
+
+      <div className="mt-10">
+        <AdminSectionHeader
+          title="Security groups"
+          description="Groups control MagicCRM permissions. Membership is separate from signing in."
+        />
+      </div>
       <ul className="mt-4 space-y-2">
         {employee.assignedGroups.length === 0 ? (
-          <li className="text-sm text-foreground/70">No security groups yet.</li>
+          <li>
+            <Card variant="flat" padding="sm">
+              <p className="text-sm text-muted-foreground">No security groups yet.</p>
+            </Card>
+          </li>
         ) : (
           employee.assignedGroups.map((group) => (
-            <li
-              key={group.id}
-              className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
-            >
-              <span>
-                <span className="font-medium text-foreground">{group.name}</span>
-                {group.description ? (
-                  <span className="mt-0.5 block text-foreground/60">{group.description}</span>
+            <li key={group.id}>
+              <Card variant="flat" padding="sm" className="flex flex-wrap items-center justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-foreground">{group.name}</span>
+                    {group.systemKey === SYSTEM_GROUP_KEYS.ADMINISTRATORS ? (
+                      <Badge tone="info">Administrators</Badge>
+                    ) : null}
+                  </span>
+                  {group.description ? (
+                    <span className="mt-0.5 block text-sm text-muted-foreground">{group.description}</span>
+                  ) : null}
+                </span>
+                {canManageGroups ? (
+                  <SecurityActionForm
+                    action={removeEmployeeSecurityGroupAction}
+                    confirm={removeSecurityMemberConfirm({
+                      isAdministrators: group.systemKey === SYSTEM_GROUP_KEYS.ADMINISTRATORS,
+                      memberLabel: label,
+                      groupName: group.name,
+                    })}
+                    notice={{
+                      successTitle: "Group removed",
+                      errorTitle: "Unable to remove group",
+                    }}
+                  >
+                    <input type="hidden" name="securityGroupId" value={group.id} />
+                    <input type="hidden" name="userProfileId" value={employee.id} />
+                    <PendingSubmitButton pendingLabel="Removing…" variant="destructive" size="sm">
+                      Remove
+                    </PendingSubmitButton>
+                  </SecurityActionForm>
                 ) : null}
-              </span>
-              {canManageGroups ? (
-                <SecurityActionForm
-                  action={removeEmployeeSecurityGroupAction}
-                  confirm={removeSecurityMemberConfirm({
-                    isAdministrators: group.systemKey === SYSTEM_GROUP_KEYS.ADMINISTRATORS,
-                    memberLabel: label,
-                    groupName: group.name,
-                  })}
-                  notice={{
-                    successTitle: "Group removed",
-                    errorTitle: "Unable to remove group",
-                  }}
-                >
-                  <input type="hidden" name="securityGroupId" value={group.id} />
-                  <input type="hidden" name="userProfileId" value={employee.id} />
-                  <PendingSubmitButton pendingLabel="Removing…" className="text-destructive">
-                    Remove
-                  </PendingSubmitButton>
-                </SecurityActionForm>
-              ) : null}
+              </Card>
             </li>
           ))
         )}
@@ -116,34 +136,28 @@ export default async function TeamEmployeePage({
       {canManageGroups && employee.availableGroups.length > 0 ? (
         <SecurityActionForm
           action={addEmployeeSecurityGroupAction}
-          className="mt-6 space-y-3"
+          className="mt-6"
           notice={{
             successTitle: "Group added",
             errorTitle: "Unable to add group",
           }}
         >
           <input type="hidden" name="userProfileId" value={employee.id} />
-          <label className="block text-sm">
-            <span className="text-foreground/70">Add security group</span>
-            <select
-              name="securityGroupId"
-              required
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-            >
+          <AdminFormSection title="Add security group">
+            <FieldSelect label="Security group" name="securityGroupId" required>
               <option value="">Select a group</option>
               {employee.availableGroups.map((group) => (
                 <option key={group.id} value={group.id}>
                   {group.name}
                 </option>
               ))}
-            </select>
-          </label>
-          <PendingSubmitButton
-            pendingLabel="Adding…"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            Add
-          </PendingSubmitButton>
+            </FieldSelect>
+            <FormActionBar className="border-0 pt-0">
+              <PendingSubmitButton pendingLabel="Adding…" variant="primary">
+                Add
+              </PendingSubmitButton>
+            </FormActionBar>
+          </AdminFormSection>
         </SecurityActionForm>
       ) : null}
     </section>

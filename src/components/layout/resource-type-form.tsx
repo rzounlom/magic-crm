@@ -1,4 +1,6 @@
+import { AdminFormSection, FormActionBar } from "@/components/layout/admin-form-chrome";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
+import { FieldInput, FieldSelect } from "@/components/ui/field";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import type { SecurityActionResult } from "@/types/security-action";
 import { RESOURCE_SCHEDULING_MODES } from "@/types/resource-schedule";
@@ -30,72 +32,71 @@ export function ResourceTypeForm({
       }}
     >
       {values?.id ? <input type="hidden" name="id" value={values.id} /> : null}
-      <label className="block text-sm">
-        <span className="text-foreground/70">Name</span>
-        <input
+      <AdminFormSection
+        title="Resource type"
+        description="A category such as Bowling Lane or Party Room. Numbered inventory is configured separately."
+      >
+        <FieldInput
+          label="Name"
           name="name"
           required
           maxLength={120}
           defaultValue={values?.name}
-          className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
         />
-      </label>
-      {values?.slug ? (
-        <p className="text-sm text-foreground/60">Slug: {values.slug}</p>
-      ) : (
-        <label className="block text-sm">
-          <span className="text-foreground/70">Slug (optional)</span>
-          <input
+        {values?.slug ? (
+          <p className="text-sm text-muted-foreground">
+            Slug: <span className="font-medium text-foreground">{values.slug}</span>
+          </p>
+        ) : (
+          <FieldInput
+            label="Slug"
             name="slug"
             maxLength={80}
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
             placeholder="bowling-lane"
+            hint="Optional. Used in configuration references."
           />
-        </label>
-      )}
-      <label className="block text-sm">
-        <span className="text-foreground/70">Scheduling mode</span>
-        <select
+        )}
+        <FieldSelect
+          label="Scheduling mode"
           name="schedulingMode"
           defaultValue={values?.schedulingMode ?? RESOURCE_SCHEDULING_MODES.SLOTTED}
-          className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
         >
           <option value={RESOURCE_SCHEDULING_MODES.SLOTTED}>Slotted (30-minute grid)</option>
           <option value={RESOURCE_SCHEDULING_MODES.CONTINUOUS}>Continuous</option>
-        </select>
-      </label>
-      <label className="block text-sm">
-        <span className="text-foreground/70">Slot minutes</span>
-        <input
-          name="slotMinutes"
-          type="number"
-          min={5}
-          defaultValue={values?.slotMinutes ?? 30}
-          className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-        />
-      </label>
-      <label className="block text-sm">
-        <span className="text-foreground/70">Default duration (minutes)</span>
-        <input
-          name="defaultDurationMinutes"
-          type="number"
-          min={1}
-          defaultValue={values?.defaultDurationMinutes ?? undefined}
-          className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-        />
-      </label>
-      {values ? (
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="active" defaultChecked={values.active} />
-          <span>Active</span>
-        </label>
-      ) : null}
-      <PendingSubmitButton
-        pendingLabel="Saving…"
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-      >
-        {values ? "Save resource type" : "Create resource type"}
-      </PendingSubmitButton>
+        </FieldSelect>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FieldInput
+            label="Slot minutes"
+            name="slotMinutes"
+            type="number"
+            min={5}
+            defaultValue={values?.slotMinutes ?? 30}
+          />
+          <FieldInput
+            label="Default duration (minutes)"
+            name="defaultDurationMinutes"
+            type="number"
+            min={1}
+            defaultValue={values?.defaultDurationMinutes ?? undefined}
+          />
+        </div>
+        {values ? (
+          <label className="flex min-h-11 items-center gap-2.5 text-sm font-medium text-foreground">
+            <input
+              type="checkbox"
+              name="active"
+              defaultChecked={values.active}
+              className="size-4 accent-primary"
+            />
+            Active
+          </label>
+        ) : null}
+      </AdminFormSection>
+      <FormActionBar>
+        <PendingSubmitButton pendingLabel="Saving…" variant="primary">
+          {values ? "Save resource type" : "Create resource type"}
+        </PendingSubmitButton>
+      </FormActionBar>
     </SecurityActionForm>
   );
 }

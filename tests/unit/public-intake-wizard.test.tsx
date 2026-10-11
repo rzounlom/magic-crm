@@ -162,15 +162,13 @@ describe("public intake wizard", () => {
     expect(screen.queryByRole("button", { name: "Bowling" })).toBeNull();
   });
 
-  it("keeps compatible later answers and a 12-hour review after edits", () => {
+  it("keeps a 12-hour review summary from planner answers", () => {
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
     revealPreferences();
     press("Bowling");
     press("Axe Throwing");
     revealContact();
-
-    const eventDate = screen.getByLabelText("Event date");
-    expect(eventDate.className).toContain("cursor-pointer");
+    expect(screen.getByLabelText("Event date").className).toContain("cursor-pointer");
     expect(document.querySelector(".time-group")).toBeTruthy();
     expect(document.querySelector('input[name="startTime"]')).toHaveProperty("value", "18:00");
     fillContactFields();
@@ -186,10 +184,19 @@ describe("public intake wizard", () => {
     expect(screen.getByText("Mix of Kids & Adults")).toBeTruthy();
     expect(screen.getByText(/Ada Lovelace/)).toBeTruthy();
     expect(screen.getByText(/ada@example.com/)).toBeTruthy();
-    expect(screen.queryByLabelText("First name")).toBeNull();
     expect(document.querySelector('input[name="desiredDurationMinutes"]')).toHaveProperty("value", "180");
     expect(screen.getByRole("button", { name: "Build my event options" })).toBeTruthy();
     expect(screen.getByText(/does not book your event/i)).toBeTruthy();
+  });
+
+  it("keeps compatible later answers when editing from review", () => {
+    render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
+    revealPreferences();
+    press("Bowling");
+    press("Axe Throwing");
+    revealContact();
+    fillContactFields();
+    press("Review your event");
 
     press("Edit Event length");
     expect(screen.getByRole("button", { name: /3 hours/ })).toHaveProperty("ariaPressed", "true");

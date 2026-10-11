@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
@@ -17,6 +19,7 @@ import { hasPermission } from "@/server/policies/require-permission";
 import { listTeamInvitations } from "@/server/services/team-invitation-service";
 import { PERMISSIONS } from "@/types/permissions";
 import { TEAM_INVITATION_STATUSES } from "@/types/team";
+import type { BadgeTone } from "@/components/ui/badge";
 
 function formatDate(value: Date): string {
   return value.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -34,6 +37,20 @@ function statusLabel(status: string): string {
       return "Expired";
     default:
       return status;
+  }
+}
+
+function statusTone(status: string): BadgeTone {
+  switch (status) {
+    case TEAM_INVITATION_STATUSES.PENDING:
+      return "warning";
+    case TEAM_INVITATION_STATUSES.ACCEPTED:
+      return "success";
+    case TEAM_INVITATION_STATUSES.REVOKED:
+    case TEAM_INVITATION_STATUSES.EXPIRED:
+      return "neutral";
+    default:
+      return "info";
   }
 }
 
@@ -68,7 +85,7 @@ export default async function TeamInvitationsPage() {
   return (
     <section className="max-w-3xl">
       <PageHeader
-        eyebrow="Admin"
+        eyebrow="Settings"
         title="Team"
         description="Pending invitations stay here until the person accepts and signs in."
       />
@@ -78,68 +95,74 @@ export default async function TeamInvitationsPage() {
       ) : (
         <ul className="mt-8 space-y-3">
           {view.invitations.map((invitation) => (
-            <li key={invitation.id} className="record-row">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium text-foreground">{invitation.email}</p>
-                  <p className="mt-1 text-sm text-foreground/70">
-                    {statusLabel(invitation.status)}
-                    {" · "}
-                    Invited {formatDate(invitation.createdAt)}
-                    {invitation.invitedByDisplayName || invitation.invitedByEmail
-                      ? ` · by ${invitation.invitedByDisplayName ?? invitation.invitedByEmail}`
-                      : ""}
-                  </p>
-                  {invitation.expiresAt && invitation.status === TEAM_INVITATION_STATUSES.PENDING ? (
-                    <p className="mt-1 text-sm text-foreground/60">
-                      Expires {formatDate(invitation.expiresAt)}
+            <li key={invitation.id}>
+              <Card variant="default" padding="md">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-foreground">{invitation.email}</p>
+                      <Badge tone={statusTone(invitation.status)}>{statusLabel(invitation.status)}</Badge>
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Invited {formatDate(invitation.createdAt)}
+                      {invitation.invitedByDisplayName || invitation.invitedByEmail
+                        ? ` · by ${invitation.invitedByDisplayName ?? invitation.invitedByEmail}`
+                        : ""}
                     </p>
-                  ) : null}
-                  <p className="mt-2 text-sm text-foreground/70">
-                    {invitation.groups.length > 0
-                      ? `Intended groups: ${invitation.groups.map((group) => group.name).join(", ")}`
-                      : "No security groups queued"}
-                  </p>
-                </div>
-                {view.canManage ? (
-                  <div className="flex flex-wrap gap-3">
-                    {invitation.status === TEAM_INVITATION_STATUSES.PENDING ? (
+                    {invitation.expiresAt && invitation.status === TEAM_INVITATION_STATUSES.PENDING ? (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Expires {formatDate(invitation.expiresAt)}
+                      </p>
+                    ) : null}
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {invitation.groups.length > 0
+                        ? `Intended groups: ${invitation.groups.map((group) => group.name).join(", ")}`
+                        : "No security groups queued"}
+                    </p>
+                  </div>
+                  {view.canManage ? (
+                    <div className="flex flex-wrap gap-2">
+                      {invitation.status === TEAM_INVITATION_STATUSES.PENDING ? (
+                        <SecurityActionForm
+                          action={revokeTeamInvitationAction}
+                          confirm={revokeInvitationConfirm(invitation.email)}
+                          notice={{
+                            successTitle: "Invitation revoked",
+                            errorTitle: "Unable to revoke invitation",
+                          }}
+                        >
+                          <input type="hidden" name="invitationId" value={invitation.id} />
+                          <PendingSubmitButton pendingLabel="Revoking…" variant="destructive" size="sm">
+                            Revoke
+                          </PendingSubmitButton>
+                        </SecurityActionForm>
+                      ) : null}
                       <SecurityActionForm
-                        action={revokeTeamInvitationAction}
-                        confirm={revokeInvitationConfirm(invitation.email)}
+                        action={sendNewTeamInvitationAction}
+                        confirm={sendNewInvitationConfirm(invitation.email)}
                         notice={{
-                          successTitle: "Invitation revoked",
-                          errorTitle: "Unable to revoke invitation",
+                          successTitle: "New invitation sent",
+                          errorTitle: "Unable to send invitation",
                         }}
                       >
                         <input type="hidden" name="invitationId" value={invitation.id} />
-                        <PendingSubmitButton pendingLabel="Revoking…" className="text-sm text-destructive">
-                          Revoke
+                        <PendingSubmitButton pendingLabel="Sending…" variant="secondary" size="sm">
+                          Send new invitation
                         </PendingSubmitButton>
                       </SecurityActionForm>
-                    ) : null}
-                    <SecurityActionForm
-                      action={sendNewTeamInvitationAction}
-                      confirm={sendNewInvitationConfirm(invitation.email)}
-                      notice={{
-                        successTitle: "New invitation sent",
-                        errorTitle: "Unable to send invitation",
-                      }}
-                    >
-                      <input type="hidden" name="invitationId" value={invitation.id} />
-                      <PendingSubmitButton pendingLabel="Sending…" className="text-sm text-primary">
-                        Send new invitation
-                      </PendingSubmitButton>
-                    </SecurityActionForm>
-                  </div>
-                ) : null}
-              </div>
+                    </div>
+                  ) : null}
+                </div>
+              </Card>
             </li>
           ))}
         </ul>
       )}
-      <p className="mt-8 text-sm text-foreground/60">
-        <Link href="/app/admin/team" className="text-primary">
+      <p className="mt-8 text-sm text-muted-foreground">
+        <Link
+          href="/app/admin/team"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
           Back to employees
         </Link>
       </p>

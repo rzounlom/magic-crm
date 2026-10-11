@@ -1,9 +1,18 @@
-import Link from "next/link";
-
+import {
+  AdminBackLink,
+  AdminChoiceRow,
+  AdminFormSection,
+  AdminSectionHeader,
+  FormActionBar,
+} from "@/components/layout/admin-form-chrome";
 import { EmployeeMemberPicker } from "@/components/layout/employee-member-picker";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityAuthorizationNote } from "@/components/layout/security-authorization-note";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { FieldInput, FieldTextarea } from "@/components/ui/field";
+import { PageHeader } from "@/components/ui/page-header";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
   deleteSecurityGroupConfirm,
@@ -29,7 +38,12 @@ import {
   getSecurityGroupDetail,
   listOrganizationUserProfiles,
 } from "@/server/services/security-group-service";
-import { PERMISSION_CATALOG, PERMISSIONS, REQUIRED_ADMIN_PERMISSIONS } from "@/types/permissions";
+import {
+  PERMISSION_CATALOG,
+  PERMISSIONS,
+  REQUIRED_ADMIN_PERMISSIONS,
+  type PermissionCatalogEntry,
+} from "@/types/permissions";
 
 type SecurityGroupDetail = NonNullable<Awaited<ReturnType<typeof getSecurityGroupDetail>>>;
 type OrganizationProfile = Awaited<ReturnType<typeof listOrganizationUserProfiles>>[number];
@@ -63,6 +77,23 @@ async function loadSecurityGroupDetail(id: string): Promise<DetailView> {
     }
     throw error;
   }
+}
+
+function groupPermissionsByModule(entries: readonly PermissionCatalogEntry[]) {
+  const modules: Array<{ module: string; entries: PermissionCatalogEntry[] }> = [];
+  for (const entry of entries) {
+    const existing = modules.find((row) => row.module === entry.module);
+    if (existing) {
+      existing.entries.push(entry);
+    } else {
+      modules.push({ module: entry.module, entries: [entry] });
+    }
+  }
+  return modules;
+}
+
+function moduleLabel(module: string): string {
+  return module.replaceAll("_", " ");
 }
 
 export default async function SecurityGroupDetailPage({
@@ -99,19 +130,30 @@ function SecurityGroupDetailView({
   const memberIds = new Set(group.members.map((row) => row.userProfileId));
   const isAdministrators = group.systemKey === SYSTEM_GROUP_KEYS.ADMINISTRATORS;
   const lockedPermissions = new Set<string>(isAdministrators ? REQUIRED_ADMIN_PERMISSIONS : []);
+  const permissionModules = groupPermissionsByModule(PERMISSION_CATALOG);
 
   return (
     <section className="max-w-3xl space-y-10">
       <div>
-        <Link href="/app/admin/security-groups" className="text-sm text-primary">
-          All security groups
-        </Link>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{group.name}</h1>
-        <p className="mt-2 text-sm text-foreground/70">
-          {isAdministrators
-            ? "This protected group must keep at least one member and core admin permissions."
-            : "Assign permissions and employees for this group."}
-        </p>
+        <AdminBackLink href="/app/admin/security-groups">All security groups</AdminBackLink>
+        <div className="mt-3">
+          <PageHeader
+            eyebrow="Settings"
+            title={group.name}
+            description={
+              isAdministrators
+                ? "This protected group must keep at least one member and core admin permissions."
+                : "Assign permissions and employees for this group."
+            }
+            actions={
+              isAdministrators ? <Badge tone="info">Administrators</Badge> : group.isSystem ? (
+                <Badge tone="neutral">Default</Badge>
+              ) : (
+                <Badge tone="neutral">Custom</Badge>
+              )
+            }
+          />
+        </div>
         <SecurityAuthorizationNote administrators={isAdministrators} />
         {canManage ? (
           <SecurityActionForm
@@ -122,7 +164,7 @@ function SecurityGroupDetailView({
               errorTitle: "Unable to refresh employee details",
             }}
           >
-            <PendingSubmitButton pendingLabel="Refreshing…" className="text-sm text-primary">
+            <PendingSubmitButton pendingLabel="Refreshing…" variant="ghost" size="sm">
               Refresh employee details
             </PendingSubmitButton>
           </SecurityActionForm>
@@ -131,7 +173,6 @@ function SecurityGroupDetailView({
 
       <SecurityActionForm
         action={updateSecurityGroupAction}
-        className="space-y-4"
         notice={{
           successTitle: "Group updated",
           successDescription: "Group details were saved.",
@@ -139,40 +180,38 @@ function SecurityGroupDetailView({
         }}
       >
         <input type="hidden" name="securityGroupId" value={group.id} />
-        <label className="block text-sm">
-          <span className="text-foreground/70">Name</span>
-          <input
+        <AdminFormSection title="Group details">
+          <FieldInput
+            label="Name"
             name="name"
             defaultValue={group.name}
             required
             maxLength={80}
             readOnly={isAdministrators || !canManage}
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
           />
-        </label>
-        <label className="block text-sm">
-          <span className="text-foreground/70">Description</span>
-          <textarea
+          <FieldTextarea
+            label="Description"
             name="description"
             defaultValue={group.description ?? ""}
             maxLength={280}
             rows={3}
             readOnly={!canManage}
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
           />
-        </label>
-        {canManage ? (
-          <PendingSubmitButton
-            pendingLabel="Saving…"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            Save details
-          </PendingSubmitButton>
-        ) : null}
+          {canManage ? (
+            <FormActionBar className="border-0 pt-0">
+              <PendingSubmitButton pendingLabel="Saving…" variant="primary">
+                Save details
+              </PendingSubmitButton>
+            </FormActionBar>
+          ) : null}
+        </AdminFormSection>
       </SecurityActionForm>
 
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Permissions</h2>
+        <AdminSectionHeader
+          title="Permissions"
+          description="Exact permission keys are preserved. Locked Administrator permissions stay selected."
+        />
         <SecurityActionForm
           action={setSecurityGroupPermissionsAction}
           className="mt-4"
@@ -183,84 +222,121 @@ function SecurityGroupDetailView({
           }}
         >
           <input type="hidden" name="securityGroupId" value={group.id} />
-          <ul className="space-y-2">
-            {PERMISSION_CATALOG.map((entry) => {
-              const locked = lockedPermissions.has(entry.key);
-              return (
-                <li key={entry.key} className="rounded-md border border-border px-3 py-2 text-sm">
-                  <label className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      name="permissionKeys"
-                      value={entry.key}
-                      defaultChecked={assignedKeys.has(entry.key) || locked}
-                      disabled={locked || !canManage}
-                    />
-                    <span>
-                      <span className="font-medium text-foreground">{entry.name}</span>
-                      <span className="mt-0.5 block text-foreground/60">{entry.description}</span>
-                    </span>
-                  </label>
-                  {locked ? <input type="hidden" name="permissionKeys" value={entry.key} /> : null}
-                </li>
-              );
-            })}
-          </ul>
+          <div
+            className="max-h-[min(36rem,70vh)] space-y-5 overflow-y-auto overscroll-contain rounded-[var(--radius-card)] border border-border bg-surface p-3 sm:p-4"
+            data-permission-matrix
+            tabIndex={0}
+            role="region"
+            aria-label="Permission matrix"
+          >
+            {permissionModules.map((module) => (
+              <div key={module.module}>
+                <h3 className="sticky top-0 z-10 bg-surface/95 py-1 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase backdrop-blur-sm">
+                  {moduleLabel(module.module)}
+                </h3>
+                <ul className="mt-2 space-y-2">
+                  {module.entries.map((entry) => {
+                    const locked = lockedPermissions.has(entry.key);
+                    const selected = assignedKeys.has(entry.key) || locked;
+                    return (
+                      <li key={entry.key}>
+                        <AdminChoiceRow selected={selected}>
+                          <label className="flex min-h-11 items-start gap-3">
+                            <input
+                              type="checkbox"
+                              name="permissionKeys"
+                              value={entry.key}
+                              defaultChecked={selected}
+                              disabled={locked || !canManage}
+                              className="mt-1 size-4 accent-primary"
+                              aria-describedby={`perm-desc-${entry.key}`}
+                            />
+                            <span>
+                              <span className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-foreground">{entry.name}</span>
+                                {locked ? <Badge tone="warning">Required</Badge> : null}
+                              </span>
+                              <span
+                                id={`perm-desc-${entry.key}`}
+                                className="mt-0.5 block text-muted-foreground"
+                              >
+                                {entry.description}
+                              </span>
+                              <span className="mt-0.5 block font-mono text-[0.7rem] text-muted-foreground/80">
+                                {entry.key}
+                              </span>
+                            </span>
+                          </label>
+                          {locked ? <input type="hidden" name="permissionKeys" value={entry.key} /> : null}
+                        </AdminChoiceRow>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
           {canManage ? (
-            <PendingSubmitButton
-              pendingLabel="Saving…"
-              className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-            >
-              Save permissions
-            </PendingSubmitButton>
+            <FormActionBar className="mt-4">
+              <PendingSubmitButton pendingLabel="Saving…" variant="primary">
+                Save permissions
+              </PendingSubmitButton>
+            </FormActionBar>
           ) : null}
         </SecurityActionForm>
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Members</h2>
+        <AdminSectionHeader title="Members" description="Employees who receive this group's permissions." />
         <ul className="mt-4 space-y-2">
           {group.members.length === 0 ? (
-            <li className="text-sm text-foreground/70">No members yet.</li>
+            <li>
+              <Card variant="flat" padding="sm">
+                <p className="text-sm text-muted-foreground">No members yet.</p>
+              </Card>
+            </li>
           ) : (
             group.members.map((member) => {
               const profile = profiles.find((row) => row.id === member.userProfileId);
               const name = profile ? resolveUserDisplayName(profile) : null;
               const email = profile?.email?.trim() || null;
               return (
-                <li
-                  key={member.id}
-                  className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
-                >
-                  <span>
-                    <span className="block font-medium text-foreground">
-                      {name ?? email ?? "Unknown employee"}
+                <li key={member.id}>
+                  <Card
+                    variant="flat"
+                    padding="sm"
+                    className="flex flex-wrap items-center justify-between gap-3"
+                  >
+                    <span className="min-w-0">
+                      <span className="block font-medium text-foreground">
+                        {name ?? email ?? "Unknown employee"}
+                      </span>
+                      {name && email ? (
+                        <span className="mt-0.5 block text-sm text-muted-foreground">{email}</span>
+                      ) : null}
                     </span>
-                    {name && email ? (
-                      <span className="mt-0.5 block text-foreground/60">{email}</span>
+                    {canManage ? (
+                      <SecurityActionForm
+                        action={removeSecurityGroupMemberAction}
+                        confirm={removeSecurityMemberConfirm({
+                          isAdministrators,
+                          memberLabel: name ?? email ?? "this employee",
+                          groupName: group.name,
+                        })}
+                        notice={{
+                          successTitle: "Member removed",
+                          successDescription: `${name ?? email ?? "The employee"} was removed from ${group.name}.`,
+                          errorTitle: "Unable to remove member",
+                        }}
+                      >
+                        <input type="hidden" name="securityGroupId" value={group.id} />
+                        <input type="hidden" name="userProfileId" value={member.userProfileId} />
+                        <PendingSubmitButton pendingLabel="Removing…" variant="destructive" size="sm">
+                          Remove
+                        </PendingSubmitButton>
+                      </SecurityActionForm>
                     ) : null}
-                  </span>
-                  {canManage ? (
-                    <SecurityActionForm
-                      action={removeSecurityGroupMemberAction}
-                      confirm={removeSecurityMemberConfirm({
-                        isAdministrators,
-                        memberLabel: name ?? email ?? "this employee",
-                        groupName: group.name,
-                      })}
-                      notice={{
-                        successTitle: "Member removed",
-                        successDescription: `${name ?? email ?? "The employee"} was removed from ${group.name}.`,
-                        errorTitle: "Unable to remove member",
-                      }}
-                    >
-                      <input type="hidden" name="securityGroupId" value={group.id} />
-                      <input type="hidden" name="userProfileId" value={member.userProfileId} />
-                      <PendingSubmitButton pendingLabel="Removing…" className="text-destructive">
-                        Remove
-                      </PendingSubmitButton>
-                    </SecurityActionForm>
-                  ) : null}
+                  </Card>
                 </li>
               );
             })
@@ -269,7 +345,7 @@ function SecurityGroupDetailView({
         {canManage ? (
           <SecurityActionForm
             action={addSecurityGroupMemberAction}
-            className="mt-4 flex items-end gap-3"
+            className="mt-4"
             notice={{
               successTitle: "Member added",
               successDescription: `{name} was added to ${group.name}.`,
@@ -277,45 +353,51 @@ function SecurityGroupDetailView({
             }}
           >
             <input type="hidden" name="securityGroupId" value={group.id} />
-            <EmployeeMemberPicker
-              key={profiles
-                .filter((profile) => !memberIds.has(profile.id))
-                .map((profile) => profile.id)
-                .join("-")}
-              name="userProfileId"
-              employees={profiles
-                .filter((profile) => !memberIds.has(profile.id))
-                .map((profile) => ({
-                  id: profile.id,
-                  label: formatUserDisplayLabel(profile),
-                  searchText: userIdentitySearchText(profile),
-                }))}
-            />
-            <PendingSubmitButton
-              pendingLabel="Adding…"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-            >
-              Add
-            </PendingSubmitButton>
+            <AdminFormSection title="Add member">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <EmployeeMemberPicker
+                  key={profiles
+                    .filter((profile) => !memberIds.has(profile.id))
+                    .map((profile) => profile.id)
+                    .join("-")}
+                  name="userProfileId"
+                  employees={profiles
+                    .filter((profile) => !memberIds.has(profile.id))
+                    .map((profile) => ({
+                      id: profile.id,
+                      label: formatUserDisplayLabel(profile),
+                      searchText: userIdentitySearchText(profile),
+                    }))}
+                />
+                <PendingSubmitButton pendingLabel="Adding…" variant="primary" className="shrink-0">
+                  Add
+                </PendingSubmitButton>
+              </div>
+            </AdminFormSection>
           </SecurityActionForm>
         ) : null}
       </div>
 
       {group.isSystem || !canManage ? null : (
-        <SecurityActionForm
-          action={deleteSecurityGroupAction}
-          confirm={deleteSecurityGroupConfirm(group.name)}
-          notice={{
-            successTitle: "Group deleted",
-            successDescription: "Employees were not deleted. Permissions from this group are gone.",
-            errorTitle: "Unable to delete group",
-          }}
+        <AdminFormSection
+          title="Danger zone"
+          description="Employees are not deleted. Permissions from this group are removed."
         >
-          <input type="hidden" name="securityGroupId" value={group.id} />
-          <PendingSubmitButton pendingLabel="Deleting…" className="text-sm text-destructive">
-            Delete group
-          </PendingSubmitButton>
-        </SecurityActionForm>
+          <SecurityActionForm
+            action={deleteSecurityGroupAction}
+            confirm={deleteSecurityGroupConfirm(group.name)}
+            notice={{
+              successTitle: "Group deleted",
+              successDescription: "Employees were not deleted. Permissions from this group are gone.",
+              errorTitle: "Unable to delete group",
+            }}
+          >
+            <input type="hidden" name="securityGroupId" value={group.id} />
+            <PendingSubmitButton pendingLabel="Deleting…" variant="destructive">
+              Delete group
+            </PendingSubmitButton>
+          </SecurityActionForm>
+        </AdminFormSection>
       )}
     </section>
   );

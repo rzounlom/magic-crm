@@ -1,9 +1,9 @@
-import Link from "next/link";
-
-import { PageHeader } from "@/components/ui/page-header";
-
+import { AdminBackLink, FormActionBar } from "@/components/layout/admin-form-chrome";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { ButtonLink } from "@/components/ui/button";
+import { FieldInput, FieldTextarea } from "@/components/ui/field";
+import { PageHeader } from "@/components/ui/page-header";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { createSecurityGroupAction } from "@/server/actions/security-groups";
 import { db } from "@/lib/db";
@@ -34,11 +34,14 @@ export default async function NewSecurityGroupPage() {
 
   return (
     <section className="max-w-xl">
-      <PageHeader
-        eyebrow="Admin"
-        title="Create group"
-        description="Custom groups let you combine permissions for how this fun center actually staffs."
-      />
+      <AdminBackLink href="/app/admin/security-groups">Back to security groups</AdminBackLink>
+      <div className="mt-3">
+        <PageHeader
+          eyebrow="Settings"
+          title="Create group"
+          description="Custom groups let you combine permissions for how this venue actually staffs."
+        />
+      </div>
       <SecurityActionForm
         action={createSecurityGroupAction}
         className="mt-8 space-y-4"
@@ -47,35 +50,16 @@ export default async function NewSecurityGroupPage() {
           errorTitle: "Unable to create group",
         }}
       >
-        <label className="block text-sm">
-          <span className="text-foreground/70">Name</span>
-          <input
-            name="name"
-            required
-            maxLength={80}
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="text-foreground/70">Description</span>
-          <textarea
-            name="description"
-            maxLength={280}
-            rows={3}
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-          />
-        </label>
-        <div className="flex items-center gap-4">
-          <PendingSubmitButton
-            pendingLabel="Creating…"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
+        <FieldInput label="Name" name="name" required maxLength={80} />
+        <FieldTextarea label="Description" name="description" maxLength={280} rows={3} />
+        <FormActionBar>
+          <PendingSubmitButton pendingLabel="Creating…" variant="primary">
             Create group
           </PendingSubmitButton>
-          <Link href="/app/admin/security-groups" className="text-sm text-foreground/70">
+          <ButtonLink href="/app/admin/security-groups" variant="ghost" size="md">
             Cancel
-          </Link>
-        </div>
+          </ButtonLink>
+        </FormActionBar>
       </SecurityActionForm>
     </section>
   );

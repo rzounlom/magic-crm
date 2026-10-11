@@ -1,7 +1,8 @@
-import Link from "next/link";
-
+import { AdminBackLink, AdminChoiceRow, FormActionBar } from "@/components/layout/admin-form-chrome";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { FieldInput } from "@/components/ui/field";
+import { PageHeader } from "@/components/ui/page-header";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { db } from "@/lib/db";
 import { inviteEmployeeAction } from "@/server/actions/team";
@@ -32,14 +33,14 @@ export default async function InviteEmployeePage() {
 
   return (
     <section className="max-w-xl">
-      <Link href="/app/admin/team" className="text-sm text-primary">
-        Back to team
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Invite employee</h1>
-      <p className="mt-4 text-sm text-foreground/70">
-        They will receive an email to join this organization. MagicCRM security groups control access
-        after they sign in. Clerk organization admin is not granted from this screen.
-      </p>
+      <AdminBackLink href="/app/admin/team">Back to team</AdminBackLink>
+      <div className="mt-3">
+        <PageHeader
+          eyebrow="Settings"
+          title="Invite employee"
+          description="They will receive an email to join this organization. MagicCRM security groups control access after they sign in. Clerk organization admin is not granted from this screen."
+        />
+      </div>
       <SecurityActionForm
         action={inviteEmployeeAction}
         className="mt-8 space-y-6"
@@ -48,44 +49,53 @@ export default async function InviteEmployeePage() {
           errorTitle: "Unable to send invitation",
         }}
       >
-        <label className="block text-sm">
-          <span className="text-foreground/70">Email</span>
-          <input
-            type="email"
-            name="email"
-            required
-            autoComplete="off"
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-          />
-        </label>
+        <FieldInput
+          label="Email"
+          type="email"
+          name="email"
+          required
+          autoComplete="off"
+        />
         <fieldset>
-          <legend className="text-sm text-foreground/70">Initial security groups</legend>
-          <p className="mt-1 text-sm text-foreground/60">Optional. Applied automatically after they sign in.</p>
+          <legend className="text-[length:var(--text-label)] font-semibold text-foreground">
+            Initial security groups
+          </legend>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Optional. Applied automatically after they sign in. Nothing is selected by default.
+          </p>
           <ul className="mt-3 space-y-2">
             {view.groups.map((group) => (
-              <li key={group.id} className="rounded-md border border-border px-3 py-2 text-sm">
-                <label className="flex items-start gap-3">
-                  <input type="checkbox" name="securityGroupIds" value={group.id} />
-                  <span>
-                    <span className="font-medium text-foreground">{group.name}</span>
-                    {group.description ? (
-                      <span className="mt-0.5 block text-foreground/60">{group.description}</span>
-                    ) : null}
-                    {group.systemKey === SYSTEM_GROUP_KEYS.ADMINISTRATORS ? (
-                      <span className="mt-0.5 block text-warning">Grants full MagicCRM administration.</span>
-                    ) : null}
-                  </span>
-                </label>
+              <li key={group.id}>
+                <AdminChoiceRow>
+                  <label className="flex min-h-11 items-start gap-3">
+                    <input
+                      type="checkbox"
+                      name="securityGroupIds"
+                      value={group.id}
+                      className="mt-1 size-4 accent-primary"
+                    />
+                    <span>
+                      <span className="font-medium text-foreground">{group.name}</span>
+                      {group.description ? (
+                        <span className="mt-0.5 block text-muted-foreground">{group.description}</span>
+                      ) : null}
+                      {group.systemKey === SYSTEM_GROUP_KEYS.ADMINISTRATORS ? (
+                        <span className="mt-0.5 block text-warning">
+                          Grants full MagicCRM administration.
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                </AdminChoiceRow>
               </li>
             ))}
           </ul>
         </fieldset>
-        <PendingSubmitButton
-          pendingLabel="Sending…"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          Send invitation
-        </PendingSubmitButton>
+        <FormActionBar>
+          <PendingSubmitButton pendingLabel="Sending…" variant="primary">
+            Send invitation
+          </PendingSubmitButton>
+        </FormActionBar>
       </SecurityActionForm>
     </section>
   );

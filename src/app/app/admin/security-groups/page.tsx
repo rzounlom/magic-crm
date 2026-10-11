@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import { PageHeader } from "@/components/ui/page-header";
+import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityAuthorizationNote } from "@/components/layout/security-authorization-note";
@@ -36,6 +39,16 @@ async function loadSecurityGroupsView(): Promise<ListView> {
   }
 }
 
+function groupBadge(group: SecurityGroupListItem) {
+  if (group.systemKey === SYSTEM_GROUP_KEYS.ADMINISTRATORS) {
+    return <Badge tone="info">Administrators</Badge>;
+  }
+  if (group.isSystem) {
+    return <Badge tone="neutral">Default</Badge>;
+  }
+  return <Badge tone="neutral">Custom</Badge>;
+}
+
 export default async function SecurityGroupsPage() {
   const view = await loadSecurityGroupsView();
 
@@ -46,19 +59,20 @@ export default async function SecurityGroupsPage() {
   return (
     <section className="max-w-3xl">
       <PageHeader
-        eyebrow="Admin"
+        eyebrow="Settings"
         title="Security groups"
         description="Security groups control what employees can access in this organization. Membership is separate from signing in."
+        actions={
+          view.canManage ? (
+            <ButtonLink href="/app/admin/security-groups/new" variant="primary" size="md">
+              Create group
+            </ButtonLink>
+          ) : undefined
+        }
       />
       <SecurityAuthorizationNote />
       {view.canManage ? (
-        <div className="mt-6 flex flex-wrap items-center gap-4">
-          <Link
-            href="/app/admin/security-groups/new"
-            className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            Create group
-          </Link>
+        <div className="mt-4">
           <SecurityActionForm
             action={refreshEmployeeIdentitiesAction}
             notice={{
@@ -66,7 +80,7 @@ export default async function SecurityGroupsPage() {
               errorTitle: "Unable to refresh employee details",
             }}
           >
-            <PendingSubmitButton pendingLabel="Refreshing…" className="text-sm text-primary">
+            <PendingSubmitButton pendingLabel="Refreshing…" variant="ghost" size="sm">
               Refresh employee details
             </PendingSubmitButton>
           </SecurityActionForm>
@@ -77,33 +91,23 @@ export default async function SecurityGroupsPage() {
           <li key={group.id}>
             <Link
               href={`/app/admin/security-groups/${group.id}`}
-              className="record-row block"
+              className="block focus-visible:outline-none"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-medium text-foreground">{group.name}</p>
-                  <p className="mt-1 text-sm text-foreground/70">
-                    {group.description ?? "No description"}
-                  </p>
+              <Card variant="default" padding="md" className="transition-colors hover:border-primary/40">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground">{group.name}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {group.description ?? "No description"}
+                    </p>
+                  </div>
+                  {groupBadge(group)}
                 </div>
-                {group.systemKey === SYSTEM_GROUP_KEYS.ADMINISTRATORS ? (
-                  <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                    Administrators
-                  </span>
-                ) : group.isSystem ? (
-                  <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-foreground/70">
-                    Default
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-foreground/70">
-                    Custom
-                  </span>
-                )}
-              </div>
-              <p className="mt-3 text-xs text-foreground/60">
-                {group.memberCount} {group.memberCount === 1 ? "member" : "members"} ·{" "}
-                {group.permissionCount} {group.permissionCount === 1 ? "permission" : "permissions"}
-              </p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {group.memberCount} {group.memberCount === 1 ? "member" : "members"} ·{" "}
+                  {group.permissionCount} {group.permissionCount === 1 ? "permission" : "permissions"}
+                </p>
+              </Card>
             </Link>
           </li>
         ))}

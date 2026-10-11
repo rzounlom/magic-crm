@@ -1,10 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AdminBackLink, AdminSectionHeader } from "@/components/layout/admin-form-chrome";
 import { KnowledgeRequirementForm } from "@/components/layout/knowledge-requirement-form";
 import { BulkCreateResourcesForm, CreateResourceForm, ResourceRowForm } from "@/components/layout/resource-inventory-forms";
 import { ResourceTypeForm } from "@/components/layout/resource-type-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   bulkCreateResourcesAction,
   createResourceAction,
@@ -64,16 +65,24 @@ export default async function ResourceTypeDetailPage({
 
   const { type, knowledgeItems } = view;
   const warningOfferings = type.requirements.filter(() => type.resources.filter((row) => row.active).length === 0);
+  const activeCount = type.resources.filter((row) => row.active).length;
 
   return (
     <section className="max-w-3xl">
-      <Link href="/app/admin/resources" className="text-sm text-primary">
-        Back to resources
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{type.name}</h1>
+      <AdminBackLink href="/app/admin/resources">Back to resources</AdminBackLink>
+      <div className="mt-3">
+        <PageHeader
+          eyebrow="Catalog"
+          title={type.name}
+          description="Type settings, finite units, and sales-knowledge requirements for availability."
+        />
+      </div>
       {warningOfferings.length > 0 ? (
-        <div className="mt-4 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
-          <p className="font-medium">Configuration required</p>
+        <div
+          className="mt-4 rounded-[var(--radius-control)] border border-warning/40 bg-warning/10 px-4 py-3 text-sm"
+          role="status"
+        >
+          <p className="font-medium text-foreground">Configuration required</p>
           <p className="mt-1 text-foreground/80">
             {warningOfferings.map((row) => row.salesKnowledgeItem.name).join(", ")}{" "}
             {warningOfferings.length === 1 ? "is" : "are"} linked to {type.name}, but no individual resources
@@ -95,17 +104,19 @@ export default async function ResourceTypeDetailPage({
         }}
       />
 
-      <h2 className="mt-10 text-lg font-semibold">Finite resources</h2>
-      <p className="mt-2 text-sm text-foreground/70">
-        {type.resources.filter((row) => row.active).length} active. Counts are tenant-configured.
-      </p>
+      <div className="mt-10">
+        <AdminSectionHeader
+          title="Finite resources"
+          description={`${activeCount} active. Counts are tenant-configured.`}
+        />
+      </div>
       <CreateResourceForm action={createResourceAction} resourceTypeId={type.id} />
       <BulkCreateResourcesForm
         action={bulkCreateResourcesAction}
         resourceTypeId={type.id}
         typeName={type.name}
       />
-      <div className="mt-6 space-y-3">
+      <div className="mt-6 space-y-3" data-resource-inventory-list>
         {type.resources.map((resource) => (
           <ResourceRowForm key={resource.id} action={updateResourceAction} resource={resource} />
         ))}

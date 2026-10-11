@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { TeamSectionTabs } from "@/components/layout/team-section-tabs";
@@ -46,7 +48,7 @@ export default async function TeamEmployeesPage() {
   return (
     <section className="max-w-3xl">
       <PageHeader
-        eyebrow="Admin"
+        eyebrow="Settings"
         title="Team"
         description="Employees in this organization. Security groups control what they can do in MagicCRM."
       />
@@ -59,33 +61,43 @@ export default async function TeamEmployeesPage() {
             <li key={employee.id}>
               <Link
                 href={`/app/admin/team/${employee.id}`}
-                className="record-row flex items-center gap-3"
+                className="block focus-visible:outline-none"
               >
-                {employee.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={employee.avatarUrl}
-                    alt=""
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground">
-                    {(employee.displayName ?? employee.email ?? "?").slice(0, 1).toUpperCase()}
-                  </span>
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className="block font-medium text-foreground">
-                    {employee.displayName ?? employee.email ?? "Unknown employee"}
-                  </span>
-                  {employee.displayName && employee.email ? (
-                    <span className="mt-0.5 block text-sm text-foreground/60">{employee.email}</span>
-                  ) : null}
-                  <span className="mt-1 block text-sm text-foreground/70">
-                    {employee.groups.length > 0
-                      ? employee.groups.map((group) => group.name).join(", ")
-                      : "No security groups"}
-                  </span>
-                </span>
+                <Card variant="default" padding="md" className="transition-colors hover:border-primary/40">
+                  <div className="flex items-center gap-3">
+                    {employee.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={employee.avatarUrl}
+                        alt=""
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground">
+                        {(employee.displayName ?? employee.email ?? "?").slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium text-foreground">
+                        {employee.displayName ?? employee.email ?? "Unknown employee"}
+                      </span>
+                      {employee.displayName && employee.email ? (
+                        <span className="mt-0.5 block text-sm text-muted-foreground">{employee.email}</span>
+                      ) : null}
+                      <span className="mt-2 flex flex-wrap gap-1.5">
+                        {employee.groups.length > 0 ? (
+                          employee.groups.map((group) => (
+                            <Badge key={group.id} tone="info">
+                              {group.name}
+                            </Badge>
+                          ))
+                        ) : (
+                          <Badge tone="warning">No security groups</Badge>
+                        )}
+                      </span>
+                    </span>
+                  </div>
+                </Card>
               </Link>
             </li>
           ))}

@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
@@ -27,7 +30,7 @@ async function loadSalesKnowledgeView(): Promise<KnowledgeView> {
     return { kind: "ready", items, canManage };
   } catch (error) {
     if (isAuthorizationError(error) || isTenantContextError(error) || isInquiryError(error)) {
-      return { kind: "status", title: "AI sales knowledge", body: error.userMessage };
+      return { kind: "status", title: "Sales knowledge", body: error.userMessage };
     }
     throw error;
   }
@@ -42,38 +45,36 @@ export default async function SalesKnowledgePage() {
   return (
     <section className="max-w-3xl">
       <PageHeader
-        eyebrow="Admin"
-        title="AI sales knowledge"
-        description="Temporary tenant knowledge for the Event Assistant. Catalog will replace or back this later. Do not invent offerings in prompts."
+        eyebrow="Catalog"
+        title="Sales knowledge"
+        description="Tenant offerings and package facts the Event Assistant may use. Do not invent availability or unpublished prices."
+        actions={
+          view.canManage ? (
+            <ButtonLink href="/app/admin/ai/knowledge/new" variant="primary" size="md">
+              Add knowledge
+            </ButtonLink>
+          ) : undefined
+        }
       />
-      {view.canManage ? (
-        <Link
-          href="/app/admin/ai/knowledge/new"
-          className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          Add knowledge
-        </Link>
-      ) : null}
       {view.items.length === 0 ? (
         <EmptyState title="No knowledge items yet." />
       ) : (
         <ul className="mt-8 space-y-3">
           {view.items.map((item) => (
             <li key={item.id}>
-              <Link
-                href={`/app/admin/ai/knowledge/${item.id}`}
-                className="record-row block"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-foreground">{item.name}</p>
-                    <p className="mt-1 text-sm text-foreground/70">{item.shortDescription}</p>
+              <Link href={`/app/admin/ai/knowledge/${item.id}`} className="block focus-visible:outline-none">
+                <Card variant="default" padding="md" className="transition-colors hover:border-primary/40">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground">{item.name}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{item.shortDescription}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <Badge tone="info">{item.type.replaceAll("_", " ")}</Badge>
+                      {!item.active ? <Badge tone="neutral">Inactive</Badge> : null}
+                    </div>
                   </div>
-                  <span className="text-xs text-foreground/60">
-                    {item.type}
-                    {item.active ? "" : " · Inactive"}
-                  </span>
-                </div>
+                </Card>
               </Link>
             </li>
           ))}

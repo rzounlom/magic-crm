@@ -1,18 +1,19 @@
-import Link from "next/link";
-
+import { AdminBackLink } from "@/components/layout/admin-form-chrome";
 import { SalesKnowledgeForm } from "@/components/layout/sales-knowledge-form";
+import { PageHeader } from "@/components/ui/page-header";
 import { createSalesKnowledgeAction } from "@/server/actions/sales-knowledge";
 
 export default function NewSalesKnowledgePage() {
   return (
     <section className="max-w-xl">
-      <Link href="/app/admin/ai/knowledge" className="text-sm text-primary">
-        Back to knowledge
-      </Link>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">Add knowledge</h1>
-      <p className="mt-4 text-sm text-foreground/70">
-        Only add facts the Event Assistant may use. Do not invent availability or unpublished prices.
-      </p>
+      <AdminBackLink href="/app/admin/ai/knowledge">Back to sales knowledge</AdminBackLink>
+      <div className="mt-3">
+        <PageHeader
+          eyebrow="Catalog"
+          title="Add knowledge"
+          description="Only add facts the Event Assistant may use. Do not invent availability or unpublished prices."
+        />
+      </div>
       <SalesKnowledgeForm action={createSalesKnowledgeAction} />
     </section>
   );

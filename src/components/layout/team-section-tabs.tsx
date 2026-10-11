@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ButtonLink } from "@/components/ui/button";
 
 type TeamSectionTabsProps = {
   active: "employees" | "invitations";
@@ -8,29 +8,42 @@ type TeamSectionTabsProps = {
 export function TeamSectionTabs({ active, canManage }: TeamSectionTabsProps) {
   return (
     <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-      <nav className="flex gap-4 text-sm" aria-label="Team sections">
-        <Link
+      <nav
+        className="flex min-h-11 flex-wrap items-center gap-1 rounded-full bg-muted p-1 text-sm"
+        aria-label="Team sections"
+        data-team-section-tabs
+      >
+        <ButtonLink
           href="/app/admin/team"
-          className={active === "employees" ? "font-medium text-foreground" : "text-primary"}
+          variant={active === "employees" ? "secondary" : "ghost"}
+          size="sm"
+          className={
+            active === "employees"
+              ? "rounded-full bg-surface shadow-sm"
+              : "rounded-full text-muted-foreground hover:text-foreground"
+          }
           aria-current={active === "employees" ? "page" : undefined}
         >
           Employees
-        </Link>
-        <Link
+        </ButtonLink>
+        <ButtonLink
           href="/app/admin/team/invitations"
-          className={active === "invitations" ? "font-medium text-foreground" : "text-primary"}
+          variant={active === "invitations" ? "secondary" : "ghost"}
+          size="sm"
+          className={
+            active === "invitations"
+              ? "rounded-full bg-surface shadow-sm"
+              : "rounded-full text-muted-foreground hover:text-foreground"
+          }
           aria-current={active === "invitations" ? "page" : undefined}
         >
           Pending invitations
-        </Link>
+        </ButtonLink>
       </nav>
       {canManage ? (
-        <Link
-          href="/app/admin/team/invite"
-          className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
+        <ButtonLink href="/app/admin/team/invite" variant="primary" size="md">
           Invite employee
-        </Link>
+        </ButtonLink>
       ) : null}
     </div>
   );

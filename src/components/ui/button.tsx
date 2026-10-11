@@ -82,6 +82,7 @@ export function ButtonLink({
   children,
   target,
   rel,
+  "aria-current": ariaCurrent,
 }: {
   href: string;
   variant?: ButtonVariant;
@@ -90,9 +91,16 @@ export function ButtonLink({
   children: ReactNode;
   target?: string;
   rel?: string;
+  "aria-current"?: "page" | "step" | "location" | "date" | "time" | "true" | "false";
 }) {
   return (
-    <Link href={href} target={target} rel={rel} className={buttonClassName({ variant, size, className })}>
+    <Link
+      href={href}
+      target={target}
+      rel={rel}
+      aria-current={ariaCurrent}
+      className={buttonClassName({ variant, size, className })}
+    >
       {children}
     </Link>
   );

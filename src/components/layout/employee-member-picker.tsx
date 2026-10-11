@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import { FieldInput, FieldSelect } from "@/components/ui/field";
+
 type EmployeeOption = {
   id: string;
   label: string;
@@ -26,36 +28,30 @@ export function EmployeeMemberPicker({ name, employees }: EmployeeMemberPickerPr
   }, [employees, query]);
 
   return (
-    <div className="flex-1 space-y-2">
-      <label className="block text-sm">
-        <span className="text-foreground/70">Filter by name or email</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-        />
-      </label>
-      <label className="block text-sm">
-        <span className="text-foreground/70">Add employee</span>
-        <select
-          name={name}
-          className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-          required
-          onChange={(event) => {
-            const option = event.currentTarget.selectedOptions[0];
-            setSelectedLabel(event.currentTarget.value && option ? option.text : "");
-          }}
-        >
-          <option value="">Select an employee</option>
-          {filtered.map((employee) => (
-            <option key={employee.id} value={employee.id}>
-              {employee.label}
-            </option>
-          ))}
-        </select>
-        <input type="hidden" name="employeeLabel" value={selectedLabel} />
-      </label>
+    <div className="min-w-0 flex-1 space-y-3" data-employee-member-picker>
+      <FieldInput
+        label="Filter by name or email"
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      <FieldSelect
+        label="Add employee"
+        name={name}
+        required
+        onChange={(event) => {
+          const option = event.currentTarget.selectedOptions[0];
+          setSelectedLabel(event.currentTarget.value && option ? option.text : "");
+        }}
+      >
+        <option value="">Select an employee</option>
+        {filtered.map((employee) => (
+          <option key={employee.id} value={employee.id}>
+            {employee.label}
+          </option>
+        ))}
+      </FieldSelect>
+      <input type="hidden" name="employeeLabel" value={selectedLabel} />
     </div>
   );
 }
