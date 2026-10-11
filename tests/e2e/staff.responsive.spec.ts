@@ -1,0 +1,80 @@
+import { expect, test } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
+
+import { resolveStaffAuth, staffAuthSkipReason } from "./helpers/staff-auth";
+import { resolveStaffInquiryFixture } from "./helpers/staff-fixture";
+
+const auth = resolveStaffAuth();
+const fixture = resolveStaffInquiryFixture();
+const evidenceDir = path.join("docs", "release", "r3-evidence");
+
+const VIEWPORTS = [
+  { name: "390", width: 390, height: 844 },
+  { name: "768", width: 768, height: 1024 },
+  { name: "1440", width: 1440, height: 900 },
+] as const;
+
+test.describe("Scenario F — Responsive staff UX", { tag: "@staff-responsive" }, () => {
+  test.skip(!auth.ok, staffAuthSkipReason());
+
+  test.use({ storageState: auth.ok ? auth.storageStatePath : undefined });
+
+  for (const viewport of VIEWPORTS) {
+    test(`staff shell at ${viewport.name}px has no horizontal overflow`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto("/app");
+      if (page.url().includes("sign-in")) {
+        test.skip(true, "Storage state expired — regenerate with pnpm test:e2e:staff:auth");
+      }
+
+      await expect(page.getByRole("navigation").or(page.getByRole("banner")).first()).toBeVisible();
+      const overflow = await page.evaluate(() => {
+        const doc = document.documentElement;
+        return {
+          clientWidth: doc.clientWidth,
+          scrollWidth: doc.scrollWidth,
+        };
+      });
+      expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
+
+      if (viewport.width <= 390) {
+        const more = page.getByRole("button", { name: /more/i });
+        if ((await more.count()) > 0) {
+          await more.first().click();
+          await expect(page.getByText(/catalog|settings|public inquiry|inquir|schedule/i).first()).toBeVisible();
+        }
+      }
+
+      fs.mkdirSync(evidenceDir, { recursive: true });
+      await page.screenshot({
+        path: path.join(evidenceDir, `staff-shell-${viewport.name}.png`),
+        fullPage: true,
+      });
+    });
+  }
+
+  test("inquiry detail primary actions remain reachable at 390px", async ({ page }) => {
+    test.skip(!fixture.ok, fixture.ok ? "" : fixture.reason);
+    if (!fixture.ok) return;
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(fixture.fixture.inquiryPath);
+    if (page.url().includes("sign-in")) {
+      test.skip(true, "Storage state expired");
+    }
+
+    const holdOrConfirm = page.locator("#hold-readiness, #confirmation-readiness").first();
+    await expect(holdOrConfirm).toBeVisible({ timeout: 15_000 });
+    await holdOrConfirm.scrollIntoViewIfNeeded();
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
+
+    fs.mkdirSync(evidenceDir, { recursive: true });
+    await page.screenshot({
+      path: path.join(evidenceDir, "staff-inquiry-390.png"),
+      fullPage: true,
+    });
+  });
+});

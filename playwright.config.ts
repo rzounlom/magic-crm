@@ -1,9 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * Lightweight UX7 browser smoke.
+ * Browser smoke + authenticated staff scenarios (R3).
  * Base URL from PLAYWRIGHT_BASE_URL (default http://localhost:3000).
  * Public intake slug from PLAYWRIGHT_PUBLIC_ORG_SLUG (required for intake specs).
+ * Staff specs require a gitignored Clerk TEST storage state (see tests/e2e/README.md).
  * Does not write production data; prefer read-only / invalid-token journeys.
  */
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
@@ -22,7 +23,8 @@ export default defineConfig({
     baseURL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    video: "off",
+    // Videos help solo debugging of headed staff flows; retained on failure only.
+    video: "retain-on-failure",
   },
   projects: [
     {

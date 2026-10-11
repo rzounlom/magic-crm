@@ -1,17 +1,17 @@
 import { expect, test } from "@playwright/test";
-import fs from "node:fs";
 
-const storageState = process.env.PLAYWRIGHT_STORAGE_STATE;
-const hasAuth = Boolean(storageState && fs.existsSync(storageState));
+import { resolveStaffAuth, staffAuthSkipReason } from "./helpers/staff-auth";
+
+const auth = resolveStaffAuth();
 
 /**
  * Read-only authenticated staff route smoke.
- * Skips entirely without PLAYWRIGHT_STORAGE_STATE (see tests/e2e/README.md).
+ * Skips entirely without a validated Clerk TEST storage state (see tests/e2e/README.md).
  */
-test.describe("staff routes smoke (authenticated)", () => {
-  test.skip(!hasAuth, "Set PLAYWRIGHT_STORAGE_STATE to a local Clerk test session file");
+test.describe("staff routes smoke (authenticated)", { tag: "@staff-routes" }, () => {
+  test.skip(!auth.ok, staffAuthSkipReason());
 
-  test.use({ storageState: storageState! });
+  test.use({ storageState: auth.ok ? auth.storageStatePath : undefined });
 
   const routes: { path: string; hint: RegExp }[] = [
     { path: "/app", hint: /inquir|schedule|magic|overview/i },
@@ -26,11 +26,10 @@ test.describe("staff routes smoke (authenticated)", () => {
   for (const route of routes) {
     test(`loads ${route.path} without server error chrome`, async ({ page }) => {
       const response = await page.goto(route.path);
-      // Permission-denied surfaces may be 200 with messaging; hard 5xx is a failure.
       expect(response?.status() ?? 0).toBeLessThan(500);
       const url = page.url();
       if (url.includes("sign-in")) {
-        test.skip(true, "Storage state expired — regenerate PLAYWRIGHT_STORAGE_STATE");
+        test.skip(true, "Storage state expired — regenerate with pnpm test:e2e:staff:auth");
       }
       const body = await page.locator("body").innerText();
       expect(body).not.toMatch(/prisma|application error|digest #/i);
