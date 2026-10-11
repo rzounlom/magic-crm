@@ -17,6 +17,7 @@ import {
   RESOURCE_RESERVATION_STATUSES,
   type PlanResourceRequirement,
 } from "@/types/resource-schedule";
+import { authorizeUnconfiguredHoursForConfirm } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -175,6 +176,27 @@ async function createPlanInquiry(
   return { ...created, plan };
 }
 
+
+async function confirmPendingReady(
+  tenant: Awaited<ReturnType<typeof provisionTenant>>,
+  inquiryId: string,
+  startTime = "18:00",
+  durationMinutes = 180,
+  slotDate = "2026-10-15",
+) {
+  const hoursException = await authorizeUnconfiguredHoursForConfirm({
+    ctx: tenant.ctx,
+    database: db,
+    organizationId: tenant.organizationId,
+    locationId: tenant.locationId!,
+    inquiryId,
+    slotDate,
+    startTime,
+    durationMinutes,
+  });
+  return confirmInquiryBooking(tenant.ctx, db, inquiryId, null, hoursException.id);
+}
+
 describe("pending bookings (postgres)", { timeout: 60_000 }, () => {
   it("does not let Check Availability allocate occupancy", async () => {
     const tenant = await provisionTenant("check");
@@ -228,7 +250,7 @@ describe("pending bookings (postgres)", { timeout: 60_000 }, () => {
       unlimitedLimiter,
     );
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
-    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const confirmed = await confirmPendingReady(tenant, created.inquiryId);
     expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     const rows = await db.resourceReservation.findMany({
       where: { inquiryId: created.inquiryId, status: RESOURCE_RESERVATION_STATUSES.BOOKED, releasedAt: null },
@@ -269,7 +291,7 @@ describe("pending bookings (postgres)", { timeout: 60_000 }, () => {
       unlimitedLimiter,
     );
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
-    await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    await confirmPendingReady(tenant, created.inquiryId);
     const booked = await db.resourceReservation.count({
       where: {
         organizationId: tenant.organizationId,
@@ -303,8 +325,8 @@ describe("pending bookings (postgres)", { timeout: 60_000 }, () => {
     await startWorkingInquiry(tenant.ctx, db, first.inquiryId);
     await startWorkingInquiry(tenant.ctx, db, second.inquiryId);
     const results = await Promise.allSettled([
-      confirmInquiryBooking(tenant.ctx, db, first.inquiryId),
-      confirmInquiryBooking(tenant.ctx, db, second.inquiryId),
+      confirmPendingReady(tenant, first.inquiryId),
+      confirmPendingReady(tenant, second.inquiryId),
     ]);
     const wins = results.filter((row) => row.status === "fulfilled");
     const losses = results.filter((row) => row.status === "rejected");

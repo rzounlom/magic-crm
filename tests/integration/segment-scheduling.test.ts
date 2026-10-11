@@ -19,6 +19,7 @@ import {
   RESOURCE_RESERVATION_STATUSES,
   type PlanResourceRequirement,
 } from "@/types/resource-schedule";
+import { authorizeUnconfiguredHoursForConfirm } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -232,6 +233,27 @@ const RECOMMENDED_HOUR_ITINERARY = [
   { startTime: "20:30", endTime: "21:30", label: "1 Hour Unlimited Arcade Play", productId: "arcade", startOffsetMinutes: 180, durationMinutes: 60 },
 ];
 
+
+async function confirmSegmentReady(
+  tenant: Awaited<ReturnType<typeof provisionTenant>>,
+  inquiryId: string,
+  startTime: string,
+  durationMinutes: number,
+  slotDate = "2026-10-15",
+) {
+  const hoursException = await authorizeUnconfiguredHoursForConfirm({
+    ctx: tenant.ctx,
+    database: db,
+    organizationId: tenant.organizationId,
+    locationId: tenant.locationId!,
+    inquiryId,
+    slotDate,
+    startTime,
+    durationMinutes,
+  });
+  return confirmInquiryBooking(tenant.ctx, db, inquiryId, null, hoursException.id);
+}
+
 describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
   it("occupies axe and bowling only during their itinerary segments", async () => {
     const tenant = await provisionTenant("occ");
@@ -252,7 +274,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
       unlimitedLimiter,
     );
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
-    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const confirmed = await confirmSegmentReady(tenant, created.inquiryId, "17:30", 180);
     expect(confirmed.created).toBe(true);
     const reservations = await db.resourceReservation.findMany({
       where: { bookingId: confirmed.booking.id, status: RESOURCE_RESERVATION_STATUSES.BOOKED },
@@ -313,7 +335,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
       unlimitedLimiter,
     );
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
-    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const confirmed = await confirmSegmentReady(tenant, created.inquiryId, "17:30", 180);
     const reservations = await db.resourceReservation.findMany({
       where: { bookingId: confirmed.booking.id, status: RESOURCE_RESERVATION_STATUSES.BOOKED, releasedAt: null },
       include: { resource: { include: { resourceType: true } } },
@@ -353,7 +375,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     });
     await bookPublicEventPlan(db, { token: first.publicToken, planId: first.plan.id, rateLimitKey: first.publicToken }, unlimitedLimiter);
     await startWorkingInquiry(tenant.ctx, db, first.inquiryId);
-    await confirmInquiryBooking(tenant.ctx, db, first.inquiryId);
+    await confirmSegmentReady(tenant, first.inquiryId, "17:30", 180);
 
     const second = await createPlanInquiry(tenant.organization, {
       startTime: "17:30",
@@ -395,7 +417,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     });
     await bookPublicEventPlan(db, { token: first.publicToken, planId: first.plan.id, rateLimitKey: first.publicToken }, unlimitedLimiter);
     await startWorkingInquiry(tenant.ctx, db, first.inquiryId);
-    await confirmInquiryBooking(tenant.ctx, db, first.inquiryId);
+    await confirmSegmentReady(tenant, first.inquiryId, "17:30", 180);
     await expect(
       bookPublicEventPlan(db, { token: second.publicToken, planId: second.plan.id, rateLimitKey: second.publicToken }, unlimitedLimiter),
     ).rejects.toBeInstanceOf(InquiryError);
@@ -439,7 +461,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     });
     await bookPublicEventPlan(db, { token: created.publicToken, planId: created.plan.id, rateLimitKey: created.publicToken }, unlimitedLimiter);
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
-    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const confirmed = await confirmSegmentReady(tenant, created.inquiryId, "17:30", 180);
     const reservations = await db.resourceReservation.findMany({
       where: { bookingId: confirmed.booking.id, status: RESOURCE_RESERVATION_STATUSES.BOOKED },
     });
@@ -471,7 +493,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     });
     await bookPublicEventPlan(db, { token: created.publicToken, planId: created.plan.id, rateLimitKey: created.publicToken }, unlimitedLimiter);
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
-    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const confirmed = await confirmSegmentReady(tenant, created.inquiryId, "17:30", 180);
     const reservations = await db.resourceReservation.findMany({
       where: { bookingId: confirmed.booking.id, status: RESOURCE_RESERVATION_STATUSES.BOOKED },
     });
@@ -590,7 +612,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
       search: "Manual Group",
     });
     expect(listedPending.some((row) => row.id === pending.booking.id)).toBe(true);
-    const confirmed = await confirmInquiryBooking(tenant.ctx, db, inquiry.id);
+    const confirmed = await confirmSegmentReady(tenant, inquiry.id, "17:30", 180);
     expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     const bowlDay = await getMasterScheduleDay(tenant.ctx, db, {
       date: "2026-10-15",
@@ -645,11 +667,22 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
     const before = await db.inquiry.findFirstOrThrow({ where: { id: created.inquiryId } });
     await checkInquiryAvailability(tenant.ctx, db, created.inquiryId);
+    const hoursException = await authorizeUnconfiguredHoursForConfirm({
+      ctx: tenant.ctx,
+      database: db,
+      organizationId: tenant.organizationId,
+      locationId: tenant.locationId!,
+      inquiryId: created.inquiryId,
+      slotDate: "2026-10-15",
+      startTime: "17:30",
+      durationMinutes: 180,
+    });
     const confirmed = await confirmPendingBooking(db, {
       organizationId: tenant.organizationId,
       inquiryId: created.inquiryId,
       actorUserProfileId: tenant.userProfileId,
       attestExternalPayment: true,
+      hoursExceptionId: hoursException.id,
     });
     expect(confirmed.created || confirmed.booking.status === BOOKING_STATUSES.CONFIRMED).toBe(true);
     expect(before.id).toBe(created.inquiryId);

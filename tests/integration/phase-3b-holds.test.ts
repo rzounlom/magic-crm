@@ -14,6 +14,10 @@ import { getMasterScheduleDay } from "@/server/services/resource-schedule-servic
 import { BOOKING_STATUSES } from "@/types/booking";
 import { EVENT_PLAN_KINDS, INQUIRY_SALES_STAGES, INQUIRY_STATUSES } from "@/types/inquiry";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
+import {
+  authorizeConfirmHoursForInquiry,
+  authorizeHoldHoursForInquiry,
+} from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -29,6 +33,43 @@ afterEach(async () => {
 afterAll(async () => {
   await db.$disconnect();
 });
+
+async function placeHoldReady(
+  tenant: { ctx: Awaited<ReturnType<typeof resolveRequestContext>>; organizationId: string },
+  created: { inquiryId: string; plan: { id: string } },
+  extras: { now?: Date; holdHours?: number } = {},
+) {
+  await db.inquiry.update({
+    where: { id: created.inquiryId },
+    data: { selectedEventPlanId: created.plan.id },
+  });
+  const hours = await authorizeHoldHoursForInquiry({
+    ctx: tenant.ctx,
+    database: db,
+    inquiryId: created.inquiryId,
+  });
+  return placeProposalHold(db, {
+    organizationId: tenant.organizationId,
+    inquiryId: created.inquiryId,
+    planId: created.plan.id,
+    selectPlan: true,
+    hoursExceptionId: hours.id,
+    now: extras.now,
+    holdHours: extras.holdHours,
+  });
+}
+
+async function confirmHeldReady(
+  tenant: { ctx: Awaited<ReturnType<typeof resolveRequestContext>> },
+  inquiryId: string,
+) {
+  const hours = await authorizeConfirmHoursForInquiry({
+    ctx: tenant.ctx,
+    database: db,
+    inquiryId,
+  });
+  return confirmHeldBooking(tenant.ctx, db, inquiryId, null, hours.id);
+}
 
 async function provisionTenant(suffix: string, extras: { timezone?: string; depositPercent?: number } = {}) {
   const result = await provisionOrganization(
@@ -299,13 +340,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const { type, resources } = await seedLanes(tenant.organizationId, locationId, 1);
     const created = await createPlanInquiry(tenant.organization, type, 1);
     const t0 = new Date("2026-09-16T16:00:00.000Z");
-    await placeProposalHold(db, {
-      organizationId: tenant.organizationId,
-      inquiryId: created.inquiryId,
-      planId: created.plan.id,
-      selectPlan: true,
-      now: t0,
-    });
+    await placeHoldReady(tenant, created, { now: t0 });
     const stillActive = await checkResourceAvailability(db, {
       organizationId: tenant.organizationId,
       locationId,
@@ -393,12 +428,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const seededA = await seedLanes(tenantA.organizationId, locationA, 1);
     const seededB = await seedLanes(tenantB.organizationId, locationB, 1);
     const createdA = await createPlanInquiry(tenantA.organization, seededA.type, 1);
-    const holdA = await placeProposalHold(db, {
-      organizationId: tenantA.organizationId,
-      inquiryId: createdA.inquiryId,
-      planId: createdA.plan.id,
-      selectPlan: true,
-    });
+    const holdA = await placeHoldReady(tenantA, createdA);
     expect(holdA.depositRequiredCents).toBe(30_000);
 
     const locationTwo = await db.location.create({
@@ -458,12 +488,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     });
     expect(checkB.available).toBe(true);
     const createdB = await createPlanInquiry(tenantB.organization, seededB.type, 1);
-    const holdB = await placeProposalHold(db, {
-      organizationId: tenantB.organizationId,
-      inquiryId: createdB.inquiryId,
-      planId: createdB.plan.id,
-      selectPlan: true,
-    });
+    const holdB = await placeHoldReady(tenantB, createdB);
     expect(holdB.depositRequiredCents).toBe(20_000);
 
     const day = await getMasterScheduleDay(tenantA.ctx, db, {
@@ -519,19 +544,14 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const locationId = tenant.organization.locations[0]?.id ?? null;
     const { type } = await seedLanes(tenant.organizationId, locationId, 1);
     const created = await createPlanInquiry(tenant.organization, type, 1);
-    await placeProposalHold(db, {
-      organizationId: tenant.organizationId,
-      inquiryId: created.inquiryId,
-      planId: created.plan.id,
-      selectPlan: true,
-    });
+    await placeHoldReady(tenant, created);
     const held = await db.resourceReservation.findMany({
       where: { inquiryId: created.inquiryId, releasedAt: null },
       select: { id: true, resourceId: true },
     });
     expect(held).toHaveLength(1);
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
-    const confirmed = await confirmHeldBooking(tenant.ctx, db, created.inquiryId);
+    const confirmed = await confirmHeldReady(tenant, created.inquiryId);
     expect(confirmed.created).toBe(true);
     expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     expect(confirmed.booking.depositRequiredCents).toBe(30_000);
@@ -555,15 +575,10 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const { type } = await seedLanes(tenant.organizationId, locationId, 1);
     const heldInquiry = await createPlanInquiry(tenant.organization, type, 1);
     const competing = await createPlanInquiry(tenant.organization, type, 1);
-    await placeProposalHold(db, {
-      organizationId: tenant.organizationId,
-      inquiryId: heldInquiry.inquiryId,
-      planId: heldInquiry.plan.id,
-      selectPlan: true,
-    });
+    await placeHoldReady(tenant, heldInquiry);
     await startWorkingInquiry(tenant.ctx, db, heldInquiry.inquiryId);
     const results = await Promise.allSettled([
-      confirmHeldBooking(tenant.ctx, db, heldInquiry.inquiryId),
+      confirmHeldReady(tenant, heldInquiry.inquiryId),
       reservePublicEventPlan(
         db,
         { token: competing.publicToken, planId: competing.plan.id, rateLimitKey: competing.publicToken },
@@ -597,15 +612,10 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const locationId = tenant.organization.locations[0]?.id ?? null;
     const { type } = await seedLanes(tenant.organizationId, locationId, 1);
     const created = await createPlanInquiry(tenant.organization, type, 1);
-    await placeProposalHold(db, {
-      organizationId: tenant.organizationId,
-      inquiryId: created.inquiryId,
-      planId: created.plan.id,
-      selectPlan: true,
-    });
+    await placeHoldReady(tenant, created);
     await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
     const results = await Promise.allSettled([
-      confirmHeldBooking(tenant.ctx, db, created.inquiryId),
+      confirmHeldReady(tenant, created.inquiryId),
       expireInquiryHoldsNow(db, { organizationId: tenant.organizationId, inquiryId: created.inquiryId }),
     ]);
     expect(results).toHaveLength(2);

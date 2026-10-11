@@ -27,6 +27,7 @@ import {
   SALES_KNOWLEDGE_TYPES,
 } from "@/types/inquiry";
 import { RESOURCE_RESERVATION_SOURCES, RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
+import { authorizeHoldHoursForInquiry } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -309,7 +310,8 @@ describe("live agent booking workspace (postgres)", () => {
     });
 
     await saveAgentWorkingPlan(tenant.ctx, db, created.inquiryId, workingInput(payload, { startTime: "18:00" }));
-    await placeInquiryPlanHold(tenant.ctx, db, created.inquiryId);
+    const holdHours = await authorizeHoldHoursForInquiry({ ctx: tenant.ctx, database: db, inquiryId: created.inquiryId });
+    await placeInquiryPlanHold(tenant.ctx, db, created.inquiryId, holdHours.id);
     const held = await db.resourceReservation.findMany({
       where: { organizationId: tenant.organizationId, inquiryId: created.inquiryId, releasedAt: null },
     });

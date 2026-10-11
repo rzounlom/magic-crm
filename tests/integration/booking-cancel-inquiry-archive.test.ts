@@ -24,6 +24,7 @@ import {
   RESOURCE_RESERVATION_STATUSES,
   type PlanResourceRequirement,
 } from "@/types/resource-schedule";
+import { authorizeUnconfiguredHoursForConfirm } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -221,6 +222,7 @@ async function createPlanInquiry(
 async function confirmPlan(
   tenant: Awaited<ReturnType<typeof provisionTenant>>,
   created: Awaited<ReturnType<typeof createPlanInquiry>>,
+  startTime = "18:00",
 ) {
   await reservePublicEventPlan(
     db,
@@ -228,7 +230,20 @@ async function confirmPlan(
     unlimitedLimiter,
   );
   await startWorkingInquiry(tenant.ctx, db, created.inquiryId);
-  return confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+  if (!tenant.locationId) {
+    throw new Error("confirmPlan requires a location");
+  }
+  const hoursException = await authorizeUnconfiguredHoursForConfirm({
+    ctx: tenant.ctx,
+    database: db,
+    organizationId: tenant.organizationId,
+    locationId: tenant.locationId,
+    inquiryId: created.inquiryId,
+    slotDate: "2026-10-15",
+    startTime,
+    durationMinutes: 180,
+  });
+  return confirmInquiryBooking(tenant.ctx, db, created.inquiryId, null, hoursException.id);
 }
 
 describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_000 }, () => {
@@ -551,11 +566,33 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
       unlimitedLimiter,
     );
     await startWorkingInquiry(tenant.ctx, db, first.inquiryId);
-    const occupied = await confirmInquiryBooking(tenant.ctx, db, first.inquiryId);
+    const firstHours = await authorizeUnconfiguredHoursForConfirm({
+      ctx: tenant.ctx,
+      database: db,
+      organizationId: tenant.organizationId,
+      locationId: tenant.locationId!,
+      inquiryId: first.inquiryId,
+      slotDate: "2026-10-15",
+      startTime: "18:00",
+      durationMinutes: 180,
+    });
+    const occupied = await confirmInquiryBooking(tenant.ctx, db, first.inquiryId, null, firstHours.id);
     expect(occupied.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
 
     await startWorkingInquiry(tenant.ctx, db, second.inquiryId);
-    await expect(confirmInquiryBooking(tenant.ctx, db, second.inquiryId)).rejects.toMatchObject({
+    const secondHours = await authorizeUnconfiguredHoursForConfirm({
+      ctx: tenant.ctx,
+      database: db,
+      organizationId: tenant.organizationId,
+      locationId: tenant.locationId!,
+      inquiryId: second.inquiryId,
+      slotDate: "2026-10-15",
+      startTime: "18:00",
+      durationMinutes: 180,
+    });
+    await expect(
+      confirmInquiryBooking(tenant.ctx, db, second.inquiryId, null, secondHours.id),
+    ).rejects.toMatchObject({
       code: "AVAILABILITY_CONFLICT",
     });
     const stuckBooking = await db.booking.findFirstOrThrow({ where: { inquiryId: second.inquiryId } });
@@ -583,7 +620,17 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
       actorUserProfileId: tenant.ctx.userId,
       source: "employee_save",
     });
-    const retried = await confirmInquiryBooking(tenant.ctx, db, second.inquiryId);
+    const retryHours = await authorizeUnconfiguredHoursForConfirm({
+      ctx: tenant.ctx,
+      database: db,
+      organizationId: tenant.organizationId,
+      locationId: tenant.locationId!,
+      inquiryId: second.inquiryId,
+      slotDate: "2026-10-15",
+      startTime: "14:00",
+      durationMinutes: 180,
+    });
+    const retried = await confirmInquiryBooking(tenant.ctx, db, second.inquiryId, null, retryHours.id);
     expect(retried.conflict).toBeNull();
     expect(retried.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
 

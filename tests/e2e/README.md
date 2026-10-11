@@ -39,7 +39,7 @@ corepack pnpm exec playwright codegen "$PLAYWRIGHT_BASE_URL/app" \
   --save-storage=playwright/.auth/staff.json
 # Complete sign-in in the headed window, then close.
 export PLAYWRIGHT_STORAGE_STATE="$PWD/playwright/.auth/staff.json"
-corepack pnpm exec playwright test tests/e2e/staff.smoke.spec.ts
+corepack pnpm exec playwright test tests/e2e/staff.smoke.spec.ts tests/e2e/staff.routes.smoke.spec.ts
 ```
 
 ### Session hygiene
@@ -54,17 +54,21 @@ Until a human produces a TEST storage-state file, authenticated staff browser co
 
 ## Optional proposal token fixture
 
-For non-mutating `/plan/[token]` smoke:
-
-1. Create an inquiry on the **TEST** tenant only (never production).
-2. Copy the opaque public plan token from the TEST database / handoff URL.
-3. Export:
+For non-mutating `/plan/[token]` smoke against the local DEV app:
 
 ```bash
-export PLAYWRIGHT_PUBLIC_PLAN_TOKEN=opaque-test-token
+corepack pnpm exec tsx --tsconfig tsconfig.json scripts/r1-create-proposal-browser-fixture.ts
+# prints exportHint; also writes playwright/.fixtures/proposal.json (gitignored)
+export PLAYWRIGHT_PUBLIC_PLAN_TOKEN='…'   # from script output
+export PLAYWRIGHT_PUBLIC_ORG_SLUG=magiccrm-test-center-b
+corepack pnpm exec playwright test tests/e2e/public-token.smoke.spec.ts
 ```
 
-Do not confirm bookings or collect payment during visual smoke. Invalid-token coverage already runs without this variable.
+The script refuses the Neon TEST branch and any host other than the known DEV branch. It creates a synthetic `r1-fixture+…@example.com` inquiry only.
+
+Service-level fixture coverage (create → resolve → invalid token → tenant bind) lives in `tests/integration/proposal-token-fixture.test.ts` on the isolated TEST database.
+
+Do not confirm bookings or collect payment during visual smoke. Invalid-token coverage already runs without `PLAYWRIGHT_PUBLIC_PLAN_TOKEN`.
 
 ## Axe
 

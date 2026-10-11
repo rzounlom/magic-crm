@@ -14,6 +14,7 @@ import { getMasterScheduleDay } from "@/server/services/resource-schedule-servic
 import { EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { EVENT_PLAN_TIERS, type EventPlanTier } from "@/types/event-planner";
 import { RESOURCE_RESERVATION_STATUSES, type PlanResourceRequirement } from "@/types/resource-schedule";
+import { authorizeConfirmHoursForInquiry, authorizeHoldHoursForInquiry } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -151,7 +152,8 @@ describe("catalog physical resource allocation (postgres)", () => {
         { token: created.publicToken, planId: plan.id, rateLimitKey: `book:${tier}:${crypto.randomUUID()}` },
         unlimitedLimiter,
       );
-      await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+      const confirmHours = await authorizeConfirmHoursForInquiry({ ctx: tenant.ctx, database: db, inquiryId: created.inquiryId });
+      await confirmInquiryBooking(tenant.ctx, db, created.inquiryId, null, confirmHours.id);
       bookedInquiryIds.set(tier, created.inquiryId);
 
       const payload = readEventPlanPayload(plan.payload);

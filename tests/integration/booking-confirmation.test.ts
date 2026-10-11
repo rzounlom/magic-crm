@@ -28,6 +28,11 @@ import {
   SALES_KNOWLEDGE_TYPES,
 } from "@/types/inquiry";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
+import {
+  authorizeConfirmHoursForInquiry,
+  authorizeHoldHoursForInquiry,
+  authorizeUnconfiguredHoursForConfirm,
+} from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -195,10 +200,27 @@ async function prepareReadyToFinalize(
     ...workingInput(payload),
     guestCount,
   });
-  await placeInquiryPlanHold(tenant.ctx, db, created.inquiryId);
+  const holdException = await authorizeHoldHoursForInquiry({
+    ctx: tenant.ctx,
+    database: db,
+    inquiryId: created.inquiryId,
+  });
+  await placeInquiryPlanHold(tenant.ctx, db, created.inquiryId, holdException.id);
   const inquiry = await db.inquiry.findFirstOrThrow({ where: { id: created.inquiryId } });
   await markInquiryReadyToFinalize(tenant.ctx, db, created.inquiryId, inquiry.updatedAt.toISOString());
   return { created, plan, type, originalGuestCount: plan.guestCount };
+}
+
+async function confirmReady(
+  tenant: Awaited<ReturnType<typeof provisionTenant>>,
+  inquiryId: string,
+) {
+  const hoursException = await authorizeConfirmHoursForInquiry({
+    ctx: tenant.ctx,
+    database: db,
+    inquiryId,
+  });
+  return confirmInquiryBooking(tenant.ctx, db, inquiryId, null, hoursException.id);
 }
 
 describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
@@ -207,7 +229,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
     const { created, plan, type } = await prepareReadyToFinalize(tenant, "bk-ok@example.com", 18);
     const selectedBefore = await db.eventPlanRecommendation.findFirstOrThrow({ where: { id: plan.id } });
 
-    const first = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const first = await confirmReady(tenant, created.inquiryId);
     expect(first.created).toBe(true);
     expect(first.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     expect(first.booking.guestCount).toBe(18);
@@ -258,7 +280,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
     const publicView = await getPublicEventPlanByToken(db, created.publicToken);
     expect(publicView.booking?.bookingNumber).toBe(first.booking.bookingNumber);
 
-    const duplicate = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const duplicate = await confirmReady(tenant, created.inquiryId);
     expect(duplicate.created).toBe(false);
     expect(duplicate.booking.id).toBe(first.booking.id);
     expect(
@@ -275,7 +297,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
       where: { inquiryId: created.inquiryId, kind: EVENT_PLAN_KINDS.AGENT_WORKING },
     });
     await saveAgentWorkingPlan(tenant.ctx, db, created.inquiryId, workingInput(draft.payload as EventPlanPayload));
-    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const confirmed = await confirmReady(tenant, created.inquiryId);
     expect(confirmed.created).toBe(true);
     expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     expect(
@@ -297,7 +319,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
       where: { organizationId: tenant.organizationId, inquiryId: created.inquiryId },
       data: { expiresAt: new Date("2000-01-01T00:00:00.000Z") },
     });
-    const confirmed = await confirmInquiryBooking(tenant.ctx, db, created.inquiryId);
+    const confirmed = await confirmReady(tenant, created.inquiryId);
     expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     expect(
       await db.resourceReservation.count({
@@ -313,7 +335,19 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
       where: { organizationId: tenant.organizationId },
       data: { active: false },
     });
-    await expect(confirmInquiryBooking(tenant.ctx, db, created.inquiryId)).rejects.toMatchObject({
+    const hoursException = await authorizeUnconfiguredHoursForConfirm({
+      ctx: tenant.ctx,
+      database: db,
+      organizationId: tenant.organizationId,
+      locationId: tenant.locationId!,
+      inquiryId: created.inquiryId,
+      slotDate: "2026-10-15",
+      startTime: "18:00",
+      durationMinutes: 180,
+    });
+    await expect(
+      confirmInquiryBooking(tenant.ctx, db, created.inquiryId, null, hoursException.id),
+    ).rejects.toMatchObject({
       code: "AVAILABILITY_CONFLICT",
     });
     const pending = await db.booking.findFirstOrThrow({
@@ -347,8 +381,24 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
         },
       },
     });
+    const hoursException = await authorizeUnconfiguredHoursForConfirm({
+      ctx: tenant.ctx,
+      database: db,
+      organizationId: tenant.organizationId,
+      locationId: tenant.locationId!,
+      inquiryId: created.inquiryId,
+      slotDate: "2026-10-15",
+      startTime: "18:00",
+      durationMinutes: 180,
+    });
     await expect(
-      confirmInquiryBooking(tenant.ctx, failing as unknown as typeof db, created.inquiryId),
+      confirmInquiryBooking(
+        tenant.ctx,
+        failing as unknown as typeof db,
+        created.inquiryId,
+        null,
+        hoursException.id,
+      ),
     ).rejects.toThrow(/simulated conversion failure/);
     expect(await db.booking.count({ where: { organizationId: tenant.organizationId } })).toBe(0);
     expect(
@@ -370,9 +420,19 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
     const tenant = await provisionTenant("bk-race");
     const { created } = await prepareReadyToFinalize(tenant, "bk-race@example.com");
     const other = await addGroupUser(tenant, SYSTEM_GROUP_KEYS.EVENT_SALES, "second-bk@example.com");
+    const hoursException = await authorizeUnconfiguredHoursForConfirm({
+      ctx: tenant.ctx,
+      database: db,
+      organizationId: tenant.organizationId,
+      locationId: tenant.locationId!,
+      inquiryId: created.inquiryId,
+      slotDate: "2026-10-15",
+      startTime: "18:00",
+      durationMinutes: 180,
+    });
     const results = await Promise.allSettled([
-      confirmInquiryBooking(tenant.ctx, db, created.inquiryId),
-      confirmInquiryBooking(other.ctx, db, created.inquiryId),
+      confirmInquiryBooking(tenant.ctx, db, created.inquiryId, null, hoursException.id),
+      confirmInquiryBooking(other.ctx, db, created.inquiryId, null, hoursException.id),
     ]);
     const fulfilled = results.filter((row) => row.status === "fulfilled");
     expect(fulfilled.length).toBeGreaterThanOrEqual(1);

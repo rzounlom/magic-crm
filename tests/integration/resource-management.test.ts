@@ -26,6 +26,7 @@ import {
 import { INQUIRY_STATUSES, SALES_KNOWLEDGE_TYPES } from "@/types/inquiry";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
+import { authorizeHoldHoursForInquiry } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -258,7 +259,8 @@ describe("resource management (postgres)", () => {
     const commsBeforeHold = await db.communicationEvent.count({
       where: { organizationId: tenant.organizationId },
     });
-    await placeInquiryPlanHold(tenant.ctx, db, created.inquiryId);
+    const holdHours = await authorizeHoldHoursForInquiry({ ctx: tenant.ctx, database: db, inquiryId: created.inquiryId });
+    await placeInquiryPlanHold(tenant.ctx, db, created.inquiryId, holdHours.id);
     const held = await db.resourceReservation.findMany({
       where: { organizationId: tenant.organizationId, inquiryId: created.inquiryId, releasedAt: null },
     });

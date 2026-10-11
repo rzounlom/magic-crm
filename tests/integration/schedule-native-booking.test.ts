@@ -8,8 +8,11 @@ import { createEmployeeManualInquiry } from "@/server/services/inquiry-service";
 import { savePendingEmployeeBooking } from "@/server/services/live-agent-service";
 import { provisionOrganization } from "@/server/services/provision-organization";
 import { getMasterScheduleBoard } from "@/server/services/resource-schedule-service";
+import { createSalesKnowledgeItem } from "@/server/services/sales-knowledge-service";
 import { BOOKING_STATUSES } from "@/types/booking";
+import { SALES_KNOWLEDGE_TYPES } from "@/types/inquiry";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
+import { authorizeConfirmHoursForInquiry } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
 
@@ -45,6 +48,19 @@ describe("schedule-native booking", () => {
       organizationSlug: organization.slug,
       dataset: loadBookingCatalogDataset(),
     });
+    // Proposal generation still needs active sales-knowledge attractions.
+    for (const name of ["Bowling", "Laser Tag", "Arcade"] as const) {
+      await createSalesKnowledgeItem(ctx, db, {
+        type: SALES_KNOWLEDGE_TYPES.ATTRACTION,
+        name,
+        shortDescription: name,
+        details: `${name} for schedule-native fixture.`,
+        priceText: "$10/person",
+        durationMinutes: 60,
+        maxGuests: 12,
+        active: true,
+      });
+    }
 
     const created = await createEmployeeManualInquiry(ctx, db, {
       firstName: "Ada",
@@ -67,7 +83,8 @@ describe("schedule-native booking", () => {
     expect(before.reservations.some((row) => row.inquiryId === created.inquiryId)).toBe(false);
     expect(before.reservations.some((row) => row.status === RESOURCE_RESERVATION_STATUSES.BOOKED)).toBe(false);
 
-    const confirmed = await confirmInquiryBooking(ctx, db, created.inquiryId);
+    const confirmHours = await authorizeConfirmHoursForInquiry({ ctx, database: db, inquiryId: created.inquiryId });
+    const confirmed = await confirmInquiryBooking(ctx, db, created.inquiryId, null, confirmHours.id);
     expect(confirmed.conflict).toBeNull();
     expect(confirmed.booking.id).toBe(pending.booking.id);
 

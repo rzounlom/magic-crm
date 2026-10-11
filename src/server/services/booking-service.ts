@@ -48,9 +48,10 @@ export async function confirmHeldBooking(
   database: BookingDb,
   inquiryId: string,
   _expectedUpdatedAt?: string | null,
+  hoursExceptionId?: string | null,
 ) {
   void _expectedUpdatedAt;
-  return confirmInquiryBooking(ctx, database, inquiryId);
+  return confirmInquiryBooking(ctx, database, inquiryId, null, hoursExceptionId);
 }
 
 export async function confirmInquiryBooking(
