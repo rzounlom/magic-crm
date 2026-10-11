@@ -407,6 +407,21 @@ label:has(:disabled) {
   outline-offset: 2px;
 }
 
+.event-type-card {
+  align-items: flex-start;
+}
+
+.event-type-icon {
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planner-section,
+  .choice-card {
+    scroll-behavior: auto;
+  }
+}
+
 .planner-section + .planner-section {
   margin-top: 2.5rem;
 }

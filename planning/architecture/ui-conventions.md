@@ -95,9 +95,11 @@ Inquiry detail booking guidance lives in `LiveAgentBookingActions` (`#confirm-bo
 
 See `docs/design/UX4_STAFF_BOOKING_EXPERIENCE.md`.
 
-## Public customer surfaces (UX5)
+## Public customer surfaces (UX5 / UX8)
 
-Public inquire/plan/conversation chrome uses `PublicCustomerShell` with the MagicCRM platform mark and optional host `organizationName` from trusted loaders. Proposal money display uses `PriceBreakdown` (authoritative cents only). Intake wizard presentation may change; question sequence and payload contracts must not. Deeper intake optimization is UX8 — see `docs/design/UX5_CUSTOMER_FACING_EXPERIENCE.md`.
+Public inquire/plan/conversation chrome uses `PublicCustomerShell` with the MagicCRM platform mark and optional host `organizationName` from trusted loaders. Proposal money display uses `PriceBreakdown` (authoritative cents only).
+
+Public intake (`PublicIntakeWizard`) is a four-step journey (Event → Fun → When → Details) with explicit Back/Continue, venue-local start-time select, and tenant-scoped non-PII draft restore in `localStorage`. Hidden form fields and `plannerAnswersToIntakeRecord` remain the CRM submission contract — do not rename required backend fields or invent availability/payment claims. See `docs/design/UX5_CUSTOMER_FACING_EXPERIENCE.md` and `docs/design/UX8_CUSTOMER_INTAKE_OVERHAUL.md`.
 
 ## Catalog and Settings admin (UX6)
 

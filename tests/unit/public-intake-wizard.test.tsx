@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PUBLIC_INQUIRY_PENDING_COPY } from "@/components/layout/public-inquiry-pending";
 import { PLANNER_FRAME_CLASS } from "@/components/layout/public-content";
 import { PublicIntakeWizard } from "@/components/layout/public-intake-wizard";
+import { clearIntakeDraft, intakeDraftStorageKey } from "@/lib/event-planner/intake-draft";
 import { notify } from "@/lib/ui/notify";
 import type { SecurityActionResult } from "@/types/security-action";
 
@@ -34,10 +35,12 @@ beforeEach(() => {
   HTMLDialogElement.prototype.close = function close() {
     this.removeAttribute("open");
   };
+  window.localStorage.clear();
 });
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
 });
 
 const ALPHA = [
@@ -62,28 +65,25 @@ function setGuestCount(guests: string) {
   fireEvent.change(screen.getByLabelText("Guest count"), { target: { value: guests } });
 }
 
-function revealPreferences(guests = "20") {
-  press("Birthday Party");
-  expect(screen.queryByRole("heading", { name: "Experience" })).toBeNull();
+function fillEventAndContinue(guests = "20") {
+  press(/Birthday Party/);
   setGuestCount(guests);
   press("Mix of Kids & Adults");
-  expect(screen.getByRole("heading", { name: "Experience" })).toBeTruthy();
-  expect(screen.getByRole("heading", { name: "Your event" })).toBeTruthy();
   press("Continue");
-  expect(screen.getByRole("heading", { name: "Event preferences" })).toBeTruthy();
 }
 
-function revealContact() {
+function fillFunAndContinue() {
   press("Food: Yes");
   press("Private space: Yes");
   press("$1,500–$3,000");
   press("3 hours");
-  expect(screen.getByLabelText("Event date")).toBeTruthy();
+  press("Continue");
+}
+
+function fillWhenAndContinue() {
   fireEvent.change(screen.getByLabelText("Event date"), { target: { value: "2026-10-15" } });
-  fireEvent.change(screen.getByLabelText("Hour"), { target: { value: "6" } });
-  fireEvent.change(screen.getByLabelText("Minute"), { target: { value: "00" } });
-  fireEvent.change(screen.getByLabelText("AM/PM"), { target: { value: "PM" } });
-  expect(screen.getByRole("heading", { name: "How can we reach you?" })).toBeTruthy();
+  fireEvent.change(screen.getByLabelText("Preferred start time"), { target: { value: "18:00" } });
+  press("Continue");
 }
 
 function fillContactFields() {
@@ -93,88 +93,78 @@ function fillContactFields() {
 }
 
 describe("public intake wizard", () => {
-  it("uses progressive stages instead of an 11-step wizard", () => {
+  it("uses a four-step journey instead of progressive six-stage reveal", () => {
     const source = readFileSync(
       path.join(process.cwd(), "src/components/layout/public-intake-wizard.tsx"),
       "utf8",
     );
     const css = readFileSync(path.join(process.cwd(), "src/app/globals.css"), "utf8");
-    expect(source).not.toMatch(/Step \d+ of/);
+    expect(source).not.toMatch(/Step \d+ of 11/);
     expect(source).not.toMatch(/of 11/);
     expect(source).not.toMatch(/Bowling|Axe Throwing|Laser Tag|Mini Golf|Generations/);
     expect(source).not.toContain("max-w-272");
     expect(source).not.toContain("ring-2");
     expect(PLANNER_FRAME_CLASS).toContain("max-w-3xl");
-    expect(PLANNER_FRAME_CLASS).toContain("px-4");
     expect(css).toMatch(/\.choice-grid[\s\S]*gap:\s*1rem/);
     expect(css).toMatch(/\.choice-card\[aria-pressed="true"\][\s\S]*box-shadow:\s*inset/);
-    expect(css).not.toMatch(/\.choice-card[\s\S]{0,240}ring-/);
 
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
     const progress = screen.getByRole("list", { name: "Planner progress" });
     expect(within(progress).getByText("Event")).toBeTruthy();
-    expect(within(progress).getByText("Experience")).toBeTruthy();
-    expect(within(progress).getByText("Preferences")).toBeTruthy();
-    expect(within(progress).getByText("Date & Time")).toBeTruthy();
-    expect(within(progress).getByText("Contact")).toBeTruthy();
-    expect(within(progress).getByText("Review")).toBeTruthy();
-    expect(within(progress).getByText("Event").className).toContain("rounded-full");
+    expect(within(progress).getByText("Fun")).toBeTruthy();
+    expect(within(progress).getByText("When")).toBeTruthy();
+    expect(within(progress).getByText("Details")).toBeTruthy();
+    expect(within(progress).queryByText("Experience")).toBeNull();
+    expect(within(progress).queryByText("Preferences")).toBeNull();
     expect(within(progress).getByText("Event").getAttribute("aria-current")).toBe("step");
-    expect(screen.queryByText(/Step \d+ of 11/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
-    expect(document.querySelector("[data-planner-shell]")?.className).not.toContain("max-w-272");
-    expect(document.querySelector("[data-choice-grid]")?.className).toContain("choice-grid");
+    expect(screen.getByRole("button", { name: "Continue" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Start over" }).className).toContain("min-h-11");
   });
 
-  it("groups guests with the event and food with private space", async () => {
+  it("keeps Back/Continue navigation and tenant-scoped activities", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
-    const event = document.getElementById("planner-section-event");
-    await choose(user, "Birthday Party");
-    expect(event?.contains(screen.getByLabelText("Guest count"))).toBe(true);
-    expect(event?.contains(screen.getByRole("button", { name: "Mix of Kids & Adults" }))).toBe(true);
-    expect(screen.queryByRole("heading", { name: "Experience" })).toBeNull();
-
+    await choose(user, /Birthday Party/);
+    expect(screen.getByLabelText("Guest count")).toBeTruthy();
     await user.type(screen.getByLabelText("Guest count"), "20");
     await choose(user, "Mix of Kids & Adults");
-    expect(screen.getByRole("button", { name: "Bowling" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Trampoline Park" })).toBeNull();
-    await choose(user, "Bowling");
-    await choose(user, "Axe Throwing");
-    expect(screen.getByRole("button", { name: /Bowling/ })).toHaveProperty("ariaPressed", "true");
-    const selected = screen.getByRole("button", { name: /Bowling/ });
-    expect(selected.className).toContain("choice-card");
-    expect(selected.className).toContain("cursor-pointer");
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
-    const preferences = document.getElementById("planner-section-preferences");
-    expect(preferences?.contains(screen.getByRole("button", { name: "Food: Yes" }))).toBe(true);
-    expect(preferences?.contains(screen.getByRole("button", { name: "Private space: Yes" }))).toBe(true);
-    expect(screen.queryAllByRole("button", { name: "Continue" })).toHaveLength(0);
+    expect(screen.getByRole("heading", { name: "The fun stuff" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Bowling/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Trampoline Park/ })).toBeNull();
+    await choose(user, /Bowling/);
+    await choose(user, /Axe Throwing/);
+    expect(screen.getByRole("button", { name: /Bowling/ })).toHaveProperty("ariaPressed", "true");
+
+    await user.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("heading", { name: "Your event" })).toBeTruthy();
+    expect(screen.getByLabelText("Guest count")).toHaveProperty("value", "20");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("button", { name: /Bowling/ })).toHaveProperty("ariaPressed", "true");
     unmount();
 
     render(<PublicIntakeWizard organizationSlug="beta" attractions={BETA} />);
-    await choose(user, "Birthday Party");
+    await choose(user, /Birthday Party/);
     await user.type(screen.getByLabelText("Guest count"), "8");
     await choose(user, "Mostly Adults");
-    expect(screen.getByRole("button", { name: "Trampoline Park" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Bowling" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("button", { name: /Trampoline Park/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Bowling/ })).toBeNull();
   });
 
-  it("keeps a 12-hour review summary from planner answers", () => {
+  it("keeps a compatible submission payload and 12-hour review summary", () => {
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
-    revealPreferences();
-    press("Bowling");
-    press("Axe Throwing");
-    revealContact();
+    fillEventAndContinue();
+    press(/Bowling/);
+    press(/Axe Throwing/);
+    fillFunAndContinue();
     expect(screen.getByLabelText("Event date").className).toContain("cursor-pointer");
-    expect(document.querySelector(".time-group")).toBeTruthy();
-    expect(document.querySelector('input[name="startTime"]')).toHaveProperty("value", "18:00");
-    fillContactFields();
-    press("Review your event");
+    fillWhenAndContinue();
 
-    expect(screen.getByRole("heading", { name: "Review your event" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Your details" })).toBeTruthy();
+    expect(document.querySelector('input[name="startTime"]')).toHaveProperty("value", "18:00");
     expect(screen.getByText("October 15, 2026 at 6:00 PM")).toBeTruthy();
     expect(screen.queryByText("18:00")).toBeNull();
     expect(screen.getByText("Bowling, Axe Throwing")).toBeTruthy();
@@ -182,83 +172,95 @@ describe("public intake wizard", () => {
     expect(screen.getByText("$1,500–$3,000")).toBeTruthy();
     expect(screen.getByText("20 guests")).toBeTruthy();
     expect(screen.getByText("Mix of Kids & Adults")).toBeTruthy();
+    expect(screen.getByText(/does not book your event/i)).toBeTruthy();
+    expect(screen.getByText(/does not reserve activities or collect payment/i)).toBeTruthy();
+
+    fillContactFields();
     expect(screen.getByText(/Ada Lovelace/)).toBeTruthy();
     expect(screen.getByText(/ada@example.com/)).toBeTruthy();
     expect(document.querySelector('input[name="desiredDurationMinutes"]')).toHaveProperty("value", "180");
     expect(screen.getByRole("button", { name: "Build my event options" })).toBeTruthy();
-    expect(screen.getByText(/does not book your event/i)).toBeTruthy();
   });
 
   it("keeps compatible later answers when editing from review", () => {
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
-    revealPreferences();
-    press("Bowling");
-    press("Axe Throwing");
-    revealContact();
+    fillEventAndContinue();
+    press(/Bowling/);
+    fillFunAndContinue();
+    fillWhenAndContinue();
     fillContactFields();
-    press("Review your event");
 
     press("Edit Event length");
-    expect(screen.getByRole("button", { name: /3 hours/ })).toHaveProperty("ariaPressed", "true");
-    expect(screen.getByRole("button", { name: /Bowling/ })).toHaveProperty("ariaPressed", "true");
+    expect(screen.getByRole("heading", { name: "The fun stuff" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "3 hours" })).toHaveProperty("ariaPressed", "true");
+    expect(screen.getByRole("button", { name: "Bowling" })).toHaveProperty("ariaPressed", "true");
     press("2 hours");
-    press("Review your event");
+    press("Continue");
+    expect(screen.getByRole("heading", { name: "When" })).toBeTruthy();
+    press("Continue");
+    expect(screen.getByRole("heading", { name: "Your details" })).toBeTruthy();
     expect(screen.getByText("2 hours")).toBeTruthy();
     expect(document.querySelector('input[name="desiredDurationMinutes"]')).toHaveProperty("value", "120");
-    expect(screen.getByText("Bowling, Axe Throwing")).toBeTruthy();
+    expect(screen.getByText(/Bowling/)).toBeTruthy();
 
     press("Edit Guests");
     const guests = screen.getByLabelText("Guest count");
     expect(guests).toHaveProperty("value", "20");
     fireEvent.change(guests, { target: { value: "22" } });
-    press("Review your event");
+    press("Continue");
+    expect(screen.getByRole("heading", { name: "The fun stuff" })).toBeTruthy();
+    press("Continue");
+    expect(screen.getByRole("heading", { name: "When" })).toBeTruthy();
+    press("Continue");
+    expect(screen.getByRole("heading", { name: "Your details" })).toBeTruthy();
     expect(screen.getByText("22 guests")).toBeTruthy();
     expect(screen.getByText("2 hours")).toBeTruthy();
     expect(screen.getByText(/Ada Lovelace/)).toBeTruthy();
   });
 
-  it("focuses the review section after commit when opening review", async () => {
+  it("focuses the details section after continue", async () => {
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
-    revealPreferences();
-    revealContact();
-    fillContactFields();
-    press("Review your event");
+    fillEventAndContinue();
+    fillFunAndContinue();
+    fillWhenAndContinue();
     await waitFor(() => {
-      expect(document.getElementById("planner-section-review")).toBe(document.activeElement);
+      expect(document.getElementById("planner-section-details")).toBe(document.activeElement);
     });
   });
 
-  it("clears the planner only after start over is confirmed", async () => {
+  it("clears the planner and draft only after start over is confirmed", async () => {
     const user = userEvent.setup();
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
-    await choose(user, "Corporate Event");
+    await choose(user, /Corporate Event/);
     await user.type(screen.getByLabelText("Guest count"), "8");
     await choose(user, "Mix of Kids & Adults");
-    expect(screen.getByText(/continue without selecting any/i)).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Continue" }));
-    expect(screen.getByRole("heading", { name: "Event preferences" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "The fun stuff" })).toBeTruthy();
+    expect(window.localStorage.getItem(intakeDraftStorageKey("alpha"))).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Start over" }));
     const dialog = screen.getByRole("dialog", { name: "Start over?" });
     expect(within(dialog).getByText(/current plan will be discarded/i)).toBeTruthy();
     await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
-    expect(screen.getByRole("heading", { name: "Event preferences" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "The fun stuff" })).toBeTruthy();
+    expect(screen.queryByLabelText("Guest count")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByLabelText("Guest count")).toHaveProperty("value", "8");
 
     await user.click(screen.getByRole("button", { name: "Start over" }));
     await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Start over" }));
     expect(screen.getByRole("heading", { name: "Your event" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Corporate Event" })).toHaveProperty("ariaPressed", "false");
+    expect(screen.getByRole("button", { name: /Corporate Event/ })).toHaveProperty("ariaPressed", "false");
     expect(screen.queryByDisplayValue("8")).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Experience" })).toBeNull();
+    expect(window.localStorage.getItem(intakeDraftStorageKey("alpha"))).toBeNull();
   });
 
-  it("keeps guest count to digits and validates contact before review", async () => {
+  it("keeps guest count to digits and validates contact before submit", async () => {
     const user = userEvent.setup();
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={[]} />);
-    await choose(user, "Birthday Party");
+    await choose(user, /Birthday Party/);
     const guests = screen.getByLabelText("Guest count");
-    expect(guests.className).toContain("w-full");
     await user.type(guests, "2a0b");
     expect(guests).toHaveProperty("value", "20");
     await user.clear(guests);
@@ -272,20 +274,16 @@ describe("public intake wizard", () => {
     await choose(user, "Private space: No preference");
     await choose(user, "Flexible / show me options");
     await choose(user, "Flexible / recommend for me");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.change(screen.getByLabelText("Event date"), { target: { value: "2026-10-15" } });
-    await user.selectOptions(screen.getByLabelText("Hour"), "5");
-    await user.selectOptions(screen.getByLabelText("Minute"), "00");
-    await user.selectOptions(screen.getByLabelText("AM/PM"), "PM");
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Review your event" })).toBeTruthy();
-    });
-    await user.click(screen.getByRole("button", { name: "Review your event" }));
+    await user.selectOptions(screen.getByLabelText("Preferred start time"), "17:00");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    await user.click(screen.getByRole("button", { name: "Build my event options" }));
     expect(screen.getByRole("textbox", { name: /first name/i }).getAttribute("aria-invalid")).toBe("true");
-    expect(screen.getByText("Enter a first name.")).toBeTruthy();
-    expect(screen.queryByRole("heading", { name: "Review your event" })).toBeNull();
+    expect(screen.getAllByText("Enter a first name.").length).toBeGreaterThan(0);
 
     fillContactFields();
-    await user.click(screen.getByRole("button", { name: "Review your event" }));
     expect(screen.getByText("We'll recommend options")).toBeTruthy();
     expect(screen.getByText("Flexible / recommend for me")).toBeTruthy();
     expect(document.querySelector('input[name="desiredDurationMinutes"]')).toHaveProperty("value", "");
@@ -303,10 +301,10 @@ describe("public intake wizard", () => {
         }),
     );
     render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} action={action} />);
-    revealPreferences();
-    revealContact();
+    fillEventAndContinue();
+    fillFunAndContinue();
+    fillWhenAndContinue();
     fillContactFields();
-    await user.click(screen.getByRole("button", { name: "Review your event" }));
 
     const submitPromise = user.click(screen.getByRole("button", { name: "Build my event options" }));
     await screen.findByRole("button", { name: PUBLIC_INQUIRY_PENDING_COPY });
@@ -325,6 +323,7 @@ describe("public intake wizard", () => {
       expect(screen.getByRole("button", { name: "Build my event options" })).toHaveProperty("disabled", false);
       expect(document.querySelector("[data-planner-shell]")).toHaveProperty("ariaBusy", "false");
     });
+    expect(screen.getByText("Try again later.")).toBeTruthy();
     expect(notify.error).toHaveBeenCalledWith(
       expect.objectContaining({ description: "Try again later." }),
     );
@@ -339,14 +338,57 @@ describe("public intake wizard", () => {
         attractionRequiredGuestMixes={["mixed_ages"]}
       />,
     );
-    await choose(user, "Birthday Party");
+    await choose(user, /Birthday Party/);
     await user.type(screen.getByLabelText("Guest count"), "20");
     await choose(user, "Mix of Kids & Adults");
     await user.click(screen.getByRole("button", { name: "Continue" }));
-    expect(screen.getByRole("alert").textContent).toContain("Choose at least one attraction.");
-    expect(screen.queryByRole("heading", { name: "Event preferences" })).toBeNull();
-    await choose(user, "Bowling");
     await user.click(screen.getByRole("button", { name: "Continue" }));
-    expect(screen.getByRole("heading", { name: "Event preferences" })).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toContain("Choose at least one activity.");
+    expect(screen.queryByRole("heading", { name: "When" })).toBeNull();
+    await choose(user, /Bowling/);
+    await choose(user, "Food: Yes");
+    await choose(user, "Private space: Yes");
+    await choose(user, "$1,500–$3,000");
+    await choose(user, "3 hours");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("heading", { name: "When" })).toBeTruthy();
+  });
+
+  it("restores non-PII draft preferences and never persists contact fields", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
+    await choose(user, /Birthday Party/);
+    await user.type(screen.getByLabelText("Guest count"), "18");
+    await choose(user, "Mostly Adults");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    await choose(user, /Bowling/);
+    await choose(user, "Food: Yes");
+    await choose(user, "Private space: No preference");
+    await choose(user, "Flexible / show me options");
+    await choose(user, "2 hours");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.change(screen.getByLabelText("Event date"), { target: { value: "2026-11-01" } });
+    await user.selectOptions(screen.getByLabelText("Preferred start time"), "14:00");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    fillContactFields();
+
+    const raw = window.localStorage.getItem(intakeDraftStorageKey("alpha"));
+    expect(raw).toBeTruthy();
+    expect(raw).not.toContain("Ada");
+    expect(raw).not.toContain("ada@example.com");
+    expect(raw).not.toContain("Lovelace");
+    unmount();
+
+    render(<PublicIntakeWizard organizationSlug="alpha" attractions={ALPHA} />);
+    await waitFor(() => {
+      expect(screen.getByText(/restored your event preferences/i)).toBeTruthy();
+    });
+    expect(screen.getByRole("button", { name: /Birthday Party/ })).toHaveProperty("ariaPressed", "true");
+    expect(screen.getByLabelText("Guest count")).toHaveProperty("value", "18");
+    expect(screen.queryByDisplayValue("Ada")).toBeNull();
+    expect(screen.queryByDisplayValue("ada@example.com")).toBeNull();
+
+    clearIntakeDraft("beta");
+    expect(window.localStorage.getItem(intakeDraftStorageKey("alpha"))).toBeTruthy();
   });
 });

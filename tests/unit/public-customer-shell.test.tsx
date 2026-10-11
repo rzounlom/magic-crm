@@ -65,7 +65,7 @@ describe("public customer shell", () => {
   it("does not show Employee sign in on the public inquiry route", () => {
     const html = renderPublicInquiry();
     expect(html).not.toContain("Employee sign in");
-    expect(html).toContain("Personal Event Planner");
+    expect(html).toContain("Plan your event");
     expect(html).toContain("MagicCRM");
     expect(html).toContain("data-public-shell");
   });
