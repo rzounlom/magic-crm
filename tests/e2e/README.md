@@ -16,7 +16,7 @@ export PLAYWRIGHT_PUBLIC_ORG_SLUG=your-test-org-slug
 
 ```bash
 corepack pnpm test:e2e          # all projects (staff skips without auth)
-corepack pnpm test:e2e:public   # public intake + journey + token + axe
+corepack pnpm test:e2e:public   # public intake + journey + token + axe + marketing home
 ```
 
 Artifacts on failure: `test-results/playwright/` and `playwright-report/`.

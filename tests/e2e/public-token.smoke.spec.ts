@@ -13,6 +13,8 @@ test.describe("public token and landing smoke", () => {
     const response = await page.goto("/");
     expect(response?.ok()).toBeTruthy();
     await expect(page.getByText("MagicCRM").first()).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(/extraordinary/i);
+    await expect(page.getByRole("link", { name: "Employee sign in" }).first()).toBeVisible();
   });
 
   test("employee app redirects unauthenticated users", async ({ page }) => {

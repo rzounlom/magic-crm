@@ -112,6 +112,18 @@ Admin Catalog (Sales knowledge, Resources) and Settings (Team, Security groups) 
 
 Do not invent POS, payments, tax, hours, or promotions settings screens. See `docs/design/UX6_CATALOG_AND_SETTINGS_EXPERIENCE.md`.
 
-## Browser verification (UX7 / UX9)
+## Public marketing homepage (UX10)
 
-Public smoke lives under `tests/e2e/` (Playwright). Prefer `PLAYWRIGHT_PUBLIC_ORG_SLUG` + `pnpm test:e2e:public` (intake + journey + token + axe). Staff journeys require a local `PLAYWRIGHT_STORAGE_STATE` — never commit it; setup notes in `tests/e2e/README.md`. Contrast math for UX2 tokens is covered by `tests/unit/brand-contrast.test.ts`. See `docs/design/UX7_BROWSER_ACCESSIBILITY_RELEASE_READINESS.md` and `docs/design/UX9_INTAKE_REFINEMENT_AND_RELEASE_VERIFICATION.md`.
+`/` is the MagicCRM marketing site (`src/components/marketing/*`), not the employee shell.
+
+- Reuse Source Sans 3 and Effortless Precision tokens; marketing-specific styles live under `.marketing-*` in `globals.css` so employee screens stay stable
+- CTAs must point at real destinations only (`#product`, `/sign-in`); do not invent pricing, demo booking, privacy, or contact routes
+- Product visuals must be authentic captures (`public/marketing/`); never invent staff dashboards — document missing staff screenshots when `PLAYWRIGHT_STORAGE_STATE` is unavailable
+- Claims must match shipped capabilities; explicitly deny POS, payments, tax collection, and advanced analytics as live features
+- SEO metadata: `src/lib/marketing/metadata.ts` (noindex outside production; canonical only for verified https `APP_URL`)
+
+See `docs/design/UX10_MAGICCRM_MARKETING_HOMEPAGE.md`.
+
+## Browser verification (UX7 / UX9 / UX10)
+
+Public smoke lives under `tests/e2e/` (Playwright). Prefer `PLAYWRIGHT_PUBLIC_ORG_SLUG` + `pnpm test:e2e:public` (intake + journey + token + axe + marketing home). Staff journeys require a local `PLAYWRIGHT_STORAGE_STATE` — never commit it; setup notes in `tests/e2e/README.md`. Contrast math for UX2 tokens is covered by `tests/unit/brand-contrast.test.ts`. See `docs/design/UX7_BROWSER_ACCESSIBILITY_RELEASE_READINESS.md`, `docs/design/UX9_INTAKE_REFINEMENT_AND_RELEASE_VERIFICATION.md`, and `docs/design/UX10_MAGICCRM_MARKETING_HOMEPAGE.md`.

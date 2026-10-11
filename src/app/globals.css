@@ -518,3 +518,95 @@ dialog::backdrop {
   background: rgb(20 32 51 / 0.46);
 }
 
+/* —— Marketing homepage (UX10) —— */
+.marketing-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 40rem) {
+  .marketing-container {
+    padding-inline: 1.75rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .marketing-container {
+    padding-inline: 2rem;
+  }
+}
+
+.marketing-nav .brand-mark {
+  color: #ffffff;
+}
+
+.marketing-nav .brand-mark-mark {
+  background: color-mix(in srgb, #ffffff 18%, var(--navy-950));
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+
+.marketing-hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 85% 20%, rgb(0 112 224 / 0.45), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgb(0 48 135 / 0.55), transparent 50%),
+    linear-gradient(160deg, #00143f 0%, var(--navy-950) 40%, var(--brand-900) 100%);
+}
+
+.marketing-hero-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -20% -10% auto auto;
+  width: min(42rem, 80vw);
+  height: min(42rem, 80vw);
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(0 112 224 / 0.35), transparent 68%);
+  filter: blur(8px);
+}
+
+.marketing-reveal {
+  animation: marketing-fade-up 0.7s ease-out both;
+}
+
+.marketing-hero-visual {
+  animation: marketing-fade-up 0.85s ease-out 0.08s both;
+}
+
+@keyframes marketing-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-reveal,
+  .marketing-hero-visual {
+    animation: none;
+  }
+
+  .marketing-showcase [role="tabpanel"] {
+    transition: none;
+  }
+}
+
+.marketing-frame {
+  isolation: isolate;
+}
+
+.marketing-phone-frame {
+  animation: marketing-fade-up 0.9s ease-out 0.16s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-phone-frame {
+    animation: none;
+  }
+}
+
