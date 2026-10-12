@@ -7,10 +7,12 @@ export async function startWorkingIfNeeded(page: Page) {
   if ((await start.count()) === 0 || !(await start.isEnabled().catch(() => false))) {
     return;
   }
-  await start.click();
+  await start.click({ force: true });
+  // Soft refresh must surface assignment without a hard reload.
   await expect(page.getByText(/Assigned to|Being worked by/i).first()).toBeVisible({
-    timeout: 20_000,
+    timeout: 25_000,
   });
+  await expect(page.getByRole("button", { name: /^Start Working$/i })).toHaveCount(0);
 }
 
 /** Run Check Availability so confirmation coach can enable Confirm booking. */
@@ -19,28 +21,26 @@ export async function checkAvailabilityIfNeeded(page: Page) {
   if ((await check.count()) === 0 || !(await check.isEnabled().catch(() => false))) {
     return;
   }
-  await check.click();
+  await check.click({ force: true });
   await expect(
-    page
-      .getByText(/Availability checked|Available|availability|validated|Within operating/i)
-      .first(),
+    page.getByText(/Availability checked|Available|availability|validated|Within operating/i).first(),
   ).toBeVisible({ timeout: 25_000 });
 }
 
 /**
- * Start working + check availability, then hard-navigate so readiness/coach
- * reflect persisted assignment and availability (soft refresh can lag).
+ * Start working + check availability. Relies on server `refresh()` + awaited
+ * `router.refresh()` — must not require a hard navigation.
  */
 export async function prepareInquiryForMutation(page: Page, inquiryPath: string) {
   await page.goto(inquiryPath, { waitUntil: "networkidle" });
   await startWorkingIfNeeded(page);
   await checkAvailabilityIfNeeded(page);
-  await page.goto(inquiryPath, { waitUntil: "networkidle" });
 }
 
 /** Open the confirm dialog for a staff mutation control (force click avoids sticky overlays). */
 export async function openMutationDialog(button: Locator) {
   await expect(button).toBeEnabled({ timeout: 15_000 });
+  await button.scrollIntoViewIfNeeded();
   await button.click({ force: true });
 }
 

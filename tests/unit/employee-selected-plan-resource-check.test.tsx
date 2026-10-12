@@ -208,6 +208,27 @@ describe("employee rooms and lanes", () => {
     expect(html).toContain("Axe Throwing Lane 1");
   });
 
+  it("links to primary HOLD readiness instead of a competing Place HOLD control", () => {
+    const html = renderToStaticMarkup(
+      <EmployeeSelectedPlanResourceCheck
+        inquiryId="inq_1"
+        availabilityStatus={PLAN_AVAILABILITY_STATUSES.AVAILABLE}
+        live={pendingLive}
+        holds={[]}
+        canHold
+        canRelease={false}
+        holdAttemptAllowed
+        timeZone="UTC"
+        canCheckAvailability
+        mode="pending"
+      />,
+    );
+    expect(html).toContain('href="#hold-readiness"');
+    expect(html).toContain("Proposal HOLD readiness");
+    expect(html).not.toContain("Place a 24-hour proposal HOLD?");
+    expect(html).not.toContain("Authorize HOLD hours exception");
+  });
+
   it("shows released copy after cancellation", () => {
     const html = renderToStaticMarkup(
       <EmployeeSelectedPlanResourceCheck

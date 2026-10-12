@@ -395,7 +395,10 @@ export function LiveAgentWorkspace({
                 <h2 className="text-lg font-semibold">{booked ? "Booking confirmed" : "Booking cancelled"}</h2>
                 {booking ? (
                   <p className="mt-2 text-sm">
-                    <Link href={`/app/bookings/${booking.id}`} className="text-primary">
+                    <Link
+                      href={`/app/bookings/${booking.id}`}
+                      className="font-medium text-primary underline underline-offset-2"
+                    >
                       {booking.bookingNumber}
                     </Link>
                     {booked ? " · Open booking" : " · Historical booking"}
@@ -615,7 +618,7 @@ export function LiveAgentWorkspace({
           {activity.map((row) => (
             <li key={row.id}>
               <p>{formatInquiryActivityAction(row.action)}</p>
-              <p className="text-xs text-foreground/55">
+              <p className="text-xs text-muted-foreground">
                 {formatOrganizationTimestamp(row.createdAt, timeZone)}
                 {row.actor ? ` · ${employeeDisplayName(row.actor)}` : ""}
               </p>

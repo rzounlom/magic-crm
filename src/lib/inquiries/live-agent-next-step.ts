@@ -136,7 +136,10 @@ export function liveAgentBookingGuide(input: LiveAgentBookingGuideInput): {
     return {
       currentStepId: "review",
       nextTitle: "Start working",
-      nextDetail: "Claim this inquiry to review the details and finish the booking.",
+      nextDetail:
+        input.canPlaceHold
+          ? "Claim this inquiry to edit the working plan and confirm. An optional proposal HOLD can still be placed from HOLD readiness without claiming."
+          : "Claim this inquiry to review the details, check availability, and finish the booking. Confirmation requires an assigned agent.",
     };
   }
   if (input.needsInventory) {

@@ -14,7 +14,6 @@ import { checkInquiryAvailabilityAction, applyWorkingPlanStartTimeAction } from 
 import {
   expireInquiryHoldNowAction,
   extendInquiryHoldAction,
-  placeInquiryHoldAction,
   releaseInquiryHoldsAction,
   updateInquiryHoldAction,
 } from "@/server/actions/resource-schedule";
@@ -236,46 +235,33 @@ export function EmployeeSelectedPlanResourceCheck({
       {mode === "pending" && holds.length === 0 && canHold ? (
         <div className="mt-6 border-t border-border pt-4">
           <h3 className="text-sm font-medium">Proposal HOLD</h3>
-          {holdAttemptAllowed ? (
-            <SecurityActionForm
-              action={placeInquiryHoldAction}
-              className="mt-3"
-              notice={{
-                successTitle: "Resources held",
-                errorTitle: "Unable to place resource hold",
-              }}
-              confirm={{
-                title: "Place a 24-hour proposal HOLD?",
-                description:
-                  "This reserves exact rooms and lanes for this plan. Availability is rechecked when the HOLD is placed. Duplicate active HOLDs for the same inquiry are rejected.",
-                confirmLabel: "Place HOLD",
-                confirmPendingLabel: "Placing…",
-              }}
-            >
-              <input type="hidden" name="inquiryId" value={inquiryId} />
-              {hoursExceptionId ? (
-                <input type="hidden" name="hoursExceptionId" value={hoursExceptionId} />
-              ) : null}
-              <PendingSubmitButton
-                pendingLabel="Placing…"
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-              >
-                Place HOLD
-              </PendingSubmitButton>
-            </SecurityActionForm>
-          ) : (
-            <p className="mt-2 text-sm text-foreground/70">
-              {holdBlockedDetail ?? (
+          <p className="mt-2 text-sm text-foreground/70">
+            {holdAttemptAllowed ? (
+              <>
+                Place the optional 24-hour HOLD from{" "}
+                <a
+                  href="#hold-readiness"
+                  className="font-semibold text-primary underline underline-offset-2"
+                >
+                  Proposal HOLD readiness
+                </a>
+                . Availability and rooms stay here; the primary hold action lives with readiness.
+              </>
+            ) : (
+              (holdBlockedDetail ?? (
                 <>
                   HOLD placement is not available yet.{" "}
-                  <a href="#hold-readiness" className="text-primary">
+                  <a
+                    href="#hold-readiness"
+                    className="font-medium text-primary underline underline-offset-2"
+                  >
                     Review HOLD readiness
                   </a>{" "}
                   for blocking reasons or an authorized hours exception.
                 </>
-              )}
-            </p>
-          )}
+              ))
+            )}
+          </p>
         </div>
       ) : null}
       {mode === "pending" && holds.length > 0 ? (

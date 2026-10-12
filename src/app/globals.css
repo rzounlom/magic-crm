@@ -328,6 +328,13 @@ label:has(:disabled) {
   }
 }
 
+/* Inquiry booking surfaces: keep readiness readable (not edge-to-edge on ultra-wide) */
+#hold-readiness,
+#confirmation-readiness,
+#availability-resources {
+  max-width: 48rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .booking-mobile-action-bar {
     backdrop-filter: none;

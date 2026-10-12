@@ -264,7 +264,7 @@ export function LiveAgentBookingActions({
     <>
       {showHoldCue ? (
         <p className="text-sm">
-          <a href="#hold-readiness" className="font-semibold text-primary">
+          <a href="#hold-readiness" className="font-semibold text-primary underline underline-offset-2">
             Review HOLD readiness
           </a>
           {canPlaceHold ? " to place an optional 24-hour HOLD, or confirm when ready." : "."}
@@ -273,7 +273,7 @@ export function LiveAgentBookingActions({
       {hasHold && showWorkingActions ? (
         <p className="text-sm text-muted-foreground">
           Resources are currently held.{" "}
-          <a href="#hold-readiness" className="font-semibold text-primary">
+          <a href="#hold-readiness" className="font-semibold text-primary underline underline-offset-2">
             Review HOLD
           </a>
         </p>
@@ -283,39 +283,45 @@ export function LiveAgentBookingActions({
       ) : null}
       {showCancel && !booked ? <div className="lg:hidden">{cancelAction}</div> : null}
       <p className="text-sm">
-        <a href="#confirmation-readiness" className="font-semibold text-primary">
+        <a
+          href="#confirmation-readiness"
+          className="font-semibold text-primary underline underline-offset-2"
+        >
           Confirmation readiness
         </a>
         {" · "}
-        <a href="#availability-resources" className="font-semibold text-primary">
+        <a
+          href="#availability-resources"
+          className="font-semibold text-primary underline underline-offset-2"
+        >
           Availability
         </a>
         {" · "}
-        <a href="#working-plan" className="font-semibold text-primary">
+        <a href="#working-plan" className="font-semibold text-primary underline underline-offset-2">
           Working plan
         </a>
       </p>
       {booked && bookingHref && bookingNumber ? (
         <p className="text-sm">
-          <Link href={bookingHref} className="text-primary">
+          <Link href={bookingHref} className="font-medium text-primary underline underline-offset-2">
             Open {bookingNumber}
           </Link>
           {" · "}
-          <Link href="/app/schedule" className="text-primary">
+          <Link href="/app/schedule" className="font-medium text-primary underline underline-offset-2">
             Master Schedule
           </Link>
         </p>
       ) : cancelled && bookingHref && bookingNumber ? (
         <p className="text-sm">
           Cancelled booking{" "}
-          <Link href={bookingHref} className="text-primary">
+          <Link href={bookingHref} className="font-medium text-primary underline underline-offset-2">
             {bookingNumber}
           </Link>
         </p>
       ) : pendingPayment && bookingHref && bookingNumber ? (
         <p className="text-sm">
           Pending booking{" "}
-          <Link href={bookingHref} className="text-primary">
+          <Link href={bookingHref} className="font-medium text-primary underline underline-offset-2">
             {bookingNumber}
           </Link>
         </p>

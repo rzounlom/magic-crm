@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateBookingWorkspace } from "@/server/actions/revalidate-booking-workspace";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
@@ -44,10 +44,7 @@ function toErrorResult(error: unknown, title: string): SecurityActionResult {
 }
 
 function revalidateInquiry(inquiryId: string) {
-  revalidatePath("/app/inquiries");
-  revalidatePath(`/app/inquiries/${inquiryId}`);
-  revalidatePath("/app/bookings");
-  revalidatePath("/app/schedule");
+  revalidateBookingWorkspace({ inquiryId });
 }
 
 /**

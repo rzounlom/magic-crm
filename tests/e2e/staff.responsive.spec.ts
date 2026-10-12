@@ -77,8 +77,26 @@ test.describe("Scenario F — Responsive staff UX", { tag: "@staff-responsive" }
     await expect(holdOrConfirm).toBeVisible({ timeout: 15_000 });
     await holdOrConfirm.scrollIntoViewIfNeeded();
 
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-    expect(overflow).toBeLessThanOrEqual(1);
+    const layout = await page.evaluate(() => {
+      const doc = document.documentElement;
+      const actionBar = document.querySelector("[data-booking-mobile-action-bar]");
+      const mobileNav = document.querySelector("[data-employee-mobile-nav]");
+      const readiness = document.querySelector("#hold-readiness, #confirmation-readiness");
+      const actionBox = actionBar?.getBoundingClientRect();
+      const navBox = mobileNav?.getBoundingClientRect();
+      const readyBox = readiness?.getBoundingClientRect();
+      return {
+        overflow: doc.scrollWidth - doc.clientWidth,
+        actionTop: actionBox?.top ?? null,
+        navTop: navBox?.top ?? null,
+        readyBottom: readyBox?.bottom ?? null,
+        actionDisplay: actionBar ? getComputedStyle(actionBar).display : null,
+      };
+    });
+    expect(layout.overflow).toBeLessThanOrEqual(1);
+    if (layout.actionTop != null && layout.navTop != null) {
+      expect(layout.actionTop).toBeLessThanOrEqual(layout.navTop + 1);
+    }
 
     fs.mkdirSync(evidenceDir, { recursive: true });
     await page.screenshot({

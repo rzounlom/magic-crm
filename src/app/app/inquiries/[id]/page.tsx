@@ -218,7 +218,11 @@ export default async function InquiryDetailPage({
                   confirmation, and a CONFIRM_BOOKING exception never authorizes HOLD placement.
                 </p>
                 {holdReadiness ? (
-                  <HoldReadinessPanel readiness={holdReadiness} canHold={canHold && canManage} />
+                  <HoldReadinessPanel
+                    readiness={holdReadiness}
+                    canHold={canHold && canManage}
+                    inquiryAssigned={Boolean(inquiry.assignedUserProfileId)}
+                  />
                 ) : null}
                 {confirmationReadiness ? (
                   <ConfirmationReadinessPanel readiness={confirmationReadiness} />

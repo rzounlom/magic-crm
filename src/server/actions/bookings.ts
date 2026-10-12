@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateBookingWorkspace } from "@/server/actions/revalidate-booking-workspace";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
@@ -31,11 +31,7 @@ export async function confirmBookingAction(formData: FormData): Promise<Security
     const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     const ctx = await getRequestContext();
     const result = await confirmInquiryBooking(ctx, db, parsedInquiryId, null, hoursExceptionId);
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${parsedInquiryId}`);
-    revalidatePath("/app/bookings");
-    revalidatePath(`/app/bookings/${result.booking.id}`);
-    revalidatePath("/app/schedule");
+    revalidateBookingWorkspace({ inquiryId: parsedInquiryId, bookingId: result.booking.id });
     if (result.conflict) {
       const nearby =
         result.conflict.nearbyStartTimes.length > 0
@@ -73,8 +69,7 @@ export async function confirmBookingAction(formData: FormData): Promise<Security
       isBookingError(error)
     ) {
       if (inquiryId) {
-        revalidatePath("/app/inquiries");
-        revalidatePath(`/app/inquiries/${inquiryId}`);
+        revalidateBookingWorkspace({ inquiryId });
       }
       return { ok: false, code: error.code, title: "Unable to confirm booking", message: error.userMessage, refresh: true };
     }
@@ -107,9 +102,7 @@ export async function createEmployeeManualBookingAction(formData: FormData): Pro
       notes: String(formData.get("notes") ?? "").trim() || null,
       locationId: String(formData.get("locationId") ?? "").trim() || null,
     });
-    revalidatePath("/app/bookings");
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${created.inquiryId}`);
+    revalidateBookingWorkspace({ inquiryId: created.inquiryId });
     return {
       ok: true,
       title: "Booking started",
@@ -128,11 +121,7 @@ export async function cancelBookingAction(formData: FormData): Promise<SecurityA
     const inquiryId = String(formData.get("inquiryId") ?? "").trim() || null;
     const ctx = await getRequestContext();
     const result = await cancelBooking(ctx, db, { bookingId, inquiryId });
-    revalidatePath("/app/bookings");
-    revalidatePath(`/app/bookings/${result.booking.id}`);
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${result.booking.inquiryId}`);
-    revalidatePath("/app/schedule");
+    revalidateBookingWorkspace({ inquiryId: result.booking.inquiryId, bookingId: result.booking.id });
     if (result.alreadyCancelled) {
       return {
         ok: true,

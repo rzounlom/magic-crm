@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateBookingWorkspace } from "@/server/actions/revalidate-booking-workspace";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
@@ -71,8 +71,7 @@ export async function startWorkingInquiryAction(formData: FormData): Promise<Sec
     const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
     const ctx = await getRequestContext();
     await startWorkingInquiry(ctx, db, inquiryId);
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidateBookingWorkspace({ inquiryId });
     return { ok: true, title: "You are working this inquiry", message: "Assignment is saved. Other agents will see that you started." };
   } catch (error) {
     unstable_rethrow(error);
@@ -110,8 +109,7 @@ export async function saveAgentWorkingPlanAction(formData: FormData): Promise<Se
       },
       String(formData.get("expectedUpdatedAt") ?? "") || null,
     );
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidateBookingWorkspace({ inquiryId });
     return {
       ok: true,
       title: "Working version saved",
@@ -130,8 +128,7 @@ export async function markReadyToFinalizeAction(formData: FormData): Promise<Sec
     const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
     const ctx = await getRequestContext();
     await markInquiryReadyToFinalize(ctx, db, inquiryId, String(formData.get("expectedUpdatedAt") ?? "") || null);
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidateBookingWorkspace({ inquiryId });
     return {
       ok: true,
       title: "Ready to finalize",
@@ -148,7 +145,7 @@ export async function saveInternalNotesAction(formData: FormData): Promise<Secur
     const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
     const ctx = await getRequestContext();
     await saveEmployeeInternalNotes(ctx, db, inquiryId, String(formData.get("notes") ?? ""));
-    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidateBookingWorkspace({ inquiryId });
     return { ok: true, title: "Internal notes saved", message: "These notes are not shown to the customer." };
   } catch (error) {
     unstable_rethrow(error);
@@ -161,8 +158,7 @@ export async function markCustomerContactedAction(formData: FormData): Promise<S
     const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
     const ctx = await getRequestContext();
     await markCustomerContacted(ctx, db, inquiryId);
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidateBookingWorkspace({ inquiryId });
     return { ok: true, title: "Customer contacted", message: "Contact was recorded on this inquiry." };
   } catch (error) {
     unstable_rethrow(error);
@@ -198,9 +194,7 @@ export async function checkInquiryAvailabilityAction(formData: FormData): Promis
     const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
     const ctx = await getRequestContext();
     const result = await checkInquiryAvailability(ctx, db, inquiryId);
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${inquiryId}`);
-    revalidatePath("/app/schedule");
+    revalidateBookingWorkspace({ inquiryId });
     if (!result.validated) {
       return {
         ok: true,
@@ -248,8 +242,7 @@ export async function adoptRecommendationAction(formData: FormData): Promise<Sec
       planId,
       String(formData.get("expectedUpdatedAt") ?? "") || null,
     );
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${inquiryId}`);
+    revalidateBookingWorkspace({ inquiryId });
     return {
       ok: true,
       title: "Package updated",
@@ -270,9 +263,7 @@ export async function applyWorkingPlanStartTimeAction(formData: FormData): Promi
       .parse(String(formData.get("startTime") ?? ""));
     const ctx = await getRequestContext();
     const result = await applyWorkingPlanStartTime(ctx, db, inquiryId, startTime);
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${inquiryId}`);
-    revalidatePath("/app/schedule");
+    revalidateBookingWorkspace({ inquiryId });
     return {
       ok: true,
       title: "Schedule updated",
@@ -291,10 +282,7 @@ export async function savePendingBookingAction(formData: FormData): Promise<Secu
     const inquiryId = idSchema.parse(String(formData.get("inquiryId") ?? ""));
     const ctx = await getRequestContext();
     const pending = await savePendingEmployeeBooking(ctx, db, inquiryId);
-    revalidatePath("/app/inquiries");
-    revalidatePath(`/app/inquiries/${inquiryId}`);
-    revalidatePath("/app/bookings");
-    revalidatePath("/app/schedule");
+    revalidateBookingWorkspace({ inquiryId });
     return {
       ok: true,
       title: "Pending booking saved",

@@ -11,7 +11,7 @@ import {
 } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import { requirePermission } from "@/server/policies/require-permission";
-import { revalidateScheduleAndInquiry } from "@/server/actions/revalidate-resources";
+import { revalidateBookingWorkspace } from "@/server/actions/revalidate-booking-workspace";
 import { expireInquiryHoldsNow } from "@/server/services/proposal-hold-service";
 import {
   extendInquiryHolds,
@@ -49,7 +49,9 @@ export async function placeManualHoldAction(formData: FormData): Promise<Securit
       holdHours: Number(formData.get("holdHours") ?? 24) || 24,
       hoursExceptionId,
     });
-    await revalidateScheduleAndInquiry(String(formData.get("inquiryId") ?? "") || undefined);
+    revalidateBookingWorkspace({
+      inquiryId: String(formData.get("inquiryId") ?? "") || undefined,
+    });
     return { ok: true, title: "Hold placed", message: "The resource is temporarily unavailable on the Master Schedule." };
   } catch (error) {
     unstable_rethrow(error);
@@ -64,7 +66,7 @@ export async function placeInquiryHoldAction(formData: FormData): Promise<Securi
     const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     const ctx = await getRequestContext();
     await placeInquiryPlanHold(ctx, db, inquiryId, hoursExceptionId);
-    await revalidateScheduleAndInquiry(inquiryId);
+    revalidateBookingWorkspace({ inquiryId: inquiryId || undefined });
     return {
       ok: true,
       title: "Resources held",
@@ -82,7 +84,9 @@ export async function releaseHoldAction(formData: FormData): Promise<SecurityAct
     const reservationId = z.string().trim().min(1).parse(String(formData.get("reservationId") ?? ""));
     const ctx = await getRequestContext();
     await releaseHold(ctx, db, reservationId);
-    await revalidateScheduleAndInquiry(String(formData.get("inquiryId") ?? "") || undefined);
+    revalidateBookingWorkspace({
+      inquiryId: String(formData.get("inquiryId") ?? "") || undefined,
+    });
     return { ok: true, title: "Hold released", message: "That resource is available again." };
   } catch (error) {
     unstable_rethrow(error);
@@ -95,7 +99,7 @@ export async function releaseInquiryHoldsAction(formData: FormData): Promise<Sec
     const inquiryId = z.string().trim().min(1).parse(String(formData.get("inquiryId") ?? ""));
     const ctx = await getRequestContext();
     await releaseInquiryHolds(ctx, db, inquiryId);
-    await revalidateScheduleAndInquiry(inquiryId);
+    revalidateBookingWorkspace({ inquiryId: inquiryId || undefined });
     return { ok: true, title: "Holds released", message: "Held resources for this inquiry are available again." };
   } catch (error) {
     unstable_rethrow(error);
@@ -110,7 +114,7 @@ export async function updateInquiryHoldAction(formData: FormData): Promise<Secur
     const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     const ctx = await getRequestContext();
     await updateInquiryPlanHold(ctx, db, inquiryId, hoursExceptionId);
-    await revalidateScheduleAndInquiry(inquiryId);
+    revalidateBookingWorkspace({ inquiryId: inquiryId || undefined });
     return {
       ok: true,
       title: "Resource hold updated",
@@ -127,7 +131,7 @@ export async function extendInquiryHoldAction(formData: FormData): Promise<Secur
     const inquiryId = z.string().trim().min(1).parse(String(formData.get("inquiryId") ?? ""));
     const ctx = await getRequestContext();
     await extendInquiryHolds(ctx, db, inquiryId);
-    await revalidateScheduleAndInquiry(inquiryId);
+    revalidateBookingWorkspace({ inquiryId: inquiryId || undefined });
     return { ok: true, title: "Hold extended", message: "The resource hold expiration was extended." };
   } catch (error) {
     unstable_rethrow(error);
@@ -145,7 +149,7 @@ export async function expireInquiryHoldNowAction(formData: FormData): Promise<Se
       organizationId: ctx.organizationId,
       inquiryId,
     });
-    await revalidateScheduleAndInquiry(inquiryId);
+    revalidateBookingWorkspace({ inquiryId: inquiryId || undefined });
     return {
       ok: true,
       title: "Hold expired",

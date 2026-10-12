@@ -1,22 +1,16 @@
-"use server";
-
 import { revalidatePath } from "next/cache";
+
+import { revalidateBookingWorkspace } from "@/server/actions/revalidate-booking-workspace";
 
 const RESOURCE_PATH = "/app/admin/resources";
 const SCHEDULE_PATH = "/app/schedule";
-const INQUIRIES_PATH = "/app/inquiries";
-const BOOKINGS_PATH = "/app/bookings";
 
-export async function revalidateResourceAdministration() {
+export function revalidateResourceAdministration() {
   revalidatePath(RESOURCE_PATH);
   revalidatePath(SCHEDULE_PATH);
 }
 
-export async function revalidateScheduleAndInquiry(inquiryId?: string) {
-  revalidatePath(SCHEDULE_PATH);
-  revalidatePath(INQUIRIES_PATH);
-  revalidatePath(BOOKINGS_PATH);
-  if (inquiryId) {
-    revalidatePath(`${INQUIRIES_PATH}/${inquiryId}`);
-  }
+/** Schedule + inquiry/booking paths; refreshes the client router after Server Actions. */
+export function revalidateScheduleAndInquiry(inquiryId?: string) {
+  revalidateBookingWorkspace({ inquiryId, refreshClient: true });
 }

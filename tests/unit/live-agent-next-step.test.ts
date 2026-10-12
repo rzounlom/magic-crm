@@ -22,6 +22,18 @@ describe("live agent booking guide", () => {
     });
   });
 
+  it("explains unassigned HOLD eligibility when placement is allowed", () => {
+    const guide = liveAgentBookingGuide({
+      booked: false,
+      assigned: false,
+      hasHold: false,
+      canPlaceHold: true,
+      confirmBlockers: [],
+    });
+    expect(guide.nextDetail).toMatch(/HOLD can still be placed/i);
+    expect(guide.nextDetail).toMatch(/without claiming/i);
+  });
+
   it("sends staff to Resources when inventory is not configured", () => {
     const guide = liveAgentBookingGuide({
       booked: false,

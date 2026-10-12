@@ -67,7 +67,7 @@ export function InquiryArchiveActions({
       {activeBooking && bookingHref && bookingNumber ? (
         <p className="text-sm text-foreground/70">
           Booking stays active.{" "}
-          <Link href={bookingHref} className="text-primary">
+          <Link href={bookingHref} className="font-medium text-primary underline underline-offset-2">
             Open {bookingNumber}
           </Link>
         </p>

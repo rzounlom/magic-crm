@@ -20,9 +20,12 @@ import { HOLD_READINESS_STATES } from "@/types/hold-readiness";
 export function HoldReadinessPanel({
   readiness,
   canHold = false,
+  inquiryAssigned = true,
 }: {
   readiness: HoldReadinessResult;
   canHold?: boolean;
+  /** When false, clarify that HOLD remains allowed without claiming (server rule). */
+  inquiryAssigned?: boolean;
 }) {
   const dateLabel = formatEventLocalDate(readiness.eventDate) ?? readiness.eventDate ?? "Not set";
   const startLabel = formatEventLocalTime(readiness.startTime) ?? readiness.startTime ?? "—";
@@ -144,33 +147,41 @@ export function HoldReadinessPanel({
         </HoursExceptionSection>
       ) : null}
 
+      {showPlaceHold && !inquiryAssigned ? (
+        <p className="mt-3 rounded-[var(--radius-control)] border border-border bg-muted/30 px-3 py-2 text-sm text-foreground/80">
+          This inquiry is unassigned. Proposal HOLD does not require claiming — Start Working is still required
+          before confirmation.
+        </p>
+      ) : null}
+
       {showPlaceHold ? (
-        <SecurityActionForm
-          action={placeInquiryHoldAction}
-          className="mt-4"
-          notice={{
-            successTitle: "Resources held",
-            errorTitle: "Unable to place resource hold",
-          }}
-          confirm={{
-            title: "Place a 24-hour proposal HOLD?",
-            description:
-              "This reserves exact rooms and lanes for this plan. Availability is rechecked when the HOLD is placed. A second active HOLD for the same inquiry is not allowed.",
-            confirmLabel: "Place HOLD",
-            confirmPendingLabel: "Placing…",
-          }}
-        >
-          <input type="hidden" name="inquiryId" value={readiness.inquiryId} />
-          {hoursExceptionId ? (
-            <input type="hidden" name="hoursExceptionId" value={hoursExceptionId} />
-          ) : null}
-          <PendingSubmitButton
-            pendingLabel="Placing…"
-            className={buttonClassName({ variant: "primary", size: "md", className: "w-full" })}
+        <div className="mt-4" data-primary-hold-action>
+          <SecurityActionForm
+            action={placeInquiryHoldAction}
+            notice={{
+              successTitle: "Resources held",
+              errorTitle: "Unable to place resource hold",
+            }}
+            confirm={{
+              title: "Place a 24-hour proposal HOLD?",
+              description:
+                "This reserves exact rooms and lanes for this plan. Availability is rechecked when the HOLD is placed. A second active HOLD for the same inquiry is not allowed.",
+              confirmLabel: "Place HOLD",
+              confirmPendingLabel: "Placing…",
+            }}
           >
-            Place HOLD
-          </PendingSubmitButton>
-        </SecurityActionForm>
+            <input type="hidden" name="inquiryId" value={readiness.inquiryId} />
+            {hoursExceptionId ? (
+              <input type="hidden" name="hoursExceptionId" value={hoursExceptionId} />
+            ) : null}
+            <PendingSubmitButton
+              pendingLabel="Placing…"
+              className={buttonClassName({ variant: "primary", size: "md", className: "w-full" })}
+            >
+              Place HOLD
+            </PendingSubmitButton>
+          </SecurityActionForm>
+        </div>
       ) : null}
 
       {nonOverridable.some((row) => row.code === "RESOURCE_CONFLICT") ? (

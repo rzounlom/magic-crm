@@ -127,11 +127,11 @@ export function AgentWorkingPlanForm({
             />
           </label>
         </div>
-        {guestMix ? <p className="text-xs text-foreground/55">Guest mix stays {guestMix.replaceAll("_", " ")}.</p> : null}
+        {guestMix ? <p className="text-xs text-muted-foreground">Guest mix stays {guestMix.replaceAll("_", " ")}.</p> : null}
 
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium">Activities</legend>
-          <p className="text-xs text-foreground/55">
+          <p className="text-xs text-muted-foreground">
             Selected activities show catalog quantities. Resource counts are calculated on save.
           </p>
           {attractions.map((item) => {
@@ -248,7 +248,7 @@ export function AgentWorkingPlanForm({
           })}
         </details>
 
-        <p className="text-xs text-foreground/55">Current duration {formatEventDuration(payload.durationMinutes)}.</p>
+        <p className="text-xs text-muted-foreground">Current duration {formatEventDuration(payload.durationMinutes)}.</p>
         <PendingSubmitButton
           pendingLabel="Saving…"
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"

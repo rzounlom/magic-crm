@@ -186,7 +186,7 @@ export function EmployeeSelectedEventPlan({
       {plan.availabilityNote ? (
         <p className="mt-3 text-sm text-foreground/70">{formatCustomerFacingClocks(plan.availabilityNote)}</p>
       ) : null}
-      <p className="mt-4 text-xs text-foreground/55">
+      <p className="mt-4 text-xs text-muted-foreground">
         {salesStage === "DEPOSIT_PENDING"
           ? "The customer requested this booking. Inventory is not reserved until the booking is confirmed."
           : salesStage === "HOLD_PLACED"

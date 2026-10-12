@@ -185,6 +185,42 @@ describe("Hold and confirmation readiness panels", () => {
     expect(expired).toContain("Expired");
   });
 
+  it("explains unassigned HOLD eligibility beside the primary Place HOLD control", () => {
+    const html = renderToStaticMarkup(
+      <HoldReadinessPanel
+        canHold
+        inquiryAssigned={false}
+        readiness={{
+          inquiryId: "inq_1",
+          state: HOLD_READINESS_STATES.NEEDS_FINAL_VALIDATION,
+          headline: "Needs final validation",
+          detail: "Details look complete.",
+          locationId: "loc_1",
+          locationName: "Main",
+          timeZone: "UTC",
+          eventDate: "2027-04-27",
+          startTime: "14:00",
+          endTime: "16:00",
+          startMinute: 14 * 60,
+          endMinute: 16 * 60,
+          operatingHoursStatus: "WITHIN_HOURS",
+          blockers: [],
+          activeException: null,
+          activeHold: null,
+          resourceAssignments: [],
+          canAuthorizeHoursException: false,
+          canRevokeHoursException: false,
+          canHoldWithCurrentException: false,
+          holdAttemptAllowed: true,
+        }}
+      />,
+    );
+    expect(html).toContain("data-primary-hold-action");
+    expect(html).toContain("unassigned");
+    expect(html).toContain("does not require claiming");
+    expect(html).toContain("Place HOLD");
+  });
+
   it("collapses HOLD hours exception forms until expanded (no active exception)", () => {
     const html = renderToStaticMarkup(
       <HoldReadinessPanel

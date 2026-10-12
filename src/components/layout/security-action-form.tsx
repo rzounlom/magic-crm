@@ -71,6 +71,10 @@ export function SecurityActionForm({
       });
       if (next.redirectTo) {
         if (onRedirect?.(next.redirectTo) === "stay") {
+          // Still refresh so staying on this page shows authoritative post-mutation state.
+          if (next.refresh) {
+            await Promise.resolve(router.refresh());
+          }
           return;
         }
         keepPending = true;
@@ -78,7 +82,8 @@ export function SecurityActionForm({
         return;
       }
       if (next.refresh) {
-        router.refresh();
+        // Await so readiness / assignment / HOLD UI update before controls re-enable.
+        await Promise.resolve(router.refresh());
       }
     } catch (error) {
       unstable_rethrow(error);
@@ -94,21 +99,32 @@ export function SecurityActionForm({
     }
   }
 
+  function handleSubmit(formData: FormData) {
+    if (!confirm) {
+      void runMutation(formData);
+      return;
+    }
+    if (onDestructiveSubmitAttempt(pendingRef.current) === "block") {
+      return;
+    }
+    queuedFormData.current = formData;
+    setConfirmOpen(true);
+  }
+
   return (
     <PendingActionProvider pending={pending}>
+      {/*
+        Use onSubmit (not React 19 form actions). After router.refresh()/RSC remount,
+        progressive-enhancement action dispatch can stop receiving native submits while
+        the props.action function still works when called directly — which leaves HOLD /
+        Confirm dialogs unable to open without a hard reload.
+      */}
       <form
         className={className}
         aria-busy={pending}
-        action={async (formData) => {
-          if (!confirm) {
-            await runMutation(formData);
-            return;
-          }
-          if (onDestructiveSubmitAttempt(pendingRef.current) === "block") {
-            return;
-          }
-          queuedFormData.current = formData;
-          setConfirmOpen(true);
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSubmit(new FormData(event.currentTarget));
         }}
       >
         {children}
