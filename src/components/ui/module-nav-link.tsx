@@ -15,15 +15,31 @@ export function ModuleNavLink({
   variant = "pill",
   className,
   onNavigate,
+  badge,
 }: {
   href: string;
   children: ReactNode;
   variant?: ModuleNavLinkVariant;
   className?: string;
   onNavigate?: () => void;
+  /** Display-only badge (e.g. TEST). Hidden from the accessible name. */
+  badge?: string;
 }) {
   const pathname = usePathname();
   const active = isEmployeeNavActive(pathname, href);
+  const label = (
+    <>
+      {children}
+      {badge ? (
+        <span
+          className="ml-1 rounded px-1 py-px text-[10px] font-bold uppercase tracking-wide text-muted-foreground ring-1 ring-border"
+          aria-hidden
+        >
+          {badge}
+        </span>
+      ) : null}
+    </>
+  );
 
   if (variant === "bottom") {
     return (
@@ -34,7 +50,7 @@ export function ModuleNavLink({
         onClick={onNavigate}
       >
         <NavIcon href={href} />
-        <span>{children}</span>
+        <span>{label}</span>
       </Link>
     );
   }
@@ -48,7 +64,7 @@ export function ModuleNavLink({
         onClick={onNavigate}
       >
         <NavIcon href={href} />
-        <span>{children}</span>
+        <span>{label}</span>
       </Link>
     );
   }
@@ -61,7 +77,7 @@ export function ModuleNavLink({
       onClick={onNavigate}
     >
       <NavIcon href={href} />
-      <span className="lg:max-xl:sr-only">{children}</span>
+      <span className="lg:max-xl:sr-only">{label}</span>
     </Link>
   );
 }
@@ -102,6 +118,10 @@ function iconPath(href: string) {
   }
   if (href.startsWith("/app/admin/ai")) {
     return "M8 2.5v2M8 11.5v2M2.5 8h2M11.5 8h2M4.2 4.2l1.4 1.4M10.4 10.4l1.4 1.4M11.8 4.2l-1.4 1.4M5.6 10.4 4.2 11.8";
+  }
+  if (href === "/scenario-lab" || href.startsWith("/scenario-lab/")) {
+    // Flask / testing icon
+    return "M5.5 2.5h5M6.5 2.5v3.2L3.2 12.2a1 1 0 0 0 .9 1.3h7.8a1 1 0 0 0 .9-1.3L9.5 5.7V2.5M5.8 9.5h4.4";
   }
   return "";
 }

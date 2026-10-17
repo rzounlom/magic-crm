@@ -67,7 +67,13 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
         data-employee-mobile-nav
       >
         {primary.map((item) => (
-          <ModuleNavLink key={item.id} href={item.href} variant="bottom" onNavigate={closeMore}>
+          <ModuleNavLink
+            key={item.id}
+            href={item.href}
+            variant="bottom"
+            badge={item.badge}
+            onNavigate={closeMore}
+          >
             {item.label}
           </ModuleNavLink>
         ))}
@@ -120,7 +126,13 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
           {overview.length > 0 ? (
             <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.overview}>
               {overview.map((item) => (
-                <ModuleNavLink key={item.id} href={item.href} variant="menu" onNavigate={closeMore}>
+                <ModuleNavLink
+                  key={item.id}
+                  href={item.href}
+                  variant="menu"
+                  badge={item.badge}
+                  onNavigate={closeMore}
+                >
                   {item.label}
                 </ModuleNavLink>
               ))}
@@ -129,7 +141,13 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
           {catalog.length > 0 ? (
             <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.catalog}>
               {catalog.map((item) => (
-                <ModuleNavLink key={item.id} href={item.href} variant="menu" onNavigate={closeMore}>
+                <ModuleNavLink
+                  key={item.id}
+                  href={item.href}
+                  variant="menu"
+                  badge={item.badge}
+                  onNavigate={closeMore}
+                >
                   {item.label}
                 </ModuleNavLink>
               ))}
@@ -138,7 +156,13 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
           {settings.length > 0 ? (
             <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.settings}>
               {settings.map((item) => (
-                <ModuleNavLink key={item.id} href={item.href} variant="menu" onNavigate={closeMore}>
+                <ModuleNavLink
+                  key={item.id}
+                  href={item.href}
+                  variant="menu"
+                  badge={item.badge}
+                  onNavigate={closeMore}
+                >
                   {item.label}
                 </ModuleNavLink>
               ))}

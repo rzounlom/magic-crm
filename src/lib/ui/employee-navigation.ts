@@ -17,18 +17,24 @@ export type EmployeeNavItemId =
   | "salesKnowledge"
   | "resources"
   | "team"
-  | "security";
+  | "security"
+  | "scenarioLab";
 
 export type EmployeeNavItem = {
   id: EmployeeNavItemId;
   href: string;
   label: string;
   group: EmployeeNavGroup;
-  /** Null = always available when the employee shell loads (Overview). */
+  /**
+   * Null = not gated by a single permission key.
+   * Overview is always visible; Scenario Lab uses a dedicated composite server gate.
+   */
   permission: PermissionKey | null;
   mobile: EmployeeNavMobileSlot;
   /** Order within the mobile primary bar (lower first). */
   mobilePrimaryOrder?: number;
+  /** Optional compact badge (display only — not authorization). */
+  badge?: string;
 };
 
 export const EMPLOYEE_NAV_ITEMS: readonly EmployeeNavItem[] = [
@@ -98,6 +104,16 @@ export const EMPLOYEE_NAV_ITEMS: readonly EmployeeNavItem[] = [
     group: "settings",
     permission: PERMISSIONS.SECURITY_GROUPS_VIEW,
     mobile: "more",
+  },
+  {
+    id: "scenarioLab",
+    href: "/scenario-lab",
+    label: "Scenario Lab",
+    group: "settings",
+    // Composite LAB1-A gate in loadEmployeeShellChrome — not a single permission.
+    permission: null,
+    mobile: "more",
+    badge: "TEST",
   },
 ] as const;
 

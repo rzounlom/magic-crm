@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -24,6 +26,22 @@ describe("employee shell chrome visibility boundaries", () => {
     const limited = new Set<EmployeeNavItemId>(["overview", "inquiries"]);
     const items = filterEmployeeNavItems(limited);
     expect(items.map((item) => item.id)).toEqual(["overview", "inquiries"]);
+  });
+
+  it("gates Scenario Lab via the composite LAB1-A soft probe, not a single permission", () => {
+    const chrome = readFileSync(
+      path.join(process.cwd(), "src/components/layout/employee-shell-chrome.ts"),
+      "utf8",
+    );
+    const loader = readFileSync(
+      path.join(process.cwd(), "src/server/scenario-lab/load-scenario-lab-access.ts"),
+      "utf8",
+    );
+    expect(chrome).toContain("hasScenarioLabAccess");
+    expect(chrome).toContain('visibleNavIds.push("scenarioLab")');
+    expect(chrome).toContain('item.id === "scenarioLab"');
+    expect(loader).toContain("requireScenarioLabAccess");
+    expect(loader).toContain("export async function hasScenarioLabAccess");
   });
 
   it("clears location display when chrome provides null location (org switch boundary)", () => {

@@ -53,7 +53,7 @@ export function EmployeeHeaderBar({
             {bookingsEvents.length > 0 ? (
               <NavGroup label={EMPLOYEE_NAV_GROUP_LABELS.bookingsEvents}>
                 {bookingsEvents.map((item) => (
-                  <ModuleNavLink key={item.id} href={item.href}>
+                  <ModuleNavLink key={item.id} href={item.href} badge={item.badge}>
                     {item.label}
                   </ModuleNavLink>
                 ))}
@@ -62,7 +62,7 @@ export function EmployeeHeaderBar({
             {catalog.length > 0 ? (
               <NavGroup label={EMPLOYEE_NAV_GROUP_LABELS.catalog}>
                 {catalog.map((item) => (
-                  <ModuleNavLink key={item.id} href={item.href}>
+                  <ModuleNavLink key={item.id} href={item.href} badge={item.badge}>
                     {item.label}
                   </ModuleNavLink>
                 ))}
@@ -71,7 +71,7 @@ export function EmployeeHeaderBar({
             {settings.length > 0 ? (
               <NavGroup label={EMPLOYEE_NAV_GROUP_LABELS.settings}>
                 {settings.map((item) => (
-                  <ModuleNavLink key={item.id} href={item.href}>
+                  <ModuleNavLink key={item.id} href={item.href} badge={item.badge}>
                     {item.label}
                   </ModuleNavLink>
                 ))}

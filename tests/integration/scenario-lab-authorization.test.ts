@@ -8,6 +8,7 @@ import {
 import { SYSTEM_GROUP_KEYS } from "@/server/authorization/default-security-groups";
 import { requireScenarioLabAccess } from "@/server/scenario-lab/authorize-scenario-lab";
 import { ScenarioLabError } from "@/server/scenario-lab/errors";
+import { hasScenarioLabAccess } from "@/server/scenario-lab/load-scenario-lab-access";
 import { resolveRequestContext } from "@/server/request-context";
 import { provisionOrganization } from "@/server/services/provision-organization";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
@@ -291,5 +292,119 @@ describe("Scenario Lab authorization (postgres)", () => {
 
     expect(run.organizationId).toBe(admin.organizationId);
     expect(owned.runId).toBe(run.id);
+  });
+});
+
+describe("Scenario Lab navigation soft probe (postgres)", () => {
+  it("returns true for both allowlisted administrators in the trusted org", async () => {
+    const adminA = await provisionTrustedAdmin(USER_A);
+    // Second allowlisted user joins the same org as an Administrator (permission required by LAB1-A).
+    await provisionOrganization(
+      {
+        clerkUserId: USER_B,
+        clerkOrganizationId: TRUSTED_ORG,
+        organizationName: "Scenario Lab Trusted Org",
+        organizationSlug: `lab1a-trusted-${crypto.randomUUID()}`,
+        isClerkOrganizationAdmin: true,
+      },
+      db,
+    );
+    const administrators = await db.securityGroup.findFirstOrThrow({
+      where: { organizationId: adminA.organizationId, systemKey: SYSTEM_GROUP_KEYS.ADMINISTRATORS },
+    });
+    const profileB = await db.userProfile.findFirstOrThrow({
+      where: { organizationId: adminA.organizationId, clerkUserId: USER_B },
+    });
+    await db.securityGroupMember.create({
+      data: {
+        organizationId: adminA.organizationId,
+        securityGroupId: administrators.id,
+        userProfileId: profileB.id,
+      },
+    });
+
+    await expect(
+      hasScenarioLabAccess({
+        auth: { clerkUserId: USER_A, clerkOrganizationId: TRUSTED_ORG },
+        database: db,
+        env: labEnv(),
+      }),
+    ).resolves.toBe(true);
+
+    await expect(
+      hasScenarioLabAccess({
+        auth: { clerkUserId: USER_B, clerkOrganizationId: TRUSTED_ORG },
+        database: db,
+        env: labEnv(),
+      }),
+    ).resolves.toBe(true);
+  });
+
+  it("returns false for the wrong Clerk organization", async () => {
+    await provisionTrustedAdmin(USER_A);
+    const otherOrgId = `org_lab1a_nav_other_${crypto.randomUUID()}`;
+    const other = await provisionOrganization(
+      {
+        clerkUserId: USER_A,
+        clerkOrganizationId: otherOrgId,
+        organizationName: "Nav Other Org",
+        organizationSlug: `lab1a-nav-other-${crypto.randomUUID()}`,
+        isClerkOrganizationAdmin: true,
+      },
+      db,
+    );
+    createdOrganizationIds.push(other.organizationId);
+
+    await expect(
+      hasScenarioLabAccess({
+        auth: { clerkUserId: USER_A, clerkOrganizationId: otherOrgId },
+        database: db,
+        env: labEnv(),
+      }),
+    ).resolves.toBe(false);
+  });
+
+  it("returns false for a non-allowlisted user", async () => {
+    await provisionTrustedAdmin("user_lab1a_nav_outsider");
+
+    await expect(
+      hasScenarioLabAccess({
+        auth: { clerkUserId: "user_lab1a_nav_outsider", clerkOrganizationId: TRUSTED_ORG },
+        database: db,
+        env: labEnv(),
+      }),
+    ).resolves.toBe(false);
+  });
+
+  it("returns false for local_development and customer_production deployments", async () => {
+    await provisionTrustedAdmin(USER_A);
+
+    await expect(
+      hasScenarioLabAccess({
+        auth: { clerkUserId: USER_A, clerkOrganizationId: TRUSTED_ORG },
+        database: db,
+        env: labEnv({ MAGICCRM_DEPLOYMENT_KIND: MAGICCRM_DEPLOYMENT_KINDS.LOCAL_DEVELOPMENT }),
+      }),
+    ).resolves.toBe(false);
+
+    await expect(
+      hasScenarioLabAccess({
+        auth: { clerkUserId: USER_A, clerkOrganizationId: TRUSTED_ORG },
+        database: db,
+        env: labEnv({ MAGICCRM_DEPLOYMENT_KIND: MAGICCRM_DEPLOYMENT_KINDS.CUSTOMER_PRODUCTION }),
+      }),
+    ).resolves.toBe(false);
+  });
+
+  it("returns false when Scenario Lab is disabled", async () => {
+    await provisionTrustedAdmin(USER_A);
+
+    await expect(
+      hasScenarioLabAccess({
+        auth: { clerkUserId: USER_A, clerkOrganizationId: TRUSTED_ORG },
+        database: db,
+        env: labEnv({ SCENARIO_LAB_ENABLED: "false" }),
+      }),
+    ).resolves.toBe(false);
   });
 });

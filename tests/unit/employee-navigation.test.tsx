@@ -46,6 +46,10 @@ describe("employee navigation helpers", () => {
     expect(byId.security.permission).toBe(PERMISSIONS.SECURITY_GROUPS_VIEW);
     expect(byId.salesKnowledge.permission).toBe(PERMISSIONS.AI_VIEW);
     expect(byId.overview.permission).toBeNull();
+    expect(byId.scenarioLab.permission).toBeNull();
+    expect(byId.scenarioLab.group).toBe("settings");
+    expect(byId.scenarioLab.mobile).toBe("more");
+    expect(byId.scenarioLab.badge).toBe("TEST");
   });
 
   it("keeps existing route URLs", () => {
@@ -58,6 +62,7 @@ describe("employee navigation helpers", () => {
     expect(hrefs).toContain("/app/admin/team");
     expect(hrefs).toContain("/app/admin/security-groups");
     expect(hrefs).toContain("/app/admin/ai/knowledge");
+    expect(hrefs).toContain("/scenario-lab");
   });
 
   it("orders mobile primary destinations Inquiries → Schedule → Bookings", () => {
@@ -79,6 +84,7 @@ describe("employee navigation helpers", () => {
     expect(moreIds).toContain("resources");
     expect(moreIds).toContain("team");
     expect(moreIds).toContain("security");
+    expect(moreIds).toContain("scenarioLab");
     expect(moreIds).not.toContain("inquiries");
   });
 
@@ -86,6 +92,12 @@ describe("employee navigation helpers", () => {
     expect(isEmployeeNavActive("/app", "/app")).toBe(true);
     expect(isEmployeeNavActive("/app/inquiries", "/app")).toBe(false);
     expect(isEmployeeNavActive("/app/inquiries/abc", "/app/inquiries")).toBe(true);
+  });
+
+  it("marks Scenario Lab active on nested lab routes", () => {
+    expect(isEmployeeNavActive("/scenario-lab", "/scenario-lab")).toBe(true);
+    expect(isEmployeeNavActive("/scenario-lab/runs/abc", "/scenario-lab")).toBe(true);
+    expect(isEmployeeNavActive("/app", "/scenario-lab")).toBe(false);
   });
 });
 
@@ -143,6 +155,35 @@ describe("EmployeeMobileNav", () => {
     expect(screen.getByRole("link", { name: "Inquiries" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Schedule" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Bookings" })).toBeNull();
+  });
+
+  it("shows Scenario Lab in More when chrome marks it visible", async () => {
+    render(
+      <EmployeeMobileNav
+        visibleNavIds={["overview", "inquiries", "scenarioLab"]}
+        publicInquiryHref={null}
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: "Scenario Lab" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "More" })).toBeTruthy();
+    });
+    const link = screen.getByRole("link", { name: "Scenario Lab" });
+    expect(link.getAttribute("href")).toBe("/scenario-lab");
+    expect(link.textContent).toContain("TEST");
+  });
+
+  it("hides Scenario Lab from mobile More when chrome omits it", async () => {
+    render(
+      <EmployeeMobileNav visibleNavIds={["overview", "inquiries", "team"]} publicInquiryHref={null} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { name: "More" })).toBeTruthy();
+    });
+    expect(screen.queryByRole("link", { name: "Scenario Lab" })).toBeNull();
   });
 });
 

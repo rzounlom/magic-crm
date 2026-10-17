@@ -10,6 +10,7 @@ import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
 import { createLocationRepository } from "@/server/repositories/location-repository";
 import { createOrganizationRepository } from "@/server/repositories/organization-repository";
+import { hasScenarioLabAccess } from "@/server/scenario-lab/load-scenario-lab-access";
 import { getCurrentTenantPublicInquiryPath } from "@/server/services/inquiry-service";
 
 export type EmployeeShellChrome = {
@@ -41,7 +42,8 @@ export const loadEmployeeShellChrome = cache(async (): Promise<EmployeeShellChro
     }
 
     const permissionChecks = EMPLOYEE_NAV_ITEMS.flatMap((item) => {
-      if (item.id === "overview" || !item.permission) {
+      // Overview is always visible; Scenario Lab uses the composite LAB1-A gate below.
+      if (item.id === "overview" || item.id === "scenarioLab" || !item.permission) {
         return [];
       }
       const permission = item.permission;
@@ -50,7 +52,7 @@ export const loadEmployeeShellChrome = cache(async (): Promise<EmployeeShellChro
       ];
     });
 
-    const [permissionResults, inquiryPathResult] = await Promise.all([
+    const [permissionResults, inquiryPathResult, scenarioLabAllowed] = await Promise.all([
       Promise.all(permissionChecks),
       getCurrentTenantPublicInquiryPath(ctx, db)
         .then((href) => ({ ok: true as const, href }))
@@ -60,12 +62,16 @@ export const loadEmployeeShellChrome = cache(async (): Promise<EmployeeShellChro
           }
           throw error;
         }),
+      hasScenarioLabAccess(),
     ]);
 
     for (const id of permissionResults) {
       if (id) {
         visibleNavIds.push(id);
       }
+    }
+    if (scenarioLabAllowed) {
+      visibleNavIds.push("scenarioLab");
     }
     publicInquiryHref = inquiryPathResult.href;
   } catch (error) {

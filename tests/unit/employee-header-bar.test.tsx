@@ -63,6 +63,25 @@ describe("EmployeeHeaderBar", () => {
     expect(html.indexOf("Security")).toBeLessThan(html.indexOf("OrgSwitcher"));
   });
 
+  it("shows Scenario Lab under Settings when chrome marks it visible", () => {
+    const html = renderHeader({
+      visibleNavIds: ["overview", "inquiries", "team", "security", "scenarioLab"],
+    });
+    expect(html).toContain('href="/scenario-lab"');
+    expect(html).toContain("Scenario Lab");
+    expect(html).toContain("TEST");
+    expect(html).toContain('aria-label="Settings"');
+    expect(html.indexOf("Security")).toBeLessThan(html.indexOf("Scenario Lab"));
+  });
+
+  it("hides Scenario Lab when chrome omits it", () => {
+    const html = renderHeader({
+      visibleNavIds: ["overview", "inquiries", "team", "security"],
+    });
+    expect(html).not.toContain('href="/scenario-lab"');
+    expect(html).not.toContain("Scenario Lab");
+  });
+
   it("hides Security for a non-admin but keeps organization switcher and UserButton", () => {
     const html = renderHeader({
       visibleNavIds: ["overview", "inquiries"],
