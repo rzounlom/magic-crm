@@ -14,13 +14,80 @@ export function isPlausibleScenarioLabCorrelationToken(value: string | undefined
   return Boolean(value && CORRELATION_TOKEN_PATTERN.test(value.trim()));
 }
 
+type ClaimLookupDatabase = {
+  scenarioLabRun: {
+    findFirst: (args: {
+      where: {
+        organizationId: string;
+        correlationToken: string;
+        status: { in: string[] };
+      };
+      select: { id: true };
+    }) => Promise<{ id: string } | null>;
+  };
+  scenarioLabOwnedEntity: {
+    findFirst: (args: {
+      where: {
+        organizationId: string;
+        runId: string;
+        entityType: string;
+      };
+      select: { id: true };
+    }) => Promise<{ id: string } | null>;
+  };
+};
+
+type ClaimDb = Pick<PrismaClient, "scenarioLabRun" | "scenarioLabOwnedEntity" | "$transaction" | "$queryRaw">;
+
+/**
+ * True only when the token matches a tenant-scoped READY/RUNNING run that does not
+ * already own an inquiry. Forged or consumed tokens return false — they must not
+ * suppress normal customer notifications or grant privileged access.
+ */
+export async function isClaimableScenarioLabCorrelationToken(
+  database: ClaimLookupDatabase,
+  input: {
+    organizationId: string;
+    correlationToken?: string | null;
+  },
+): Promise<boolean> {
+  const token = input.correlationToken?.trim();
+  if (!token || !isPlausibleScenarioLabCorrelationToken(token)) {
+    return false;
+  }
+
+  const run = await database.scenarioLabRun.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      correlationToken: token,
+      status: {
+        in: [SCENARIO_LAB_RUN_STATUSES.READY, SCENARIO_LAB_RUN_STATUSES.RUNNING],
+      },
+    },
+    select: { id: true },
+  });
+  if (!run) {
+    return false;
+  }
+
+  const owned = await database.scenarioLabOwnedEntity.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      runId: run.id,
+      entityType: SCENARIO_LAB_ENTITY_TYPES.INQUIRY,
+    },
+    select: { id: true },
+  });
+  return !owned;
+}
+
 /**
  * After a real public inquiry is persisted, claim it for a Scenario Lab run when
  * a valid correlation token is present. Never grants privileged access.
- * Invalid/expired tokens are ignored so normal public intake is not broken.
+ * Invalid/expired/consumed tokens are ignored so normal public intake is not broken.
  */
 export async function claimScenarioLabInquiryIfPresent(
-  database: PrismaClient,
+  database: ClaimDb,
   input: {
     organizationId: string;
     inquiryId: string;

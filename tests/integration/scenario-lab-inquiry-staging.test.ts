@@ -401,4 +401,161 @@ describe("Scenario Lab inquiry staging (postgres)", () => {
       ScenarioLabError,
     );
   });
+
+  it("does not suppress plan notifications for forged correlation tokens", async () => {
+    await provisionTrustedAdmin(USER_A);
+    const access = await labAccess(USER_A);
+    const org = await db.organization.findFirstOrThrow({
+      where: { id: access.request.organizationId },
+      select: { slug: true },
+    });
+    const interest = await db.attractionInterest.findFirstOrThrow({
+      where: { organizationId: access.request.organizationId, active: true },
+    });
+
+    const previousAppUrl = process.env.APP_URL;
+    process.env.APP_URL = "http://localhost:3000";
+    try {
+      const inquiry = await createPublicInquiry(db, {
+        organizationSlug: org.slug,
+        rateLimitKey: `lab1bv-forged-${crypto.randomUUID()}`,
+        firstName: "Jordan",
+        lastName: "Example",
+        email: `jordan.${crypto.randomUUID()}@example.com`,
+        phone: "5550102222",
+        eventType: "Birthday Party",
+        preferredDate: futureEventDate(42),
+        startTime: "16:00",
+        guestCount: 8,
+        guestMix: "mostly_adults",
+        desiredDurationMinutes: 90,
+        budgetBand: "under_1500",
+        foodPreference: "NO_FOOD",
+        privateSpacePreference: "NO_PREFERENCE",
+        attractionInterestIds: [interest.id],
+        submissionId: crypto.randomUUID(),
+        scenarioLabCorrelationToken: "f".repeat(32),
+      });
+
+      const audit = await db.auditLog.findFirst({
+        where: {
+          organizationId: access.request.organizationId,
+          resourceType: "inquiry",
+          resourceId: inquiry.inquiryId,
+          action: "inquiry.plan_generated",
+        },
+        select: { metadata: true },
+        orderBy: { createdAt: "desc" },
+      });
+      const metadata = (audit?.metadata ?? {}) as { planUrl?: string };
+      expect(metadata.planUrl).toMatch(/^http:\/\/localhost:3000\/plan\//);
+    } finally {
+      if (previousAppUrl === undefined) {
+        delete process.env.APP_URL;
+      } else {
+        process.env.APP_URL = previousAppUrl;
+      }
+    }
+  });
+
+  it("rejects replay: a consumed token cannot claim a second inquiry", async () => {
+    await provisionTrustedAdmin(USER_A);
+    const access = await labAccess(USER_A);
+    const created = await createCustomerInquiryScenarioRun(access.request, db, {
+      idempotencyKey: `idem_${crypto.randomUUID()}`,
+    });
+    await markScenarioLabPublicIntakeOpened(access.request, db, created.runId);
+
+    const run = await db.scenarioLabRun.findFirstOrThrow({
+      where: { id: created.runId },
+      select: { correlationToken: true, organizationId: true, fixturePayload: true },
+    });
+    const fixture = run.fixturePayload as {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      eventType: string;
+      guestCount: number;
+      guestMix: string;
+      foodPreference: string;
+      privateSpacePreference: string;
+      budgetBand: string;
+      desiredDurationMinutes: number;
+      eventDate: string;
+      attractionInterestIds: string[];
+      notes: string;
+    };
+    const org = await db.organization.findFirstOrThrow({
+      where: { id: run.organizationId },
+      select: { slug: true },
+    });
+
+    const first = await createPublicInquiry(db, {
+      organizationSlug: org.slug,
+      rateLimitKey: `lab1bv-replay-a-${crypto.randomUUID()}`,
+      firstName: fixture.firstName,
+      lastName: fixture.lastName,
+      email: `replay.a.${crypto.randomUUID()}@example.com`,
+      phone: fixture.phone,
+      eventType: fixture.eventType,
+      preferredDate: fixture.eventDate,
+      startTime: "14:00",
+      guestCount: fixture.guestCount,
+      guestMix: fixture.guestMix,
+      desiredDurationMinutes: fixture.desiredDurationMinutes,
+      budgetBand: fixture.budgetBand,
+      foodPreference: fixture.foodPreference,
+      privateSpacePreference: fixture.privateSpacePreference,
+      attractionInterestIds: fixture.attractionInterestIds,
+      notes: fixture.notes,
+      submissionId: crypto.randomUUID(),
+      scenarioLabCorrelationToken: run.correlationToken,
+    });
+
+    const second = await createPublicInquiry(db, {
+      organizationSlug: org.slug,
+      rateLimitKey: `lab1bv-replay-b-${crypto.randomUUID()}`,
+      firstName: fixture.firstName,
+      lastName: fixture.lastName,
+      email: `replay.b.${crypto.randomUUID()}@example.com`,
+      phone: fixture.phone,
+      eventType: fixture.eventType,
+      preferredDate: fixture.eventDate,
+      startTime: "14:00",
+      guestCount: fixture.guestCount,
+      guestMix: fixture.guestMix,
+      desiredDurationMinutes: fixture.desiredDurationMinutes,
+      budgetBand: fixture.budgetBand,
+      foodPreference: fixture.foodPreference,
+      privateSpacePreference: fixture.privateSpacePreference,
+      attractionInterestIds: fixture.attractionInterestIds,
+      notes: fixture.notes,
+      submissionId: crypto.randomUUID(),
+      scenarioLabCorrelationToken: run.correlationToken,
+    });
+
+    const owned = await db.scenarioLabOwnedEntity.findMany({
+      where: { organizationId: run.organizationId, runId: created.runId, entityType: "inquiry" },
+    });
+    expect(owned).toHaveLength(1);
+    expect(owned[0]?.entityId).toBe(first.inquiryId);
+    expect(owned[0]?.entityId).not.toBe(second.inquiryId);
+
+    const detail = await getScenarioLabRunDetail(access.request, db, created.runId);
+    expect(detail.status).toBe("completed");
+    expect(detail.inquiry?.id).toBe(first.inquiryId);
+  });
+
+  it("does not reveal private run data for invalid lab prefill tokens", async () => {
+    await provisionTrustedAdmin(USER_A);
+    const access = await labAccess(USER_A);
+    const org = await db.organization.findFirstOrThrow({
+      where: { id: access.request.organizationId },
+      select: { slug: true },
+    });
+    const { loadPublicIntakePrefillForLabToken } = await import("@/server/scenario-lab/run-service");
+    const prefill = await loadPublicIntakePrefillForLabToken(db, org.slug, "a".repeat(32));
+    expect(prefill).toBeNull();
+  });
 });

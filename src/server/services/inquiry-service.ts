@@ -37,7 +37,10 @@ import {
 import { normalizeInvitationEmail } from "@/server/team/invitation-email";
 import { resolvePrimaryLocationId } from "@/server/locations/primary-location";
 import { assertSelectablePublicAttractions, generateEventPlansForInquiry } from "@/server/services/event-plan-service";
-import { claimScenarioLabInquiryIfPresent } from "@/server/scenario-lab/claim-inquiry";
+import {
+  claimScenarioLabInquiryIfPresent,
+  isClaimableScenarioLabCorrelationToken,
+} from "@/server/scenario-lab/claim-inquiry";
 import { startWorkingInquiry } from "@/server/services/live-agent-service";
 import { runSalesAgentTurn, type SalesAgentRuntime } from "@/server/services/sales-agent-service";
 import {
@@ -249,15 +252,21 @@ export async function createPublicInquiry(
   });
 
   const labCorrelationToken = parsed.data.scenarioLabCorrelationToken?.trim();
-  // Scenario Lab synthetic customers must never trigger outbound plan emails.
-  const skipOutboundNotification = Boolean(labCorrelationToken);
+  // Only a currently claimable tenant-scoped token may suppress outbound plan email.
+  // Forged / consumed / wrong-tenant tokens must not change normal customer behavior.
+  const labTokenClaimable = labCorrelationToken
+    ? await isClaimableScenarioLabCorrelationToken(database, {
+        organizationId: organization.id,
+        correlationToken: labCorrelationToken,
+      })
+    : false;
 
   try {
     const appUrl = process.env.APP_URL?.trim();
     await generateEventPlansForInquiry(database, {
       organizationId: organization.id,
       inquiryId: created.inquiry.id,
-      ...(!skipOutboundNotification && appUrl
+      ...(!labTokenClaimable && appUrl
         ? {
             planNotification: personalEventPlanNotification({
               customerEmail: parsed.data.email.trim(),
@@ -281,7 +290,7 @@ export async function createPublicInquiry(
     });
   }
 
-  if (labCorrelationToken) {
+  if (labTokenClaimable) {
     await claimScenarioLabInquiryIfPresent(database, {
       organizationId: organization.id,
       inquiryId: created.inquiry.id,
