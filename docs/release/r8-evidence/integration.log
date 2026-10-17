@@ -1,0 +1,73 @@
+$ node scripts/run-integration-tests.mjs
+◇ injected env (4) from .env.test // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (7) from .env // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+
+ RUN  v4.1.11 /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm
+
+stdout | tests/integration/booking-confirmation.test.ts > confirmed booking conversion (postgres) > converts a ready-to-finalize working version into one Booking and BOOKED resources
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"clerk_org_bk-ok_63410d0c-debd-4ae2-8a60-bf8f82e5d13b"}
+
+stdout | tests/integration/booking-confirmation.test.ts > confirmed booking conversion (postgres) > converts a ready-to-finalize working version into one Booking and BOOKED resources
+{"scope":"magiccrm.tenant","event":"organization_provisioned","clerkOrganizationId":"clerk_org_bk-ok_63410d0c-debd-4ae2-8a60-bf8f82e5d13b"}
+
+stdout | tests/integration/booking-confirmation.test.ts > confirmed booking conversion (postgres) > converts a ready-to-finalize working version into one Booking and BOOKED resources
+{"scope":"magiccrm.tenant","event":"user_profile_provisioned","clerkOrganizationId":"clerk_org_bk-ok_63410d0c-debd-4ae2-8a60-bf8f82e5d13b"}
+
+stdout | tests/integration/booking-confirmation.test.ts > confirmed booking conversion (postgres) > converts a ready-to-finalize working version into one Booking and BOOKED resources
+{"scope":"magiccrm.tenant","event":"administrator_bootstrapped","outcome":"administrator_bootstrapped"}
+
+stdout | tests/integration/booking-confirmation.test.ts > confirmed booking conversion (postgres) > converts a ready-to-finalize working version into one Booking and BOOKED resources
+◇ injected env (4) from .env.test // tip: ⌘ enable debugging { debug: true }
+◇ injected env (7) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ⌘ suppress logs { quiet: true }
+
+stdout | tests/integration/booking-confirmation.test.ts
+◇ injected env (4) from .env.test // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (7) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (0) from .env.local // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+◇ injected env (4) from .env.test // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (7) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env.local // tip: ⌘ override existing { override: true }
+◇ injected env (4) from .env.test // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (7) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env.local // tip: ⌘ override existing { override: true }
+
+stdout | tests/integration/booking-confirmation.test.ts
+◇ injected env (4) from .env.test // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (7) from .env // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env.local // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+ ❯ tests/integration/booking-confirmation.test.ts (8 tests | 1 failed) 53325ms
+     × converts a ready-to-finalize working version into one Booking and BOOKED resources 8289ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/booking-confirmation.test.ts > confirmed booking conversion (postgres) > converts a ready-to-finalize working version into one Booking and BOOKED resources
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/integration/booking-confirmation.test.ts:258:106
+    256|     const queued = await listInquiries(tenant.ctx, db);
+    257|     expect(queued.some((row) => row.id === created.inquiryId && isLive…
+    258|     expect(queued.some((row) => row.id === created.inquiryId && row.st…
+       |                                                                                                          ^
+    259|
+    260|     const listed = await listBookings(tenant.ctx, db, { filter: "upcom…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 37 passed (38)
+      Tests  1 failed | 187 passed (188)
+   Start at  14:07:22
+   Duration  817.32s (transform 1.65s, setup 25.54s, import 6.13s, tests 777.29s, environment 5ms)
+
+[ELIFECYCLE] Command failed with exit code 1.

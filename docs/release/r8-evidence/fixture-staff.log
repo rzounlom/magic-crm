@@ -1,0 +1,13 @@
+$ tsx --tsconfig tsconfig.json scripts/r3-create-staff-browser-fixture.ts
+◇ injected env (7) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env.local // tip: ⌘ suppress logs { quiet: true }
+{
+  "ok": true,
+  "outPath": "playwright/.fixtures/staff-inquiry.json",
+  "organizationSlug": "magiccrm-test-center-b",
+  "inquiryId": "tyceu1ma63amd3ntt2sx697q",
+  "planCount": 3,
+  "selectedPlanId": "glkr31t9bj9alezcqw473qxe",
+  "inquiryPath": "/app/inquiries/tyceu1ma63amd3ntt2sx697q",
+  "exportHint": "export PLAYWRIGHT_STAFF_INQUIRY_FIXTURE=\"$PWD/playwright/.fixtures/staff-inquiry.json\""
+}

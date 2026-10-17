@@ -1,0 +1,13 @@
+◇ injected env (4) from .env.test // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (7) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+
+ RUN  v4.1.11 /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  14:29:49
+   Duration  20.17s (transform 1.07s, setup 1.04s, import 931ms, tests 17.95s, environment 0ms)
+

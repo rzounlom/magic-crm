@@ -1,0 +1,62 @@
+$ prisma generate && next build
+◇ injected env (7) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.10.0) to ./src/generated/prisma in 570ms
+
+▲ Next.js 16.3.3 (Turbopack)
+- Environments: .env
+✓ Running next.config.ts took 49ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.7s
+  Running TypeScript ...
+  Finished TypeScript in 4.4s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/19) ...
+  Generating static pages using 11 workers (4/19) 
+  Generating static pages using 11 workers (9/19) 
+  Generating static pages using 11 workers (14/19) 
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+✓ Generating static pages using 11 workers (19/19) in 543ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /accept-invitation
+├ ƒ /app
+├ ƒ /app/admin/ai/knowledge
+├ ƒ /app/admin/ai/knowledge/[id]
+├ ƒ /app/admin/ai/knowledge/new
+├ ƒ /app/admin/resources
+├ ƒ /app/admin/resources/[id]
+├ ƒ /app/admin/resources/new
+├ ƒ /app/admin/security-groups
+├ ƒ /app/admin/security-groups/[id]
+├ ƒ /app/admin/security-groups/new
+├ ƒ /app/admin/team
+├ ƒ /app/admin/team/[userProfileId]
+├ ƒ /app/admin/team/invitations
+├ ƒ /app/admin/team/invite
+├ ƒ /app/bookings
+├ ƒ /app/bookings/[id]
+├ ƒ /app/bookings/new
+├ ƒ /app/inquiries
+├ ƒ /app/inquiries/[id]
+├ ƒ /app/schedule
+├ ƒ /conversation/[token]
+├ ƒ /inquire/[organizationSlug]
+├ ƒ /plan/[token]
+├ ƒ /sign-in/[[...sign-in]]
+└ ƒ /sign-up/[[...sign-up]]
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

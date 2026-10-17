@@ -1,0 +1,10 @@
+$ tsx --tsconfig tsconfig.json scripts/r5-create-lifecycle-fixture.ts
+◇ injected env (7) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]
+{
+  "ok": true,
+  "staffPath": "playwright/.fixtures/staff-inquiry.json",
+  "lifecyclePath": "playwright/.fixtures/r5-lifecycle.json",
+  "holdPath": "/app/inquiries/s355q765rgsif2dm8rjotxtx",
+  "confirmPath": "/app/inquiries/igpji3e61azfh94979wi4829"
+}

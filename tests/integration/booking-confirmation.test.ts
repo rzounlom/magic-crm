@@ -40,6 +40,15 @@ const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
 const unlimitedLimiter = createMemoryRateLimiter();
 
+/** Keep confirmed events in the active inquiry queue (not historical by calendar end). */
+function futureEventDate(daysAhead = 21): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + daysAhead);
+  return d.toISOString().slice(0, 10);
+}
+const EVENT_DATE = futureEventDate();
+const EVENT_YEAR = EVENT_DATE.slice(0, 4);
+
 async function cleanup() {
   await deleteTestOrganizations(db, createdOrganizationIds);
   createdOrganizationIds.length = 0;
@@ -144,7 +153,7 @@ async function submitAndSelect(
       customerGroupName: "Apex Robotics",
       email,
       eventType: "Corporate Event",
-      preferredDate: "2026-10-15",
+      preferredDate: EVENT_DATE,
       startTime: "18:00",
       guestCount,
       guestMix: "mostly_adults",
@@ -233,7 +242,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
     expect(first.created).toBe(true);
     expect(first.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     expect(first.booking.guestCount).toBe(18);
-    expect(first.booking.bookingNumber).toMatch(/^[A-Z0-9]{3}-2026-\d{5}$/);
+    expect(first.booking.bookingNumber).toMatch(new RegExp(`^[A-Z0-9]{3}-${EVENT_YEAR}-\\d{5}$`));
     expect(first.booking.agentWorkingPlanId).toBeTruthy();
     expect(first.booking.selectedEventPlanId).toBe(plan.id);
 
@@ -265,7 +274,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
     expect(detail?.lineItems.length).toBeGreaterThan(0);
 
     const schedule = await getMasterScheduleDay(tenant.ctx, db, {
-      date: "2026-10-15",
+      date: EVENT_DATE,
       resourceTypeId: type.id,
     });
     expect(schedule?.reservations.some((row) => row.status === RESOURCE_RESERVATION_STATUSES.BOOKED && row.bookingId === first.booking.id)).toBe(true);
@@ -341,7 +350,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
       inquiryId: created.inquiryId,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 180,
     });
@@ -387,7 +396,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
       inquiryId: created.inquiryId,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 180,
     });
@@ -426,7 +435,7 @@ describe("confirmed booking conversion (postgres)", { timeout: 45_000 }, () => {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
       inquiryId: created.inquiryId,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 180,
     });

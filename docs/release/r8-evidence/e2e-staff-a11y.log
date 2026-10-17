@@ -1,0 +1,9 @@
+
+Running 2 tests using 1 worker
+
+(node:11295) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium-desktop] › tests/e2e/staff.a11y.spec.ts:15:7 › Staff axe smoke (authenticated) › /app has no critical or serious axe violations @staff-a11y (4.2s)
+  ✓  2 [chromium-desktop] › tests/e2e/staff.a11y.spec.ts:25:7 › Staff axe smoke (authenticated) › inquiry detail has no critical or serious axe violations @staff-a11y (4.1s)
+
+  2 passed (9.3s)

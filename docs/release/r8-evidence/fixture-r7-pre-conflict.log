@@ -1,0 +1,10 @@
+$ tsx --tsconfig tsconfig.json scripts/r7-create-conflict-fixture.ts
+◇ injected env (7) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ⌘ enable debugging { debug: true }
+{
+  "ok": true,
+  "outPath": "playwright/.fixtures/r7-conflict.json",
+  "winnerPath": "/app/inquiries/a8km2l9538vg1wan9mkoo5js",
+  "loserPath": "/app/inquiries/qhs1s4a1ps8u9zbta870mjgl",
+  "preferredDate": "2027-09-20"
+}

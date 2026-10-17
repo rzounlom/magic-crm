@@ -1,0 +1,66 @@
+{
+  "createdAt": "2026-10-17T18:33:11.746Z",
+  "baseURL": "http://localhost:3000",
+  "hardReloadRequiredOverall": false,
+  "notes": [],
+  "summary": {
+    "startWorking": {
+      "samplesMs": [
+        2392,
+        2323
+      ],
+      "count": 2,
+      "medianMs": 2357.5,
+      "worstMs": 2392,
+      "hardReloadRequired": false
+    },
+    "checkAvailability": {
+      "samplesMs": [
+        19,
+        16
+      ],
+      "count": 2,
+      "medianMs": 17.5,
+      "worstMs": 19,
+      "hardReloadRequired": false
+    },
+    "placeHold": {
+      "samplesMs": [
+        5356,
+        3335
+      ],
+      "count": 2,
+      "medianMs": 4345.5,
+      "worstMs": 5356,
+      "hardReloadRequired": false
+    },
+    "releaseHold": {
+      "samplesMs": [
+        857,
+        2364
+      ],
+      "count": 2,
+      "medianMs": 1610.5,
+      "worstMs": 2364,
+      "hardReloadRequired": false
+    },
+    "confirmBooking": {
+      "samplesMs": [
+        4765
+      ],
+      "count": 1,
+      "medianMs": 4765,
+      "worstMs": 4765,
+      "hardReloadRequired": false
+    },
+    "cancelBooking": {
+      "samplesMs": [
+        828
+      ],
+      "count": 1,
+      "medianMs": 828,
+      "worstMs": 828,
+      "hardReloadRequired": false
+    }
+  }
+}

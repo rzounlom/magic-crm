@@ -1,0 +1,7 @@
+$ eslint
+
+/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/tests/integration/catalog-resource-allocation.test.ts
+  17:43  warning  'authorizeHoldHoursForInquiry' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (0 errors, 1 warning)
+

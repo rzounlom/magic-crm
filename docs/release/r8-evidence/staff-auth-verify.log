@@ -1,0 +1,13 @@
+$ node scripts/r3-verify-staff-auth.mjs
+◇ injected env (7) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env.local // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+{
+  "ok": true,
+  "storageStatePath": "playwright/.auth/staff.json",
+  "cookieCount": 9,
+  "hasMeta": true,
+  "clerkPublishableKeyKind": "test",
+  "expectedOrganizationSlug": "magiccrm-test-center-b",
+  "baseUrl": "http://localhost:3000",
+  "note": "Cookie names/values intentionally omitted."
+}

@@ -1,0 +1,13 @@
+◇ injected env (4) from .env.test // tip: ⌘ enable debugging { debug: true }
+◇ injected env (7) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+◇ injected env (0) from .env.local // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+
+ RUN  v4.1.11 /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  14:28:04
+   Duration  57.34s (transform 775ms, setup 749ms, import 735ms, tests 55.52s, environment 0ms)
+

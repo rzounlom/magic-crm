@@ -1,0 +1,19 @@
+{
+  "env": {
+    "hostnameHash": "dfb1cb10b9206e33",
+    "hostnameLength": 56,
+    "mentionsBoldArt": true,
+    "mentionsSparklingBird": false,
+    "hasEpFragment": true,
+    "role": null
+  },
+  "envTest": {
+    "hostnameHash": "44d456247d9d05fd",
+    "hostnameLength": 62,
+    "mentionsBoldArt": false,
+    "mentionsSparklingBird": true,
+    "hasEpFragment": true,
+    "role": "test"
+  },
+  "hostsDifferByHash": true
+}

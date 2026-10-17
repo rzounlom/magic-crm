@@ -1,0 +1,16 @@
+$ playwright test tests/e2e/staff.lifecycle.spec.ts --project=chromium-desktop
+
+Running 7 tests using 1 worker
+
+(node:11624) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium-desktop] › tests/e2e/staff.lifecycle.spec.ts:25:7 › R6 — Mutation consistency lifecycle (opt-in) › places HOLD without hard reload and shows active status @staff-lifecycle (17.3s)
+  ✓  2 [chromium-desktop] › tests/e2e/staff.lifecycle.spec.ts:66:7 › R6 — Mutation consistency lifecycle (opt-in) › releases HOLD without hard reload when Release is available @staff-lifecycle (6.7s)
+  ✓  3 [chromium-desktop] › tests/e2e/staff.lifecycle.spec.ts:91:7 › R6 — Mutation consistency lifecycle (opt-in) › confirms booking without hard reload and lands on booking detail @staff-lifecycle (15.7s)
+  ✓  4 [chromium-desktop] › tests/e2e/staff.lifecycle.spec.ts:136:7 › R6 — Mutation consistency lifecycle (opt-in) › duplicate Place HOLD while pending does not open a second dialog @staff-lifecycle (5.3s)
+  ✓  5 [chromium-desktop] › tests/e2e/staff.lifecycle.spec.ts:161:7 › R6 — Mutation consistency lifecycle (opt-in) › cancels confirmed booking without hard reload when Cancel is available @staff-lifecycle (7.1s)
+  -  6 [chromium-desktop] › tests/e2e/staff.lifecycle.spec.ts:194:7 › R6 — Mutation consistency lifecycle (opt-in) › conflict-after-availability scenario is reported when not safely runnable @staff-lifecycle
+  ✓  7 [chromium-desktop] › tests/e2e/staff.lifecycle.spec.ts:203:7 › R6 — Mutation consistency lifecycle (opt-in) › admin-denied routes guide staff to an administrator @staff-lifecycle (1.9s)
+
+  1 skipped
+  6 passed (55.1s)

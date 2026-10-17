@@ -1,0 +1,10 @@
+
+Running 3 tests using 1 worker
+
+(node:10320) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium-desktop] › tests/e2e/staff.navigation.spec.ts:12:7 › Scenario A — Staff navigation and organization context › authenticated entry reaches /app with module navigation @staff-nav (2.5s)
+  ✓  2 [chromium-desktop] › tests/e2e/staff.navigation.spec.ts:20:7 › Scenario A — Staff navigation and organization context › organization context chip is present and non-empty when rendered @staff-nav (1.8s)
+  ✓  3 [chromium-desktop] › tests/e2e/staff.navigation.spec.ts:36:7 › Scenario A — Staff navigation and organization context › unauthenticated sign-in surface is not shown while storage state is valid @staff-nav (2.5s)
+
+  3 passed (7.9s)

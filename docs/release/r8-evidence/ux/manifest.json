@@ -1,0 +1,392 @@
+{
+  "createdAt": "2026-10-17T18:35:32.587Z",
+  "baseURL": "http://localhost:3000",
+  "orgSlug": "magiccrm-test-center-b",
+  "inventory": [
+    {
+      "file": "public-inquire-390w.png",
+      "route": "/inquire/magiccrm-test-center-b",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "public inquiry",
+      "finalUrl": "http://localhost:3000/inquire/magiccrm-test-center-b"
+    },
+    {
+      "file": "public-proposal-390w.png",
+      "route": "/plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "public proposal",
+      "finalUrl": "http://localhost:3000/plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs"
+    },
+    {
+      "file": "sign-in-390w.png",
+      "route": "/sign-in",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "sign-in",
+      "finalUrl": "http://localhost:3000/sign-in"
+    },
+    {
+      "file": "public-inquire-768w.png",
+      "route": "/inquire/magiccrm-test-center-b",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "public inquiry",
+      "finalUrl": "http://localhost:3000/inquire/magiccrm-test-center-b"
+    },
+    {
+      "file": "public-proposal-768w.png",
+      "route": "/plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "public proposal",
+      "finalUrl": "http://localhost:3000/plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs"
+    },
+    {
+      "file": "sign-in-768w.png",
+      "route": "/sign-in",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "sign-in",
+      "finalUrl": "http://localhost:3000/sign-in"
+    },
+    {
+      "file": "public-inquire-1024w.png",
+      "route": "/inquire/magiccrm-test-center-b",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "public inquiry",
+      "finalUrl": "http://localhost:3000/inquire/magiccrm-test-center-b"
+    },
+    {
+      "file": "public-proposal-1024w.png",
+      "route": "/plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "public proposal",
+      "finalUrl": "http://localhost:3000/plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs"
+    },
+    {
+      "file": "sign-in-1024w.png",
+      "route": "/sign-in",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "sign-in",
+      "finalUrl": "http://localhost:3000/sign-in"
+    },
+    {
+      "file": "public-inquire-1440w.png",
+      "route": "/inquire/magiccrm-test-center-b",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "public inquiry",
+      "finalUrl": "http://localhost:3000/inquire/magiccrm-test-center-b"
+    },
+    {
+      "file": "public-proposal-1440w.png",
+      "route": "/plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "public proposal",
+      "finalUrl": "http://localhost:3000/plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs"
+    },
+    {
+      "file": "sign-in-1440w.png",
+      "route": "/sign-in",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "sign-in",
+      "finalUrl": "http://localhost:3000/sign-in"
+    },
+    {
+      "file": "staff-shell-390w.png",
+      "route": "/app",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "workspace shell",
+      "finalUrl": "http://localhost:3000/app"
+    },
+    {
+      "file": "inquiry-queue-390w.png",
+      "route": "/app/inquiries",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "inquiry queue",
+      "finalUrl": "http://localhost:3000/app/inquiries"
+    },
+    {
+      "file": "inquiry-detail-390w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "inquiry detail",
+      "finalUrl": "http://localhost:3000/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz"
+    },
+    {
+      "file": "hold-readiness-390w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 390,
+      "notes": "hold readiness panel"
+    },
+    {
+      "file": "lifecycle-hold-390w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "HOLD workflow inquiry",
+      "finalUrl": "http://localhost:3000/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz"
+    },
+    {
+      "file": "lifecycle-confirm-390w.png",
+      "route": "/app/inquiries/usg1utncagxg69li5d1gev1s",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "confirm-ready inquiry",
+      "finalUrl": "http://localhost:3000/app/inquiries/usg1utncagxg69li5d1gev1s"
+    },
+    {
+      "file": "master-schedule-390w.png",
+      "route": "/app/schedule",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "master schedule",
+      "finalUrl": "http://localhost:3000/app/schedule"
+    },
+    {
+      "file": "bookings-list-390w.png",
+      "route": "/app/bookings",
+      "width": 390,
+      "height": 844,
+      "overflowPx": 0,
+      "notes": "bookings list",
+      "finalUrl": "http://localhost:3000/app/bookings"
+    },
+    {
+      "file": "staff-shell-768w.png",
+      "route": "/app",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "workspace shell",
+      "finalUrl": "http://localhost:3000/app"
+    },
+    {
+      "file": "inquiry-queue-768w.png",
+      "route": "/app/inquiries",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "inquiry queue",
+      "finalUrl": "http://localhost:3000/app/inquiries"
+    },
+    {
+      "file": "inquiry-detail-768w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "inquiry detail",
+      "finalUrl": "http://localhost:3000/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz"
+    },
+    {
+      "file": "hold-readiness-768w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 768,
+      "notes": "hold readiness panel"
+    },
+    {
+      "file": "lifecycle-hold-768w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "HOLD workflow inquiry",
+      "finalUrl": "http://localhost:3000/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz"
+    },
+    {
+      "file": "lifecycle-confirm-768w.png",
+      "route": "/app/inquiries/usg1utncagxg69li5d1gev1s",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "confirm-ready inquiry",
+      "finalUrl": "http://localhost:3000/app/inquiries/usg1utncagxg69li5d1gev1s"
+    },
+    {
+      "file": "master-schedule-768w.png",
+      "route": "/app/schedule",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "master schedule",
+      "finalUrl": "http://localhost:3000/app/schedule"
+    },
+    {
+      "file": "bookings-list-768w.png",
+      "route": "/app/bookings",
+      "width": 768,
+      "height": 1024,
+      "overflowPx": 0,
+      "notes": "bookings list",
+      "finalUrl": "http://localhost:3000/app/bookings"
+    },
+    {
+      "file": "staff-shell-1024w.png",
+      "route": "/app",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "workspace shell",
+      "finalUrl": "http://localhost:3000/app"
+    },
+    {
+      "file": "inquiry-queue-1024w.png",
+      "route": "/app/inquiries",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "inquiry queue",
+      "finalUrl": "http://localhost:3000/app/inquiries"
+    },
+    {
+      "file": "inquiry-detail-1024w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "inquiry detail",
+      "finalUrl": "http://localhost:3000/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz"
+    },
+    {
+      "file": "hold-readiness-1024w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 1024,
+      "notes": "hold readiness panel"
+    },
+    {
+      "file": "lifecycle-hold-1024w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "HOLD workflow inquiry",
+      "finalUrl": "http://localhost:3000/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz"
+    },
+    {
+      "file": "lifecycle-confirm-1024w.png",
+      "route": "/app/inquiries/usg1utncagxg69li5d1gev1s",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "confirm-ready inquiry",
+      "finalUrl": "http://localhost:3000/app/inquiries/usg1utncagxg69li5d1gev1s"
+    },
+    {
+      "file": "master-schedule-1024w.png",
+      "route": "/app/schedule",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "master schedule",
+      "finalUrl": "http://localhost:3000/app/schedule"
+    },
+    {
+      "file": "bookings-list-1024w.png",
+      "route": "/app/bookings",
+      "width": 1024,
+      "height": 768,
+      "overflowPx": 0,
+      "notes": "bookings list",
+      "finalUrl": "http://localhost:3000/app/bookings"
+    },
+    {
+      "file": "staff-shell-1440w.png",
+      "route": "/app",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "workspace shell",
+      "finalUrl": "http://localhost:3000/app"
+    },
+    {
+      "file": "inquiry-queue-1440w.png",
+      "route": "/app/inquiries",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "inquiry queue",
+      "finalUrl": "http://localhost:3000/app/inquiries"
+    },
+    {
+      "file": "inquiry-detail-1440w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "inquiry detail",
+      "finalUrl": "http://localhost:3000/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz"
+    },
+    {
+      "file": "hold-readiness-1440w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 1440,
+      "notes": "hold readiness panel"
+    },
+    {
+      "file": "lifecycle-hold-1440w.png",
+      "route": "/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "HOLD workflow inquiry",
+      "finalUrl": "http://localhost:3000/app/inquiries/k26gqjzn8pzqxtwwnymw8zoz"
+    },
+    {
+      "file": "lifecycle-confirm-1440w.png",
+      "route": "/app/inquiries/usg1utncagxg69li5d1gev1s",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "confirm-ready inquiry",
+      "finalUrl": "http://localhost:3000/app/inquiries/usg1utncagxg69li5d1gev1s"
+    },
+    {
+      "file": "master-schedule-1440w.png",
+      "route": "/app/schedule",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "master schedule",
+      "finalUrl": "http://localhost:3000/app/schedule"
+    },
+    {
+      "file": "bookings-list-1440w.png",
+      "route": "/app/bookings",
+      "width": 1440,
+      "height": 900,
+      "overflowPx": 0,
+      "notes": "bookings list",
+      "finalUrl": "http://localhost:3000/app/bookings"
+    }
+  ],
+  "findings": []
+}

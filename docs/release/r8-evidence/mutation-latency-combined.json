@@ -1,0 +1,78 @@
+{
+  "createdAt": "2026-10-17T18:35:36.070Z",
+  "runs": 2,
+  "hardReloadRequiredOverall": false,
+  "notes": [
+    "checkAvailability sub-50ms samples likely matched pre-existing availability copy and are under-measured"
+  ],
+  "summary": {
+    "startWorking": {
+      "samplesMs": [
+        2392,
+        2323,
+        2379,
+        2326
+      ],
+      "count": 4,
+      "medianMs": 2352.5,
+      "worstMs": 2392,
+      "hardReloadRequired": false
+    },
+    "checkAvailability": {
+      "samplesMs": [
+        19,
+        16,
+        15,
+        20
+      ],
+      "count": 4,
+      "medianMs": 17.5,
+      "worstMs": 20,
+      "hardReloadRequired": false
+    },
+    "placeHold": {
+      "samplesMs": [
+        5356,
+        3335,
+        5856,
+        4359
+      ],
+      "count": 4,
+      "medianMs": 4857.5,
+      "worstMs": 5856,
+      "hardReloadRequired": false
+    },
+    "releaseHold": {
+      "samplesMs": [
+        857,
+        2364,
+        846,
+        3392
+      ],
+      "count": 4,
+      "medianMs": 1610.5,
+      "worstMs": 3392,
+      "hardReloadRequired": false
+    },
+    "confirmBooking": {
+      "samplesMs": [
+        4765,
+        5234
+      ],
+      "count": 2,
+      "medianMs": 4999.5,
+      "worstMs": 5234,
+      "hardReloadRequired": false
+    },
+    "cancelBooking": {
+      "samplesMs": [
+        828,
+        1328
+      ],
+      "count": 2,
+      "medianMs": 1078,
+      "worstMs": 1328,
+      "hardReloadRequired": false
+    }
+  }
+}

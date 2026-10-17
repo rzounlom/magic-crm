@@ -1,0 +1,10 @@
+$ tsx --tsconfig tsconfig.json scripts/r7-create-conflict-fixture.ts
+◇ injected env (7) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (0) from .env.local // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+{
+  "ok": true,
+  "outPath": "playwright/.fixtures/r7-conflict.json",
+  "winnerPath": "/app/inquiries/il7lq23q0elul97r600k74xt",
+  "loserPath": "/app/inquiries/j55gf05xl5xjz4s3v916q392",
+  "preferredDate": "2027-09-14"
+}
