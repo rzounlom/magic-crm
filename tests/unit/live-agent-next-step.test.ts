@@ -139,7 +139,7 @@ describe("live agent booking guide", () => {
       }),
     ).toMatchObject({
       currentStepId: "confirm",
-      nextTitle: "This booking was cancelled",
+      nextTitle: "Cancelled booking",
     });
   });
 

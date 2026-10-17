@@ -120,16 +120,17 @@ export function liveAgentBookingGuide(input: LiveAgentBookingGuideInput): {
   if (input.cancelled) {
     return {
       currentStepId: "confirm",
-      nextTitle: "This booking was cancelled",
+      nextTitle: "Cancelled booking",
       nextDetail:
-        "Historical booking information is kept. Archive the inquiry to remove it from the active queue.",
+        "This inquiry’s booking was cancelled. Historical details remain. Archive to remove it from the active queue. MagicCRM did not collect payment.",
     };
   }
   if (input.booked) {
     return {
       currentStepId: "confirm",
-      nextTitle: "This event is booked",
-      nextDetail: "Open the booking for the confirmed record, or view it on the Master Schedule.",
+      nextTitle: "Booked",
+      nextDetail:
+        "Confirmation is complete. Open the booking record for the authoritative details, or view occupancy on the Master Schedule. MagicCRM does not collect payment.",
     };
   }
   if (!input.assigned) {

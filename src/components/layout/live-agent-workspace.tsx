@@ -35,7 +35,9 @@ import {
 } from "@/lib/inquiries/employee-workspace-state";
 import { summarizePlanChanges, workingPlanAffectsExistingHolds } from "@/lib/inquiries/plan-diff";
 import { formatPhoneDisplay } from "@/lib/inquiries/public-phone";
-import { formatEventLocalDateTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { formatEventLocalDate, formatEventLocalDateTime, formatEventLocalTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
+import { formatMoneyFromCents } from "@/lib/event-planner/money";
+import { formatActivityLine } from "@/lib/event-planner/activity-display";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import { markCustomerContactedAction, saveInternalNotesAction } from "@/server/actions/live-agent";
 import { bookingConfirmationBlockers } from "@/lib/bookings/confirmation-blockers";
@@ -315,13 +317,30 @@ export function LiveAgentWorkspace({
         Back to inquiries
       </Link>
       <div className="mt-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">{displayName}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">{displayName}</h1>
+          {booked ? <span className="status-badge status-badge-success">Booked</span> : null}
+          {cancelled ? <span className="status-badge status-badge-neutral">Cancelled</span> : null}
+          {!booked && !cancelled && classified.legacyHolds.length > 0 ? (
+            <span className="status-badge status-badge-warning">Active HOLD</span>
+          ) : null}
+          {!booked && !cancelled && !inquiry.assignedUserProfileId ? (
+            <span className="status-badge status-badge-neutral">Unassigned</span>
+          ) : null}
+          {!booked && !cancelled && inquiry.assignedUserProfileId && classified.legacyHolds.length === 0 ? (
+            <span className="status-badge status-badge-neutral">In progress</span>
+          ) : null}
+        </div>
         <p className={`mt-2 text-sm ${assignedToOther ? "rounded-md border border-warning/40 bg-warning/10 px-3 py-2" : "text-foreground/70"}`}>
-          {inquiry.assignedUserProfileId
-            ? `${assignedToOther ? "Being worked by" : "Assigned to"} ${assignedName}${
-                inquiry.assignedAt ? ` · ${formatOrganizationTimestamp(inquiry.assignedAt, timeZone)}` : ""
-              }`
-            : "Unassigned"}
+          {booked && booking
+            ? `${booking.bookingNumber} · Confirmed booking record`
+            : cancelled && booking
+              ? `${booking.bookingNumber} · Cancelled booking (historical)`
+              : inquiry.assignedUserProfileId
+                ? `${assignedToOther ? "Being worked by" : "Assigned to"} ${assignedName}${
+                    inquiry.assignedAt ? ` · ${formatOrganizationTimestamp(inquiry.assignedAt, timeZone)}` : ""
+                  }`
+                : "Unassigned — claim to edit the working plan and confirm"}
         </p>
         {inquiry.workflowStage === INQUIRY_WORKFLOW_STAGES.HOLD_PLACED ||
         inquiry.workflowStage === INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE ? (
@@ -345,6 +364,7 @@ export function LiveAgentWorkspace({
         booked={booked}
         bookingHref={booking ? `/app/bookings/${booking.id}` : null}
         bookingNumber={booking?.bookingNumber ?? null}
+        scheduleHref={scheduleHref}
         canManage={canManage}
         canHold={canHold}
         canConfirm={canConfirm}
@@ -391,33 +411,99 @@ export function LiveAgentWorkspace({
         <div className="space-y-6">
           {booked || cancelled ? (
             <>
-              <section className="rounded-2xl border border-border bg-surface shadow-sm px-5 py-5">
-                <h2 className="text-lg font-semibold">{booked ? "Booking confirmed" : "Booking cancelled"}</h2>
+              <section
+                id="booked-summary"
+                className="rounded-[var(--radius-card)] border border-border bg-surface px-5 py-5 shadow-[var(--shadow-card)]"
+              >
+                <h2 className="text-lg font-semibold">
+                  {booked ? "Confirmed event" : "Cancelled event"}
+                </h2>
                 {booking ? (
-                  <p className="mt-2 text-sm">
-                    <Link
-                      href={`/app/bookings/${booking.id}`}
-                      className="font-medium text-primary underline underline-offset-2"
-                    >
-                      {booking.bookingNumber}
-                    </Link>
-                    {booked ? " · Open booking" : " · Historical booking"}
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {booking.bookingNumber}
+                    {booked
+                      ? " — authoritative booking record (read-only except cancel when permitted)"
+                      : " — historical record"}
                   </p>
                 ) : null}
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-muted-foreground">Date</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {formatEventLocalDate(confirmedPayload.eventDate) ?? confirmedPayload.eventDate ?? "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Time</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {formatEventLocalTime(confirmedPayload.startTime) ?? "—"}
+                      {confirmedPayload.startTime && confirmedPayload.durationMinutes
+                        ? ` · ${confirmedPayload.durationMinutes} min`
+                        : ""}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Guests</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {booking?.guestCount ?? confirmedPayload.guestCount ?? "—"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Total</dt>
+                    <dd className="mt-0.5 font-medium">
+                      {formatMoneyFromCents(
+                        booking?.totalCents ??
+                          workingPlan?.estimatedTotalCents ??
+                          selectedPlan.estimatedTotalCents ??
+                          0,
+                        selectedPlan.currency,
+                      )}
+                    </dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-muted-foreground">Activities</dt>
+                    <dd className="mt-0.5">
+                      {confirmedPayload.activities.length > 0
+                        ? confirmedPayload.activities
+                            .map((row) =>
+                              formatActivityLine(row, {
+                                guestCount: confirmedPayload.guestCount,
+                                itinerary: confirmedPayload.itinerary,
+                              }),
+                            )
+                            .join("; ")
+                        : "—"}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  MagicCRM does not collect or record payment on this screen.
+                </p>
               </section>
-              <EmployeePlanSnapshot
-                title="Booked plan"
-                planTitle={displayPlanTitle(workingPlan?.title ?? selectedPlan.title)}
-                estimatedTotalCents={booking?.totalCents ?? workingPlan?.estimatedTotalCents ?? selectedPlan.estimatedTotalCents}
-                currency={selectedPlan.currency}
-                durationMinutes={workingPlan?.durationMinutes ?? selectedPlan.durationMinutes}
-                payload={booking?.payload ?? workingPlan?.payload ?? selectedPlan.payload}
-                comparisonNote={
-                  confirmedDiffers
-                    ? "This booking was modified from the original customer selection."
-                    : "Matches the original customer selection."
-                }
-              />
+              <details className="rounded-[var(--radius-card)] border border-border bg-surface px-5 py-4">
+                <summary className="cursor-pointer text-sm font-semibold">
+                  Original customer selection & plan history
+                </summary>
+                <div className="mt-4">
+                  <EmployeePlanSnapshot
+                    title="Booked plan"
+                    planTitle={displayPlanTitle(workingPlan?.title ?? selectedPlan.title)}
+                    estimatedTotalCents={
+                      booking?.totalCents ??
+                      workingPlan?.estimatedTotalCents ??
+                      selectedPlan.estimatedTotalCents
+                    }
+                    currency={selectedPlan.currency}
+                    durationMinutes={workingPlan?.durationMinutes ?? selectedPlan.durationMinutes}
+                    payload={booking?.payload ?? workingPlan?.payload ?? selectedPlan.payload}
+                    comparisonNote={
+                      confirmedDiffers
+                        ? "This booking was modified from the original customer selection."
+                        : "Matches the original customer selection."
+                    }
+                  />
+                </div>
+              </details>
             </>
           ) : workingPlan && canManage && !assignedToOther ? (
             <AgentWorkingPlanForm

@@ -192,8 +192,10 @@ describe("live agent booking actions", () => {
 
     expect(html).toContain("Cancel this booking?");
     expect(html).toContain("Cancel Booking");
-    expect(html).toContain("This event is booked");
-    expect(html).toContain("Master Schedule");
+    expect(html).toContain("Booked");
+    expect(html).toContain("Open Booking");
+    expect(html).toContain("View on Schedule");
+    expect(html).toContain('data-primary-booking-action');
     expect(html).not.toContain("Save Pending Booking");
     expect(html).not.toContain("Confirm this booking?");
   });

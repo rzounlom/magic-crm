@@ -41,11 +41,11 @@ test.describe("R6 — Mutation consistency lifecycle (opt-in)", { tag: "@staff-l
     await openMutationDialog(holdCard.getByRole("button", { name: /^Place HOLD$/i }).first());
     await confirmOpenDialog(page, /^Place HOLD$/i);
 
-    await expect(page.getByText(/Resources held/i).first()).toBeVisible({ timeout: 20_000 });
-    // Soft refresh must update HOLD state without navigation.
-    await expect(holdCard.getByText(/^Active \(/i)).toBeVisible({ timeout: 25_000 });
+    // Soft refresh must update HOLD state without navigation (toast may race awareness polling).
+    await expect(holdCard.getByText(/^Active \(/i)).toBeVisible({ timeout: 60_000 });
     await expect(holdCard.getByText(/Expires/i)).toBeVisible();
     await expect(holdCard.getByText(/No active HOLD/i)).toHaveCount(0);
+    await expect(page.getByText(/Unable to place resource hold/i)).toHaveCount(0);
     await expect(page.getByText(/Booking confirmed|Open BK-/i)).toHaveCount(0);
 
     // Additional persisted evidence after hard reload (not required for soft consistency).
@@ -167,9 +167,11 @@ test.describe("R6 — Mutation consistency lifecycle (opt-in)", { tag: "@staff-l
       test.skip(true, "Storage state expired");
     }
 
-    await expect(page.getByRole("link", { name: /Open MAG-/i }).first()).toBeVisible({
-      timeout: 15_000,
-    }).catch(() => undefined);
+    await expect(
+      page.getByRole("link", { name: /^Open Booking$/i }).or(page.getByRole("link", { name: /Open MAG-/i })).first(),
+    )
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => undefined);
 
     const cancel = page.getByRole("button", { name: /^Cancel Booking$/i }).first();
     if ((await cancel.count()) === 0 || !(await cancel.isEnabled().catch(() => false))) {

@@ -97,3 +97,52 @@ export function resolveR5LifecycleFixture(filePath?: string): R5LifecycleResolut
     return { ok: false, reason: `R5 lifecycle fixture at ${resolvedPath} is not valid JSON.` };
   }
 }
+
+export const DEFAULT_R7_CONFLICT_FIXTURE = path.join("playwright", ".fixtures", "r7-conflict.json");
+
+export type R7ConflictFixture = {
+  createdAt: string;
+  databaseHost: string;
+  organizationSlug: string;
+  preferredDate: string;
+  startTime?: string;
+  winner: {
+    inquiryId: string;
+    inquiryPath: string;
+    email: string;
+    preferredDate?: string;
+  };
+  loser: {
+    inquiryId: string;
+    inquiryPath: string;
+    email: string;
+    preferredDate?: string;
+  };
+  note?: string;
+};
+
+export type R7ConflictResolution =
+  | { ok: true; fixture: R7ConflictFixture }
+  | { ok: false; reason: string };
+
+export function resolveR7ConflictFixture(filePath?: string): R7ConflictResolution {
+  const resolvedPath =
+    filePath ?? process.env.PLAYWRIGHT_R7_CONFLICT_FIXTURE ?? DEFAULT_R7_CONFLICT_FIXTURE;
+
+  if (!fs.existsSync(resolvedPath)) {
+    return {
+      ok: false,
+      reason: `R7 conflict fixture missing at ${resolvedPath}. Run: corepack pnpm test:e2e:staff:r7-fixture`,
+    };
+  }
+
+  try {
+    const fixture = JSON.parse(fs.readFileSync(resolvedPath, "utf8")) as R7ConflictFixture;
+    if (!fixture.winner?.inquiryPath || !fixture.loser?.inquiryPath || !fixture.organizationSlug) {
+      return { ok: false, reason: `R7 conflict fixture at ${resolvedPath} is incomplete.` };
+    }
+    return { ok: true, fixture };
+  } catch {
+    return { ok: false, reason: `R7 conflict fixture at ${resolvedPath} is not valid JSON.` };
+  }
+}

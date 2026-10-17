@@ -209,25 +209,50 @@ export default async function InquiryDetailPage({
           holdReadiness={holdReadiness}
           readinessSection={
             holdReadiness || confirmationReadiness ? (
-              <div className="mt-6 space-y-4" aria-label="Booking readiness">
-                <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">
-                  HOLD and confirmation readiness
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  HOLD and confirmation stay separate. A PLACE_HOLD exception never authorizes
-                  confirmation, and a CONFIRM_BOOKING exception never authorizes HOLD placement.
-                </p>
-                {holdReadiness ? (
-                  <HoldReadinessPanel
-                    readiness={holdReadiness}
-                    canHold={canHold && canManage}
-                    inquiryAssigned={Boolean(inquiry.assignedUserProfileId)}
-                  />
-                ) : null}
-                {confirmationReadiness ? (
-                  <ConfirmationReadinessPanel readiness={confirmationReadiness} />
-                ) : null}
-              </div>
+              inquiry.bookings[0]?.status === BOOKING_STATUSES.CONFIRMED ||
+              inquiry.bookings[0]?.status === BOOKING_STATUSES.CANCELLED ? (
+                <details className="mt-6 rounded-[var(--radius-card)] border border-border bg-surface px-4 py-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-foreground">
+                    Historical readiness details
+                  </summary>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    HOLD and confirmation readiness from before this booking closed. They are not
+                    active workflow steps.
+                  </p>
+                  <div className="mt-4 space-y-4" aria-label="Historical booking readiness">
+                    {holdReadiness ? (
+                      <HoldReadinessPanel
+                        readiness={holdReadiness}
+                        canHold={false}
+                        inquiryAssigned={Boolean(inquiry.assignedUserProfileId)}
+                      />
+                    ) : null}
+                    {confirmationReadiness ? (
+                      <ConfirmationReadinessPanel readiness={confirmationReadiness} />
+                    ) : null}
+                  </div>
+                </details>
+              ) : (
+                <div className="mt-6 space-y-4" aria-label="Booking readiness">
+                  <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">
+                    HOLD and confirmation readiness
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    HOLD and confirmation stay separate. A PLACE_HOLD exception never authorizes
+                    confirmation, and a CONFIRM_BOOKING exception never authorizes HOLD placement.
+                  </p>
+                  {holdReadiness ? (
+                    <HoldReadinessPanel
+                      readiness={holdReadiness}
+                      canHold={canHold && canManage}
+                      inquiryAssigned={Boolean(inquiry.assignedUserProfileId)}
+                    />
+                  ) : null}
+                  {confirmationReadiness ? (
+                    <ConfirmationReadinessPanel readiness={confirmationReadiness} />
+                  ) : null}
+                </div>
+              )
             ) : null
           }
         />

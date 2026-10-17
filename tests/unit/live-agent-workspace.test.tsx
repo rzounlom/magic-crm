@@ -284,7 +284,10 @@ describe("employee booking workspace", () => {
         ]}
       />,
     );
-    expect(html).toContain("Booking confirmed");
+    expect(html).toContain("Booked");
+    expect(html).toContain("Confirmed event");
+    expect(html).toContain("Open Booking");
+    expect(html).toContain("View on Schedule");
     expect(html).toContain("Booked plan");
     expect(html).toContain("GEN-2026-00021");
     expect(html).toContain("Axe Throwing Lane 1");

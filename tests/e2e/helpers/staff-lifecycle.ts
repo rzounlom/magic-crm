@@ -9,7 +9,9 @@ export async function startWorkingIfNeeded(page: Page) {
   }
   await start.click({ force: true });
   // Soft refresh must surface assignment without a hard reload.
-  await expect(page.getByText(/Assigned to|Being worked by/i).first()).toBeVisible({
+  await expect(
+    page.getByText(/Assigned to|Being worked by|In progress/i).first(),
+  ).toBeVisible({
     timeout: 25_000,
   });
   await expect(page.getByRole("button", { name: /^Start Working$/i })).toHaveCount(0);

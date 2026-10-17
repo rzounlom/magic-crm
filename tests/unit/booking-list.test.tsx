@@ -157,7 +157,9 @@ describe("booking list and detail", () => {
     expect(html).toContain("Catered Slider Bar");
     expect(html).toContain("Party Room A");
     expect(html).toContain("1 booked");
-    expect(html).toContain("read-only after confirmation");
+    expect(html).toContain("read-only except permission-gated cancel");
+    expect(html).toContain("View on Schedule");
+    expect(html).toContain("data-booking-detail");
     expect(html).toContain("No deposit or payment has been recorded");
     expect(html).toContain("/app/inquiries/inq_1");
     expect(html).toContain("80");

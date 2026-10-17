@@ -41,6 +41,7 @@ export function LiveAgentBookingActions({
   booked,
   bookingHref,
   bookingNumber,
+  scheduleHref = "/app/schedule",
   canManage,
   canHold,
   canConfirm,
@@ -65,6 +66,8 @@ export function LiveAgentBookingActions({
   booked: boolean;
   bookingHref?: string | null;
   bookingNumber?: string | null;
+  /** Master Schedule deep-link for the confirmed/working event day. */
+  scheduleHref?: string;
   canManage: boolean;
   canHold: boolean;
   canConfirm: boolean;
@@ -231,20 +234,48 @@ export function LiveAgentBookingActions({
       <Link
         href={bookingHref}
         className={buttonClassName({ variant: "primary", size: "md", className: "w-full text-center" })}
+        data-primary-booking-action
       >
-        Open {bookingNumber}
+        Open Booking
+      </Link>
+    ) : null;
+
+  const viewScheduleAction =
+    booked || cancelled ? (
+      <Link
+        href={scheduleHref}
+        className={buttonClassName({ variant: "secondary", size: "md", className: "w-full text-center" })}
+      >
+        View on Schedule
       </Link>
     ) : null;
 
   /** Desktop: full action stack. */
-  const desktopActions = (
+  const desktopActions = booked ? (
+    <>
+      {openBookingAction}
+      {viewScheduleAction}
+      {cancelAction}
+    </>
+  ) : cancelled ? (
+    <>
+      {bookingHref && bookingNumber ? (
+        <Link
+          href={bookingHref}
+          className={buttonClassName({ variant: "secondary", size: "md", className: "w-full text-center" })}
+        >
+          Open {bookingNumber}
+        </Link>
+      ) : null}
+      {viewScheduleAction}
+    </>
+  ) : (
     <>
       {startWorkingAction}
       {inventoryAction}
       {savePendingAction}
       {confirmAction}
       {cancelAction}
-      {openBookingAction}
     </>
   );
 
@@ -252,15 +283,33 @@ export function LiveAgentBookingActions({
    * Mobile: one primary control above the UX3 bottom nav.
    * Secondary paths stay in the in-flow coach (HOLD readiness, save pending, cancel).
    */
-  const mobilePrimaryAction =
-    startWorkingAction ??
-    inventoryAction ??
-    (canSubmitConfirm ? confirmAction : null) ??
-    (showWorkingActions ? confirmAction : null) ??
-    openBookingAction ??
-    cancelAction;
+  const mobilePrimaryAction = booked
+    ? openBookingAction
+    : (startWorkingAction ??
+      inventoryAction ??
+      (canSubmitConfirm ? confirmAction : null) ??
+      (showWorkingActions ? confirmAction : null) ??
+      cancelAction);
 
-  const secondaryLinks = (
+  const secondaryLinks = booked ? (
+    <>
+      {bookingNumber ? (
+        <p className="text-sm text-muted-foreground">
+          Booking <span className="font-medium text-foreground">{bookingNumber}</span>
+        </p>
+      ) : null}
+      <p className="text-sm">
+        <Link href={scheduleHref} className="font-medium text-primary underline underline-offset-2">
+          View on Schedule
+        </Link>
+        {" · "}
+        <a href="#booked-summary" className="font-medium text-primary underline underline-offset-2">
+          Event summary
+        </a>
+      </p>
+      {showCancel ? <div className="lg:hidden">{cancelAction}</div> : null}
+    </>
+  ) : (
     <>
       {showHoldCue ? (
         <p className="text-sm">
@@ -272,7 +321,7 @@ export function LiveAgentBookingActions({
       ) : null}
       {hasHold && showWorkingActions ? (
         <p className="text-sm text-muted-foreground">
-          Resources are currently held.{" "}
+          Active proposal HOLD — not a confirmed booking.{" "}
           <a href="#hold-readiness" className="font-semibold text-primary underline underline-offset-2">
             Review HOLD
           </a>
@@ -282,36 +331,28 @@ export function LiveAgentBookingActions({
         <div className="lg:hidden">{savePendingAction}</div>
       ) : null}
       {showCancel && !booked ? <div className="lg:hidden">{cancelAction}</div> : null}
-      <p className="text-sm">
-        <a
-          href="#confirmation-readiness"
-          className="font-semibold text-primary underline underline-offset-2"
-        >
-          Confirmation readiness
-        </a>
-        {" · "}
-        <a
-          href="#availability-resources"
-          className="font-semibold text-primary underline underline-offset-2"
-        >
-          Availability
-        </a>
-        {" · "}
-        <a href="#working-plan" className="font-semibold text-primary underline underline-offset-2">
-          Working plan
-        </a>
-      </p>
-      {booked && bookingHref && bookingNumber ? (
+      {showWorkingActions ? (
         <p className="text-sm">
-          <Link href={bookingHref} className="font-medium text-primary underline underline-offset-2">
-            Open {bookingNumber}
-          </Link>
+          <a
+            href="#confirmation-readiness"
+            className="font-semibold text-primary underline underline-offset-2"
+          >
+            Confirmation readiness
+          </a>
           {" · "}
-          <Link href="/app/schedule" className="font-medium text-primary underline underline-offset-2">
-            Master Schedule
-          </Link>
+          <a
+            href="#availability-resources"
+            className="font-semibold text-primary underline underline-offset-2"
+          >
+            Availability
+          </a>
+          {" · "}
+          <a href="#working-plan" className="font-semibold text-primary underline underline-offset-2">
+            Working plan
+          </a>
         </p>
-      ) : cancelled && bookingHref && bookingNumber ? (
+      ) : null}
+      {cancelled && bookingHref && bookingNumber ? (
         <p className="text-sm">
           Cancelled booking{" "}
           <Link href={bookingHref} className="font-medium text-primary underline underline-offset-2">

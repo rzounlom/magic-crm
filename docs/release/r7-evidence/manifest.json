@@ -1,0 +1,149 @@
+{
+  "createdAt": "2026-10-12T01:14:03.188Z",
+  "inventory": [
+    {
+      "file": "inquiry-unassigned-or-working-390w.png",
+      "kind": "inquiry-working",
+      "name": "390",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "inquiry-hold-390w.png",
+      "kind": "inquiry-hold",
+      "name": "390",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "inquiry-confirmed-390w.png",
+      "kind": "inquiry-confirmed",
+      "name": "390",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "booking-detail-390w.png",
+      "kind": "booking-detail",
+      "url": "http://localhost:3000/app/bookings/h9odlu4817jy038l6y5pwqqb",
+      "name": "390",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "schedule-390w.png",
+      "kind": "schedule",
+      "name": "390",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "inquiry-unassigned-or-working-768w.png",
+      "kind": "inquiry-working",
+      "name": "768",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "inquiry-hold-768w.png",
+      "kind": "inquiry-hold",
+      "name": "768",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "inquiry-confirmed-768w.png",
+      "kind": "inquiry-confirmed",
+      "name": "768",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "booking-detail-768w.png",
+      "kind": "booking-detail",
+      "url": "http://localhost:3000/app/bookings/h9odlu4817jy038l6y5pwqqb",
+      "name": "768",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "schedule-768w.png",
+      "kind": "schedule",
+      "name": "768",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "inquiry-unassigned-or-working-1024w.png",
+      "kind": "inquiry-working",
+      "name": "1024",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "inquiry-hold-1024w.png",
+      "kind": "inquiry-hold",
+      "name": "1024",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "inquiry-confirmed-1024w.png",
+      "kind": "inquiry-confirmed",
+      "name": "1024",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "booking-detail-1024w.png",
+      "kind": "booking-detail",
+      "url": "http://localhost:3000/app/bookings/h9odlu4817jy038l6y5pwqqb",
+      "name": "1024",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "schedule-1024w.png",
+      "kind": "schedule",
+      "name": "1024",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "inquiry-unassigned-or-working-1440w.png",
+      "kind": "inquiry-working",
+      "name": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "inquiry-hold-1440w.png",
+      "kind": "inquiry-hold",
+      "name": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "inquiry-confirmed-1440w.png",
+      "kind": "inquiry-confirmed",
+      "name": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "booking-detail-1440w.png",
+      "kind": "booking-detail",
+      "url": "http://localhost:3000/app/bookings/h9odlu4817jy038l6y5pwqqb",
+      "name": "1440",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "schedule-1440w.png",
+      "kind": "schedule",
+      "name": "1440",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}
