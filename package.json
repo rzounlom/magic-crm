@@ -51,6 +51,7 @@
     "scenario-lab:verify-database": "tsx --tsconfig tsconfig.json scripts/verify-scenario-lab-database.ts",
     "scenario-lab:migrate-deploy": "node scripts/migrate-scenario-lab-database.mjs",
     "scenario-lab:provision-db-identity": "tsx --tsconfig tsconfig.json scripts/provision-scenario-lab-database-identity.ts",
+    "scenario-lab:seed": "tsx --tsconfig tsconfig.json scripts/seed-scenario-lab-venue.ts",
     "prepare": "husky"
   },
   "dependencies": {
