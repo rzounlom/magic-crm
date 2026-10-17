@@ -1,0 +1,101 @@
+{
+  "createdAt": "2026-10-17T19:21:13.636Z",
+  "inventory": [
+    {
+      "file": "staff-shell-390w.png",
+      "route": "/app",
+      "name": "390",
+      "width": 390,
+      "height": 844,
+      "mobileDisplay": "grid",
+      "overflowPx": 0,
+      "inquiriesBox": {
+        "top": 0,
+        "left": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0
+      },
+      "nextIndicatorPresent": false
+    },
+    {
+      "file": "inquiry-detail-390w.png",
+      "route": "/app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3",
+      "name": "390",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "staff-shell-768w.png",
+      "route": "/app",
+      "name": "768",
+      "width": 768,
+      "height": 1024,
+      "mobileDisplay": "grid",
+      "overflowPx": 0,
+      "inquiriesBox": {
+        "top": 0,
+        "left": 0,
+        "width": 0,
+        "height": 0,
+        "bottom": 0
+      },
+      "nextIndicatorPresent": true
+    },
+    {
+      "file": "inquiry-detail-768w.png",
+      "route": "/app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3",
+      "name": "768",
+      "width": 768,
+      "height": 1024
+    },
+    {
+      "file": "staff-shell-1024w.png",
+      "route": "/app",
+      "name": "1024",
+      "width": 1024,
+      "height": 768,
+      "mobileDisplay": "none",
+      "overflowPx": 0,
+      "inquiriesBox": {
+        "top": 12,
+        "left": 149.546875,
+        "width": 38.375,
+        "height": 40,
+        "bottom": 52
+      },
+      "nextIndicatorPresent": false
+    },
+    {
+      "file": "inquiry-detail-1024w.png",
+      "route": "/app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3",
+      "name": "1024",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "staff-shell-1440w.png",
+      "route": "/app",
+      "name": "1440",
+      "width": 1440,
+      "height": 900,
+      "mobileDisplay": "none",
+      "overflowPx": 0,
+      "inquiriesBox": {
+        "top": 12,
+        "left": 149.546875,
+        "width": 97.921875,
+        "height": 40,
+        "bottom": 52
+      },
+      "nextIndicatorPresent": false
+    },
+    {
+      "file": "inquiry-detail-1440w.png",
+      "route": "/app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3",
+      "name": "1440",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

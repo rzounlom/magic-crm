@@ -14,9 +14,14 @@ import { getMasterScheduleDay } from "@/server/services/resource-schedule-servic
 import { EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { EVENT_PLAN_TIERS, type EventPlanTier } from "@/types/event-planner";
 import { RESOURCE_RESERVATION_STATUSES, type PlanResourceRequirement } from "@/types/resource-schedule";
-import { authorizeConfirmHoursForInquiry, authorizeHoldHoursForInquiry } from "../helpers/authorize-test-hours-exception";
+import { authorizeConfirmHoursForInquiry } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
+const EVENT_DATE_PLUS_1 = futureEventDate(28 + 1);
+const EVENT_DATE_PLUS_7 = futureEventDate(28 + 7);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -50,9 +55,9 @@ const EXPECTED: Record<
 };
 
 const DATES: Record<EventPlanTier, string> = {
-  [EVENT_PLAN_TIERS.BUDGET]: "2026-10-17",
-  [EVENT_PLAN_TIERS.BEST_FIT]: "2026-10-18",
-  [EVENT_PLAN_TIERS.PREMIUM]: "2026-10-24",
+  [EVENT_PLAN_TIERS.BUDGET]: EVENT_DATE,
+  [EVENT_PLAN_TIERS.BEST_FIT]: EVENT_DATE_PLUS_1,
+  [EVENT_PLAN_TIERS.PREMIUM]: EVENT_DATE_PLUS_7,
 };
 
 type Tenant = {

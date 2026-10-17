@@ -26,6 +26,9 @@ import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
 import { createFakeSalesAgentModel } from "../helpers/fake-sales-agent-model";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -75,7 +78,7 @@ function intake(slug: string, email: string, extras: Record<string, unknown> = {
     lastName: "Lovelace",
     email,
     eventType: "Birthday Party",
-    preferredDate: "2026-10-15",
+    preferredDate: EVENT_DATE,
     startTime: "18:00",
     guestCount: 12,
     guestMix: "mostly_children",

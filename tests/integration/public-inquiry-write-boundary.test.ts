@@ -5,6 +5,9 @@ import { createPublicInquiry } from "@/server/services/inquiry-service";
 import { provisionOrganization } from "@/server/services/provision-organization";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -48,7 +51,7 @@ describe("public inquiry nested write", () => {
         lastName: "Lovelace",
         email,
         eventType: "Birthday Party",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "18:00",
         guestCount: 20,
         guestMix: "mixed_ages",

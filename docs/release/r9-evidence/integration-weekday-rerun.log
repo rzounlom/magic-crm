@@ -1,0 +1,13 @@
+◇ injected env (4) from .env.test // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (7) from .env // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from .env.local // tip: ⌘ override existing { override: true }
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+
+ RUN  v4.1.11 /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm
+
+
+ Test Files  3 passed (3)
+      Tests  10 passed (10)
+   Start at  15:02:41
+   Duration  14.37s (transform 476ms, setup 1.92s, import 380ms, tests 11.41s, environment 0ms)
+

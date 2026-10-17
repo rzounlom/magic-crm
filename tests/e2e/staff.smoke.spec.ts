@@ -11,7 +11,7 @@ test.describe("staff shell smoke (authenticated)", { tag: "@staff-smoke" }, () =
   test.use({ storageState: auth.ok ? auth.storageStatePath : undefined });
 
   test("employee shell shows navigation chrome", async ({ page }) => {
-    await page.goto("/app");
+    await page.goto("/app", { waitUntil: "domcontentloaded" });
     if (page.url().includes("sign-in")) {
       test.skip(true, "Storage state expired — regenerate with pnpm test:e2e:staff:auth");
     }
@@ -22,7 +22,7 @@ test.describe("staff shell smoke (authenticated)", { tag: "@staff-smoke" }, () =
 
   test("mobile More control is discoverable when present", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/app");
+    await page.goto("/app", { waitUntil: "domcontentloaded" });
     if (page.url().includes("sign-in")) {
       test.skip(true, "Storage state expired");
     }

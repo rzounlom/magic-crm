@@ -1,0 +1,33 @@
+{
+  "createdAt": "2026-10-17T18:52:24.950Z",
+  "baseURL": "http://localhost:3000",
+  "hardReloadRequiredOverall": false,
+  "notes": [],
+  "summary": {
+    "placeHold": {
+      "samplesMs": [
+        4359,
+        3336
+      ],
+      "count": 2,
+      "medianMs": 3847.5,
+      "worstMs": 4359,
+      "hardReloadRequired": false,
+      "completionSignal": "hold-readiness Active (…)"
+    },
+    "confirmBooking": {
+      "samplesMs": [
+        2872
+      ],
+      "count": 1,
+      "medianMs": 2872,
+      "worstMs": 2872,
+      "hardReloadRequired": false,
+      "completionSignal": "URL /app/bookings/:id"
+    }
+  },
+  "r8BaselineMedianMs": {
+    "placeHold": 4858,
+    "confirmBooking": 5000
+  }
+}

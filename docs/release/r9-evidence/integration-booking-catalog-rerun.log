@@ -1,0 +1,13 @@
+◇ injected env (4) from .env.test // tip: ⌘ enable debugging { debug: true }
+◇ injected env (7) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (0) from .env.local // tip: ⌘ suppress logs { quiet: true }
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+
+ RUN  v4.1.11 /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  15:19:22
+   Duration  21.97s (transform 842ms, setup 784ms, import 798ms, tests 20.17s, environment 0ms)
+

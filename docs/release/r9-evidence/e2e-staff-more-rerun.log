@@ -1,0 +1,17 @@
+
+Running 1 test using 1 worker
+
+(node:29479) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium-desktop] › tests/e2e/staff.smoke.spec.ts:23:7 › staff shell smoke (authenticated) › mobile More control is discoverable when present @staff-smoke (5.3s)
+
+  1 passed (6.7s)
+
+Running 2 tests using 1 worker
+
+(node:29549) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium-desktop] › tests/e2e/staff.responsive.spec.ts:26:9 › Scenario F — Responsive staff UX › staff shell at 390px has no horizontal overflow @staff-responsive (2.2s)
+  ✓  2 [chromium-desktop] › tests/e2e/staff.responsive.spec.ts:66:7 › Scenario F — Responsive staff UX › inquiry detail primary actions remain reachable at 390px @staff-responsive (4.5s)
+
+  2 passed (7.9s)

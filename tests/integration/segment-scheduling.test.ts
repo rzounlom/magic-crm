@@ -22,6 +22,9 @@ import {
 import { authorizeUnconfiguredHoursForConfirm } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -167,7 +170,7 @@ async function createPlanInquiry(
       lastName: "Lovelace",
       email: `ada.${crypto.randomUUID()}@example.com`,
       eventType: "Birthday Party",
-      preferredDate: "2026-10-15",
+      preferredDate: EVENT_DATE,
       startTime: payload.startTime,
       guestCount: 20,
       guestMix: "mixed_ages",
@@ -200,7 +203,7 @@ async function createPlanInquiry(
       availabilityStatus: "AVAILABLE",
       payload: {
         guestCount: 20,
-        eventDate: "2026-10-15",
+        eventDate: EVENT_DATE,
         startTime: payload.startTime,
         durationMinutes: payload.durationMinutes,
         activities: payload.activities ?? [
@@ -239,7 +242,7 @@ async function confirmSegmentReady(
   inquiryId: string,
   startTime: string,
   durationMinutes: number,
-  slotDate = "2026-10-15",
+  slotDate = EVENT_DATE,
 ) {
   const hoursException = await authorizeUnconfiguredHoursForConfirm({
     ctx: tenant.ctx,
@@ -290,13 +293,13 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     expect(bowlRows[0]?.endMinute).toBe(20 * 60);
     const zone = resolveSchedulingTimeZone({ organizationTimeZone: tenant.organization.timezone });
     const axeWindow = occupancyInstants({
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60 + 30,
       endMinute: 19 * 60,
       timeZone: zone,
     });
     const bowlWindow = occupancyInstants({
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 19 * 60,
       endMinute: 20 * 60,
       timeZone: zone,
@@ -305,9 +308,9 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     expect(axeRows[0]?.endsAt?.toISOString()).toBe(axeWindow.endsAt.toISOString());
     expect(bowlRows[0]?.startsAt?.toISOString()).toBe(bowlWindow.startsAt.toISOString());
     expect(bowlRows[0]?.endsAt?.toISOString()).toBe(bowlWindow.endsAt.toISOString());
-    const axeDay = await getMasterScheduleDay(tenant.ctx, db, { date: "2026-10-15", resourceTypeId: axe.type.id });
+    const axeDay = await getMasterScheduleDay(tenant.ctx, db, { date: EVENT_DATE, resourceTypeId: axe.type.id });
     expect(axeDay?.reservations.map((row) => [row.startMinute, row.endMinute])).toEqual([[18 * 60 + 30, 19 * 60]]);
-    const bowlDay = await getMasterScheduleDay(tenant.ctx, db, { date: "2026-10-15", resourceTypeId: bowling.type.id });
+    const bowlDay = await getMasterScheduleDay(tenant.ctx, db, { date: EVENT_DATE, resourceTypeId: bowling.type.id });
     expect(bowlDay?.reservations.map((row) => [row.startMinute, row.endMinute])).toEqual([[19 * 60, 20 * 60]]);
   });
 
@@ -348,14 +351,14 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     expect(bowlRows.every((row) => row.startMinute === 19 * 60 + 30 && row.endMinute === 20 * 60 + 30)).toBe(true);
     const zone = resolveSchedulingTimeZone({ organizationTimeZone: tenant.organization.timezone });
     const axeWindow = occupancyInstants({
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60 + 30,
       endMinute: 19 * 60 + 30,
       timeZone: zone,
     });
     expect(axeRows[0]?.startsAt?.toISOString()).toBe(axeWindow.startsAt.toISOString());
     expect(axeRows[0]?.endsAt?.toISOString()).toBe(axeWindow.endsAt.toISOString());
-    const axeDay = await getMasterScheduleDay(tenant.ctx, db, { date: "2026-10-15", resourceTypeId: axe.type.id });
+    const axeDay = await getMasterScheduleDay(tenant.ctx, db, { date: EVENT_DATE, resourceTypeId: axe.type.id });
     expect(axeDay?.reservations).toHaveLength(3);
     expect(axeDay?.reservations.every((row) => row.startMinute === 18 * 60 + 30 && row.endMinute === 19 * 60 + 30)).toBe(true);
     expect(axeDay?.slotMinutes).toBe(30);
@@ -499,7 +502,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     });
     expect(reservations.length).toBeGreaterThan(1);
     expect(reservations.every((row) => row.startMinute === 18 * 60 && row.endMinute === 21 * 60)).toBe(true);
-    const bowlDay = await getMasterScheduleDay(tenant.ctx, db, { date: "2026-10-15", resourceTypeId: bowling.type.id });
+    const bowlDay = await getMasterScheduleDay(tenant.ctx, db, { date: EVENT_DATE, resourceTypeId: bowling.type.id });
     expect(bowlDay?.reservations.every((row) => row.startMinute === 18 * 60 && row.endMinute === 21 * 60)).toBe(true);
   });
 
@@ -512,7 +515,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
       customerGroupName: "Manual Group",
       email: `manual.${crypto.randomUUID()}@example.com`,
       eventType: "Private Group",
-      preferredDate: "2026-10-15",
+      preferredDate: EVENT_DATE,
       startTime: "17:30",
       guestCount: 20,
       guestMix: "mixed_ages",
@@ -526,7 +529,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     expect(await db.conversation.count({ where: { inquiryId: inquiry.id } })).toBe(0);
     const payload = {
       guestCount: 20,
-      eventDate: "2026-10-15",
+      eventDate: EVENT_DATE,
       startTime: "17:30",
       durationMinutes: 180,
       activities: [{ knowledgeItemId: "bowl", name: "Bowling", quantity: 1, priceCents: 80_000 }],
@@ -615,7 +618,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
     const confirmed = await confirmSegmentReady(tenant, inquiry.id, "17:30", 180);
     expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     const bowlDay = await getMasterScheduleDay(tenant.ctx, db, {
-      date: "2026-10-15",
+      date: EVENT_DATE,
       resourceTypeId: bowling.type.id,
     });
     expect(bowlDay?.reservations.some((row) => row.startMinute === 19 * 60 && row.endMinute === 20 * 60)).toBe(true);
@@ -631,7 +634,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
         lastName: "Access",
         email: `desk.${crypto.randomUUID()}@example.com`,
         eventType: "Private Group",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "17:30",
         guestCount: 10,
         desiredDurationMinutes: 180,
@@ -643,7 +646,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
         lastName: "Tenant",
         email: `cross.${crypto.randomUUID()}@example.com`,
         eventType: "Private Group",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "17:30",
         guestCount: 10,
         desiredDurationMinutes: 180,
@@ -673,7 +676,7 @@ describe("segment-level scheduling (postgres)", { timeout: 60_000 }, () => {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
       inquiryId: created.inquiryId,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startTime: "17:30",
       durationMinutes: 180,
     });

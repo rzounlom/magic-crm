@@ -11,6 +11,11 @@ import {
 } from "@/types/operating-hours";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDateOnWeekday } from "../helpers/future-event-date";
+
+/** Thursdays in US daylight time — seeded hours use dayOfWeek 4 and EDT UTC offsets. */
+const EVENT_DATE = futureEventDateOnWeekday("thu", 250);
+const EVENT_DATE_PLUS_7 = futureEventDateOnWeekday("thu", 257);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -113,7 +118,7 @@ describe("operating-hours and local-time booking guards (TEST)", () => {
         organizationId: org.id,
         locationId: location.id,
         timeZone: "America/Indiana/Indianapolis",
-        slotDate: "2026-10-22",
+        slotDate: EVENT_DATE_PLUS_7,
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         flow: "test_confirm_unconfigured",
@@ -135,14 +140,14 @@ describe("operating-hours and local-time booking guards (TEST)", () => {
       organizationId: org.id,
       locationId: location.id,
       timeZone: "America/Indiana/Indianapolis",
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE_PLUS_7,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       flow: "test_pending",
     });
     expect(result.ok).toBe(true);
     expect(result.aggregate.legacyCompatibilityAllow).toBe(true);
-    expect(result.startsAt.toISOString()).toBe("2026-10-22T18:00:00.000Z");
+    expect(result.startsAt.toISOString()).toBe(`${EVENT_DATE_PLUS_7}T18:00:00.000Z`);
   });
 
   it("blocks confirmed occupancy for invalid local time and verified closures", async () => {
@@ -157,7 +162,7 @@ describe("operating-hours and local-time booking guards (TEST)", () => {
       org.id,
       location.id,
       [{ dayOfWeek: 4, startMinute: 12 * 60, endMinute: 22 * 60 }],
-      [{ localDate: "2026-10-15", kind: OPERATING_HOURS_EXCEPTION_KINDS.CLOSED }],
+      [{ localDate: EVENT_DATE, kind: OPERATING_HOURS_EXCEPTION_KINDS.CLOSED }],
     );
 
     await expect(
@@ -180,7 +185,7 @@ describe("operating-hours and local-time booking guards (TEST)", () => {
         organizationId: org.id,
         locationId: location.id,
         timeZone: "America/Indiana/Indianapolis",
-        slotDate: "2026-10-15",
+        slotDate: EVENT_DATE,
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         flow: "test_confirm",
@@ -219,13 +224,13 @@ describe("operating-hours and local-time booking guards (TEST)", () => {
       organizationId: multi.id,
       locationId: indiana.id,
       timeZone: indiana.timezone,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE_PLUS_7,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       flow: "test_indiana",
       errorKind: "booking",
     });
-    expect(indianaOk.startsAt.toISOString()).toBe("2026-10-22T18:00:00.000Z");
+    expect(indianaOk.startsAt.toISOString()).toBe(`${EVENT_DATE_PLUS_7}T18:00:00.000Z`);
 
     await expect(
       assertWritableOccupancyOrThrow({
@@ -233,7 +238,7 @@ describe("operating-hours and local-time booking guards (TEST)", () => {
         organizationId: multi.id,
         locationId: pacific.id,
         timeZone: pacific.timezone,
-        slotDate: "2026-10-22",
+        slotDate: EVENT_DATE_PLUS_7,
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         flow: "test_pacific",
@@ -246,12 +251,12 @@ describe("operating-hours and local-time booking guards (TEST)", () => {
       organizationId: utcOrg.id,
       locationId: utcOrg.locations[0]!.id,
       timeZone: "UTC",
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE_PLUS_7,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       flow: "test_utc",
     });
-    expect(utcOk.startsAt.toISOString()).toBe("2026-10-22T14:00:00.000Z");
+    expect(utcOk.startsAt.toISOString()).toBe(`${EVENT_DATE_PLUS_7}T14:00:00.000Z`);
 
     const foreign = await db.locationOperatingHoursPolicy.findFirst({
       where: { organizationId: utcOrg.id, locationId: indiana.id },

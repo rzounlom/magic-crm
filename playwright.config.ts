@@ -21,6 +21,9 @@ export default defineConfig({
   outputDir: "test-results/playwright",
   use: {
     baseURL,
+    // Staff /app can wait on Clerk + awareness; prefer navigation timeout over default load hangs.
+    navigationTimeout: 45_000,
+    actionTimeout: 20_000,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     // Videos help solo debugging of headed staff flows; retained on failure only.

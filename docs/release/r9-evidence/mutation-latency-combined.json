@@ -1,0 +1,33 @@
+{
+  "createdAt": "2026-10-17T18:52:25.099Z",
+  "runs": 2,
+  "r8BaselineMedianMs": {
+    "placeHold": 4858,
+    "confirmBooking": 5000
+  },
+  "summary": {
+    "placeHold": {
+      "samplesMs": [
+        4347,
+        3340,
+        4359,
+        3336
+      ],
+      "count": 4,
+      "medianMs": 3843.5,
+      "worstMs": 4359,
+      "hardReloadRequired": false
+    },
+    "confirmBooking": {
+      "samplesMs": [
+        3511,
+        2872
+      ],
+      "count": 2,
+      "medianMs": 3191.5,
+      "worstMs": 3511,
+      "hardReloadRequired": false
+    }
+  },
+  "notes": []
+}

@@ -13,6 +13,9 @@ import {
 } from "@/types/tax";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -55,7 +58,7 @@ describe("tax engine persistence and gating", () => {
       toTaxCalculationInput({
         organizationId,
         locationId,
-        taxDate: "2026-10-14",
+        taxDate: EVENT_DATE,
         lineItems: [
           {
             productId: "p1",
@@ -183,7 +186,7 @@ describe("tax engine persistence and gating", () => {
       toTaxCalculationInput({
         organizationId: a.organizationId,
         locationId: a.locationId,
-        taxDate: "2026-10-14",
+        taxDate: EVENT_DATE,
         lineItems: [
           {
             productId: product.id,
@@ -205,7 +208,7 @@ describe("tax engine persistence and gating", () => {
       toTaxCalculationInput({
         organizationId: b.organizationId,
         locationId: b.locationId,
-        taxDate: "2026-10-14",
+        taxDate: EVENT_DATE,
         lineItems: [
           {
             productId: "x",
@@ -228,7 +231,7 @@ describe("tax engine persistence and gating", () => {
       toTaxCalculationInput({
         organizationId: a.organizationId,
         locationId: a.locationId,
-        taxDate: "2026-10-14",
+        taxDate: EVENT_DATE,
         lineItems: [
           {
             productId: product.id,
@@ -274,7 +277,7 @@ describe("tax engine persistence and gating", () => {
       toTaxCalculationInput({
         organizationId,
         locationId: second.id,
-        taxDate: "2026-10-14",
+        taxDate: EVENT_DATE,
         lineItems: [
           {
             productId: "p",

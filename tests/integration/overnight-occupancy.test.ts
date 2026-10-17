@@ -6,6 +6,10 @@ import { LOCAL_TIME_RESOLUTION_STATUSES } from "@/types/operating-hours";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
+const EVENT_DATE_PLUS_1 = futureEventDate(28 + 1);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -59,7 +63,7 @@ describe("overnight resource occupancy (TEST)", () => {
     });
 
     const overnight = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-25",
+      slotDate: EVENT_DATE,
       startMinute: 23 * 60,
       endMinute: 25 * 60,
       timeZone: "America/Indiana/Indianapolis",
@@ -76,7 +80,7 @@ describe("overnight resource occupancy (TEST)", () => {
         resourceId: resource.id,
         status: RESOURCE_RESERVATION_STATUSES.BOOKED,
         sourceType: "MANUAL",
-        slotDate: new Date("2026-10-25T00:00:00.000Z"),
+        slotDate: new Date(`${EVENT_DATE}T00:00:00.000Z`),
         startMinute: 23 * 60,
         endMinute: 25 * 60,
         startsAt: overnight.startsAt,
@@ -87,7 +91,7 @@ describe("overnight resource occupancy (TEST)", () => {
     const available = await listAvailableResourceIds(db, {
       organizationId: org.id,
       resourceIds: [resource.id],
-      window: { slotDate: "2026-10-26", startMinute: 30, endMinute: 90 },
+      window: { slotDate: EVENT_DATE_PLUS_1, startMinute: 30, endMinute: 90 },
       timeZone: "America/Indiana/Indianapolis",
     });
     expect(available).toEqual([]);
@@ -95,13 +99,13 @@ describe("overnight resource occupancy (TEST)", () => {
     const backToBack = await listAvailableResourceIds(db, {
       organizationId: org.id,
       resourceIds: [resource.id],
-      window: { slotDate: "2026-10-26", startMinute: 60, endMinute: 120 },
+      window: { slotDate: EVENT_DATE_PLUS_1, startMinute: 60, endMinute: 120 },
       timeZone: "America/Indiana/Indianapolis",
     });
     expect(backToBack).toEqual([resource.id]);
 
     const conflictInstant = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-26",
+      slotDate: EVENT_DATE_PLUS_1,
       startMinute: 30,
       endMinute: 90,
       timeZone: "America/Indiana/Indianapolis",
@@ -119,7 +123,7 @@ describe("overnight resource occupancy (TEST)", () => {
           resourceId: resource.id,
           status: RESOURCE_RESERVATION_STATUSES.HOLD,
           sourceType: "MANUAL",
-          slotDate: new Date("2026-10-26T00:00:00.000Z"),
+          slotDate: new Date(`${EVENT_DATE_PLUS_1}T00:00:00.000Z`),
           startMinute: 30,
           endMinute: 90,
           startsAt: conflictInstant.startsAt,

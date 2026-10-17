@@ -11,6 +11,10 @@ import { EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { RESOURCE_RESERVATION_SOURCES, RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
+const EVENT_DATE_PLUS_1 = futureEventDate(28 + 1);
 import { TENANT_ALPHA_DATASET, TENANT_BETA_DATASET } from "../fixtures/tenant-alpha-beta-catalogs";
 
 const db = createTestPrismaClient();
@@ -52,7 +56,7 @@ function intake(slug: string, extras: Record<string, unknown> = {}) {
     lastName: "Lovelace",
     email: `ada.${crypto.randomUUID()}@example.com`,
     eventType: "Private Group",
-    preferredDate: "2026-10-15",
+    preferredDate: EVENT_DATE,
     startTime: "18:00",
     guestCount: 12,
     guestMix: "mostly_adults",
@@ -186,7 +190,7 @@ describe("catalog tenant isolation (postgres)", () => {
         organizationId: alpha.id,
         status: RESOURCE_RESERVATION_STATUSES.HOLD,
         sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
-        slotDate: "2026-10-15",
+        slotDate: EVENT_DATE,
         startMinute: 18 * 60,
         endMinute: 20 * 60,
         resourceIds: alphaBowling.resources.map((row) => row.id),
@@ -210,7 +214,7 @@ describe("catalog tenant isolation (postgres)", () => {
       const alphaCheck = await checkResourceAvailability(db, {
         organizationId: alpha.id,
         locationId: alpha.locations[0]?.id,
-        date: "2026-10-15",
+        date: EVENT_DATE,
         startTime: "18:00",
         durationMinutes: 60,
         resourceRequirements: [requirement(alpha.id, alphaBowling.id, 2)],
@@ -218,7 +222,7 @@ describe("catalog tenant isolation (postgres)", () => {
       const betaCheck = await checkResourceAvailability(db, {
         organizationId: beta.id,
         locationId: beta.locations[0]?.id,
-        date: "2026-10-15",
+        date: EVENT_DATE,
         startTime: "18:00",
         durationMinutes: 60,
         resourceRequirements: [requirement(beta.id, betaBowling.id, 2)],
@@ -229,7 +233,7 @@ describe("catalog tenant isolation (postgres)", () => {
       const crossTenant = await checkResourceAvailability(db, {
         organizationId: beta.id,
         locationId: beta.locations[0]?.id,
-        date: "2026-10-15",
+        date: EVENT_DATE,
         startTime: "18:00",
         durationMinutes: 60,
         resourceRequirements: [requirement(beta.id, alphaBowling.id, 1)],
@@ -260,7 +264,7 @@ describe("catalog tenant isolation (postgres)", () => {
       const loc2Check = await checkResourceAvailability(db, {
         organizationId: alpha.id,
         locationId: second.id,
-        date: "2026-10-16",
+        date: EVENT_DATE_PLUS_1,
         startTime: "18:00",
         durationMinutes: 60,
         resourceRequirements: [requirement(alpha.id, alphaBowling.id, 2)],
@@ -271,7 +275,7 @@ describe("catalog tenant isolation (postgres)", () => {
       const loc1Check = await checkResourceAvailability(db, {
         organizationId: alpha.id,
         locationId: alpha.locations[0]?.id,
-        date: "2026-10-16",
+        date: EVENT_DATE_PLUS_1,
         startTime: "18:00",
         durationMinutes: 60,
         resourceRequirements: [requirement(alpha.id, alphaBowling.id, 2)],

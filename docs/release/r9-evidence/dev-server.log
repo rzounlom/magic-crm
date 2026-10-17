@@ -1,0 +1,2276 @@
+$ next dev
+▲ Next.js 16.3.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.83:3000
+- Environments: .env
+✓ Ready in 663ms
+✓ Running next.config.ts took 59ms
+
+Attention: Clerk collects telemetry data from its SDKs when connected to development instances.
+The data collected is used to inform Clerk's product roadmap.
+To learn more, including how to opt-out from the telemetry program, visit: https://clerk.com/docs/telemetry.
+
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 2.4s (next.js: 613ms, proxy.ts: 14ms, application-code: 1783ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":180,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 428ms (next.js: 4ms, proxy.ts: 13ms, application-code: 411ms)
+  └─ ƒ loadInquiryAwarenessAction() in 393ms src/server/actions/inquiry-notifications.ts
+ POST /app 200 in 73ms (next.js: 3ms, proxy.ts: 10ms, application-code: 60ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":148,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 598ms (next.js: 3ms, proxy.ts: 8ms, application-code: 587ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":168,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 412ms (next.js: 3ms, proxy.ts: 10ms, application-code: 399ms)
+  └─ ƒ loadInquiryAwarenessAction() in 384ms src/server/actions/inquiry-notifications.ts
+ POST /app 200 in 194ms (next.js: 3ms, proxy.ts: 11ms, application-code: 179ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":137,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 3.2s (next.js: 1316ms, proxy.ts: 8ms, application-code: 1902ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":147,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 412ms (next.js: 10ms, proxy.ts: 11ms, application-code: 390ms)
+  └─ ƒ loadInquiryAwarenessAction() in 380ms src/server/actions/inquiry-notifications.ts
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 464ms (next.js: 7ms, proxy.ts: 16ms, application-code: 442ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":187,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 610ms (next.js: 3ms, proxy.ts: 6ms, application-code: 601ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":213,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 470ms (next.js: 9ms, proxy.ts: 9ms, application-code: 452ms)
+  └─ ƒ loadInquiryAwarenessAction() in 440ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":145,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 380ms (next.js: 4ms, proxy.ts: 10ms, application-code: 365ms)
+  └─ ƒ loadInquiryAwarenessAction() in 355ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 1542ms (next.js: 8ms, proxy.ts: 6ms, application-code: 1528ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":142,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 384ms (next.js: 10ms, proxy.ts: 7ms, application-code: 368ms)
+  └─ ƒ loadInquiryAwarenessAction() in 354ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":162,"unreadCount":25,"candidateCount":24}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 615ms (next.js: 7ms, proxy.ts: 18ms, application-code: 590ms)
+  └─ ƒ markInquiryNotificationSeenAction("lrmr1u1q7ie7st6ewo926q5u") in 578ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":139,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 393ms (next.js: 5ms, proxy.ts: 9ms, application-code: 380ms)
+  └─ ƒ loadInquiryAwarenessAction() in 370ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 1639ms (next.js: 31ms, proxy.ts: 9ms, application-code: 1599ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":145,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 392ms (next.js: 13ms, proxy.ts: 10ms, application-code: 369ms)
+  └─ ƒ loadInquiryAwarenessAction() in 361ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":139,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 604ms (next.js: 5ms, proxy.ts: 11ms, application-code: 588ms)
+  └─ ƒ markInquiryNotificationSeenAction("lrmr1u1q7ie7st6ewo926q5u") in 582ms src/server/actions/inquiry-notifications.ts
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 147ms (next.js: 4ms, proxy.ts: 7ms, application-code: 137ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":140,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 1422ms (next.js: 7ms, proxy.ts: 7ms, application-code: 1408ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":149,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 396ms (next.js: 8ms, proxy.ts: 8ms, application-code: 380ms)
+  └─ ƒ loadInquiryAwarenessAction() in 373ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":139,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 597ms (next.js: 4ms, proxy.ts: 11ms, application-code: 582ms)
+  └─ ƒ markInquiryNotificationSeenAction("lrmr1u1q7ie7st6ewo926q5u") in 575ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":150,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 378ms (next.js: 8ms, proxy.ts: 7ms, application-code: 362ms)
+  └─ ƒ loadInquiryAwarenessAction() in 356ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.mutation-timing","action":"confirmBookingAction","phasesMs":{"auth_context":78,"domain_mutation":1638,"cache_invalidation":1,"total":1717}}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 2.7s (next.js: 6ms, proxy.ts: 7ms, application-code: 2.7s)
+  └─ ƒ confirmBookingAction({}) in 1719ms src/server/actions/bookings.ts
+ GET /app/bookings/j95iesleev645ujzw8lx0qrk 200 in 1540ms (next.js: 1090ms, proxy.ts: 7ms, application-code: 443ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 970ms (next.js: 8ms, proxy.ts: 7ms, application-code: 954ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":138,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 379ms (next.js: 18ms, proxy.ts: 7ms, application-code: 354ms)
+  └─ ƒ loadInquiryAwarenessAction() in 346ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":138,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 571ms (next.js: 5ms, proxy.ts: 6ms, application-code: 559ms)
+  └─ ƒ markInquiryNotificationSeenAction("lrmr1u1q7ie7st6ewo926q5u") in 551ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":141,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 370ms (next.js: 8ms, proxy.ts: 8ms, application-code: 355ms)
+  └─ ƒ loadInquiryAwarenessAction() in 347ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":251,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 604ms (next.js: 8ms, proxy.ts: 15ms, application-code: 581ms)
+  └─ ƒ loadInquiryAwarenessAction() in 572ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 1208ms (next.js: 8ms, proxy.ts: 7ms, application-code: 1193ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":143,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 379ms (next.js: 8ms, proxy.ts: 8ms, application-code: 363ms)
+  └─ ƒ loadInquiryAwarenessAction() in 356ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":139,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 571ms (next.js: 7ms, proxy.ts: 8ms, application-code: 556ms)
+  └─ ƒ markInquiryNotificationSeenAction("lrmr1u1q7ie7st6ewo926q5u") in 549ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":146,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 383ms (next.js: 5ms, proxy.ts: 8ms, application-code: 370ms)
+  └─ ƒ loadInquiryAwarenessAction() in 363ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":265,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 615ms (next.js: 6ms, proxy.ts: 5ms, application-code: 603ms)
+  └─ ƒ loadInquiryAwarenessAction() in 597ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 1178ms (next.js: 7ms, proxy.ts: 7ms, application-code: 1163ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":151,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 406ms (next.js: 7ms, proxy.ts: 9ms, application-code: 390ms)
+  └─ ƒ loadInquiryAwarenessAction() in 374ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":143,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 567ms (next.js: 5ms, proxy.ts: 9ms, application-code: 553ms)
+  └─ ƒ markInquiryNotificationSeenAction("lrmr1u1q7ie7st6ewo926q5u") in 545ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":143,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 391ms (next.js: 5ms, proxy.ts: 8ms, application-code: 378ms)
+  └─ ƒ loadInquiryAwarenessAction() in 369ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":284,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 639ms (next.js: 7ms, proxy.ts: 9ms, application-code: 623ms)
+  └─ ƒ loadInquiryAwarenessAction() in 617ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 1423ms (next.js: 6ms, proxy.ts: 6ms, application-code: 1411ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":142,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 468ms (next.js: 9ms, proxy.ts: 8ms, application-code: 450ms)
+  └─ ƒ loadInquiryAwarenessAction() in 442ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":143,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 592ms (next.js: 25ms, proxy.ts: 9ms, application-code: 558ms)
+  └─ ƒ markInquiryNotificationSeenAction("lrmr1u1q7ie7st6ewo926q5u") in 550ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":146,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 388ms (next.js: 4ms, proxy.ts: 7ms, application-code: 377ms)
+  └─ ƒ loadInquiryAwarenessAction() in 367ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 740ms (next.js: 4ms, proxy.ts: 6ms, application-code: 731ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 203ms (next.js: 3ms, proxy.ts: 8ms, application-code: 193ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":140,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 590ms (next.js: 3ms, proxy.ts: 8ms, application-code: 579ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 186ms (next.js: 3ms, proxy.ts: 7ms, application-code: 176ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":147,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries 200 in 2.2s (next.js: 132ms, proxy.ts: 8ms, application-code: 2.1s)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/inquiries 200 in 338ms (next.js: 3ms, proxy.ts: 10ms, application-code: 324ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":143,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 612ms (next.js: 3ms, proxy.ts: 8ms, application-code: 602ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":143,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 368ms (next.js: 3ms, proxy.ts: 9ms, application-code: 357ms)
+  └─ ƒ loadInquiryAwarenessAction() in 348ms src/server/actions/inquiry-notifications.ts
+ POST /app 200 in 190ms (next.js: 3ms, proxy.ts: 10ms, application-code: 178ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":141,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 649ms (next.js: 2ms, proxy.ts: 7ms, application-code: 640ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 253ms (next.js: 3ms, proxy.ts: 9ms, application-code: 242ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":145,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 587ms (next.js: 3ms, proxy.ts: 7ms, application-code: 577ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 272ms (next.js: 3ms, proxy.ts: 7ms, application-code: 263ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":138,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 589ms (next.js: 3ms, proxy.ts: 8ms, application-code: 578ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":161,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 440ms (next.js: 3ms, proxy.ts: 10ms, application-code: 427ms)
+  └─ ƒ loadInquiryAwarenessAction() in 420ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 1126ms (next.js: 7ms, proxy.ts: 7ms, application-code: 1112ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":152,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 381ms (next.js: 7ms, proxy.ts: 7ms, application-code: 368ms)
+  └─ ƒ loadInquiryAwarenessAction() in 360ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":142,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 597ms (next.js: 5ms, proxy.ts: 10ms, application-code: 582ms)
+  └─ ƒ markInquiryNotificationSeenAction("lrmr1u1q7ie7st6ewo926q5u") in 574ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":148,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 377ms (next.js: 5ms, proxy.ts: 11ms, application-code: 362ms)
+  └─ ƒ loadInquiryAwarenessAction() in 355ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":263,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/lrmr1u1q7ie7st6ewo926q5u 200 in 628ms (next.js: 8ms, proxy.ts: 11ms, application-code: 609ms)
+  └─ ƒ loadInquiryAwarenessAction() in 602ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 637ms (next.js: 2ms, proxy.ts: 6ms, application-code: 628ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app 200 in 388ms (next.js: 4ms, proxy.ts: 22ms, application-code: 362ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":151,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries 200 in 1804ms (next.js: 5ms, proxy.ts: 7ms, application-code: 1792ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":144,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries 200 in 444ms (next.js: 3ms, proxy.ts: 23ms, application-code: 419ms)
+  └─ ƒ loadInquiryAwarenessAction() in 412ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries 200 in 153ms (next.js: 4ms, proxy.ts: 9ms, application-code: 140ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":152,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/schedule 200 in 976ms (next.js: 91ms, proxy.ts: 7ms, application-code: 878ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/schedule 200 in 318ms (next.js: 3ms, proxy.ts: 9ms, application-code: 306ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":154,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/bookings 200 in 1025ms (next.js: 87ms, proxy.ts: 7ms, application-code: 930ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/bookings 200 in 297ms (next.js: 3ms, proxy.ts: 9ms, application-code: 285ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":142,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/admin/team 200 in 872ms (next.js: 82ms, proxy.ts: 6ms, application-code: 783ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/admin/team 200 in 298ms (next.js: 6ms, proxy.ts: 10ms, application-code: 282ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":146,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/admin/security-groups 200 in 888ms (next.js: 79ms, proxy.ts: 7ms, application-code: 802ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/admin/security-groups 200 in 215ms (next.js: 3ms, proxy.ts: 22ms, application-code: 189ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":148,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/admin/resources 200 in 821ms (next.js: 37ms, proxy.ts: 6ms, application-code: 778ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/admin/resources 200 in 309ms (next.js: 3ms, proxy.ts: 8ms, application-code: 298ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":150,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 636ms (next.js: 3ms, proxy.ts: 7ms, application-code: 626ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app 200 in 355ms (next.js: 5ms, proxy.ts: 13ms, application-code: 336ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":151,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 621ms (next.js: 3ms, proxy.ts: 7ms, application-code: 611ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app 200 in 387ms (next.js: 4ms, proxy.ts: 9ms, application-code: 374ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":156,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 616ms (next.js: 3ms, proxy.ts: 8ms, application-code: 605ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":294,"unreadCount":26,"candidateCount":24}
+ POST /app 200 in 573ms (next.js: 3ms, proxy.ts: 17ms, application-code: 553ms)
+  └─ ƒ loadInquiryAwarenessAction() in 542ms src/server/actions/inquiry-notifications.ts
+ POST /app 200 in 313ms (next.js: 3ms, proxy.ts: 14ms, application-code: 296ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":164,"unreadCount":26,"candidateCount":24}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 1586ms (next.js: 11ms, proxy.ts: 8ms, application-code: 1566ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":192,"unreadCount":26,"candidateCount":24}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+ POST /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 758ms (next.js: 6ms, proxy.ts: 13ms, application-code: 738ms)
+  └─ ƒ loadInquiryAwarenessAction() in 722ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ POST /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 406ms (next.js: 38ms, proxy.ts: 8ms, application-code: 360ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+⨯ Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+ GET /app 200 in 644ms (next.js: 3ms, proxy.ts: 15ms, application-code: 626ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":210,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":146,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 436ms (next.js: 3ms, proxy.ts: 8ms, application-code: 425ms)
+  └─ ƒ loadInquiryAwarenessAction() in 414ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ POST /app 200 in 160ms (next.js: 2ms, proxy.ts: 6ms, application-code: 151ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 648ms (next.js: 3ms, proxy.ts: 9ms, application-code: 637ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":398,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":150,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 669ms (next.js: 8ms, proxy.ts: 7ms, application-code: 654ms)
+  └─ ƒ loadInquiryAwarenessAction() in 647ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":164,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 464ms (next.js: 2ms, proxy.ts: 8ms, application-code: 454ms)
+  └─ ƒ loadInquiryAwarenessAction() in 435ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 1264ms (next.js: 8ms, proxy.ts: 7ms, application-code: 1248ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":177,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 564ms (next.js: 8ms, proxy.ts: 8ms, application-code: 548ms)
+  └─ ƒ loadInquiryAwarenessAction() in 540ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ POST /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 373ms (next.js: 5ms, proxy.ts: 8ms, application-code: 359ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+⨯ Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+ GET /app 200 in 625ms (next.js: 3ms, proxy.ts: 8ms, application-code: 614ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":172,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":182,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 479ms (next.js: 3ms, proxy.ts: 12ms, application-code: 463ms)
+  └─ ƒ loadInquiryAwarenessAction() in 457ms src/server/actions/inquiry-notifications.ts
+ POST /app 200 in 110ms (next.js: 3ms, proxy.ts: 7ms, application-code: 99ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 634ms (next.js: 3ms, proxy.ts: 9ms, application-code: 622ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":138,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":159,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 431ms (next.js: 3ms, proxy.ts: 14ms, application-code: 414ms)
+  └─ ƒ loadInquiryAwarenessAction() in 403ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":185,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 432ms (next.js: 3ms, proxy.ts: 8ms, application-code: 421ms)
+  └─ ƒ loadInquiryAwarenessAction() in 412ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 1289ms (next.js: 8ms, proxy.ts: 8ms, application-code: 1273ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":183,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 615ms (next.js: 4ms, proxy.ts: 6ms, application-code: 604ms)
+  └─ ƒ loadInquiryAwarenessAction() in 583ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ POST /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 469ms (next.js: 8ms, proxy.ts: 8ms, application-code: 453ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+⨯ Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+ GET /app 200 in 639ms (next.js: 3ms, proxy.ts: 9ms, application-code: 628ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":200,"unreadCount":25,"candidateCount":24}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":161,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 442ms (next.js: 3ms, proxy.ts: 7ms, application-code: 432ms)
+  └─ ƒ loadInquiryAwarenessAction() in 422ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":186,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 418ms (next.js: 3ms, proxy.ts: 8ms, application-code: 407ms)
+  └─ ƒ loadInquiryAwarenessAction() in 399ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 1287ms (next.js: 4ms, proxy.ts: 8ms, application-code: 1275ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries/yn2kddbpc06qtrdrocpyvhns 200 in 466ms (next.js: 7ms, proxy.ts: 7ms, application-code: 453ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":140,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 1089ms (next.js: 3ms, proxy.ts: 9ms, application-code: 1077ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":144,"unreadCount":26,"candidateCount":24}
+ POST /app 200 in 406ms (next.js: 24ms, proxy.ts: 10ms, application-code: 373ms)
+  └─ ƒ loadInquiryAwarenessAction() in 364ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":150,"unreadCount":26,"candidateCount":24}
+ POST /app 200 in 389ms (next.js: 3ms, proxy.ts: 8ms, application-code: 377ms)
+  └─ ƒ loadInquiryAwarenessAction() in 367ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 1635ms (next.js: 12ms, proxy.ts: 5ms, application-code: 1618ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":136,"unreadCount":26,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 368ms (next.js: 9ms, proxy.ts: 8ms, application-code: 351ms)
+  └─ ƒ loadInquiryAwarenessAction() in 340ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":150,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 632ms (next.js: 7ms, proxy.ts: 12ms, application-code: 613ms)
+  └─ ƒ markInquiryNotificationSeenAction("l996vuzsupfuouefkyrehhrz") in 577ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":138,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 389ms (next.js: 10ms, proxy.ts: 20ms, application-code: 359ms)
+  └─ ƒ loadInquiryAwarenessAction() in 352ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 1551ms (next.js: 8ms, proxy.ts: 7ms, application-code: 1536ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="l996vuzsup..." loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/app/inqui..." tree={[...]} params={{id:"l996vu..."}} cacheNode={{rsc:{...}, ...}} ...>
+              <SegmentViewNode type="page" pagePath="app/inquir...">
+                <SegmentTrieNode>
+                <InquiryDetailPage>
+                  <AcknowledgeInquiryView>
+                  <LiveAgentWorkspace>
+                    <section className="w-full">
+                      <LinkComponent>
+                      <div className="mt-4">
+                        <div>
+                        <p>
+                        <InquiryArchiveActions>
+                          <div className="mt-4 flex ...">
+                            <SecurityActionForm action={function archiveInquiryAction} notice={{...}} ...>
+                              <PendingActionProvider pending={false}>
+                                <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                  <input
+                                    type="hidden"
+                                    name="inquiryId"
+                                    value="l996vuzsupfuouefkyrehhrz"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  ...
+                                ...
+                      <LiveAgentBookingActions>
+                        <section id="confirm-bo..." className="booking-co..." aria-label="Booking coach">
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          <div>
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          ...
+                      ...
+                        <div className="mt-4" data-primary-hold-action={true}>
+                          <SecurityActionForm action={function placeInquiryHoldAction} notice={{...}} ...>
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                      <div className="mt-8 grid ...">
+                        ...
+                          <SecurityActionForm action={function checkInquiryAvailabilityAction} className="mt-4" ...>
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-4" aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                        <aside className="space-y-4">
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-4" aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-3 space..." aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                <textarea
+                                  name="notes"
+                                  rows={4}
+                                  maxLength={4000}
+                                  defaultValue=""
+                                  className="w-full rounded-xl border border-border bg-surface px-3 py-2"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                      <details className="mt-8 round...">
+                        <summary>
+                        <ol>
+                        <ol>
+                        <h3>
+                        <ol>
+                        <SecurityActionForm action={function sendEmployeeInquiryMessageAction} className="mt-4 space..." ...>
+                          <PendingActionProvider pending={false}>
+                            <form className="mt-4 space..." aria-busy={false} onSubmit={function onSubmit}>
+                              <input
+                                type="hidden"
+                                name="inquiryId"
+                                value="l996vuzsupfuouefkyrehhrz"
+-                               style={{caret-color:"transparent"}}
+                              >
+                              <input
+                                type="hidden"
+                                name="conversationId"
+                                value="t1bwdd914jfew0peh5iakakl"
+-                               style={{caret-color:"transparent"}}
+                              >
+                              <label className="block text-sm">
+                                <span>
+                                <textarea
+                                  name="content"
+                                  required={true}
+                                  rows={3}
+                                  maxLength={2000}
+                                  className="mt-1 w-full rounded-xl border border-border bg-surface px-3 py-2"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                              ...
+                            ...
+              ...
+            ...
+ 
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":149,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 407ms (next.js: 8ms, proxy.ts: 7ms, application-code: 391ms)
+  └─ ƒ loadInquiryAwarenessAction() in 383ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 357ms (next.js: 5ms, proxy.ts: 14ms, application-code: 339ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":145,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 1473ms (next.js: 6ms, proxy.ts: 7ms, application-code: 1461ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":145,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 404ms (next.js: 20ms, proxy.ts: 13ms, application-code: 372ms)
+  └─ ƒ loadInquiryAwarenessAction() in 362ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 441ms (next.js: 8ms, proxy.ts: 10ms, application-code: 423ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":163,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 1477ms (next.js: 8ms, proxy.ts: 7ms, application-code: 1461ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":143,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 375ms (next.js: 9ms, proxy.ts: 8ms, application-code: 358ms)
+  └─ ƒ loadInquiryAwarenessAction() in 350ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":150,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 640ms (next.js: 11ms, proxy.ts: 10ms, application-code: 618ms)
+  └─ ƒ markInquiryNotificationSeenAction("l996vuzsupfuouefkyrehhrz") in 611ms src/server/actions/inquiry-notifications.ts
+Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+⨯ uncaughtException: Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+⨯ uncaughtException:  Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 1405ms (next.js: 8ms, proxy.ts: 7ms, application-code: 1389ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="l996vuzsup..." loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/app/inqui..." tree={[...]} params={{id:"l996vu..."}} cacheNode={{rsc:{...}, ...}} ...>
+              <SegmentViewNode type="page" pagePath="app/inquir...">
+                <SegmentTrieNode>
+                <InquiryDetailPage>
+                  <AcknowledgeInquiryView>
+                  <LiveAgentWorkspace>
+                    <section className="w-full">
+                      <LinkComponent>
+                      <div className="mt-4">
+                        <div>
+                        <p>
+                        <InquiryArchiveActions>
+                          <div className="mt-4 flex ...">
+                            <SecurityActionForm action={function archiveInquiryAction} notice={{...}} ...>
+                              <PendingActionProvider pending={false}>
+                                <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                  <input
+                                    type="hidden"
+                                    name="inquiryId"
+                                    value="l996vuzsupfuouefkyrehhrz"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  ...
+                                ...
+                      <LiveAgentBookingActions>
+                        <section id="confirm-bo..." className="booking-co..." aria-label="Booking coach">
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          <div>
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          ...
+                      ...
+                        <div className="mt-4" data-primary-hold-action={true}>
+                          <SecurityActionForm action={function placeInquiryHoldAction} notice={{...}} ...>
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                      <div className="mt-8 grid ...">
+                        ...
+                          <SecurityActionForm action={function checkInquiryAvailabilityAction} className="mt-4" ...>
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-4" aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                        <aside className="space-y-4">
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-4" aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-3 space..." aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                <textarea
+                                  name="notes"
+                                  rows={4}
+                                  maxLength={4000}
+                                  defaultValue=""
+                                  className="w-full rounded-xl border border-border bg-surface px-3 py-2"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                      <details className="mt-8 round...">
+                        <summary>
+                        <ol>
+                        <ol>
+                        <h3>
+                        <ol>
+                        <SecurityActionForm action={function sendEmployeeInquiryMessageAction} className="mt-4 space..." ...>
+                          <PendingActionProvider pending={false}>
+                            <form className="mt-4 space..." aria-busy={false} onSubmit={function onSubmit}>
+                              <input
+                                type="hidden"
+                                name="inquiryId"
+                                value="l996vuzsupfuouefkyrehhrz"
+-                               style={{caret-color:"transparent"}}
+                              >
+                              <input
+                                type="hidden"
+                                name="conversationId"
+                                value="t1bwdd914jfew0peh5iakakl"
+-                               style={{caret-color:"transparent"}}
+                              >
+                              <label className="block text-sm">
+                                <span>
+                                <textarea
+                                  name="content"
+                                  required={true}
+                                  rows={3}
+                                  maxLength={2000}
+                                  className="mt-1 w-full rounded-xl border border-border bg-surface px-3 py-2"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                              ...
+                            ...
+              ...
+            ...
+ 
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":245,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 517ms (next.js: 11ms, proxy.ts: 10ms, application-code: 496ms)
+  └─ ƒ loadInquiryAwarenessAction() in 483ms src/server/actions/inquiry-notifications.ts
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 294ms (next.js: 6ms, proxy.ts: 10ms, application-code: 279ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":147,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 1379ms (next.js: 5ms, proxy.ts: 7ms, application-code: 1367ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":142,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 386ms (next.js: 10ms, proxy.ts: 7ms, application-code: 369ms)
+  └─ ƒ loadInquiryAwarenessAction() in 362ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 460ms (next.js: 18ms, proxy.ts: 11ms, application-code: 431ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":139,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 1300ms (next.js: 8ms, proxy.ts: 6ms, application-code: 1286ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":147,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 376ms (next.js: 8ms, proxy.ts: 7ms, application-code: 361ms)
+  └─ ƒ loadInquiryAwarenessAction() in 355ms src/server/actions/inquiry-notifications.ts
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 282ms (next.js: 7ms, proxy.ts: 8ms, application-code: 267ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":138,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 607ms (next.js: 5ms, proxy.ts: 7ms, application-code: 596ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app 200 in 459ms (next.js: 2ms, proxy.ts: 7ms, application-code: 450ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":141,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 577ms (next.js: 3ms, proxy.ts: 7ms, application-code: 567ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 183ms (next.js: 3ms, proxy.ts: 7ms, application-code: 173ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":139,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries 200 in 1993ms (next.js: 5ms, proxy.ts: 7ms, application-code: 1981ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries 200 in 499ms (next.js: 4ms, proxy.ts: 20ms, application-code: 474ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":184,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 888ms (next.js: 4ms, proxy.ts: 8ms, application-code: 876ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":178,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 523ms (next.js: 4ms, proxy.ts: 15ms, application-code: 504ms)
+  └─ ƒ loadInquiryAwarenessAction() in 431ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":141,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 409ms (next.js: 22ms, proxy.ts: 20ms, application-code: 368ms)
+  └─ ƒ loadInquiryAwarenessAction() in 356ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 600ms (next.js: 3ms, proxy.ts: 7ms, application-code: 590ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 283ms (next.js: 3ms, proxy.ts: 10ms, application-code: 271ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":140,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 602ms (next.js: 3ms, proxy.ts: 7ms, application-code: 592ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 280ms (next.js: 3ms, proxy.ts: 7ms, application-code: 270ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":134,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 610ms (next.js: 3ms, proxy.ts: 8ms, application-code: 600ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 313ms (next.js: 3ms, proxy.ts: 6ms, application-code: 305ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":192,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 1558ms (next.js: 11ms, proxy.ts: 7ms, application-code: 1541ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <LoadingBoundary name="l996vuzsup..." loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/app/inqui..." tree={[...]} params={{id:"l996vu..."}} cacheNode={{rsc:{...}, ...}} ...>
+              <SegmentViewNode type="page" pagePath="app/inquir...">
+                <SegmentTrieNode>
+                <InquiryDetailPage>
+                  <AcknowledgeInquiryView>
+                  <LiveAgentWorkspace>
+                    <section className="w-full">
+                      <LinkComponent>
+                      <div className="mt-4">
+                        <div>
+                        <p>
+                        <InquiryArchiveActions>
+                          <div className="mt-4 flex ...">
+                            <SecurityActionForm action={function archiveInquiryAction} notice={{...}} ...>
+                              <PendingActionProvider pending={false}>
+                                <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                  <input
+                                    type="hidden"
+                                    name="inquiryId"
+                                    value="l996vuzsupfuouefkyrehhrz"
+-                                   style={{caret-color:"transparent"}}
+                                  >
+                                  ...
+                                ...
+                      <LiveAgentBookingActions>
+                        <section id="confirm-bo..." className="booking-co..." aria-label="Booking coach">
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          <div>
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          ...
+                      ...
+                        <div className="mt-4" data-primary-hold-action={true}>
+                          <SecurityActionForm action={function placeInquiryHoldAction} notice={{...}} ...>
+                            <PendingActionProvider pending={false}>
+                              <form className={undefined} aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                      <div className="mt-8 grid ...">
+                        ...
+                          <SecurityActionForm action={function checkInquiryAvailabilityAction} className="mt-4" ...>
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-4" aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                        <aside className="space-y-4">
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-4" aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                          ...
+                            <PendingActionProvider pending={false}>
+                              <form className="mt-3 space..." aria-busy={false} onSubmit={function onSubmit}>
+                                <input
+                                  type="hidden"
+                                  name="inquiryId"
+                                  value="l996vuzsupfuouefkyrehhrz"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                <textarea
+                                  name="notes"
+                                  rows={4}
+                                  maxLength={4000}
+                                  defaultValue=""
+                                  className="w-full rounded-xl border border-border bg-surface px-3 py-2"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                                ...
+                              ...
+                      <details className="mt-8 round...">
+                        <summary>
+                        <ol>
+                        <ol>
+                        <h3>
+                        <ol>
+                        <SecurityActionForm action={function sendEmployeeInquiryMessageAction} className="mt-4 space..." ...>
+                          <PendingActionProvider pending={false}>
+                            <form className="mt-4 space..." aria-busy={false} onSubmit={function onSubmit}>
+                              <input
+                                type="hidden"
+                                name="inquiryId"
+                                value="l996vuzsupfuouefkyrehhrz"
+-                               style={{caret-color:"transparent"}}
+                              >
+                              <input
+                                type="hidden"
+                                name="conversationId"
+                                value="t1bwdd914jfew0peh5iakakl"
+-                               style={{caret-color:"transparent"}}
+                              >
+                              <label className="block text-sm">
+                                <span>
+                                <textarea
+                                  name="content"
+                                  required={true}
+                                  rows={3}
+                                  maxLength={2000}
+                                  className="mt-1 w-full rounded-xl border border-border bg-surface px-3 py-2"
+-                                 style={{caret-color:"transparent"}}
+                                >
+                              ...
+                            ...
+              ...
+            ...
+ 
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":141,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 369ms (next.js: 7ms, proxy.ts: 7ms, application-code: 355ms)
+  └─ ƒ loadInquiryAwarenessAction() in 347ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries/l996vuzsupfuouefkyrehhrz 200 in 308ms (next.js: 5ms, proxy.ts: 8ms, application-code: 295ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":142,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 719ms (next.js: 3ms, proxy.ts: 6ms, application-code: 710ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 214ms (next.js: 3ms, proxy.ts: 9ms, application-code: 202ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":138,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/inquiries 200 in 1980ms (next.js: 4ms, proxy.ts: 7ms, application-code: 1969ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/inquiries 200 in 266ms (next.js: 4ms, proxy.ts: 10ms, application-code: 252ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":145,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/schedule 200 in 947ms (next.js: 6ms, proxy.ts: 6ms, application-code: 935ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/schedule 200 in 296ms (next.js: 3ms, proxy.ts: 9ms, application-code: 285ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":146,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/bookings 200 in 878ms (next.js: 6ms, proxy.ts: 8ms, application-code: 865ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/bookings 200 in 312ms (next.js: 4ms, proxy.ts: 13ms, application-code: 295ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":141,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/admin/team 200 in 813ms (next.js: 6ms, proxy.ts: 7ms, application-code: 801ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/admin/team 200 in 213ms (next.js: 3ms, proxy.ts: 8ms, application-code: 202ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":140,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/admin/security-groups 200 in 767ms (next.js: 6ms, proxy.ts: 7ms, application-code: 755ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/admin/security-groups 200 in 234ms (next.js: 4ms, proxy.ts: 7ms, application-code: 223ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":139,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app/admin/resources 200 in 787ms (next.js: 5ms, proxy.ts: 7ms, application-code: 775ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app/admin/resources 200 in 274ms (next.js: 2ms, proxy.ts: 6ms, application-code: 265ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":138,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 614ms (next.js: 3ms, proxy.ts: 7ms, application-code: 605ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ POST /app 200 in 147ms (next.js: 2ms, proxy.ts: 7ms, application-code: 138ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":141,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 561ms (next.js: 3ms, proxy.ts: 7ms, application-code: 552ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":147,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 389ms (next.js: 3ms, proxy.ts: 7ms, application-code: 380ms)
+  └─ ƒ loadInquiryAwarenessAction() in 372ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 713ms (next.js: 6ms, proxy.ts: 10ms, application-code: 698ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":139,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 364ms (next.js: 3ms, proxy.ts: 7ms, application-code: 354ms)
+  └─ ƒ loadInquiryAwarenessAction() in 349ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":140,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 359ms (next.js: 2ms, proxy.ts: 7ms, application-code: 350ms)
+  └─ ƒ loadInquiryAwarenessAction() in 344ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":249,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 587ms (next.js: 3ms, proxy.ts: 7ms, application-code: 577ms)
+  └─ ƒ loadInquiryAwarenessAction() in 570ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":262,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 974ms (next.js: 5ms, proxy.ts: 11ms, application-code: 958ms)
+  └─ ƒ loadInquiryAwarenessAction() in 947ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":248,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 579ms (next.js: 3ms, proxy.ts: 8ms, application-code: 568ms)
+  └─ ƒ loadInquiryAwarenessAction() in 562ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 934ms (next.js: 5ms, proxy.ts: 7ms, application-code: 923ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":146,"unreadCount":26,"candidateCount":24}
+ POST /app 200 in 371ms (next.js: 2ms, proxy.ts: 7ms, application-code: 362ms)
+  └─ ƒ loadInquiryAwarenessAction() in 356ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app 200 in 373ms (next.js: 2ms, proxy.ts: 5ms, application-code: 365ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":162,"unreadCount":26,"candidateCount":24}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 1491ms (next.js: 11ms, proxy.ts: 9ms, application-code: 1472ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":172,"unreadCount":26,"candidateCount":24}
+ POST /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 558ms (next.js: 4ms, proxy.ts: 9ms, application-code: 545ms)
+  └─ ƒ loadInquiryAwarenessAction() in 537ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ POST /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 445ms (next.js: 8ms, proxy.ts: 8ms, application-code: 429ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 590ms (next.js: 3ms, proxy.ts: 8ms, application-code: 579ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":156,"unreadCount":25,"candidateCount":24}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":164,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 636ms (next.js: 5ms, proxy.ts: 12ms, application-code: 620ms)
+  └─ ƒ loadInquiryAwarenessAction() in 606ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ POST /app 200 in 203ms (next.js: 3ms, proxy.ts: 11ms, application-code: 189ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 854ms (next.js: 14ms, proxy.ts: 133ms, application-code: 707ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":142,"unreadCount":25,"candidateCount":24}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":160,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 441ms (next.js: 3ms, proxy.ts: 8ms, application-code: 431ms)
+  └─ ƒ loadInquiryAwarenessAction() in 418ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":182,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 485ms (next.js: 3ms, proxy.ts: 6ms, application-code: 477ms)
+  └─ ƒ loadInquiryAwarenessAction() in 468ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 1479ms (next.js: 9ms, proxy.ts: 11ms, application-code: 1459ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":145,"unreadCount":25,"candidateCount":24}
+ POST /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 622ms (next.js: 5ms, proxy.ts: 11ms, application-code: 606ms)
+  └─ ƒ loadInquiryAwarenessAction() in 578ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ POST /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 682ms (next.js: 7ms, proxy.ts: 67ms, application-code: 608ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+⨯ Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+ GET /app 200 in 802ms (next.js: 6ms, proxy.ts: 30ms, application-code: 766ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":204,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":184,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 598ms (next.js: 37ms, proxy.ts: 10ms, application-code: 551ms)
+  └─ ƒ loadInquiryAwarenessAction() in 536ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ POST /app 200 in 266ms (next.js: 11ms, proxy.ts: 35ms, application-code: 221ms)
+ GET /app 200 in 918ms (next.js: 8ms, proxy.ts: 8ms, application-code: 902ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":144,"unreadCount":25,"candidateCount":24}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":217,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 535ms (next.js: 4ms, proxy.ts: 19ms, application-code: 512ms)
+  └─ ƒ loadInquiryAwarenessAction() in 497ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":175,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 492ms (next.js: 4ms, proxy.ts: 10ms, application-code: 478ms)
+  └─ ƒ loadInquiryAwarenessAction() in 466ms src/server/actions/inquiry-notifications.ts
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 1636ms (next.js: 12ms, proxy.ts: 12ms, application-code: 1612ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":222,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+ POST /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 731ms (next.js: 6ms, proxy.ts: 12ms, application-code: 713ms)
+  └─ ƒ loadInquiryAwarenessAction() in 698ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 769ms (next.js: 5ms, proxy.ts: 11ms, application-code: 753ms)
+ POST /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 666ms (next.js: 9ms, proxy.ts: 7ms, application-code: 650ms)
+⨯ Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":205,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":178,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 457ms (next.js: 3ms, proxy.ts: 9ms, application-code: 445ms)
+  └─ ƒ loadInquiryAwarenessAction() in 416ms src/server/actions/inquiry-notifications.ts
+ POST /app 200 in 422ms (next.js: 3ms, proxy.ts: 8ms, application-code: 412ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":197,"unreadCount":25,"candidateCount":24}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 1475ms (next.js: 4ms, proxy.ts: 7ms, application-code: 1464ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ POST /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 516ms (next.js: 8ms, proxy.ts: 8ms, application-code: 500ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":161,"unreadCount":25,"candidateCount":24}

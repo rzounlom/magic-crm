@@ -29,6 +29,9 @@ import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
 import { authorizeHoldHoursForInquiry } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -157,7 +160,7 @@ describe("resource management (postgres)", () => {
         lastName: "Lovelace",
         email: "hold@example.com",
         eventType: "Birthday Party",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "18:00",
         guestCount: 12,
         guestMix: "mostly_adults",
@@ -185,7 +188,7 @@ describe("resource management (postgres)", () => {
       organizationId: tenant.organizationId,
       status: RESOURCE_RESERVATION_STATUSES.HOLD,
       sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60,
       endMinute: 21 * 60,
       resourceIds: lanes.map((row) => row.id),
@@ -239,7 +242,7 @@ describe("resource management (postgres)", () => {
       organizationId: tenant.organizationId,
       status: RESOURCE_RESERVATION_STATUSES.HOLD,
       sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60,
       endMinute: 21 * 60,
       resourceIds: [lanes[0]!.id],
@@ -282,7 +285,7 @@ describe("resource management (postgres)", () => {
     await releaseInquiryHolds(tenant.ctx, db, created.inquiryId);
     const afterRelease = await checkResourceAvailability(db, {
       organizationId: tenant.organizationId,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 180,
       resourceRequirements: [

@@ -27,6 +27,10 @@ import {
 import { authorizeUnconfiguredHoursForConfirm } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
+const EVENT_DATE_PLUS_5 = futureEventDate(28 + 5);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -169,7 +173,7 @@ async function createPlanInquiry(
       lastName: "Lovelace",
       email: `ada.${crypto.randomUUID()}@example.com`,
       eventType: "Birthday Party",
-      preferredDate: "2026-10-15",
+      preferredDate: EVENT_DATE,
       startTime,
       guestCount: 12,
       guestMix: "mostly_children",
@@ -202,7 +206,7 @@ async function createPlanInquiry(
       availabilityStatus: "AVAILABLE",
       payload: {
         guestCount: 12,
-        eventDate: "2026-10-15",
+        eventDate: EVENT_DATE,
         startTime,
         durationMinutes: 180,
         activities: [{ knowledgeItemId: "bowl", name: "Bowling", quantity: 1, priceCents: 100_000 }],
@@ -239,7 +243,7 @@ async function confirmPlan(
     organizationId: tenant.organizationId,
     locationId: tenant.locationId,
     inquiryId: created.inquiryId,
-    slotDate: "2026-10-15",
+    slotDate: EVENT_DATE,
     startTime,
     durationMinutes: 180,
   });
@@ -280,7 +284,7 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
     const confirmed = await confirmPlan(tenant, created);
     expect(confirmed.booking.status).toBe(BOOKING_STATUSES.CONFIRMED);
     const before = await getMasterScheduleDay(tenant.ctx, db, {
-      date: "2026-10-15",
+      date: EVENT_DATE,
       resourceTypeId: bowling.type.id,
     });
     expect(before?.reservations.filter((row) => row.status === RESOURCE_RESERVATION_STATUSES.BOOKED)).toHaveLength(1);
@@ -296,7 +300,7 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
     expect(rows.every((row) => row.releasedAt != null)).toBe(true);
 
     const after = await getMasterScheduleDay(tenant.ctx, db, {
-      date: "2026-10-15",
+      date: EVENT_DATE,
       resourceTypeId: bowling.type.id,
     });
     expect(after?.reservations.filter((row) => row.status === RESOURCE_RESERVATION_STATUSES.BOOKED)).toHaveLength(0);
@@ -408,7 +412,7 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
       await locationHasExclusiveOccupancy(db, {
         organizationId: tenant.organizationId,
         locationId: tenant.locationId!,
-        window: { slotDate: "2026-10-15", startMinute: 18 * 60, endMinute: 19 * 60 },
+        window: { slotDate: EVENT_DATE, startMinute: 18 * 60, endMinute: 19 * 60 },
       }),
     ).toBe(false);
 
@@ -439,7 +443,7 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
         lastName: "Lovelace",
         email: `ada.${crypto.randomUUID()}@example.com`,
         eventType: "Birthday Party",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "18:00",
         guestCount: 12,
         guestMix: "mostly_children",
@@ -465,7 +469,7 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
         lastName: "Hopper",
         email: `grace.${crypto.randomUUID()}@example.com`,
         eventType: "Birthday Party",
-        preferredDate: "2026-10-20",
+        preferredDate: EVENT_DATE_PLUS_5,
         startTime: "18:00",
         guestCount: 8,
         guestMix: "mostly_children",
@@ -572,7 +576,7 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
       inquiryId: first.inquiryId,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 180,
     });
@@ -586,7 +590,7 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
       inquiryId: second.inquiryId,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 180,
     });
@@ -626,7 +630,7 @@ describe("booking cancellation and inquiry archive (postgres)", { timeout: 120_0
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
       inquiryId: second.inquiryId,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startTime: "14:00",
       durationMinutes: 180,
     });

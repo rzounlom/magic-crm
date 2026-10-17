@@ -1,0 +1,13 @@
+◇ injected env (4) from .env.test // tip: ⌘ enable debugging { debug: true }
+◇ injected env (7) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+
+ RUN  v4.1.11 /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  15:09:54
+   Duration  19.12s (transform 741ms, setup 741ms, import 686ms, tests 17.48s, environment 0ms)
+

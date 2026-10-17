@@ -27,6 +27,9 @@ import {
 import { BOOKING_STATUSES } from "@/types/booking";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -174,7 +177,7 @@ async function createConfirmableInquiry(
       lastName: "Lovelace",
       email,
       eventType: "Birthday Party",
-      preferredDate: "2026-10-22",
+      preferredDate: EVENT_DATE,
       startTime: "14:00",
       guestCount: 8,
       guestMix: "mixed_ages",
@@ -206,7 +209,7 @@ async function createConfirmableInquiry(
       availabilityStatus: "AVAILABLE",
       payload: {
         guestCount: 8,
-        eventDate: "2026-10-22",
+        eventDate: EVENT_DATE,
         startTime: "14:00",
         durationMinutes: 120,
         activities: [{ knowledgeItemId: type.id, name: type.name, quantity: 1, priceCents: 20_000 }],
@@ -257,7 +260,7 @@ describe("SBF1 staff confirmation operations (TEST)", { timeout: 180_000 }, () =
       authorizeOperatingHoursException(deskCtx, db, {
         organizationId: tenant.organizationId,
         locationId: tenant.locationId!,
-        slotDate: "2026-10-22",
+        slotDate: EVENT_DATE,
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -272,7 +275,7 @@ describe("SBF1 staff confirmation operations (TEST)", { timeout: 180_000 }, () =
       authorizeOperatingHoursException(other.ctx, db, {
         organizationId: tenant.organizationId,
         locationId: tenant.locationId!,
-        slotDate: "2026-10-22",
+        slotDate: EVENT_DATE,
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -286,7 +289,7 @@ describe("SBF1 staff confirmation operations (TEST)", { timeout: 180_000 }, () =
       authorizeOperatingHoursException(tenant.ctx, db, {
         organizationId: tenant.organizationId,
         locationId: tenant.locationId!,
-        slotDate: "2026-10-22",
+        slotDate: EVENT_DATE,
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -299,7 +302,7 @@ describe("SBF1 staff confirmation operations (TEST)", { timeout: 180_000 }, () =
     const authorized = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -320,7 +323,7 @@ describe("SBF1 staff confirmation operations (TEST)", { timeout: 180_000 }, () =
     const again = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -359,17 +362,17 @@ describe("SBF1 staff confirmation operations (TEST)", { timeout: 180_000 }, () =
         resourceId: resource.id,
         status: "BOOKED",
         sourceType: "MANUAL",
-        slotDate: new Date("2026-10-22T00:00:00.000Z"),
+        slotDate: new Date(`${EVENT_DATE}T00:00:00.000Z`),
         startMinute: 14 * 60,
         endMinute: 16 * 60,
-        startsAt: new Date("2026-10-22T18:00:00.000Z"),
-        endsAt: new Date("2026-10-22T20:00:00.000Z"),
+        startsAt: new Date(`${EVENT_DATE}T18:00:00.000Z`),
+        endsAt: new Date(`${EVENT_DATE}T20:00:00.000Z`),
       },
     });
     const exception = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,

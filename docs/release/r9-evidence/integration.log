@@ -1,0 +1,14 @@
+$ node scripts/run-integration-tests.mjs
+◇ injected env (4) from .env.test // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (7) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+◇ injected env (0) from .env.local // tip: ⌘ override existing { override: true }
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+
+ RUN  v4.1.11 /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm
+
+
+ Test Files  38 passed (38)
+      Tests  188 passed (188)
+   Start at  15:20:11
+   Duration  816.30s (transform 1.69s, setup 22.61s, import 6.57s, tests 778.04s, environment 6ms)
+

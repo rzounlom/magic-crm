@@ -10,6 +10,11 @@ import type { BookingCatalogDataset } from "@/server/catalog/dataset";
 import { TENANT_ALPHA_DATASET } from "../fixtures/tenant-alpha-beta-catalogs";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDateOnWeekday } from "../helpers/future-event-date";
+
+/** Weekday-sensitive catalog pricing — keep Thursday / Friday semantics. */
+const EVENT_DATE = futureEventDateOnWeekday("thu", 28);
+const EVENT_DATE_PLUS_1 = futureEventDateOnWeekday("fri", 28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -107,14 +112,14 @@ describe("pricing promotions and weekendDays", () => {
 
     const friday = priceProduct(bowling!, {
       guestCount: 6,
-      eventDate: "2026-10-16",
+      eventDate: EVENT_DATE_PLUS_1,
       startTime: "18:00",
       durationMinutes: 60,
       organizationId: organization.id,
     });
     const otherFriday = priceProduct(otherBowling!, {
       guestCount: 6,
-      eventDate: "2026-10-16",
+      eventDate: EVENT_DATE_PLUS_1,
       startTime: "18:00",
       durationMinutes: 60,
       organizationId: other.organizationId,
@@ -128,7 +133,7 @@ describe("pricing promotions and weekendDays", () => {
     const axe = loaded.products.find((row) => row.slug === "axe-throwing")!;
     const base = priceProduct(axe, {
       guestCount: 2,
-      eventDate: "2026-10-15",
+      eventDate: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 60,
       organizationId: organization.id,
@@ -137,7 +142,7 @@ describe("pricing promotions and weekendDays", () => {
       quotes: [base],
       context: {
         guestCount: 2,
-        eventDate: "2026-10-15",
+        eventDate: EVENT_DATE,
         startTime: "18:00",
         durationMinutes: 60,
         organizationId: organization.id,
@@ -250,7 +255,7 @@ describe("pricing promotions and weekendDays", () => {
     const axe = loaded.products.find((row) => row.slug === "axe-throwing")!;
     const base = priceProduct(axe, {
       guestCount: 4,
-      eventDate: "2026-10-15",
+      eventDate: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 30,
       organizationId: organization.id,
@@ -259,7 +264,7 @@ describe("pricing promotions and weekendDays", () => {
       quotes: [base],
       context: {
         guestCount: 4,
-        eventDate: "2026-10-15",
+        eventDate: EVENT_DATE,
         startTime: "18:00",
         durationMinutes: 30,
         organizationId: organization.id,

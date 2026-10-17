@@ -12,6 +12,7 @@ import {
 import { getRequestContext } from "@/server/get-request-context";
 import { requirePermission } from "@/server/policies/require-permission";
 import { revalidateBookingWorkspace } from "@/server/actions/revalidate-booking-workspace";
+import { startMutationTimer } from "@/lib/observability/mutation-timing";
 import { expireInquiryHoldsNow } from "@/server/services/proposal-hold-service";
 import {
   extendInquiryHolds,
@@ -60,13 +61,18 @@ export async function placeManualHoldAction(formData: FormData): Promise<Securit
 }
 
 export async function placeInquiryHoldAction(formData: FormData): Promise<SecurityActionResult> {
+  const timer = startMutationTimer("placeInquiryHoldAction");
   try {
     const inquiryId = z.string().trim().min(1).parse(String(formData.get("inquiryId") ?? ""));
     const hoursExceptionRaw = String(formData.get("hoursExceptionId") ?? "").trim();
     const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     const ctx = await getRequestContext();
+    timer.mark("auth_context");
     await placeInquiryPlanHold(ctx, db, inquiryId, hoursExceptionId);
+    timer.mark("domain_mutation");
     revalidateBookingWorkspace({ inquiryId: inquiryId || undefined });
+    timer.mark("cache_invalidation");
+    timer.end();
     return {
       ok: true,
       title: "Resources held",
@@ -74,6 +80,7 @@ export async function placeInquiryHoldAction(formData: FormData): Promise<Securi
         "Temporary holds were placed for the selected plan. They expire after 24 hours if not converted to a booking.",
     };
   } catch (error) {
+    timer.end();
     unstable_rethrow(error);
     return toResult(error, "Unable to place resource hold");
   }

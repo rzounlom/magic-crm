@@ -12,7 +12,10 @@ const sourceSans = Source_Sans_3({
   display: "swap",
 });
 
+const appUrl = process.env.APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(appUrl),
   title: "MagicCRM",
   description: "Booking, CRM & AI-assisted event sales",
 };

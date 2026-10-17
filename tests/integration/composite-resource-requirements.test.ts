@@ -19,11 +19,14 @@ import { RESOURCE_QUANTITY_RULES, RESOURCE_RESERVATION_SOURCES, RESOURCE_RESERVA
 import { TENANT_ALPHA_DATASET, TENANT_BETA_DATASET } from "../fixtures/tenant-alpha-beta-catalogs";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
 
-const SLOT_DATE = "2026-10-15";
+const SLOT_DATE = EVENT_DATE;
 const START = 18 * 60;
 const END = 21 * 60;
 const WINDOW = { slotDate: SLOT_DATE, startMinute: START, endMinute: END };

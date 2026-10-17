@@ -34,6 +34,7 @@ import {
   authorizeUnconfiguredHoursForConfirm,
 } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
+import { futureEventDate } from "../helpers/future-event-date";
 import { createTestPrismaClient } from "../helpers/test-database";
 
 const db = createTestPrismaClient();
@@ -41,12 +42,7 @@ const createdOrganizationIds: string[] = [];
 const unlimitedLimiter = createMemoryRateLimiter();
 
 /** Keep confirmed events in the active inquiry queue (not historical by calendar end). */
-function futureEventDate(daysAhead = 21): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + daysAhead);
-  return d.toISOString().slice(0, 10);
-}
-const EVENT_DATE = futureEventDate();
+const EVENT_DATE = futureEventDate(28);
 const EVENT_YEAR = EVENT_DATE.slice(0, 4);
 
 async function cleanup() {

@@ -1,0 +1,10 @@
+$ vitest run --config vitest.config.mts
+
+ RUN  v4.1.11 /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm
+
+
+ Test Files  117 passed (117)
+      Tests  614 passed (614)
+   Start at  14:47:51
+   Duration  19.10s (transform 12.74s, setup 0ms, import 35.94s, tests 27.76s, environment 68.80s)
+

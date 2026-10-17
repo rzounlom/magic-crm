@@ -31,6 +31,10 @@ import {
 } from "@/types/resource-schedule";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
+const EVENT_DATE_PLUS_1 = futureEventDate(28 + 1);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -169,7 +173,7 @@ async function createHoldableInquiry(
   type: { id: string; slug: string; name: string },
   opts?: { eventDate?: string; startTime?: string },
 ) {
-  const eventDate = opts?.eventDate ?? "2026-10-22";
+  const eventDate = opts?.eventDate ?? EVENT_DATE;
   const startTime = opts?.startTime ?? "14:00";
   const email = `sbf2.${crypto.randomUUID()}@example.com`;
   const created = await createPublicInquiry(
@@ -264,7 +268,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
       authorizeOperatingHoursException(deskCtx, db, {
         organizationId: tenant.organizationId,
         locationId: tenant.locationId!,
-        slotDate: "2026-10-22",
+        slotDate: EVENT_DATE,
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -279,7 +283,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
       authorizeOperatingHoursException(other.ctx, db, {
         organizationId: tenant.organizationId,
         locationId: tenant.locationId!,
-        slotDate: "2026-10-22",
+        slotDate: EVENT_DATE,
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -292,7 +296,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
     const confirmPurpose = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -307,7 +311,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
     const authorized = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -328,7 +332,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
     const again = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -374,17 +378,17 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
         resourceId: resource.id,
         status: "BOOKED",
         sourceType: "MANUAL",
-        slotDate: new Date("2026-10-22T00:00:00.000Z"),
+        slotDate: new Date(`${EVENT_DATE}T00:00:00.000Z`),
         startMinute: 14 * 60,
         endMinute: 16 * 60,
-        startsAt: new Date("2026-10-22T18:00:00.000Z"),
-        endsAt: new Date("2026-10-22T20:00:00.000Z"),
+        startsAt: new Date(`${EVENT_DATE}T18:00:00.000Z`),
+        endsAt: new Date(`${EVENT_DATE}T20:00:00.000Z`),
       },
     });
     const exception = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -409,7 +413,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
     const wrongWindow = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 10 * 60,
       endMinute: 12 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -424,7 +428,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
     const expired = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -445,7 +449,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
     const exceptionA = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-23",
+      slotDate: EVENT_DATE_PLUS_1,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -455,7 +459,7 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
     const exceptionB = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-23",
+      slotDate: EVENT_DATE_PLUS_1,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -466,14 +470,14 @@ describe("SBF2 staff HOLD operations (TEST)", { timeout: 180_000 }, () => {
     const results = await Promise.allSettled([
       placeManualHold(tenant.ctx, db, {
         resourceId: resource.id,
-        date: "2026-10-23",
+        date: EVENT_DATE_PLUS_1,
         startTime: "14:00",
         endTime: "16:00",
         hoursExceptionId: exceptionA.id,
       }),
       placeManualHold(tenant.ctx, db, {
         resourceId: resource.id,
-        date: "2026-10-23",
+        date: EVENT_DATE_PLUS_1,
         startTime: "14:00",
         endTime: "16:00",
         hoursExceptionId: exceptionB.id,

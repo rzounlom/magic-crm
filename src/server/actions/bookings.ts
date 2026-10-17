@@ -5,6 +5,7 @@ import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/lib/db";
+import { startMutationTimer } from "@/lib/observability/mutation-timing";
 import {
   isAuthorizationError,
   isBookingError,
@@ -25,13 +26,18 @@ function employeeDurationMinutes(value: FormDataEntryValue | null): number {
 
 export async function confirmBookingAction(formData: FormData): Promise<SecurityActionResult> {
   const inquiryId = String(formData.get("inquiryId") ?? "").trim();
+  const timer = startMutationTimer("confirmBookingAction");
   try {
     const parsedInquiryId = z.string().trim().min(1).parse(inquiryId);
     const hoursExceptionRaw = String(formData.get("hoursExceptionId") ?? "").trim();
     const hoursExceptionId = hoursExceptionRaw.length > 0 ? hoursExceptionRaw : null;
     const ctx = await getRequestContext();
+    timer.mark("auth_context");
     const result = await confirmInquiryBooking(ctx, db, parsedInquiryId, null, hoursExceptionId);
+    timer.mark("domain_mutation");
     revalidateBookingWorkspace({ inquiryId: parsedInquiryId, bookingId: result.booking.id });
+    timer.mark("cache_invalidation");
+    timer.end();
     if (result.conflict) {
       const nearby =
         result.conflict.nearbyStartTimes.length > 0
@@ -60,6 +66,7 @@ export async function confirmBookingAction(formData: FormData): Promise<Security
       redirectTo: `/app/bookings/${result.booking.id}`,
     };
   } catch (error) {
+    timer.end();
     unstable_rethrow(error);
     if (
       isAuthorizationError(error) ||

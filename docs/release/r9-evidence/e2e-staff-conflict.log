@@ -1,0 +1,9 @@
+$ playwright test tests/e2e/staff.conflict.spec.ts --project=chromium-desktop
+
+Running 1 test using 1 worker
+
+(node:28466) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium-desktop] › tests/e2e/staff.conflict.spec.ts:21:7 › R7 — Stale availability conflict (opt-in) › second inquiry cannot HOLD after first occupies exclusive resource @staff-conflict (23.7s)
+
+  1 passed (24.9s)

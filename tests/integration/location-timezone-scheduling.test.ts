@@ -8,6 +8,18 @@ import { evaluateLocationTimezoneCorrectionSafety } from "@/server/ops/location-
 import { weekdayKeyFromIsoDate } from "@/server/catalog/pricing";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDateOnWeekday } from "../helpers/future-event-date";
+
+/**
+ * Thursday far enough ahead to land in US daylight time so Indianapolis 18:00 → 22:00Z
+ * and Pacific 18:00 → next-day 01:00Z stay stable (winter EST/PST would shift assertions).
+ */
+const EVENT_DATE = futureEventDateOnWeekday("thu", 250);
+const EVENT_DATE_PLUS_1 = (() => {
+  const d = new Date(`${EVENT_DATE}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+})();
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -63,7 +75,7 @@ describe("location timezone scheduling (TEST)", () => {
     expect(beforeZone).toBe("UTC");
 
     const wrongInstant = occupancyInstants({
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60,
       endMinute: 20 * 60,
       timeZone: beforeZone,
@@ -126,17 +138,17 @@ describe("location timezone scheduling (TEST)", () => {
     expect(afterZone).toBe("America/Indiana/Indianapolis");
 
     const correctInstant = occupancyInstants({
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60,
       endMinute: 20 * 60,
       timeZone: afterZone,
     });
-    expect(correctInstant.startsAt.toISOString()).toBe("2026-10-15T22:00:00.000Z");
-    expect(wrongInstant.startsAt.toISOString()).toBe("2026-10-15T18:00:00.000Z");
+    expect(correctInstant.startsAt.toISOString()).toBe(`${EVENT_DATE}T22:00:00.000Z`);
+    expect(wrongInstant.startsAt.toISOString()).toBe(`${EVENT_DATE}T18:00:00.000Z`);
 
     const reread = await db.resourceReservation.findFirstOrThrow({ where: { id: stored.id } });
     expect(reread.startsAt!.toISOString()).toBe(preservedStartsAt);
-    expect(weekdayKeyFromIsoDate("2026-10-15", afterZone)).toBe("thu");
+    expect(weekdayKeyFromIsoDate(EVENT_DATE, afterZone)).toBe("thu");
   });
 
   it("keeps a legitimate UTC tenant and a Pacific sibling location isolated", async () => {
@@ -177,27 +189,27 @@ describe("location timezone scheduling (TEST)", () => {
 
     const localMinute = 18 * 60;
     const utcInstant = occupancyInstants({
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: localMinute,
       endMinute: localMinute + 120,
       timeZone: utcZone,
     }).startsAt.toISOString();
     const indianaInstant = occupancyInstants({
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: localMinute,
       endMinute: localMinute + 120,
       timeZone: indianaZone,
     }).startsAt.toISOString();
     const pacificInstant = occupancyInstants({
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: localMinute,
       endMinute: localMinute + 120,
       timeZone: pacificZone,
     }).startsAt.toISOString();
 
-    expect(utcInstant).toBe("2026-10-15T18:00:00.000Z");
-    expect(indianaInstant).toBe("2026-10-15T22:00:00.000Z");
-    expect(pacificInstant).toBe("2026-10-16T01:00:00.000Z");
+    expect(utcInstant).toBe(`${EVENT_DATE}T18:00:00.000Z`);
+    expect(indianaInstant).toBe(`${EVENT_DATE}T22:00:00.000Z`);
+    expect(pacificInstant).toBe(`${EVENT_DATE_PLUS_1}T01:00:00.000Z`);
     expect(new Set([utcInstant, indianaInstant, pacificInstant]).size).toBe(3);
   });
 

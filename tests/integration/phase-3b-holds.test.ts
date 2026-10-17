@@ -20,6 +20,10 @@ import {
 } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
+const EVENT_DATE_PLUS_1 = futureEventDate(28 + 1);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -148,7 +152,7 @@ async function createPlanInquiry(
       lastName: "Lovelace",
       email: `ada.${crypto.randomUUID()}@example.com`,
       eventType: "Birthday Party",
-      preferredDate: "2026-10-15",
+      preferredDate: EVENT_DATE,
       startTime: "18:00",
       guestCount: 12,
       guestMix: "mostly_children",
@@ -181,7 +185,7 @@ async function createPlanInquiry(
       availabilityStatus: "AVAILABLE",
       payload: {
         guestCount: 12,
-        eventDate: "2026-10-15",
+        eventDate: EVENT_DATE,
         startTime: "18:00",
         durationMinutes: 60,
         activities: [{ knowledgeItemId: "bowl", name: "Bowling", quantity: 1, priceCents: 100_000 }],
@@ -291,7 +295,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
         locationId,
         resourceId: resources[0]!.id,
         status: RESOURCE_RESERVATION_STATUSES.BOOKED,
-        slotDate: new Date("2026-10-15T00:00:00.000Z"),
+        slotDate: new Date(`${EVENT_DATE}T00:00:00.000Z`),
         startMinute: 18 * 60,
         endMinute: 19 * 60,
         sourceType: "MANUAL",
@@ -344,7 +348,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const stillActive = await checkResourceAvailability(db, {
       organizationId: tenant.organizationId,
       locationId,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 60,
       now: new Date(t0.getTime() + 23 * 60 * 60 * 1000 + 59 * 60 * 1000),
@@ -371,7 +375,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const after = await checkResourceAvailability(db, {
       organizationId: tenant.organizationId,
       locationId,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 60,
       now: expiredAt,
@@ -401,7 +405,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
         locationId,
         resourceId: resources[0]!.id,
         status: RESOURCE_RESERVATION_STATUSES.BOOKED,
-        slotDate: new Date("2026-10-16T00:00:00.000Z"),
+        slotDate: new Date(`${EVENT_DATE_PLUS_1}T00:00:00.000Z`),
         startMinute: 18 * 60,
         endMinute: 19 * 60,
         sourceType: "BOOKING",
@@ -443,7 +447,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const checkSameTenantOtherLocation = await checkResourceAvailability(db, {
       organizationId: tenantA.organizationId,
       locationId: locationTwo.id,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 60,
       resourceRequirements: [
@@ -467,7 +471,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     const checkB = await checkResourceAvailability(db, {
       organizationId: tenantB.organizationId,
       locationId: locationB,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 60,
       resourceRequirements: [
@@ -492,7 +496,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
     expect(holdB.depositRequiredCents).toBe(20_000);
 
     const day = await getMasterScheduleDay(tenantA.ctx, db, {
-      date: "2026-10-15",
+      date: EVENT_DATE,
       resourceTypeId: seededA.type.id,
     });
     expect(day?.reservations.some((row) => row.status === RESOURCE_RESERVATION_STATUSES.HOLD)).toBe(true);
@@ -514,7 +518,7 @@ describe("phase 3B holds and schedule (postgres)", () => {
         lastName: "Other",
         email: `eve.${crypto.randomUUID()}@example.com`,
         eventType: "Birthday Party",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "18:00",
         guestCount: 8,
         guestMix: "mostly_children",

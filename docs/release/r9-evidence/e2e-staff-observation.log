@@ -1,0 +1,32 @@
+
+Running 25 tests using 1 worker
+
+(node:30879) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium-desktop] › tests/e2e/staff.a11y.spec.ts:15:7 › Staff axe smoke (authenticated) › /app has no critical or serious axe violations @staff-a11y (3.7s)
+  ✓   2 [chromium-desktop] › tests/e2e/staff.a11y.spec.ts:25:7 › Staff axe smoke (authenticated) › inquiry detail has no critical or serious axe violations @staff-a11y (4.3s)
+  ✓   3 [chromium-desktop] › tests/e2e/staff.confirmation.spec.ts:18:7 › Scenario D — Confirmation readiness › shows confirmation readiness distinct from HOLD purpose @staff-confirm (3.0s)
+  ✓   4 [chromium-desktop] › tests/e2e/staff.confirmation.spec.ts:41:7 › Scenario D — Confirmation readiness › confirms booking only when UI allows and mutations are opted in @staff-confirm (3.0s)
+  ✓   5 [chromium-desktop] › tests/e2e/staff.guarded-failure.spec.ts:18:7 › Scenario E — Guarded failure › blocked HOLD or confirmation explains the real blocker without creating occupancy @staff-guard (3.0s)
+  ✓   6 [chromium-desktop] › tests/e2e/staff.hold-readiness.spec.ts:18:7 › Scenario C — Proposal and optional HOLD › surfaces HOLD readiness guidance without inventing availability @staff-hold (2.8s)
+  ✓   7 [chromium-desktop] › tests/e2e/staff.hold-readiness.spec.ts:42:7 › Scenario C — Proposal and optional HOLD › places HOLD only when UI allows and mutations are opted in @staff-hold (2.7s)
+  ✓   8 [chromium-desktop] › tests/e2e/staff.inquiry-review.spec.ts:18:7 › Scenario B — Inquiry review › opens seeded TEST/DEV inquiry and shows event preferences distinctly from readiness @staff-inquiry (2.6s)
+  ✓   9 [chromium-desktop] › tests/e2e/staff.navigation.spec.ts:12:7 › Scenario A — Staff navigation and organization context › authenticated entry reaches /app with module navigation @staff-nav (2.0s)
+  ✓  10 [chromium-desktop] › tests/e2e/staff.navigation.spec.ts:21:7 › Scenario A — Staff navigation and organization context › organization context chip is present and non-empty when rendered @staff-nav (1.6s)
+  ✓  11 [chromium-desktop] › tests/e2e/staff.navigation.spec.ts:37:7 › Scenario A — Staff navigation and organization context › unauthenticated sign-in surface is not shown while storage state is valid @staff-nav (3.7s)
+  ✓  12 [chromium-desktop] › tests/e2e/staff.responsive.spec.ts:26:9 › Scenario F — Responsive staff UX › staff shell at 390px has no horizontal overflow @staff-responsive (3.3s)
+  ✓  13 [chromium-desktop] › tests/e2e/staff.responsive.spec.ts:26:9 › Scenario F — Responsive staff UX › staff shell at 768px has no horizontal overflow @staff-responsive (1.9s)
+  ✓  14 [chromium-desktop] › tests/e2e/staff.responsive.spec.ts:26:9 › Scenario F — Responsive staff UX › staff shell at 1024px has no horizontal overflow @staff-responsive (1.8s)
+  ✓  15 [chromium-desktop] › tests/e2e/staff.responsive.spec.ts:26:9 › Scenario F — Responsive staff UX › staff shell at 1440px has no horizontal overflow @staff-responsive (1.9s)
+  ✓  16 [chromium-desktop] › tests/e2e/staff.responsive.spec.ts:66:7 › Scenario F — Responsive staff UX › inquiry detail primary actions remain reachable at 390px @staff-responsive (2.6s)
+  ✓  17 [chromium-desktop] › tests/e2e/staff.routes.smoke.spec.ts:27:9 › staff routes smoke (authenticated) › loads /app without server error chrome @staff-routes (1.9s)
+  ✓  18 [chromium-desktop] › tests/e2e/staff.routes.smoke.spec.ts:27:9 › staff routes smoke (authenticated) › loads /app/inquiries without server error chrome @staff-routes (3.5s)
+  ✓  19 [chromium-desktop] › tests/e2e/staff.routes.smoke.spec.ts:27:9 › staff routes smoke (authenticated) › loads /app/schedule without server error chrome @staff-routes (2.2s)
+  ✓  20 [chromium-desktop] › tests/e2e/staff.routes.smoke.spec.ts:27:9 › staff routes smoke (authenticated) › loads /app/bookings without server error chrome @staff-routes (2.2s)
+  ✓  21 [chromium-desktop] › tests/e2e/staff.routes.smoke.spec.ts:27:9 › staff routes smoke (authenticated) › loads /app/admin/team without server error chrome @staff-routes (1.9s)
+  ✓  22 [chromium-desktop] › tests/e2e/staff.routes.smoke.spec.ts:27:9 › staff routes smoke (authenticated) › loads /app/admin/security-groups without server error chrome @staff-routes (1.9s)
+  ✓  23 [chromium-desktop] › tests/e2e/staff.routes.smoke.spec.ts:27:9 › staff routes smoke (authenticated) › loads /app/admin/resources without server error chrome @staff-routes (1.9s)
+  ✓  24 [chromium-desktop] › tests/e2e/staff.smoke.spec.ts:13:7 › staff shell smoke (authenticated) › employee shell shows navigation chrome @staff-smoke (1.8s)
+  ✓  25 [chromium-desktop] › tests/e2e/staff.smoke.spec.ts:23:7 › staff shell smoke (authenticated) › mobile More control is discoverable when present @staff-smoke (1.8s)
+
+  25 passed (1.1m)

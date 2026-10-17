@@ -1,0 +1,29 @@
+◇ injected env (4) from .env.test // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (7) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ◈ secrets for agents [www.dotenvx.com]
+[magiccrm] test database role=test host=ep-sparkling-bird-avsqbixx-pooler.c-11.us-east-1.aws.neon.tech database=neondb; development host=ep-bold-art-avjy5nt4-pooler.c-11.us-east-1.aws.neon.tech database=neondb
+
+node:internal/modules/run_main:105
+    triggerUncaughtException(
+    ^
+Error: Transform failed with 10 errors:
+/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/scripts/r9-debug-booking-catalog.ts:18:17: ERROR: Top-level await is currently not supported with the "cjs" output format
+/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/scripts/r9-debug-booking-catalog.ts:29:14: ERROR: Top-level await is currently not supported with the "cjs" output format
+/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/scripts/r9-debug-booking-catalog.ts:30:2: ERROR: Top-level await is currently not supported with the "cjs" output format
+/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/scripts/r9-debug-booking-catalog.ts:31:16: ERROR: Top-level await is currently not supported with the "cjs" output format
+/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/scripts/r9-debug-booking-catalog.ts:35:2: ERROR: Top-level await is currently not supported with the "cjs" output format
+...
+    at failureErrorWithLog (/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/lib/main.js:1748:15)
+    at /Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/lib/main.js:1017:50
+    at responseCallbacks.<computed> (/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/lib/main.js:884:9)
+    at handleIncomingPacket (/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/lib/main.js:939:12)
+    at Socket.readFromStdout (/Users/romariczounlome/Documents/Dev/ZounMedia/projects/magic-crm/node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild/lib/main.js:862:7)
+    at Socket.emit (node:events:507:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  name: 'TransformError'
+}
+
+Node.js v24.4.1

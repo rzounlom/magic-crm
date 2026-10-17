@@ -14,6 +14,9 @@ import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason"
 import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -92,7 +95,7 @@ describe("finite resource schedule (postgres)", () => {
         lastName: "Lovelace",
         email: "res@example.com",
         eventType: "Birthday Party",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "18:00",
         guestCount: 12,
         guestMix: "mostly_adults",
@@ -166,7 +169,7 @@ describe("finite resource schedule (postgres)", () => {
       organizationId: a.organizationId,
       status: RESOURCE_RESERVATION_STATUSES.BOOKED,
       sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60,
       endMinute: 20 * 60,
       resourceIds: [lane.id],
@@ -174,7 +177,7 @@ describe("finite resource schedule (postgres)", () => {
 
     const availability = await checkResourceAvailability(db, {
       organizationId: a.organizationId,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 120,
       resourceRequirements: [
@@ -198,7 +201,7 @@ describe("finite resource schedule (postgres)", () => {
 
     const stillBusy = await checkResourceAvailability(db, {
       organizationId: a.organizationId,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 120,
       excludeInquiryId: "inquiry_from_another_flow",
@@ -225,7 +228,7 @@ describe("finite resource schedule (postgres)", () => {
         organizationId: a.organizationId,
         status: RESOURCE_RESERVATION_STATUSES.HOLD,
         sourceType: RESOURCE_RESERVATION_SOURCES.INQUIRY,
-        slotDate: "2026-10-15",
+        slotDate: EVENT_DATE,
         startMinute: 18 * 60,
         endMinute: 19 * 60,
         resourceIds: [lane.id],
@@ -256,7 +259,7 @@ describe("finite resource schedule (postgres)", () => {
         organizationId: tenant.organizationId,
         resourceId: lane.id,
         status: RESOURCE_RESERVATION_STATUSES.HOLD,
-        slotDate: new Date("2026-10-15T00:00:00.000Z"),
+        slotDate: new Date(`${EVENT_DATE}T00:00:00.000Z`),
         startMinute: 18 * 60,
         endMinute: 20 * 60,
         sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
@@ -278,7 +281,7 @@ describe("finite resource schedule (postgres)", () => {
     };
     const expired = await checkResourceAvailability(db, {
       organizationId: tenant.organizationId,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 120,
       resourceRequirements: [requirement],
@@ -289,7 +292,7 @@ describe("finite resource schedule (postgres)", () => {
       organizationId: tenant.organizationId,
       status: RESOURCE_RESERVATION_STATUSES.HOLD,
       sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60,
       endMinute: 20 * 60,
       resourceIds: [lane.id],
@@ -310,7 +313,7 @@ describe("finite resource schedule (postgres)", () => {
     });
     const missing = await checkResourceAvailability(db, {
       organizationId: tenant.organizationId,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 120,
       resourceRequirements: [

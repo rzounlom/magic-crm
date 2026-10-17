@@ -25,7 +25,7 @@ test.describe("Scenario F — Responsive staff UX", { tag: "@staff-responsive" }
   for (const viewport of VIEWPORTS) {
     test(`staff shell at ${viewport.name}px has no horizontal overflow`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await page.goto("/app");
+      await page.goto("/app", { waitUntil: "domcontentloaded" });
       if (page.url().includes("sign-in")) {
         test.skip(true, "Storage state expired — regenerate with pnpm test:e2e:staff:auth");
       }

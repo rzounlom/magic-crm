@@ -32,6 +32,15 @@ import {
 } from "@/types/resource-schedule";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
+const EVENT_DATE_PLUS_7 = futureEventDate(28 + 7);
+const EVENT_DATE_PLUS_8 = futureEventDate(28 + 8);
+const EVENT_DATE_PLUS_9 = futureEventDate(28 + 9);
+const EVENT_DATE_PLUS_10 = futureEventDate(28 + 10);
+const EVENT_DATE_PLUS_11 = futureEventDate(28 + 11);
+const EVENT_DATE_PLUS_12 = futureEventDate(28 + 12);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -317,7 +326,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const tenant = await provisionTenant("e2e");
     const { type } = await seedLane(tenant.organizationId, tenant.locationId, 1);
     const inquiry = await createConfirmableInquiry(tenant, type, {
-      eventDate: "2026-10-22",
+      eventDate: EVENT_DATE_PLUS_7,
       startTime: "14:00",
     });
 
@@ -328,7 +337,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const exception = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE_PLUS_7,
       startMinute: inquiry.startMinute,
       endMinute: inquiry.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -377,11 +386,11 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const tenant = await provisionTenant("rollback");
     const { type, resources } = await seedLane(tenant.organizationId, tenant.locationId, 1);
     const inquiry = await createConfirmableInquiry(tenant, type, {
-      eventDate: "2026-10-22",
+      eventDate: EVENT_DATE_PLUS_7,
       startTime: "15:00",
     });
     const instants = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE_PLUS_7,
       startMinute: inquiry.startMinute,
       endMinute: inquiry.endMinute,
       timeZone: tenant.timeZone,
@@ -397,7 +406,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
         resourceId: resources[0]!.id,
         status: RESOURCE_RESERVATION_STATUSES.BOOKED,
         sourceType: "MANUAL",
-        slotDate: new Date("2026-10-22T00:00:00.000Z"),
+        slotDate: new Date(`${EVENT_DATE_PLUS_7}T00:00:00.000Z`),
         startMinute: inquiry.startMinute,
         endMinute: inquiry.endMinute,
         startsAt: instants.startsAt,
@@ -408,7 +417,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const exception = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE_PLUS_7,
       startMinute: inquiry.startMinute,
       endMinute: inquiry.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -435,17 +444,17 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const tenant = await provisionTenant("race-ex");
     const { type } = await seedLane(tenant.organizationId, tenant.locationId, 2);
     const a = await createConfirmableInquiry(tenant, type, {
-      eventDate: "2026-10-23",
+      eventDate: EVENT_DATE_PLUS_8,
       startTime: "14:00",
     });
     const b = await createConfirmableInquiry(tenant, type, {
-      eventDate: "2026-10-23",
+      eventDate: EVENT_DATE_PLUS_8,
       startTime: "14:00",
     });
     const exception = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-23",
+      slotDate: EVENT_DATE_PLUS_8,
       startMinute: a.startMinute,
       endMinute: a.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -507,7 +516,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const desk = await addGroupUser(tenant, SYSTEM_GROUP_KEYS.FRONT_DESK, "desk-r2d4@example.com");
     const { type } = await seedLane(tenant.organizationId, tenant.locationId, 1);
     const inquiry = await createConfirmableInquiry(tenant, type, {
-      eventDate: "2026-10-24",
+      eventDate: EVENT_DATE_PLUS_9,
       startTime: "16:00",
     });
 
@@ -515,7 +524,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
       authorizeOperatingHoursException(desk.ctx, db, {
         organizationId: tenant.organizationId,
         locationId: tenant.locationId!,
-        slotDate: "2026-10-24",
+        slotDate: EVENT_DATE_PLUS_9,
         startMinute: inquiry.startMinute,
         endMinute: inquiry.endMinute,
         purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -528,7 +537,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
       authorizeOperatingHoursException(other.ctx, db, {
         organizationId: tenant.organizationId,
         locationId: tenant.locationId!,
-        slotDate: "2026-10-24",
+        slotDate: EVENT_DATE_PLUS_9,
         startMinute: inquiry.startMinute,
         endMinute: inquiry.endMinute,
         purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -540,7 +549,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const holdPurpose = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-24",
+      slotDate: EVENT_DATE_PLUS_9,
       startMinute: inquiry.startMinute,
       endMinute: inquiry.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -555,7 +564,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const revoked = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-24",
+      slotDate: EVENT_DATE_PLUS_9,
       startMinute: inquiry.startMinute,
       endMinute: inquiry.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -571,7 +580,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const expired = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-24",
+      slotDate: EVENT_DATE_PLUS_9,
       startMinute: inquiry.startMinute,
       endMinute: inquiry.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -588,7 +597,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const wrongTime = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-24",
+      slotDate: EVENT_DATE_PLUS_9,
       startMinute: inquiry.startMinute + 30,
       endMinute: inquiry.endMinute + 30,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -613,7 +622,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
         {
           organizationId: tenant.organizationId,
           locationId: tenant.locationId!,
-          slotDate: "2026-10-24",
+          slotDate: EVENT_DATE_PLUS_9,
           startMinute: inquiry.startMinute,
           endMinute: inquiry.endMinute,
           purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -629,10 +638,10 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const { type } = await seedLane(tenant.organizationId, tenant.locationId, 1);
     // Pending may be created while hours are unconfigured; close the day before confirm.
     const inquiry = await createConfirmableInquiry(tenant, type, {
-      eventDate: "2026-10-15",
+      eventDate: EVENT_DATE,
       startTime: "14:00",
     });
-    await seedVerifiedClosedDay(tenant.organizationId, tenant.locationId!, "2026-10-15");
+    await seedVerifiedClosedDay(tenant.organizationId, tenant.locationId!, EVENT_DATE);
 
     await expect(
       confirmInquiryBooking(tenant.ctx, db, inquiry.inquiryId),
@@ -641,7 +650,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const exception = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: inquiry.startMinute,
       endMinute: inquiry.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -666,19 +675,19 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const { resources: pacificResources } = await seedLane(pacific.organizationId, pacific.locationId, 1);
 
     const overnight = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-25",
+      slotDate: EVENT_DATE_PLUS_10,
       startMinute: 23 * 60,
       endMinute: 25 * 60,
       timeZone: "America/Indiana/Indianapolis",
     });
     const morning = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-26",
+      slotDate: EVENT_DATE_PLUS_11,
       startMinute: 30,
       endMinute: 90,
       timeZone: "America/Indiana/Indianapolis",
     });
     const backToBack = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-26",
+      slotDate: EVENT_DATE_PLUS_11,
       startMinute: 60,
       endMinute: 120,
       timeZone: "America/Indiana/Indianapolis",
@@ -703,7 +712,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
           resourceId: indianaResources[0]!.id,
           status: RESOURCE_RESERVATION_STATUSES.BOOKED,
           sourceType: "MANUAL",
-          slotDate: new Date("2026-10-25T00:00:00.000Z"),
+          slotDate: new Date(`${EVENT_DATE_PLUS_10}T00:00:00.000Z`),
           startMinute: 23 * 60,
           endMinute: 25 * 60,
           startsAt: overnight.startsAt,
@@ -718,7 +727,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
             resourceId: indianaResources[0]!.id,
             status: RESOURCE_RESERVATION_STATUSES.BOOKED,
             sourceType: "MANUAL",
-            slotDate: new Date("2026-10-26T00:00:00.000Z"),
+            slotDate: new Date(`${EVENT_DATE_PLUS_11}T00:00:00.000Z`),
             startMinute: 30,
             endMinute: 90,
             startsAt: morning.startsAt,
@@ -734,7 +743,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
           resourceId: indianaResources[0]!.id,
           status: RESOURCE_RESERVATION_STATUSES.BOOKED,
           sourceType: "MANUAL",
-          slotDate: new Date("2026-10-26T00:00:00.000Z"),
+          slotDate: new Date(`${EVENT_DATE_PLUS_11}T00:00:00.000Z`),
           startMinute: 60,
           endMinute: 120,
           startsAt: backToBack.startsAt,
@@ -744,7 +753,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
 
       // Different organization + resource: no cross-tenant exclusion collision.
       const pacificWindow = resolveStrictOccupancyInstants({
-        slotDate: "2026-10-25",
+        slotDate: EVENT_DATE_PLUS_10,
         startMinute: 23 * 60,
         endMinute: 25 * 60,
         timeZone: "America/Los_Angeles",
@@ -758,7 +767,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
             resourceId: pacificResources[0]!.id,
             status: RESOURCE_RESERVATION_STATUSES.BOOKED,
             sourceType: "MANUAL",
-            slotDate: new Date("2026-10-25T00:00:00.000Z"),
+            slotDate: new Date(`${EVENT_DATE_PLUS_10}T00:00:00.000Z`),
             startMinute: 23 * 60,
             endMinute: 25 * 60,
             startsAt: pacificWindow.startsAt,
@@ -780,11 +789,11 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
           resourceId: indianaResources[0]!.id,
           status: RESOURCE_RESERVATION_STATUSES.BOOKED,
           sourceType: "MANUAL",
-          slotDate: new Date("2026-10-27T00:00:00.000Z"),
+          slotDate: new Date(`${EVENT_DATE_PLUS_12}T00:00:00.000Z`),
           startMinute: 10 * 60,
           endMinute: 11 * 60,
-          startsAt: new Date("2026-10-27T14:00:00.000Z"),
-          endsAt: new Date("2026-10-27T15:00:00.000Z"),
+          startsAt: new Date(`${EVENT_DATE_PLUS_12}T14:00:00.000Z`),
+          endsAt: new Date(`${EVENT_DATE_PLUS_12}T15:00:00.000Z`),
           releasedAt: new Date(),
         },
       });
@@ -795,11 +804,11 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
           resourceId: indianaResources[0]!.id,
           status: RESOURCE_RESERVATION_STATUSES.BOOKED,
           sourceType: "MANUAL",
-          slotDate: new Date("2026-10-27T00:00:00.000Z"),
+          slotDate: new Date(`${EVENT_DATE_PLUS_12}T00:00:00.000Z`),
           startMinute: 10 * 60,
           endMinute: 11 * 60,
-          startsAt: new Date("2026-10-27T14:00:00.000Z"),
-          endsAt: new Date("2026-10-27T15:00:00.000Z"),
+          startsAt: new Date(`${EVENT_DATE_PLUS_12}T14:00:00.000Z`),
+          endsAt: new Date(`${EVENT_DATE_PLUS_12}T15:00:00.000Z`),
         },
       });
       expect(cancelled.releasedAt).not.toBeNull();
@@ -812,13 +821,13 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const tenant = await provisionTenant("race-ov");
     const { resources } = await seedLane(tenant.organizationId, tenant.locationId, 1);
     const overnight = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-25",
+      slotDate: EVENT_DATE_PLUS_10,
       startMinute: 23 * 60,
       endMinute: 25 * 60,
       timeZone: tenant.timeZone,
     });
     const overlap = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-25",
+      slotDate: EVENT_DATE_PLUS_10,
       startMinute: 23 * 60 + 30,
       endMinute: 25 * 60 + 30,
       timeZone: tenant.timeZone,
@@ -843,7 +852,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
             resourceId: resources[0]!.id,
             status: RESOURCE_RESERVATION_STATUSES.BOOKED,
             sourceType: "MANUAL",
-            slotDate: new Date("2026-10-25T00:00:00.000Z"),
+            slotDate: new Date(`${EVENT_DATE_PLUS_10}T00:00:00.000Z`),
             startMinute: 23 * 60,
             endMinute: 25 * 60,
             startsAt: overnight.startsAt,
@@ -857,7 +866,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
             resourceId: resources[0]!.id,
             status: RESOURCE_RESERVATION_STATUSES.BOOKED,
             sourceType: "MANUAL",
-            slotDate: new Date("2026-10-25T00:00:00.000Z"),
+            slotDate: new Date(`${EVENT_DATE_PLUS_10}T00:00:00.000Z`),
             startMinute: 23 * 60 + 30,
             endMinute: 25 * 60 + 30,
             startsAt: overlap.startsAt,
@@ -885,19 +894,19 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     // Confirm path: second overnight-overlapping inquiry cannot confirm after the first.
     const { type } = await seedLane(tenant.organizationId, tenant.locationId, 1);
     const first = await createConfirmableInquiry(tenant, type, {
-      eventDate: "2026-10-25",
+      eventDate: EVENT_DATE_PLUS_10,
       startTime: "23:00",
       durationMinutes: 120,
     });
     const second = await createConfirmableInquiry(tenant, type, {
-      eventDate: "2026-10-25",
+      eventDate: EVENT_DATE_PLUS_10,
       startTime: "23:30",
       durationMinutes: 120,
     });
     const exFirst = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-25",
+      slotDate: EVENT_DATE_PLUS_10,
       startMinute: first.startMinute,
       endMinute: first.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -908,7 +917,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const exSecond = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-25",
+      slotDate: EVENT_DATE_PLUS_10,
       startMinute: second.startMinute,
       endMinute: second.endMinute,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.CONFIRM_BOOKING,
@@ -943,7 +952,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const tenant = await provisionTenant("hold-fail");
     const { resources } = await seedLane(tenant.organizationId, tenant.locationId, 1);
     const instants = resolveStrictOccupancyInstants({
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE_PLUS_7,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       timeZone: tenant.timeZone,
@@ -959,7 +968,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
         resourceId: resources[0]!.id,
         status: RESOURCE_RESERVATION_STATUSES.BOOKED,
         sourceType: "MANUAL",
-        slotDate: new Date("2026-10-22T00:00:00.000Z"),
+        slotDate: new Date(`${EVENT_DATE_PLUS_7}T00:00:00.000Z`),
         startMinute: 14 * 60,
         endMinute: 16 * 60,
         startsAt: instants.startsAt,
@@ -969,7 +978,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     const exception = await authorizeOperatingHoursException(tenant.ctx, db, {
       organizationId: tenant.organizationId,
       locationId: tenant.locationId!,
-      slotDate: "2026-10-22",
+      slotDate: EVENT_DATE_PLUS_7,
       startMinute: 14 * 60,
       endMinute: 16 * 60,
       purpose: OPERATING_HOURS_EXCEPTION_PURPOSES.PLACE_HOLD,
@@ -979,7 +988,7 @@ describe("R2D.4 booking transaction safety (TEST)", { timeout: 180_000 }, () => 
     await expect(
       placeManualHold(tenant.ctx, db, {
         resourceId: resources[0]!.id,
-        date: "2026-10-22",
+        date: EVENT_DATE_PLUS_7,
         startTime: "14:00",
         endTime: "16:00",
         hoursExceptionId: exception.id,

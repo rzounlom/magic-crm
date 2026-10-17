@@ -10,6 +10,9 @@ import { INQUIRY_AUDIENCES } from "@/types/catalog";
 import { TENANT_ALPHA_DATASET } from "../fixtures/tenant-alpha-beta-catalogs";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -115,7 +118,7 @@ describe("experience grants", () => {
           lastName: "Lovelace",
           email,
           eventType: "Birthday Party",
-          preferredDate: "2026-10-15",
+          preferredDate: EVENT_DATE,
           startTime: "18:00",
           guestCount: 12,
           guestMix: "mixed_ages",
@@ -142,7 +145,7 @@ describe("experience grants", () => {
           lastName: "Lovelace",
           email,
           eventType: "Birthday Party",
-          preferredDate: "2026-10-15",
+          preferredDate: EVENT_DATE,
           startTime: "18:00",
           guestCount: 12,
           guestMix: "mostly_adults",

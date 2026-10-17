@@ -1,0 +1,13 @@
+$ tsx --tsconfig tsconfig.json scripts/r3-create-staff-browser-fixture.ts
+◇ injected env (7) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+◇ injected env (0) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]
+{
+  "ok": true,
+  "outPath": "playwright/.fixtures/staff-inquiry.json",
+  "organizationSlug": "magiccrm-test-center-b",
+  "inquiryId": "l996vuzsupfuouefkyrehhrz",
+  "planCount": 3,
+  "selectedPlanId": "dszrcoobkd5qkjdb4di7zv7s",
+  "inquiryPath": "/app/inquiries/l996vuzsupfuouefkyrehhrz",
+  "exportHint": "export PLAYWRIGHT_STAFF_INQUIRY_FIXTURE=\"$PWD/playwright/.fixtures/staff-inquiry.json\""
+}

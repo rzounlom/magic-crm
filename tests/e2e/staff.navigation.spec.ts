@@ -10,7 +10,8 @@ test.describe("Scenario A — Staff navigation and organization context", { tag:
   test.use({ storageState: auth.ok ? auth.storageStatePath : undefined });
 
   test("authenticated entry reaches /app with module navigation", async ({ page }) => {
-    const response = await page.goto("/app");
+    // domcontentloaded avoids ERR_TIMED_OUT when Clerk/awareness keep the load event deferred.
+    const response = await page.goto("/app", { waitUntil: "domcontentloaded" });
     expect(response?.status() ?? 0).toBeLessThan(500);
     await expect(page).not.toHaveURL(/sign-in/);
     await expect(page.getByRole("navigation").first()).toBeVisible();
@@ -18,7 +19,7 @@ test.describe("Scenario A — Staff navigation and organization context", { tag:
   });
 
   test("organization context chip is present and non-empty when rendered", async ({ page }) => {
-    await page.goto("/app");
+    await page.goto("/app", { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/sign-in/);
     const chip = page.locator("[data-employee-context]");
     if ((await chip.count()) === 0) {
@@ -34,7 +35,7 @@ test.describe("Scenario A — Staff navigation and organization context", { tag:
   });
 
   test("unauthenticated sign-in surface is not shown while storage state is valid", async ({ page }) => {
-    await page.goto("/app/inquiries");
+    await page.goto("/app/inquiries", { waitUntil: "domcontentloaded" });
     if (page.url().includes("sign-in")) {
       test.skip(true, "Storage state expired — regenerate with pnpm test:e2e:staff:auth");
     }

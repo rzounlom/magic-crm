@@ -12,6 +12,9 @@ import { EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { RESOURCE_RESERVATION_SOURCES, RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -61,7 +64,7 @@ describe("proposal nearby search (postgres)", () => {
       organizationId: organization.id,
       status: RESOURCE_RESERVATION_STATUSES.BOOKED,
       sourceType: RESOURCE_RESERVATION_SOURCES.BOOKING,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60,
       endMinute: 19 * 60,
       resourceIds: partyA,
@@ -71,7 +74,7 @@ describe("proposal nearby search (postgres)", () => {
       organizationId: organization.id,
       status: RESOURCE_RESERVATION_STATUSES.BOOKED,
       sourceType: RESOURCE_RESERVATION_SOURCES.BOOKING,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 18 * 60,
       endMinute: 19 * 60,
       resourceIds: partyB,
@@ -91,7 +94,7 @@ describe("proposal nearby search (postgres)", () => {
         lastName: "C",
         email: `party.c.${crypto.randomUUID()}@example.com`,
         eventType: "Birthday Party",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "17:00",
         guestCount: 20,
         guestMix: "mixed_ages",

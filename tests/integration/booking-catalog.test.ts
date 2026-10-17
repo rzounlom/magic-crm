@@ -11,6 +11,10 @@ import { RESOURCE_RESERVATION_SOURCES, RESOURCE_RESERVATION_STATUSES } from "@/t
 import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDateOnWeekday } from "../helpers/future-event-date";
+
+/** Thursday keeps Generations-like bowling proposal composition stable. */
+const EVENT_DATE = futureEventDateOnWeekday("thu", 28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -48,7 +52,7 @@ function intake(slug: string, extras: Record<string, unknown> = {}) {
     lastName: "Lovelace",
     email: `ada.${crypto.randomUUID()}@example.com`,
     eventType: "Birthday Party",
-    preferredDate: "2026-10-15",
+    preferredDate: EVENT_DATE,
     startTime: "18:00",
     guestCount: 12,
     guestMix: "mostly_children",
@@ -158,7 +162,7 @@ describe("booking catalog import and proposals (postgres)", () => {
       organizationId: tenantA.id,
       status: RESOURCE_RESERVATION_STATUSES.HOLD,
       sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 8 * 60,
       endMinute: 22 * 60,
       resourceIds: typeA.resources.map((row) => row.id),
@@ -175,6 +179,7 @@ describe("booking catalog import and proposals (postgres)", () => {
       where: { inquiryId: created.inquiryId },
     });
     const bowlingPlan = plans.find((row) => JSON.stringify(row.payload).includes("bowling-lane"));
+    expect(bowlingPlan, "expected a bowling-lane plan for exhausted-capacity assertion").toBeTruthy();
     expect(bowlingPlan?.availabilityStatus === "UNAVAILABLE" || bowlingPlan?.availabilityValidated === false).toBe(true);
 
     const typeB = await db.resourceType.findFirstOrThrow({
@@ -182,7 +187,7 @@ describe("booking catalog import and proposals (postgres)", () => {
     });
     const checkB = await checkResourceAvailability(db, {
       organizationId: tenantB.id,
-      date: "2026-10-15",
+      date: EVENT_DATE,
       startTime: "18:00",
       durationMinutes: 60,
       resourceRequirements: [

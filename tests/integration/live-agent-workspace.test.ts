@@ -30,6 +30,9 @@ import { RESOURCE_RESERVATION_SOURCES, RESOURCE_RESERVATION_STATUSES } from "@/t
 import { authorizeHoldHoursForInquiry } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -150,7 +153,7 @@ async function submitAndSelect(
       customerGroupName: "Apex Robotics",
       email,
       eventType: "Corporate Event",
-      preferredDate: "2026-10-15",
+      preferredDate: EVENT_DATE,
       startTime: "18:00",
       guestCount,
       guestMix: "mostly_adults",
@@ -292,7 +295,7 @@ describe("live agent booking workspace (postgres)", () => {
       organizationId: tenant.organizationId,
       status: RESOURCE_RESERVATION_STATUSES.HOLD,
       sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
-      slotDate: "2026-10-15",
+      slotDate: EVENT_DATE,
       startMinute: 19 * 60,
       endMinute: 22 * 60,
       resourceIds: lanes.slice(0, 3).map((row) => row.id),
@@ -325,7 +328,7 @@ describe("live agent booking workspace (postgres)", () => {
         organizationId: tenant.organizationId,
         status: RESOURCE_RESERVATION_STATUSES.HOLD,
         sourceType: RESOURCE_RESERVATION_SOURCES.MANUAL,
-        slotDate: "2026-10-15",
+        slotDate: EVENT_DATE,
         startMinute: 18 * 60,
         endMinute: 21 * 60,
         resourceIds: leftover,

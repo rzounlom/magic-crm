@@ -20,6 +20,9 @@ import {
 import { authorizeUnconfiguredHoursForConfirm } from "../helpers/authorize-test-hours-exception";
 import { deleteTestOrganizations } from "../helpers/cleanup-test-organizations";
 import { createTestPrismaClient } from "../helpers/test-database";
+import { futureEventDate } from "../helpers/future-event-date";
+
+const EVENT_DATE = futureEventDate(28);
 
 const db = createTestPrismaClient();
 const createdOrganizationIds: string[] = [];
@@ -126,7 +129,7 @@ async function createPlanInquiry(
       lastName: "Lovelace",
       email: `ada.${crypto.randomUUID()}@example.com`,
       eventType: "Birthday Party",
-      preferredDate: "2026-10-15",
+      preferredDate: EVENT_DATE,
       startTime: "18:00",
       guestCount: 12,
       guestMix: "mostly_children",
@@ -159,7 +162,7 @@ async function createPlanInquiry(
       availabilityStatus: "AVAILABLE",
       payload: {
         guestCount: 12,
-        eventDate: "2026-10-15",
+        eventDate: EVENT_DATE,
         startTime: "18:00",
         durationMinutes: 180,
         activities: [{ knowledgeItemId: "bowl", name: "Bowling", quantity: 1, priceCents: 100_000 }],
@@ -182,7 +185,7 @@ async function confirmPendingReady(
   inquiryId: string,
   startTime = "18:00",
   durationMinutes = 180,
-  slotDate = "2026-10-15",
+  slotDate = EVENT_DATE,
 ) {
   const hoursException = await authorizeUnconfiguredHoursForConfirm({
     ctx: tenant.ctx,
@@ -213,10 +216,10 @@ describe("pending bookings (postgres)", { timeout: 60_000 }, () => {
     const check = await checkInquiryAvailability(tenant.ctx, db, created.inquiryId);
     expect(check.available).toBe(true);
     expect(await db.resourceReservation.count({ where: { inquiryId: created.inquiryId } })).toBe(0);
-    const pending = await listPendingBookingsForSchedule(tenant.ctx, db, "2026-10-15");
+    const pending = await listPendingBookingsForSchedule(tenant.ctx, db, EVENT_DATE);
     expect(pending.some((row) => row.inquiryId === created.inquiryId)).toBe(true);
     const day = await getMasterScheduleDay(tenant.ctx, db, {
-      date: "2026-10-15",
+      date: EVENT_DATE,
       resourceTypeId: bowling.type.id,
     });
     expect(day?.reservations).toHaveLength(0);
@@ -266,7 +269,7 @@ describe("pending bookings (postgres)", { timeout: 60_000 }, () => {
     expect(bySlug.get("axe-throwing-lane")).toBe(7);
     expect(bySlug.get("skybox")).toBe(1);
     const axeDay = await getMasterScheduleDay(tenant.ctx, db, {
-      date: "2026-10-15",
+      date: EVENT_DATE,
       resourceTypeId: axe.type.id,
     });
     expect(axeDay?.reservations.filter((row) => row.status === RESOURCE_RESERVATION_STATUSES.BOOKED)).toHaveLength(7);
@@ -368,7 +371,7 @@ describe("pending bookings (postgres)", { timeout: 60_000 }, () => {
         lastName: "Other",
         email: `eve.${crypto.randomUUID()}@example.com`,
         eventType: "Birthday Party",
-        preferredDate: "2026-10-15",
+        preferredDate: EVENT_DATE,
         startTime: "18:00",
         guestCount: 8,
         guestMix: "mostly_children",

@@ -1,0 +1,10 @@
+$ tsx --tsconfig tsconfig.json scripts/r5-create-lifecycle-fixture.ts
+◇ injected env (7) from .env // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+{
+  "ok": true,
+  "staffPath": "playwright/.fixtures/staff-inquiry.json",
+  "lifecyclePath": "playwright/.fixtures/r5-lifecycle.json",
+  "holdPath": "/app/inquiries/p3qzzrmmtar2qbr9bpgcnzrl",
+  "confirmPath": "/app/inquiries/l5yetv6hx813i0cjxai1le6w"
+}
