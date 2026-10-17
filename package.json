@@ -34,7 +34,6 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install chromium",
     "test:watch": "vitest --config vitest.config.mts",
-
     "test:db:prepare": "node scripts/prepare-test-db.mjs",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
@@ -52,6 +51,7 @@
     "scenario-lab:migrate-deploy": "node scripts/migrate-scenario-lab-database.mjs",
     "scenario-lab:provision-db-identity": "tsx --tsconfig tsconfig.json scripts/provision-scenario-lab-database-identity.ts",
     "scenario-lab:seed": "tsx --tsconfig tsconfig.json scripts/seed-scenario-lab-venue.ts",
+    "scenario-lab:dev": "tsx --tsconfig tsconfig.json scripts/dev-scenario-lab.ts",
     "prepare": "husky"
   },
   "dependencies": {

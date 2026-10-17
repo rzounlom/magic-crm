@@ -4389,3 +4389,15 @@ Learn more: https://clerk.com/docs/reference/components/versioning
  GET /sign-in 200 in 51ms (next.js: 7ms, proxy.ts: 6ms, application-code: 39ms)
 [browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
  GET /sign-in/SignIn_clerk_catchall_check_1792268272094 200 in 60ms (next.js: 7ms, proxy.ts: 8ms, application-code: 44ms)
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+▲ Next.js 16.3.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.83:3000
+- Environments: .env
+✓ Ready in 502ms
+✓ Running next.config.ts took 47ms
+
+Attention: Clerk collects telemetry data from its SDKs when connected to development instances.
+The data collected is used to inform Clerk's product roadmap.
+To learn more, including how to opt-out from the telemetry program, visit: https://clerk.com/docs/telemetry.
+
