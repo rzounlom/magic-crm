@@ -66,6 +66,8 @@ model Organization {
   operatingHoursWindows  LocationOperatingHoursWindow[]
   operatingHoursExceptions LocationOperatingHoursException[]
   operatingHoursStaffExceptions OperatingHoursStaffException[]
+  scenarioLabRuns         ScenarioLabRun[]
+  scenarioLabOwnedEntities ScenarioLabOwnedEntity[]
 
   @@index([onboardingStatus])
   @@map("organizations")
@@ -377,6 +379,7 @@ model UserProfile {
   inquirySeen                 InquirySeen[]
   operatingHoursExceptionsAuthorized OperatingHoursStaffException[] @relation("OperatingHoursStaffExceptionAuthorizedBy")
   operatingHoursExceptionsRevoked    OperatingHoursStaffException[] @relation("OperatingHoursStaffExceptionRevokedBy")
+  scenarioLabRunsCreated             ScenarioLabRun[]               @relation("ScenarioLabRunCreatedBy")
 
   @@unique([organizationId, id])
   @@unique([organizationId, clerkUserId])
@@ -1281,6 +1284,61 @@ model BookingLineItem {
   @@unique([organizationId, id])
   @@index([organizationId, bookingId])
   @@map("booking_line_items")
+}
+
+/// Singleton proof that this database was intentionally labeled for nonproduction Scenario Lab use.
+/// Provision only via the explicit provisioning script. Never auto-insert into an unknown database.
+model DatabaseEnvironmentIdentity {
+  /// Fixed singleton primary key.
+  id        String   @id
+  /// Must be scenario_lab_test for Scenario Lab enablement. Never production.
+  kind      String   @db.VarChar(64)
+  /// Secret matched against MAGICCRM_DATABASE_ENVIRONMENT_TOKEN. Never expose to clients.
+  token     String   @db.VarChar(128)
+  /// Safe operator-facing label shown in Scenario Lab UI (not a connection string).
+  label     String   @db.VarChar(80)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("database_environment_identity")
+}
+
+/// Durable Scenario Lab run record. Templates and staging land in later LAB phases.
+model ScenarioLabRun {
+  id                     String   @id @default(cuid(2))
+  organizationId         String
+  createdByUserProfileId String
+  /// Reserved for LAB1-B+ scenario templates.
+  templateKey            String?  @db.VarChar(80)
+  status                 String   @default("initialized") @db.VarChar(32)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  organization  Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdBy     UserProfile             @relation("ScenarioLabRunCreatedBy", fields: [organizationId, createdByUserProfileId], references: [organizationId, id], onDelete: Restrict)
+  ownedEntities ScenarioLabOwnedEntity[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, status])
+  @@map("scenario_lab_runs")
+}
+
+/// Tracks fixture entities owned by a Scenario Lab run for future safe reset.
+model ScenarioLabOwnedEntity {
+  id             String   @id @default(cuid(2))
+  organizationId String
+  runId          String
+  entityType     String   @db.VarChar(80)
+  entityId       String
+  createdAt      DateTime @default(now())
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  run          ScenarioLabRun @relation(fields: [organizationId, runId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, entityType, entityId])
+  @@index([organizationId, runId])
+  @@map("scenario_lab_owned_entities")
 }
 
 /// Tenant-scoped AI usage metadata for later pricing. Not billing.

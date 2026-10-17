@@ -48,6 +48,7 @@
     "tenant:import-sales-knowledge": "tsx --tsconfig tsconfig.json scripts/seed-dev-sales-knowledge.ts",
     "tenant:import-booking-catalog": "tsx --tsconfig tsconfig.json scripts/import-booking-catalog.ts",
     "tenant:sync-resource-types": "tsx --tsconfig tsconfig.json scripts/sync-tenant-resource-types.ts",
+    "scenario-lab:provision-db-identity": "tsx --tsconfig tsconfig.json scripts/provision-scenario-lab-database-identity.ts",
     "prepare": "husky"
   },
   "dependencies": {

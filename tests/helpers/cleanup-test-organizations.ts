@@ -48,6 +48,8 @@ const CLEANUP_TABLES_BY_ORG_ID = [
   "team_invitation_security_groups",
   "team_invitations",
   "audit_logs",
+  "scenario_lab_owned_entities",
+  "scenario_lab_runs",
   "security_groups",
   "user_profiles",
   "locations",
