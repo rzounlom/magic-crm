@@ -1303,24 +1303,38 @@ model DatabaseEnvironmentIdentity {
   @@map("database_environment_identity")
 }
 
-/// Durable Scenario Lab run record. Templates and staging land in later LAB phases.
+/// Durable Scenario Lab run record for private QA staging.
 model ScenarioLabRun {
-  id                     String   @id @default(cuid(2))
+  id                     String    @id @default(cuid(2))
   organizationId         String
   createdByUserProfileId String
-  /// Reserved for LAB1-B+ scenario templates.
-  templateKey            String?  @db.VarChar(80)
-  status                 String   @default("initialized") @db.VarChar(32)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  /// Stable template key such as customer_submits_inquiry.
+  templateKey            String    @db.VarChar(80)
+  /// initialized | ready | running | completed | failed
+  status                 String    @default("initialized") @db.VarChar(32)
+  /// High-entropy public handoff token (not the run id). Unique across the database.
+  correlationToken       String    @unique @db.VarChar(64)
+  /// Client-supplied key for idempotent create within the trusted organization.
+  idempotencyKey         String    @db.VarChar(80)
+  /// Synthetic customer/event fixture prepared for this run (never real customer PII).
+  fixturePayload         Json?
+  failureMessage         String?   @db.VarChar(500)
+  publicIntakeOpenedAt   DateTime?
+  inquiryLinkedAt        DateTime?
+  /// Append-only observed timeline entries (operator actions + authoritative DB observations).
+  timeline               Json      @default("[]")
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   organization  Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   createdBy     UserProfile             @relation("ScenarioLabRunCreatedBy", fields: [organizationId, createdByUserProfileId], references: [organizationId, id], onDelete: Restrict)
   ownedEntities ScenarioLabOwnedEntity[]
 
   @@unique([organizationId, id])
+  @@unique([organizationId, idempotencyKey])
   @@index([organizationId, createdAt])
   @@index([organizationId, status])
+  @@index([organizationId, templateKey, createdAt])
   @@map("scenario_lab_runs")
 }
 

@@ -48,6 +48,7 @@ export async function submitPublicInquiryAction(formData: FormData): Promise<Sec
       notes: String(formData.get("notes") ?? ""),
       companyWebsite: String(formData.get("companyWebsite") ?? ""),
       submissionId: String(formData.get("submissionId") ?? ""),
+      scenarioLabCorrelationToken: String(formData.get("scenarioLabCorrelationToken") ?? ""),
     });
     if (!fields.success) {
       return {
@@ -64,6 +65,7 @@ export async function submitPublicInquiryAction(formData: FormData): Promise<Sec
       ...fields.data,
       phone: fields.data.phone || undefined,
       notes: fields.data.notes || undefined,
+      scenarioLabCorrelationToken: fields.data.scenarioLabCorrelationToken || undefined,
     });
     return {
       ok: true,

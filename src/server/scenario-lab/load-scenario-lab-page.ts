@@ -1,67 +1,43 @@
 import "server-only";
 
-import { notFound } from "next/navigation";
-
-import { readTrustedClerkAuth } from "@/lib/auth/trusted-clerk-auth";
 import { db } from "@/lib/db";
+import { loadScenarioLabAccessOrNotFound } from "@/server/scenario-lab/load-scenario-lab-access";
 import {
-  requireScenarioLabAccess,
-  type ScenarioLabAccessContext,
-} from "@/server/scenario-lab/authorize-scenario-lab";
-import { isScenarioLabError } from "@/server/scenario-lab/errors";
+  assessTrustedVenueReadiness,
+  listScenarioLabRuns,
+  listScenarioLabTemplateViews,
+} from "@/server/scenario-lab/run-service";
 
-export type ScenarioLabFoundationView = {
+export type ScenarioLabDashboardView = {
   heading: string;
   environmentBadge: string;
   authorizedUser: string;
   trustedOrganization: string;
   databaseIdentityLabel: string;
   environmentVerificationStatus: "verified";
-  stagingMessage: string;
+  venueReady: boolean;
+  venueRequirements: string[];
+  templates: Array<{
+    key: string;
+    name: string;
+    description: string;
+    available: boolean;
+    statusLabel: string;
+  }>;
+  recentRuns: Array<{
+    id: string;
+    templateName: string;
+    statusLabel: string;
+    createdAt: string;
+  }>;
 };
 
-/**
- * Server-only page loader. Unauthorized callers receive a safe 404.
- * Never returns secrets, URLs, tokens, or other tenants' data.
- */
-export async function loadScenarioLabFoundationPage(): Promise<ScenarioLabFoundationView> {
-  let access: ScenarioLabAccessContext;
-  try {
-    const auth = await readTrustedClerkAuth();
-    access = await requireScenarioLabAccess({
-      auth,
-      database: db,
-      resolveOrganizationName: async (organizationId) => {
-        const org = await db.organization.findFirst({
-          where: { id: organizationId },
-          select: { name: true },
-        });
-        return org?.name ?? null;
-      },
-      resolveUserDisplayName: async (userProfileId) => {
-        const profile = await db.userProfile.findFirst({
-          where: { id: userProfileId },
-          select: { displayName: true, firstName: true, lastName: true, clerkUserId: true },
-        });
-        if (!profile) {
-          return null;
-        }
-        if (profile.displayName?.trim()) {
-          return profile.displayName.trim();
-        }
-        const name = [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim();
-        if (name) {
-          return name;
-        }
-        return profile.clerkUserId;
-      },
-    });
-  } catch (error) {
-    if (isScenarioLabError(error)) {
-      notFound();
-    }
-    throw error;
-  }
+export async function loadScenarioLabDashboardPage(): Promise<ScenarioLabDashboardView> {
+  const access = await loadScenarioLabAccessOrNotFound();
+  const [venue, recentRuns] = await Promise.all([
+    assessTrustedVenueReadiness(db, access.request.organizationId),
+    listScenarioLabRuns(access.request, db, 15),
+  ]);
 
   return {
     heading: "MagicCRM Scenario Lab",
@@ -70,6 +46,14 @@ export async function loadScenarioLabFoundationPage(): Promise<ScenarioLabFounda
     trustedOrganization: access.organizationName,
     databaseIdentityLabel: access.environment.databaseLabel,
     environmentVerificationStatus: "verified",
-    stagingMessage: "Scenario staging is not enabled yet.",
+    venueReady: venue.ready,
+    venueRequirements: venue.requirements,
+    templates: listScenarioLabTemplateViews(),
+    recentRuns: recentRuns.map((run) => ({
+      id: run.id,
+      templateName: run.templateName,
+      statusLabel: run.statusLabel,
+      createdAt: run.createdAt,
+    })),
   };
 }

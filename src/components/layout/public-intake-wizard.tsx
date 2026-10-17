@@ -122,12 +122,18 @@ export function PublicIntakeWizard({
   attractions = [],
   attractionRequiredGuestMixes = [],
   action = submitPublicInquiryAction,
+  initialAnswers,
+  scenarioLabCorrelationToken,
 }: {
   organizationSlug: string;
   attractions?: PublicPlannerAttraction[];
   /** Guest mixes whose tenant profile refuses an empty attraction list. */
   attractionRequiredGuestMixes?: Array<(typeof INTAKE_GUEST_MIX_VALUES)[number]>;
   action?: (formData: FormData) => Promise<SecurityActionResult>;
+  /** Optional Scenario Lab synthetic prefill (public-safe fields only). */
+  initialAnswers?: Partial<PlannerAnswers>;
+  /** Optional Scenario Lab correlation nonce — not a privileged run id. */
+  scenarioLabCorrelationToken?: string;
 }) {
   const router = useRouter();
   const honeypotId = useId();
@@ -145,6 +151,7 @@ export function PublicIntakeWizard({
   const [submissionId, setSubmissionId] = useState(() => crypto.randomUUID());
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
   const [draftRestored, setDraftRestored] = useState(false);
+  const [labPrefillApplied, setLabPrefillApplied] = useState(false);
   const [focusTick, setFocusTick] = useState(0);
 
   const catalogAttractionIds = useMemo(() => new Set(attractions.map((item) => item.id)), [attractions]);
@@ -168,6 +175,15 @@ export function PublicIntakeWizard({
       return;
     }
     draftHydrated.current = true;
+    // Scenario Lab prefill wins over browser draft so operators stage known fixtures.
+    if (initialAnswers && Object.keys(initialAnswers).length > 0) {
+      queueMicrotask(() => {
+        dispatch({ type: "edit", patch: initialAnswers });
+        setLabPrefillApplied(true);
+        draftReady.current = true;
+      });
+      return;
+    }
     const restored = readIntakeDraft(organizationSlug, catalogAttractionIds);
     // Defer so hydrate is an external-store callback, not a sync effect setState.
     queueMicrotask(() => {
@@ -389,6 +405,15 @@ export function PublicIntakeWizard({
           </p>
 
           <div data-planner-scroll className="public-scroll min-h-0 flex-1 overflow-y-auto pt-4 pr-2 pb-8">
+            {labPrefillApplied ? (
+              <div
+                role="status"
+                data-lab-prefill-banner
+                className="mb-4 rounded-[var(--radius-control)] border border-border bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground"
+              >
+                <p>Scenario Lab filled synthetic TEST customer details. Review and submit through this real intake form.</p>
+              </div>
+            ) : null}
             {draftRestored ? (
               <div
                 role="status"
@@ -408,6 +433,9 @@ export function PublicIntakeWizard({
             <form id="planner-review" aria-busy={pending} onSubmit={onSubmit} noValidate>
               <input type="hidden" name="organizationSlug" value={organizationSlug} />
               <input type="hidden" name="submissionId" value={submissionId} />
+              {scenarioLabCorrelationToken ? (
+                <input type="hidden" name="scenarioLabCorrelationToken" value={scenarioLabCorrelationToken} />
+              ) : null}
               <input type="hidden" name="eventType" value={answers.eventType} />
               <input type="hidden" name="preferredDate" value={answers.eventDate} />
               <input type="hidden" name="startTime" value={startTime} />

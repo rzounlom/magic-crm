@@ -131,6 +131,15 @@ export const publicIntakeSchema = z
     notes: optionalTrimmed(PUBLIC_INTAKE_LIMITS.notes, "Notes are too long."),
     companyWebsite: z.string().optional(),
     submissionId: z.string().trim().min(8).max(80),
+    /// Optional Scenario Lab correlation nonce. Never a privileged run id.
+    scenarioLabCorrelationToken: z.preprocess(
+      emptyToUndefined,
+      z
+        .string()
+        .trim()
+        .regex(/^[a-f0-9]{32,64}$/i, { error: "Invalid lab reference." })
+        .optional(),
+    ),
   })
   .superRefine((data, ctx) => {
     if (!data.foodPreference && !data.diningPreference) {

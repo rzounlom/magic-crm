@@ -37,6 +37,7 @@ import {
 import { normalizeInvitationEmail } from "@/server/team/invitation-email";
 import { resolvePrimaryLocationId } from "@/server/locations/primary-location";
 import { assertSelectablePublicAttractions, generateEventPlansForInquiry } from "@/server/services/event-plan-service";
+import { claimScenarioLabInquiryIfPresent } from "@/server/scenario-lab/claim-inquiry";
 import { startWorkingInquiry } from "@/server/services/live-agent-service";
 import { runSalesAgentTurn, type SalesAgentRuntime } from "@/server/services/sales-agent-service";
 import {
@@ -83,6 +84,8 @@ export type PublicIntakeInput = {
   notes?: string;
   companyWebsite?: string;
   submissionId: string;
+  /** Optional Scenario Lab handoff token. Does not grant privileged access. */
+  scenarioLabCorrelationToken?: string;
 };
 
 export async function getCurrentTenantPublicInquiryPath(
@@ -245,12 +248,16 @@ export async function createPublicInquiry(
     metadata: { source: INQUIRY_SOURCES.WEB, channel: CONVERSATION_CHANNELS.WEB },
   });
 
+  const labCorrelationToken = parsed.data.scenarioLabCorrelationToken?.trim();
+  // Scenario Lab synthetic customers must never trigger outbound plan emails.
+  const skipOutboundNotification = Boolean(labCorrelationToken);
+
   try {
     const appUrl = process.env.APP_URL?.trim();
     await generateEventPlansForInquiry(database, {
       organizationId: organization.id,
       inquiryId: created.inquiry.id,
-      ...(appUrl
+      ...(!skipOutboundNotification && appUrl
         ? {
             planNotification: personalEventPlanNotification({
               customerEmail: parsed.data.email.trim(),
@@ -271,6 +278,14 @@ export async function createPublicInquiry(
         status: INQUIRY_STATUSES.NEEDS_FOLLOW_UP,
         humanHandoffReason: READY_FOR_HUMAN_REASONS.GENERATION_FAILED,
       },
+    });
+  }
+
+  if (labCorrelationToken) {
+    await claimScenarioLabInquiryIfPresent(database, {
+      organizationId: organization.id,
+      inquiryId: created.inquiry.id,
+      correlationToken: labCorrelationToken,
     });
   }
 

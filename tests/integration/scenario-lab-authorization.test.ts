@@ -272,7 +272,11 @@ describe("Scenario Lab authorization (postgres)", () => {
       data: {
         organizationId: access.request.organizationId,
         createdByUserProfileId: access.request.userId,
+        templateKey: "customer_submits_inquiry",
         status: "initialized",
+        correlationToken: `lab1a_${crypto.randomUUID().replace(/-/g, "")}`,
+        idempotencyKey: `idem_${crypto.randomUUID()}`,
+        timeline: [],
       },
     });
 

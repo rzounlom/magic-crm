@@ -2274,3 +2274,1071 @@ Learn more: https://clerk.com/docs/reference/components/versioning
 (code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
  POST /app/inquiries/kfr7qdnz3o8qrcvxqsis8ee3 200 in 516ms (next.js: 8ms, proxy.ts: 8ms, application-code: 500ms)
 {"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":161,"unreadCount":25,"candidateCount":24}
+ GET /sign-in 200 in 1340ms (next.js: 987ms, proxy.ts: 7ms, application-code: 345ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267567290 200 in 100ms (next.js: 14ms, proxy.ts: 15ms, application-code: 72ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 132ms (next.js: 9ms, proxy.ts: 6ms, application-code: 116ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267570076 200 in 142ms (next.js: 43ms, proxy.ts: 10ms, application-code: 89ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 65ms (next.js: 10ms, proxy.ts: 7ms, application-code: 48ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267572488 200 in 94ms (next.js: 26ms, proxy.ts: 14ms, application-code: 54ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 150ms (next.js: 32ms, proxy.ts: 16ms, application-code: 102ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267577258 200 in 122ms (next.js: 42ms, proxy.ts: 24ms, application-code: 56ms)
+ GET /sign-in 200 in 71ms (next.js: 4ms, proxy.ts: 8ms, application-code: 59ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267579413 200 in 74ms (next.js: 10ms, proxy.ts: 8ms, application-code: 57ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 62ms (next.js: 9ms, proxy.ts: 9ms, application-code: 45ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 2.1s (next.js: 236ms, proxy.ts: 22ms, application-code: 1882ms)
+ POST /app 200 in 461ms (next.js: 82ms, proxy.ts: 28ms, application-code: 351ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":231,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 624ms (next.js: 4ms, proxy.ts: 8ms, application-code: 612ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ POST /app 200 in 438ms (next.js: 3ms, proxy.ts: 9ms, application-code: 425ms)
+⨯ Error: aborted
+    at ignore-listed frames {
+  code: 'ECONNRESET'
+}
+ GET /app 200 in 719ms (next.js: 24ms, proxy.ts: 10ms, application-code: 685ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":236,"unreadCount":25,"candidateCount":24}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":190,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 420ms (next.js: 4ms, proxy.ts: 9ms, application-code: 407ms)
+  └─ ƒ loadInquiryAwarenessAction() in 399ms src/server/actions/inquiry-notifications.ts
+ POST /app 200 in 18ms (next.js: 4ms, proxy.ts: 8ms, application-code: 5ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":208,"unreadCount":25,"candidateCount":24}
+ GET / 200 in 235ms (next.js: 53ms, proxy.ts: 7ms, application-code: 176ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 90ms (next.js: 3ms, proxy.ts: 5ms, application-code: 82ms)
+ GET /sign-in 200 in 43ms (next.js: 9ms, proxy.ts: 7ms, application-code: 26ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267590373 200 in 69ms (next.js: 6ms, proxy.ts: 6ms, application-code: 57ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 67ms (next.js: 3ms, proxy.ts: 6ms, application-code: 58ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 66ms (next.js: 3ms, proxy.ts: 5ms, application-code: 59ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 65ms (next.js: 2ms, proxy.ts: 5ms, application-code: 58ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET / 200 in 89ms (next.js: 5ms, proxy.ts: 8ms, application-code: 77ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET / 200 in 72ms (next.js: 3ms, proxy.ts: 6ms, application-code: 63ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET / 200 in 92ms (next.js: 2ms, proxy.ts: 5ms, application-code: 84ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET / 200 in 102ms (next.js: 23ms, proxy.ts: 6ms, application-code: 72ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET / 200 in 81ms (next.js: 3ms, proxy.ts: 6ms, application-code: 73ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 75ms (next.js: 2ms, proxy.ts: 5ms, application-code: 67ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 116ms (next.js: 23ms, proxy.ts: 7ms, application-code: 86ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 72ms (next.js: 2ms, proxy.ts: 6ms, application-code: 64ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 69ms (next.js: 3ms, proxy.ts: 4ms, application-code: 62ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 70ms (next.js: 2ms, proxy.ts: 6ms, application-code: 62ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 1616ms (next.js: 950ms, proxy.ts: 5ms, application-code: 661ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 297ms (next.js: 8ms, proxy.ts: 6ms, application-code: 283ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /inquire/magiccrm-test-center-b 200 in 285ms (next.js: 7ms, proxy.ts: 6ms, application-code: 272ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /inquire/magiccrm-test-center-b 200 in 291ms (next.js: 6ms, proxy.ts: 5ms, application-code: 280ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /inquire/magiccrm-test-center-b 200 in 283ms (next.js: 6ms, proxy.ts: 5ms, application-code: 272ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 301ms (next.js: 6ms, proxy.ts: 5ms, application-code: 290ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 388ms (next.js: 8ms, proxy.ts: 5ms, application-code: 376ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 292ms (next.js: 7ms, proxy.ts: 5ms, application-code: 279ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 286ms (next.js: 7ms, proxy.ts: 5ms, application-code: 273ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 302ms (next.js: 8ms, proxy.ts: 6ms, application-code: 289ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 288ms (next.js: 7ms, proxy.ts: 5ms, application-code: 275ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 289ms (next.js: 7ms, proxy.ts: 6ms, application-code: 277ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 286ms (next.js: 7ms, proxy.ts: 5ms, application-code: 273ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /plan/invalid-token-ux7-smoke 404 in 875ms (next.js: 802ms, proxy.ts: 5ms, application-code: 68ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs 200 in 510ms (next.js: 10ms, proxy.ts: 6ms, application-code: 494ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 73ms (next.js: 2ms, proxy.ts: 4ms, application-code: 67ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 54ms (next.js: 7ms, proxy.ts: 5ms, application-code: 41ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267635241 200 in 65ms (next.js: 13ms, proxy.ts: 6ms, application-code: 46ms)
+ GET /sign-in 200 in 88ms (next.js: 8ms, proxy.ts: 6ms, application-code: 75ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267637972 200 in 78ms (next.js: 11ms, proxy.ts: 9ms, application-code: 58ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 58ms (next.js: 8ms, proxy.ts: 6ms, application-code: 44ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267640178 200 in 60ms (next.js: 8ms, proxy.ts: 8ms, application-code: 44ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 49ms (next.js: 7ms, proxy.ts: 5ms, application-code: 37ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267641746 200 in 55ms (next.js: 7ms, proxy.ts: 6ms, application-code: 42ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 57ms (next.js: 7ms, proxy.ts: 5ms, application-code: 45ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267644358 200 in 61ms (next.js: 8ms, proxy.ts: 7ms, application-code: 46ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 47ms (next.js: 4ms, proxy.ts: 5ms, application-code: 39ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267645450 200 in 213ms (next.js: 7ms, proxy.ts: 6ms, application-code: 201ms)
+ GET /sign-in 200 in 45ms (next.js: 4ms, proxy.ts: 7ms, application-code: 35ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 1276ms (next.js: 4ms, proxy.ts: 6ms, application-code: 1266ms)
+ POST /app 200 in 317ms (next.js: 5ms, proxy.ts: 9ms, application-code: 303ms)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":142,"unreadCount":25,"candidateCount":24}
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 599ms (next.js: 3ms, proxy.ts: 7ms, application-code: 589ms)
+{"scope":"magiccrm.auth1","checkpoint":"app_shell_start","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.tenant","event":"organization_provisioning_started","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.tenant","event":"organization_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.tenant","event":"user_profile_reused","clerkOrganizationId":"org_3IegAuSjOhx2Hcjgea5ItoEjUwQ"}
+{"scope":"magiccrm.auth1","checkpoint":"provision_done","elapsedMs":0,"organizationCreated":false,"userProfileCreated":false}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":151,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 398ms (next.js: 3ms, proxy.ts: 7ms, application-code: 388ms)
+  └─ ƒ loadInquiryAwarenessAction() in 378ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.auth1","checkpoint":"chrome_done","elapsedMs":0,"route":"/app"}
+{"scope":"magiccrm.auth1","checkpoint":"app_ready","elapsedMs":0,"route":"/app"}
+ GET /app 200 in 626ms (next.js: 3ms, proxy.ts: 7ms, application-code: 616ms)
+ POST /app 200 in 176ms (next.js: 5ms, proxy.ts: 10ms, application-code: 161ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":141,"unreadCount":25,"candidateCount":24}
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":161,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 535ms (next.js: 3ms, proxy.ts: 9ms, application-code: 523ms)
+  └─ ƒ loadInquiryAwarenessAction() in 515ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":144,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 378ms (next.js: 3ms, proxy.ts: 8ms, application-code: 367ms)
+  └─ ƒ loadInquiryAwarenessAction() in 359ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":272,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 649ms (next.js: 5ms, proxy.ts: 10ms, application-code: 635ms)
+  └─ ƒ loadInquiryAwarenessAction() in 624ms src/server/actions/inquiry-notifications.ts
+{"scope":"magiccrm.inquiry-awareness","event":"loaded","durationMs":259,"unreadCount":25,"candidateCount":24}
+ POST /app 200 in 592ms (next.js: 3ms, proxy.ts: 7ms, application-code: 582ms)
+  └─ ƒ loadInquiryAwarenessAction() in 576ms src/server/actions/inquiry-notifications.ts
+ GET / 200 in 73ms (next.js: 2ms, proxy.ts: 5ms, application-code: 66ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 69ms (next.js: 2ms, proxy.ts: 5ms, application-code: 61ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in 200 in 43ms (next.js: 9ms, proxy.ts: 11ms, application-code: 24ms)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267687402 200 in 108ms (next.js: 10ms, proxy.ts: 20ms, application-code: 78ms)
+ GET / 200 in 68ms (next.js: 3ms, proxy.ts: 6ms, application-code: 59ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 69ms (next.js: 3ms, proxy.ts: 5ms, application-code: 62ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 66ms (next.js: 2ms, proxy.ts: 6ms, application-code: 57ms)
+ GET / 200 in 72ms (next.js: 2ms, proxy.ts: 6ms, application-code: 64ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET / 200 in 69ms (next.js: 3ms, proxy.ts: 5ms, application-code: 61ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET / 200 in 74ms (next.js: 2ms, proxy.ts: 6ms, application-code: 66ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET / 200 in 77ms (next.js: 2ms, proxy.ts: 8ms, application-code: 66ms)
+ GET / 200 in 77ms (next.js: 4ms, proxy.ts: 7ms, application-code: 66ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET / 200 in 66ms (next.js: 3ms, proxy.ts: 5ms, application-code: 58ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 91ms (next.js: 3ms, proxy.ts: 8ms, application-code: 79ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 70ms (next.js: 2ms, proxy.ts: 8ms, application-code: 60ms)
+[browser] Image with src "/marketing/intake-desktop-event.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 69ms (next.js: 0.6ms, proxy.ts: 6ms, application-code: 63ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET / 200 in 67ms (next.js: 2ms, proxy.ts: 5ms, application-code: 59ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 531ms (next.js: 7ms, proxy.ts: 5ms, application-code: 518ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 296ms (next.js: 7ms, proxy.ts: 4ms, application-code: 285ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 302ms (next.js: 8ms, proxy.ts: 5ms, application-code: 289ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 300ms (next.js: 7ms, proxy.ts: 4ms, application-code: 288ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /inquire/magiccrm-test-center-b 200 in 303ms (next.js: 8ms, proxy.ts: 6ms, application-code: 289ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 305ms (next.js: 7ms, proxy.ts: 5ms, application-code: 292ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /inquire/magiccrm-test-center-b 200 in 313ms (next.js: 8ms, proxy.ts: 6ms, application-code: 299ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 474ms (next.js: 8ms, proxy.ts: 5ms, application-code: 461ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 309ms (next.js: 18ms, proxy.ts: 6ms, application-code: 285ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 298ms (next.js: 7ms, proxy.ts: 5ms, application-code: 286ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 312ms (next.js: 7ms, proxy.ts: 5ms, application-code: 299ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 319ms (next.js: 8ms, proxy.ts: 6ms, application-code: 305ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /inquire/magiccrm-test-center-b 200 in 297ms (next.js: 7ms, proxy.ts: 4ms, application-code: 286ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /plan/invalid-token-ux7-smoke 404 in 73ms (next.js: 7ms, proxy.ts: 6ms, application-code: 60ms)
+ GET /plan/QiCOIqsb7R6DS4n_gpFSoI2qzjWpPL3l2FQq_MtnIzs 200 in 384ms (next.js: 7ms, proxy.ts: 5ms, application-code: 372ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET / 200 in 69ms (next.js: 3ms, proxy.ts: 6ms, application-code: 61ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".auth-sign-in-shell-panel .cl-rootBox"
+  - CSS ".auth-sign-in-shell-panel .cl-cardBox"
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js:35:1730)
+ GET /sign-in 200 in 50ms (next.js: 7ms, proxy.ts: 5ms, application-code: 37ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (https://dashing-panda-5445.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js:40:1032)
+ GET /sign-in/SignIn_clerk_catchall_check_1792267725541 200 in 65ms (next.js: 5ms, proxy.ts: 6ms, application-code: 54ms)
