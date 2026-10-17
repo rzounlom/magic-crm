@@ -22,6 +22,9 @@ import {
 
 if (process.env.MAGICCRM_DATABASE_ROLE === "test") {
   config({ path: ".env.test", override: true });
+} else if (process.env.MAGICCRM_DEPLOYMENT_KIND === "scenario_lab_test") {
+  // Prefer isolated Scenario Lab env; do not fall back to DEV URLs.
+  config({ path: ".env.scenario-lab.local", override: true });
 } else {
   config();
   config({ path: ".env.local", override: true });

@@ -5,6 +5,9 @@ import { resolvePrismaCliDatasourceUrl } from "./src/lib/env/prisma-cli";
 
 if (process.env.MAGICCRM_DATABASE_ROLE === "test") {
   config({ path: ".env.test", override: true });
+} else if (process.env.MAGICCRM_DEPLOYMENT_KIND === "scenario_lab_test") {
+  // Isolated Scenario Lab Neon branch — never merge DEV .env / .env.local URLs.
+  config({ path: ".env.scenario-lab.local", override: true });
 } else {
   config();
   config({ path: ".env.local", override: true });
