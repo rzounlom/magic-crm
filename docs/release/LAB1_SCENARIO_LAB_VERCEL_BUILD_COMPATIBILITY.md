@@ -66,8 +66,9 @@ pnpm build
 | --- | --- |
 | Branch | `scenario-lab-deploy` |
 | Tip before fix | `9bf20e37be0e9693d1c93f2b8da4e485c17fda37` |
-| Tip after commit | See git log after commit (this document committed with the fix) |
-| `main` modified | **No** |
+| Fix commit | `7dbb2e7deed58cfd08ee987932b9329090edb774` — *fix: use default Next.js distDir on Vercel for Scenario Lab* |
+| Local `main` tip (unchanged) | `9bf20e37be0e9693d1c93f2b8da4e485c17fda37` |
+| `origin/main` (unchanged) | `21991faee1f6e1fa9985e7d862ea025cc14bb966` |
 | Pushed | **No** |
 | Deployed | **No** |
 
