@@ -1,7 +1,11 @@
 # dependencies
 /node_modules
+node_modules/
 /.pnp
 .pnp.*
+# Local / accidental pnpm content-addressable store (never commit)
+.pnpm-store/
+**/.pnpm-store/
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -17,9 +21,11 @@
 /playwright/.auth/
 /playwright/.fixtures/
 
-# next.js
+# next.js (root + nested; Lab local dual-dev uses .next-scenario-lab)
 /.next/
+.next/
 /.next-scenario-lab/
+.next-scenario-lab/
 /out/
 
 # production
