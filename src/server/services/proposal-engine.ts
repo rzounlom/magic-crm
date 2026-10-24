@@ -1,3 +1,4 @@
+import { productEligibleForInquiry } from "@/server/catalog/alcohol-eligibility";
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
 import {
   COVERAGE_FEASIBILITY,
@@ -14,7 +15,7 @@ import {
   type ExperienceGrant,
   type FoodInclusion,
 } from "@/server/catalog/experience-coverage";
-import { composeEventItinerary, itinerarySpanMinutes, type ItineraryProduct } from "@/server/catalog/itinerary";
+import { composeEventItinerary, itinerarySpanMinutes, scheduleLimitationText, type ItineraryProduct } from "@/server/catalog/itinerary";
 import {
   addedScheduledActivities,
   customerActivityName,
@@ -78,6 +79,7 @@ export type LoadedCatalogProduct = CatalogProductInput & {
   experienceGrants?: ExperienceGrant[];
   experienceSessions?: number | null;
   foodInclusion?: FoodInclusion | null;
+  containsAlcohol?: boolean | null;
 };
 
 export type LoadedRecommendationProfile = {
@@ -183,6 +185,14 @@ export function selectCatalogProductsForTier(input: {
     if (!productUsableOnDate(product, input.inquiry.desiredDate)) {
       return;
     }
+    if (
+      !productEligibleForInquiry(product, {
+        audience: audienceFromGuestMix(input.inquiry.guestMix),
+        diningPreference: input.inquiry.diningPreference,
+      })
+    ) {
+      return;
+    }
     seen.add(product.id);
     chosen.push(product);
   };
@@ -248,8 +258,12 @@ async function quoteSelection(input: {
     foodFirst: input.profile.foodFirst,
     products: selectedProducts,
     fallbackMinutes: input.inquiry.desiredDurationMinutes ?? 60,
+    requestedMinutes: input.inquiry.desiredDurationMinutes,
   });
-  const durationMinutes = itineraryDraft.eventLengthMinutes || input.inquiry.desiredDurationMinutes || 60;
+  const durationMinutes =
+    input.inquiry.desiredDurationMinutes && input.inquiry.desiredDurationMinutes > 0
+      ? input.inquiry.desiredDurationMinutes
+      : itineraryDraft.eventLengthMinutes || 60;
   const pricingContext = {
     guestCount: input.inquiry.guestCount,
     eventDate: input.inquiry.desiredDate,
@@ -354,6 +368,8 @@ async function quoteSelection(input: {
     result,
     pricedProducts: selected,
     appliedPromotions,
+    itineraryPrecise: itineraryDraft.precise,
+    overflowActivityNames: itineraryDraft.overflowActivityNames,
   };
 }
 
@@ -434,7 +450,11 @@ export async function buildCatalogEventPlans(input: {
           diningPreference: input.inquiry.diningPreference,
           experienceGrants: product.experienceGrants ?? [],
           foodInclusion: product.foodInclusion ?? null,
-        }) !== PACKAGE_INTAKE_ELIGIBILITY.INELIGIBLE,
+        }) !== PACKAGE_INTAKE_ELIGIBILITY.INELIGIBLE &&
+        productEligibleForInquiry(product, {
+          audience,
+          diningPreference: input.inquiry.diningPreference,
+        }),
     );
     let spaceUnmet = composed?.spaceUnmet ?? false;
     let unfulfilledInterestSlugs = composed?.unfulfilledInterestSlugs ?? [];
@@ -788,9 +808,21 @@ export async function buildCatalogEventPlans(input: {
           : coverageFeasibility === COVERAGE_FEASIBILITY.INFEASIBLE
             ? "This option does not cover every selected experience."
             : null;
-    const sampleItinerary = itinerary.filter(isSampleItinerarySegment);
+    const neededActivityMinutes = selected
+      .filter((row) => row.kind === "ATTRACTION" || row.kind === "PACKAGE")
+      .reduce((sum, row) => sum + (row.durationMinutes && row.durationMinutes > 0 ? row.durationMinutes : 0), 0);
+    const scheduleLimitation = scheduleLimitationText({
+      overflowActivityNames: quote.overflowActivityNames,
+      requestedMinutes: input.inquiry.desiredDurationMinutes,
+      neededMinutes: neededActivityMinutes,
+    });
+    const itineraryPrecise = quote.itineraryPrecise && !scheduleLimitation;
+    const customerItinerary = itineraryPrecise
+      ? itinerary
+      : itinerary.filter((segment) => segment.role === "SPACE");
+    const sampleItinerary = customerItinerary.filter(isSampleItinerarySegment);
     const spanMinutes = itinerarySpanMinutes(sampleItinerary);
-    if (spanMinutes > durationMinutes) {
+    if (spanMinutes > durationMinutes && !input.inquiry.desiredDurationMinutes) {
       durationMinutes = spanMinutes;
     }
     const sequenced = sampleItinerary
@@ -830,7 +862,18 @@ export async function buildCatalogEventPlans(input: {
       : spaceUnmet
         ? "No private space in this venue's catalog fits this group."
         : null;
-    const customerFacingReason = [coverageNote, added.length > 0 && !delta ? `${experience}${exclusiveNote}` : experience, durationNote, spaceNote]
+    const unfulfilledNote =
+      unfulfilledInterestSlugs.length > 0
+        ? "A requested activity could not be included for this date or group size."
+        : null;
+    const customerFacingReason = [
+      coverageNote,
+      added.length > 0 && !delta ? `${experience}${exclusiveNote}` : experience,
+      durationNote,
+      spaceNote,
+      scheduleLimitation,
+      unfulfilledNote,
+    ]
       .filter(Boolean)
       .join(" ");
     const budget = budgetAssessment({
@@ -908,8 +951,16 @@ export async function buildCatalogEventPlans(input: {
           };
         }),
         durationNote,
-        schedule: sampleItinerary.map((row) => `${row.startTime}–${row.endTime} ${row.label}`),
-        itinerary,
+        schedule: itineraryPrecise
+          ? sampleItinerary.map((row) => `${row.startTime}–${row.endTime} ${row.label}`)
+          : activities.map((row) =>
+              row.durationMinutes && row.durationMinutes > 0
+                ? `${row.name} (${row.durationMinutes} minutes)`
+                : row.name,
+            ),
+        itinerary: customerItinerary,
+        itineraryPrecise,
+        scheduleLimitation,
         lineItems,
         depositPreviewCents,
         depositPreviewPercent: depositPercent,

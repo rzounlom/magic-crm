@@ -32,7 +32,7 @@ export default async function PublicEventPlanPage({
   const organizationName = customerFacingOrganizationName(view.organizationName);
 
   return (
-    <PublicCustomerShell contained organizationName={organizationName}>
+    <PublicCustomerShell organizationName={organizationName}>
       <PublicEventPlanView
         organizationName={organizationName}
         currency={view.currency}

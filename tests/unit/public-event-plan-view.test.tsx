@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PublicEventPlanView } from "@/components/layout/public-event-plan-view";
+import { PRODUCT_KINDS } from "@/types/catalog";
 import { EVENT_PLAN_TIERS } from "@/types/event-planner";
 
 vi.mock("next/navigation", () => ({
@@ -33,6 +34,11 @@ describe("public event plan view", () => {
           customerFirstName: "Ada",
           guestCount: 24,
           eventGoal: "Celebration",
+          eventType: "Birthday Party",
+          desiredDate: "2026-10-15",
+          desiredStartTime: "18:00",
+          guestMix: "mixed_ages",
+          diningPreference: "pizza_light",
           selectedEventPlanId: null,
         }}
         plans={[
@@ -110,8 +116,17 @@ describe("public event plan view", () => {
 
     expect(html).toContain("Your Personal Event Plan");
     expect(html).toContain("Riverside Fun Center Personal Event Planner");
+    expect(html).toContain("data-event-summary");
+    expect(html).toContain("Birthday Party");
+    expect(html).toContain("Oct 15, 2026 at 6:00 PM");
+    expect(html).toContain("24 guests");
+    expect(html).toContain("Mix of Kids &amp; Adults");
+    expect(html).toContain("Pizza &amp; Light Fare");
     expect(html).toContain("Recommended");
-    expect(html).toContain("Why We Recommend This");
+    expect(html).toContain("About this package");
+    expect(html).toContain("Great Value");
+    expect(html).toContain("Best Balance");
+    expect(html).toContain("Elevated Experience");
     expect(html).toContain("Good");
     expect(html).toContain("Recommended");
     expect(html).toContain("Premium");
@@ -121,20 +136,23 @@ describe("public event plan view", () => {
     expect(html).toContain("Estimated deposit");
     expect(html).toContain("(30%)");
     expect(html).toContain("Laser Tag - 90 minutes");
-    expect(html).toContain("Book Now");
+    expect(html).toContain("Continue with this package");
     expect(html).toContain("Submit inquiry");
+    expect(html).not.toContain("Book Now");
+    expect(html).not.toContain("Most Popular");
     const detailsAt = html.indexOf("data-plan-details");
     const actionsAt = html.indexOf("data-plan-actions");
     expect(detailsAt).toBeGreaterThan(-1);
     expect(actionsAt).toBeGreaterThan(detailsAt);
-    expect(html.indexOf("Book Now")).toBeGreaterThan(actionsAt);
+    expect(html.indexOf("Continue with this package")).toBeGreaterThan(actionsAt);
     expect(html.indexOf("Submit inquiry")).toBeGreaterThan(actionsAt);
-    expect(html.slice(detailsAt, actionsAt)).toContain("Attractions");
-    expect(html.slice(detailsAt, actionsAt)).not.toContain("Book Now");
-    expect(html).toContain("Attractions");
-    expect(html).toContain("Dining");
-    expect(html).toContain("Event Length");
+    expect(html.slice(detailsAt, actionsAt)).toContain("Activities &amp; Experiences");
+    expect(html.slice(detailsAt, actionsAt)).not.toContain("Continue with this package");
+    expect(html).toContain("Activities &amp; Experiences");
+    expect(html).toContain("Food &amp; Drinks");
+    expect(html).toContain("3 hours");
     expect(html).toContain("Final availability will be confirmed by our event team.");
+    expect(html).toContain("This saves a booking request");
     expect(html).toContain("Booking is finalized after the required payment");
     expect(html).not.toContain("Event Assistant");
     expect(html).not.toContain("AI Sales");
@@ -145,6 +163,7 @@ describe("public event plan view", () => {
     expect(html).toContain("5:30 PM–6:30 PM Fajita Bar");
     expect(html).toContain("6:30 PM–7:00 PM Axe Throwing");
     expect(html).not.toContain("17:30–18:30");
+    expect(html).not.toMatch(/overflow-y-auto/);
   });
 
   it("shows a confirmation screen after a plan is saved", () => {
@@ -188,6 +207,7 @@ describe("public event plan view", () => {
     expect(html).toContain("events team will follow up");
     expect(html).toContain("Inventory is not reserved");
     expect(html).toContain("The time is not held");
+    expect(html).not.toContain("Continue with this package");
     expect(html).not.toContain("Book Now");
   });
 
@@ -282,6 +302,7 @@ describe("public event plan view", () => {
     expect(html).toContain("Your Event Is Confirmed");
     expect(html).toContain("RIV-2026-00001");
     expect(html).toContain("24 guests");
+    expect(html).not.toContain("Continue with this package");
     expect(html).not.toContain("Book Now");
     expect(html).not.toContain("not reserved yet");
   });
@@ -339,6 +360,7 @@ describe("public event plan view", () => {
     expect(html).toContain("Estimated deposit");
     expect(html).toContain("inventory is not reserved");
     expect(html).toContain("Online payment is not enabled");
+    expect(html).not.toContain("Continue with this package");
     expect(html).not.toContain("Book Now");
     expect(html).not.toContain("24-hour hold");
     expect(html).not.toContain("Held until");
@@ -354,12 +376,12 @@ describe("public event plan view", () => {
     expect(formDataAt).toBeGreaterThan(-1);
     expect(yieldAt).toBeGreaterThan(-1);
     expect(formDataAt).toBeLessThan(yieldAt);
-    expect(source).toContain('pendingLabel="Booking…"');
+    expect(source).toContain('pendingLabel="Saving…"');
     expect(source).toContain('pendingLabel="Submitting…"');
     expect(source).toContain("onSafeSubmitAttempt");
   });
 
-  it("does not claim current availability when status is NOT_VALIDATED, while still allowing Book Now", () => {
+  it("does not claim current availability when status is NOT_VALIDATED, while still allowing a booking request", () => {
     const html = renderToStaticMarkup(
       <PublicEventPlanView
         organizationName="Riverside Fun Center"
@@ -398,12 +420,14 @@ describe("public event plan view", () => {
         ]}
       />,
     );
-    expect(html).toContain("Book Now");
+    expect(html).toContain("Continue with this package");
     expect(html).toContain("Live inventory still needs confirmation before booking.");
-    expect(html).not.toContain("Currently available for the sample itinerary shown.");
+    expect(html).not.toContain("Currently available");
+    expect(html).not.toContain("Your date is confirmed");
+    expect(html).not.toContain("This time is guaranteed available");
   });
 
-  it("hides Book Now on unavailable options and shows a persistent adjustment notice", () => {
+  it("hides the continue action on unavailable options and shows a persistent adjustment notice", () => {
     const html = renderToStaticMarkup(
       <PublicEventPlanView
         organizationName="Riverside Fun Center"
@@ -472,11 +496,12 @@ describe("public event plan view", () => {
     expect(html).not.toContain("18:30");
     expect(html).toContain("Adjusted from your requested time");
     expect(html).toContain("This option is not available at the requested time.");
-    expect(html).toContain("Book Now");
+    expect(html).toContain("Continue with this package");
+    expect(html).not.toContain("Currently available");
     const mobile = html.slice(html.indexOf('data-proposal-mobile'), html.indexOf('data-proposal-desktop'));
     const desktop = html.slice(html.indexOf('data-proposal-desktop'));
-    expect(mobile.split("Book Now").length - 1).toBe(1);
-    expect(desktop.split("Book Now").length - 1).toBe(1);
+    expect(mobile.split(">Continue with this package<").length - 1).toBe(1);
+    expect(desktop.split(">Continue with this package<").length - 1).toBe(1);
   });
 
   it("formats proposal copy once and keeps each tenant deposit percent", () => {
@@ -628,15 +653,15 @@ describe("mobile proposal comparison", () => {
     expect(mobile?.getAttribute("role")).toBe("tabpanel");
 
     const mobileRegion = within(mobile as HTMLElement);
-    expect(mobileRegion.getAllByRole("button", { name: "Book Now" })).toHaveLength(1);
-    expect(mobileRegion.getAllByRole("button", { name: "Submit inquiry" })).toHaveLength(1);
+    expect(mobileRegion.getAllByRole("button", { name: /Continue with this package/ })).toHaveLength(1);
+    expect(mobileRegion.getAllByRole("button", { name: /Submit inquiry/ })).toHaveLength(1);
     expect(mobileRegion.getAllByDisplayValue("recommended-plan")).toHaveLength(2);
 
     await user.click(good);
     expect(good.getAttribute("aria-selected")).toBe("true");
     expect(mobileRegion.getAllByDisplayValue("good-plan")).toHaveLength(2);
     expect(mobileRegion.queryByDisplayValue("recommended-plan")).toBeNull();
-    expect(mobileRegion.getAllByRole("button", { name: "Book Now" })).toHaveLength(1);
+    expect(mobileRegion.getAllByRole("button", { name: /Continue with this package/ })).toHaveLength(1);
 
     await user.click(premium);
     expect(premium.getAttribute("aria-selected")).toBe("true");
@@ -644,5 +669,477 @@ describe("mobile proposal comparison", () => {
     expect(mobileRegion.queryByDisplayValue("good-plan")).toBeNull();
     expect(mobile?.querySelectorAll("article")).toHaveLength(1);
     expect(desktop?.querySelectorAll("article")).toHaveLength(3);
+    expect(mobile?.querySelector("[data-plan-details]")?.className).not.toMatch(/overflow-y-auto/);
+    expect(desktop?.querySelector("[data-plan-details]")?.className).not.toMatch(/overflow-y-auto/);
+  });
+});
+
+function catalogLine(
+  productId: string,
+  slug: string,
+  name: string,
+  kind: string,
+  quantity: number,
+  unitPriceCents: number,
+) {
+  return {
+    productId,
+    slug,
+    name,
+    kind,
+    quantity,
+    unitPriceCents,
+    totalCents: quantity * unitPriceCents,
+  };
+}
+
+function generationsCatalogPlan(
+  id: string,
+  tier: string,
+  diningName: string,
+  diningSlug: string,
+  diningQuantity: number,
+  diningUnitCents: number,
+  extras: Record<string, unknown> = {},
+) {
+  const diningTotal = diningQuantity * diningUnitCents;
+  return {
+    id,
+    tier,
+    title: tier,
+    estimatedTotalCents: 18000 + diningTotal,
+    currency: "USD",
+    durationMinutes: 180,
+    customerFacingReason: `${diningName} package.`,
+    availabilityStatus: "AVAILABLE",
+    payload: {
+      catalogBacked: true,
+      guestCount: 20,
+      eventDate: "2026-10-24",
+      startTime: "16:00",
+      durationMinutes: 180,
+      activities: [
+        { knowledgeItemId: "bowl", productId: "bowling-1h", name: "1 Hour Bowling", quantity: 1, priceCents: 18000 },
+      ],
+      dining: { label: diningName, quantity: diningQuantity, priceCents: diningTotal },
+      spaces: [],
+      schedule: [],
+      itinerary: [],
+      pricingComplete: true,
+      lineItems: [
+        catalogLine("bowling-1h", "bowling-1h", "1 Hour Bowling", PRODUCT_KINDS.ATTRACTION, 1, 18000),
+        catalogLine("food", diningSlug, diningName, PRODUCT_KINDS.FOOD, diningQuantity, diningUnitCents),
+      ],
+      ...extras,
+    },
+  };
+}
+
+describe("catalog-backed and fallback proposals", () => {
+  it("renders Generations catalog dining labels, quantities, and proven upgrades", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Generations Adventureplex"
+        currency="USD"
+        token="generations-token"
+        inquiry={{
+          customerFirstName: "Sam",
+          guestCount: 20,
+          eventGoal: "Family Fun",
+          eventType: "Birthday Party",
+          desiredDate: "2026-10-24",
+          desiredStartTime: "16:00",
+          guestMix: "mostly_children",
+          diningPreference: "not_sure",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          generationsCatalogPlan(
+            "gen-good",
+            EVENT_PLAN_TIERS.BUDGET,
+            "Pizza & Pitcher Combination",
+            "pizza-pitcher-combo",
+            5,
+            2000,
+          ),
+          generationsCatalogPlan(
+            "gen-rec",
+            EVENT_PLAN_TIERS.BEST_FIT,
+            "Slider Bar",
+            "slider-bar",
+            20,
+            3000,
+            {
+              compositionDelta: {
+                comparedWithTier: EVENT_PLAN_TIERS.BUDGET,
+                addedProductNames: [],
+                foodFrom: "Pizza & Pitcher Combination",
+                foodTo: "Slider Bar",
+                spaceAdded: null,
+                fulfillmentChanges: [],
+              },
+            },
+          ),
+          generationsCatalogPlan(
+            "gen-prem",
+            EVENT_PLAN_TIERS.PREMIUM,
+            "Smokehouse BBQ",
+            "smokehouse-bbq",
+            20,
+            3500,
+            {
+              compositionDelta: {
+                comparedWithTier: EVENT_PLAN_TIERS.BEST_FIT,
+                addedProductNames: [],
+                foodFrom: "Slider Bar",
+                foodTo: "Smokehouse BBQ",
+                spaceAdded: null,
+                fulfillmentChanges: [],
+              },
+            },
+          ),
+        ]}
+      />,
+    );
+
+    expect(html).toContain("Birthday Party");
+    expect(html).toContain("20 guests");
+    expect(html).toContain("Mostly Kids / Youth");
+    expect(html).toContain("5 × Pizza &amp; Pitcher Combination at $20 = $100");
+    expect(html).toContain("20 × Slider Bar at $30 = $600");
+    expect(html).toContain("20 × Smokehouse BBQ at $35 = $700");
+    expect(html).toContain("Upgraded from Pizza &amp; Pitcher Combination to Slider Bar");
+    expect(html).toContain("Upgraded from Slider Bar to Smokehouse BBQ");
+    expect(html).not.toContain("Adds 1 Hour Bowling");
+    expect(html).not.toContain("Includes private event space");
+    expect(html).not.toContain("Most Popular");
+    expect(html).toContain('value="gen-good"');
+    expect(html).toContain('value="gen-rec"');
+    expect(html).toContain('value="gen-prem"');
+    expect(html).toContain("Inventory occupancy looks open");
+    expect(html).not.toContain("Your date is confirmed");
+    expect(html).not.toContain("Book Now");
+  });
+
+  it("renders a non-Generations fallback proposal without inventing catalog prices", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="riverside-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 12,
+          eventGoal: "Team Building",
+          eventType: "Corporate Event",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          {
+            id: "riv-good",
+            tier: EVENT_PLAN_TIERS.BUDGET,
+            title: "Good",
+            estimatedTotalCents: 90000,
+            currency: "USD",
+            durationMinutes: 120,
+            customerFacingReason: "A focused bowling plan.",
+            availabilityStatus: "NOT_VALIDATED",
+            payload: {
+              catalogBacked: false,
+              guestCount: 12,
+              eventDate: null,
+              startTime: null,
+              durationMinutes: 120,
+              activities: [{ knowledgeItemId: "bowl", name: "Bowling", quantity: 2, unitLabel: "lane", priceCents: 0 }],
+              dining: { label: "Pizza & Light Fare", priceCents: 0 },
+              spaces: [],
+              schedule: [],
+              itinerary: [],
+              pricingComplete: true,
+            },
+          },
+          {
+            id: "riv-rec",
+            tier: EVENT_PLAN_TIERS.BEST_FIT,
+            title: "Recommended",
+            estimatedTotalCents: 120000,
+            currency: "USD",
+            durationMinutes: 120,
+            customerFacingReason: "Adds go-karts.",
+            availabilityStatus: "NOT_VALIDATED",
+            payload: {
+              catalogBacked: false,
+              guestCount: 12,
+              eventDate: null,
+              startTime: null,
+              durationMinutes: 120,
+              activities: [
+                { knowledgeItemId: "bowl", name: "Bowling", quantity: 2, unitLabel: "lane", priceCents: 0 },
+                { knowledgeItemId: "kart", name: "Go-Karts", quantity: 1, priceCents: 0 },
+              ],
+              dining: { label: "Pizza & Light Fare", priceCents: 0 },
+              spaces: [],
+              schedule: [],
+              itinerary: [],
+              pricingComplete: true,
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(html).toContain("Corporate Event");
+    expect(html).toContain("Not specified");
+    expect(html).toContain("Pizza &amp; Light Fare");
+    expect(html).toContain("A component breakdown is not available for this estimate.");
+    expect(html).toContain("Adds Go-Karts");
+    expect(html).not.toContain("5 × Pizza");
+    expect(html).not.toContain("Pizza &amp; Pitcher Combination");
+    expect(html).not.toContain("Slider Bar");
+    expect(html).not.toContain("Smokehouse BBQ");
+    expect(html).not.toContain("Generations Adventureplex");
+    expect(html).toContain("Riverside Fun Center");
+    expect(html).toContain('value="riv-good"');
+    expect(html).toContain('value="riv-rec"');
+  });
+
+  it("does not present an unresolved dining preference as a purchased food item", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="riverside-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 12,
+          eventGoal: "Team Building",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          {
+            id: "riv-open",
+            tier: EVENT_PLAN_TIERS.BUDGET,
+            title: "Good",
+            estimatedTotalCents: 90000,
+            currency: "USD",
+            durationMinutes: 120,
+            customerFacingReason: "A focused bowling plan.",
+            payload: {
+              catalogBacked: false,
+              guestCount: 12,
+              eventDate: null,
+              startTime: null,
+              durationMinutes: 120,
+              activities: [{ knowledgeItemId: "bowl", name: "Bowling", quantity: 1, priceCents: 0 }],
+              dining: { label: "Not Sure — Recommend Something", priceCents: 0 },
+              spaces: [],
+              schedule: [],
+              pricingComplete: false,
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(html).toContain("Dining to be confirmed");
+    expect(html).not.toContain("Not Sure — Recommend Something");
+  });
+
+  it("does not claim a private room or upgrade when the payload does not prove one", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="opaque-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 10,
+          eventGoal: "Celebration",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          comparisonPlan(EVENT_PLAN_TIERS.BUDGET, "good-plan", 80000),
+          comparisonPlan(EVENT_PLAN_TIERS.BEST_FIT, "recommended-plan", 80000),
+        ]}
+      />,
+    );
+
+    expect(html).not.toContain("Upgraded from");
+    expect(html).not.toContain("Includes private event space");
+    expect(html).not.toContain("Private Space / Room");
+    expect(html).not.toContain("Most Popular");
+  });
+
+  it("does not promise three choices when only one package is available", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="one-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 12,
+          eventGoal: "Team Building",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          {
+            id: "only-good",
+            tier: EVENT_PLAN_TIERS.BEST_FIT,
+            title: "Recommended",
+            estimatedTotalCents: 90000,
+            currency: "USD",
+            durationMinutes: 120,
+            customerFacingReason: "A complete bowling plan.",
+            payload: {
+              guestCount: 12,
+              eventDate: "2026-10-17",
+              startTime: "14:00",
+              durationMinutes: 120,
+              activities: [{ knowledgeItemId: "bowl", name: "Bowling", quantity: 1, priceCents: 0 }],
+              dining: { label: "Dining to be confirmed", priceCents: 0 },
+              spaces: [],
+              schedule: [],
+              pricingComplete: true,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain("prepared a package for Ada");
+    expect(html).toContain("Review what is included");
+    expect(html).not.toContain("prepared packages for Ada");
+    expect(html).not.toContain("Compare what is included");
+    expect(html).toContain('value="only-good"');
+    expect(html).toContain("Continue with this package");
+  });
+
+  it("shows an overflow as a sample list instead of invented clock times", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="overflow-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 20,
+          eventGoal: "Birthday Party",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          {
+            id: "youth-2h",
+            tier: EVENT_PLAN_TIERS.BUDGET,
+            title: "Good",
+            estimatedTotalCents: 110000,
+            currency: "USD",
+            durationMinutes: 120,
+            customerFacingReason: "Includes laser and arcade.",
+            payload: {
+              guestCount: 20,
+              eventDate: "2026-10-17",
+              startTime: "14:00",
+              durationMinutes: 120,
+              activities: [
+                { knowledgeItemId: "laser", name: "Unlimited Laser Tag - 90 Minutes", quantity: 1, priceCents: 0 },
+                { knowledgeItemId: "arcade", name: "1 Hour Unlimited Arcade Play", quantity: 1, priceCents: 0 },
+              ],
+              dining: { label: "Pizza & Pitcher Combination", priceCents: 10000 },
+              spaces: [],
+              schedule: ["Unlimited Laser Tag - 90 Minutes (90 minutes)", "1 Hour Unlimited Arcade Play (60 minutes)"],
+              itinerary: [],
+              itineraryPrecise: false,
+              scheduleLimitation:
+                "These activities need 2 hours 30 minutes, which is longer than the requested 2 hours. The timeline is a sample until our team confirms the flow.",
+              pricingComplete: true,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain("Unlimited Laser Tag");
+    expect(html).toContain("longer than the requested 2 hours");
+    expect(html).not.toContain("2:00 PM–3:30 PM");
+    expect(html).not.toContain("3:30 PM–4:30 PM");
+    expect(html).not.toContain("Continue with this package");
+    expect(html).toContain("Submit inquiry");
+    expect(html).not.toContain("This option is not available at the requested time.");
+  });
+
+  it("lets a feasible package continue while blocking an infeasible sibling", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="mixed-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 20,
+          eventGoal: "Birthday Party",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          {
+            id: "feasible-good",
+            tier: EVENT_PLAN_TIERS.BUDGET,
+            title: "Good",
+            estimatedTotalCents: 80000,
+            currency: "USD",
+            durationMinutes: 180,
+            customerFacingReason: "Laser and pizza.",
+            payload: {
+              guestCount: 20,
+              eventDate: "2026-10-17",
+              startTime: "14:00",
+              durationMinutes: 180,
+              activities: [{ knowledgeItemId: "laser", name: "Unlimited Laser Tag - 90 Minutes", quantity: 1, priceCents: 0 }],
+              dining: { label: "Pizza & Pitcher Combination", priceCents: 10000 },
+              spaces: [],
+              schedule: [],
+              itineraryPrecise: true,
+              pricingComplete: true,
+            },
+          },
+          {
+            id: "infeasible-premium",
+            tier: EVENT_PLAN_TIERS.PREMIUM,
+            title: "Premium",
+            estimatedTotalCents: 140000,
+            currency: "USD",
+            durationMinutes: 120,
+            customerFacingReason: "Laser and arcade.",
+            payload: {
+              guestCount: 20,
+              eventDate: "2026-10-17",
+              startTime: "14:00",
+              durationMinutes: 120,
+              activities: [
+                { knowledgeItemId: "laser", name: "Unlimited Laser Tag - 90 Minutes", quantity: 1, priceCents: 0 },
+                { knowledgeItemId: "arcade", name: "1 Hour Unlimited Arcade Play", quantity: 1, priceCents: 0 },
+              ],
+              dining: { label: "Smokehouse BBQ", priceCents: 20000 },
+              spaces: [],
+              schedule: ["Unlimited Laser Tag - 90 Minutes (90 minutes)", "1 Hour Unlimited Arcade Play (60 minutes)"],
+              itineraryPrecise: false,
+              scheduleLimitation:
+                "These activities need 2 hours 30 minutes, which is longer than the requested 2 hours. The timeline is a sample until our team confirms the flow.",
+              pricingComplete: true,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain('value="feasible-good"');
+    expect(html).toContain('value="infeasible-premium"');
+    expect(html.split(">Continue with this package<").length - 1).toBe(2);
+    expect(html).toContain("Submit inquiry");
+    expect(html).toContain("longer than the requested 2 hours");
+    expect(html).not.toContain("Your date is confirmed");
+  });
+
+  it("keeps the plan page as a page-scrolling public shell", () => {
+    const planPage = readFileSync(path.join(process.cwd(), "src/app/plan/[token]/page.tsx"), "utf8");
+    expect(planPage).toContain("PublicCustomerShell");
+    expect(planPage).not.toContain("contained");
   });
 });

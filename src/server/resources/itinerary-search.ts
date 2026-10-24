@@ -132,6 +132,7 @@ export async function searchViableStructuredItinerary(input: {
         preserveOrder: true,
         products,
         fallbackMinutes: input.durationMinutes,
+        requestedMinutes: input.durationMinutes,
       });
       const itinerary = composed.itinerary;
       const requirements = stampPlanResourceWindows({

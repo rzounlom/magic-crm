@@ -8,6 +8,10 @@
 !.yarn/releases
 !.yarn/versions
 
+# Package manager stores
+.pnp-store/
+.pnpm-store/
+
 # testing
 /coverage
 /test-results/
@@ -19,6 +23,7 @@
 
 # next.js
 /.next/
+/.next-scenario-lab/
 /out/
 
 # production
@@ -47,6 +52,7 @@ yarn-error.log*
 .env*.local
 !.env.example
 !.env.test.example
+!.env.scenario-lab.example
 !.env.development.example
 !.env.production.example
 .env.test

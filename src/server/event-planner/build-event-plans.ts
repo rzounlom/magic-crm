@@ -1,3 +1,9 @@
+import {
+  fitsRemainingMinutes,
+  hasOverlappingExperience,
+  remainingScheduledMinutes,
+  type UpgradeProduct,
+} from "@/server/catalog/meaningful-upgrade";
 import { estimateKnowledgePriceCents } from "@/server/event-planner/parse-knowledge-price";
 import {
   notesExcludeItem,
@@ -11,6 +17,7 @@ import {
   DINING_PREFERENCE_LABELS,
   EVENT_PLAN_TIER_TITLES,
   EVENT_PLAN_TIERS,
+  UNCONFIRMED_DINING_LABEL,
   type EventPlanActivity,
   type EventPlanDining,
   type EventPlanDraft,
@@ -340,11 +347,7 @@ function pickDining(
   }
 
   if (!chosen) {
-    const label =
-      inquiry.diningPreference && inquiry.diningPreference in DINING_PREFERENCE_LABELS
-        ? DINING_PREFERENCE_LABELS[inquiry.diningPreference as keyof typeof DINING_PREFERENCE_LABELS]
-        : "Dining to be confirmed";
-    return { label, priceCents: 0, quantity: inquiry.guestCount };
+    return { label: UNCONFIRMED_DINING_LABEL, priceCents: 0, quantity: inquiry.guestCount };
   }
 
   const dining = diningFromItem(chosen, inquiry);
@@ -390,8 +393,7 @@ function pickSpaces(
     inquiry.spacePreference === "private" ||
     inquiry.spacePreference === "semi_private" ||
     signals.wantsPrivateRoom ||
-    signals.dinnerTogether ||
-    tier === EVENT_PLAN_TIERS.PREMIUM;
+    signals.dinnerTogether;
   if (!wantsRoom) {
     return [];
   }
@@ -409,6 +411,35 @@ function spaceFromItem(room: PlannerKnowledgeItem, inquiry: PlannerInquiryFacts)
     priceCents: estimate.cents,
     priceText: room.priceText,
   };
+}
+
+function knowledgeAsUpgrade(item: PlannerKnowledgeItem): UpgradeProduct {
+  return {
+    id: item.id,
+    slug: item.id,
+    name: item.name,
+    kind: "ATTRACTION",
+    durationMinutes: item.durationMinutes,
+  };
+}
+
+function canAddKnowledgeActivity(
+  selected: PlannerKnowledgeItem[],
+  candidate: PlannerKnowledgeItem,
+  inquiry: PlannerInquiryFacts,
+): boolean {
+  const chosen = selected.map(knowledgeAsUpgrade);
+  if (hasOverlappingExperience(chosen, knowledgeAsUpgrade(candidate))) {
+    return false;
+  }
+  return fitsRemainingMinutes(
+    knowledgeAsUpgrade(candidate),
+    remainingScheduledMinutes({
+      requestedMinutes: inquiry.desiredDurationMinutes,
+      reservedMinutes: 0,
+      chosen,
+    }),
+  );
 }
 
 function toActivity(item: PlannerKnowledgeItem, inquiry: PlannerInquiryFacts): EventPlanActivity {
@@ -489,13 +520,29 @@ function composeActivities(
   const uniqueStart = startPool.filter(
     (item, index) => startPool.findIndex((row) => row.id === item.id) === index,
   );
-  let selected = uniqueStart.slice(0, Math.min(minCount, uniqueStart.length)).map((item) => toActivity(item, inquiry));
+  const selectedItems: PlannerKnowledgeItem[] = [];
+  for (const item of uniqueStart) {
+    if (selectedItems.length >= minCount) {
+      break;
+    }
+    if (!canAddKnowledgeActivity(selectedItems, item, inquiry)) {
+      continue;
+    }
+    selectedItems.push(item);
+  }
+  if (selectedItems.length === 0 && uniqueStart[0]) {
+    selectedItems.push(uniqueStart[0]);
+  }
+  let selected = selectedItems.map((item) => toActivity(item, inquiry));
 
   const total = () => selected.reduce((sum, row) => sum + row.priceCents, 0) + extrasCents;
   const unused = () => pool.filter((item) => !selected.some((row) => row.knowledgeItemId === item.id));
 
   while (targetCents != null && selected.length < Math.min(maxCount, pool.length) && total() < targetCents * 0.88) {
-    const remaining = unused();
+    const selectedKnowledge = selected
+      .map((row) => pool.find((item) => item.id === row.knowledgeItemId))
+      .filter((row): row is PlannerKnowledgeItem => Boolean(row));
+    const remaining = unused().filter((item) => canAddKnowledgeActivity(selectedKnowledge, item, inquiry));
     const priced = remaining.filter((item) => toActivity(item, inquiry).priceCents > 0);
     const candidates = priced.length > 0 ? priced : remaining;
     if (candidates.length === 0) {
@@ -582,13 +629,7 @@ function tierOverCeiling(
   return inquiry.budgetMax != null ? Math.round(inquiry.budgetMax * 1.08) : null;
 }
 
-function durationForTier(requested: number, tier: EventPlanTier): number {
-  if (tier === EVENT_PLAN_TIERS.BUDGET && requested >= 180) {
-    return Math.max(120, requested - 60);
-  }
-  if (tier === EVENT_PLAN_TIERS.PREMIUM) {
-    return Math.min(300, requested + 60);
-  }
+function durationForTier(requested: number): number {
   return requested;
 }
 
@@ -763,7 +804,7 @@ export function buildEventPlans(input: BuildEventPlansInput): EventPlanDraft[] {
   ];
 
   const drafts: EventPlanDraft[] = configs.map((config) => {
-    const durationMinutes = durationForTier(requestedDuration, config.tier);
+    const durationMinutes = durationForTier(requestedDuration);
     const dining = pickDining(knowledge, inquiry, config.tier);
     const spaces = pickSpaces(knowledge, inquiry, config.tier, signals);
     const extras = dining.priceCents + spaces.reduce((sum, row) => sum + row.priceCents, 0);
@@ -822,7 +863,16 @@ export function buildEventPlans(input: BuildEventPlansInput): EventPlanDraft[] {
     const extra = ranked.find(
       (item) => !premium.payload.activities.some((row) => row.knowledgeItemId === item.id),
     );
-    if (extra) {
+    const extraFits =
+      extra &&
+      canAddKnowledgeActivity(
+        premium.payload.activities
+          .map((row) => ranked.find((item) => item.id === row.knowledgeItemId))
+          .filter((row): row is PlannerKnowledgeItem => Boolean(row)),
+        extra,
+        inquiry,
+      );
+    if (extra && extraFits) {
       premium.payload.activities = [...premium.payload.activities, toActivity(extra, inquiry)];
       premium.estimatedTotalCents = planTotal(
         premium.payload.activities,

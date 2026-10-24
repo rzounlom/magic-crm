@@ -71,6 +71,7 @@ const products: LoadedCatalogProduct[] = dataset.products.map((product) => ({
     : null,
   experienceGrants: (product.coverage ?? []).map((row) => grantFor(row)),
   foodInclusion: product.intakeDeclarations?.foodInclusion ?? null,
+  containsAlcohol: product.intakeDeclarations?.containsAlcohol === true,
 }));
 
 const requirements: CatalogResourceRequirementRow[] = dataset.products.flatMap((product) =>
@@ -157,10 +158,11 @@ describe("real catalog proposal scenarios", () => {
     const good = tier(drafts, EVENT_PLAN_TIERS.BUDGET);
     const recommended = tier(drafts, EVENT_PLAN_TIERS.BEST_FIT);
     const premium = tier(drafts, EVENT_PLAN_TIERS.PREMIUM);
-    expect(slugs(good)).toEqual(expect.arrayContaining(["bowling-1h", "axe-throwing-30", "fajita-bar"]));
+    expect(slugs(good)).toEqual(expect.arrayContaining(["bowling-1h", "axe-throwing-30", "pizza-pitcher-combo"]));
     expect(slugs(recommended)).toEqual(expect.arrayContaining(["bowling-1h", "axe-throwing-60", "slider-bar"]));
-    expect(slugs(premium)).toEqual(expect.arrayContaining(["bowling-1h", "axe-throwing-60", "smokehouse-bbq", "skybox"]));
+    expect(slugs(premium)).toEqual(expect.arrayContaining(["bowling-1h", "axe-throwing-60", "smokehouse-bbq"]));
     expect(slugs(premium)).not.toContain("unlimited-arcade-1h");
+    expect(slugs(premium)).not.toContain("skybox");
     expect(good.estimatedTotalCents).toBeLessThan(premium.estimatedTotalCents);
     expect(good.payload.coverageFeasibility).toBe("FEASIBLE");
     expect(good.payload.lineItems?.find((row) => row.slug === "bowling-1h")?.totalCents).toBeGreaterThan(0);
@@ -187,7 +189,9 @@ describe("real catalog proposal scenarios", () => {
       expect(draft.payload.coverageFeasibility).toBe("FEASIBLE");
     }
     expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BUDGET))).toContain("pizza-pitcher-combo");
-    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.PREMIUM))).toContain("climbers-cove-90");
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BUDGET))).not.toContain("fajita-bar");
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.PREMIUM))).not.toContain("climbers-cove-90");
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.PREMIUM))).toContain("smokehouse-bbq");
   });
 
   it("keeps an explicit mixed selection instead of inventing a default", async () => {
@@ -200,10 +204,14 @@ describe("real catalog proposal scenarios", () => {
     );
     expect(drafts).toHaveLength(3);
     expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BUDGET))).toContain("bowling-1h");
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BUDGET))).toContain("pizza-pitcher-combo");
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BUDGET))).not.toContain("fajita-bar");
     expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BUDGET))).not.toContain("axe-throwing-60");
     expect(slugs(tier(drafts, EVENT_PLAN_TIERS.PREMIUM))).toEqual(
-      expect.arrayContaining(["bowling-1h", "axe-throwing-60", "skybox"]),
+      expect.arrayContaining(["bowling-1h", "smokehouse-bbq"]),
     );
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.PREMIUM))).not.toContain("axe-throwing-60");
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.PREMIUM))).not.toContain("skybox");
   });
 
   it("keeps package bowling coverage without inventing food when No Food is selected", async () => {
@@ -305,7 +313,7 @@ describe("real catalog proposal scenarios", () => {
       (sum, row) => sum + (row.durationMinutesPerParticipant ?? 0),
       0,
     );
-    expect(good.durationMinutes).toBe(150);
+    expect(good.durationMinutes).toBe(180);
     expect(entitlementSum).toBeGreaterThan(0);
     expect(good.durationMinutes).not.toBe(entitlementSum);
   });

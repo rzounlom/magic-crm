@@ -49,6 +49,7 @@ function asCatalogProduct(product: ReturnType<typeof loadBookingCatalogDataset>[
       ? { servesMin: product.serving.servesMin, servesMax: product.serving.servesMax, unitCount: product.serving.unitCount ?? null }
       : null,
     hasResourceRequirements: product.requirements.length > 0,
+    containsAlcohol: product.intakeDeclarations?.containsAlcohol === true,
   };
 }
 
@@ -103,29 +104,229 @@ describe("deterministic tier composition", () => {
     const good = tier(rows, EVENT_PLAN_TIERS.BUDGET);
     const recommended = tier(rows, EVENT_PLAN_TIERS.BEST_FIT);
     const premium = tier(rows, EVENT_PLAN_TIERS.PREMIUM);
-    expect(slugs(good)).toEqual(expect.arrayContaining(["fajita-bar", "axe-throwing-30", "bowling-1h"]));
+    expect(slugs(good)).toEqual(expect.arrayContaining(["pizza-pitcher-combo", "axe-throwing-30", "bowling-1h"]));
     expect(slugs(good)).not.toEqual(expect.arrayContaining(["axe-throwing-60", "unlimited-arcade-1h", "skybox", "beer-wall"]));
     expect(slugs(recommended)).toEqual(expect.arrayContaining(["slider-bar", "axe-throwing-60", "bowling-1h"]));
     expect(slugs(recommended)).not.toContain("unlimited-arcade-1h");
-    expect(slugs(premium)).toEqual(expect.arrayContaining(["smokehouse-bbq", "axe-throwing-60", "bowling-1h", "unlimited-arcade-1h"]));
+    expect(slugs(premium)).toEqual(expect.arrayContaining(["smokehouse-bbq", "axe-throwing-60", "bowling-1h"]));
+    expect(slugs(premium)).not.toContain("unlimited-arcade-1h");
     expect(slugs(premium)).not.toContain("laser-plex-card");
     expect(good?.payload.compositionDelta?.foodTo).toBeNull();
     expect(good?.customerFacingReason).toMatch(/^Includes /);
     expect(recommended?.customerFacingReason).toMatch(/upgrades dining to Slider Bar/i);
     expect(recommended?.customerFacingReason).not.toMatch(/extra hour of Bowling|hour of Bowling/);
     expect(premium?.customerFacingReason).toMatch(/Smokehouse BBQ/);
-    expect(premium?.customerFacingReason).toMatch(/Arcade/);
+    expect(premium?.customerFacingReason).not.toMatch(/Arcade/);
     expect(premium?.customerFacingReason).not.toMatch(/beer/i);
   });
 
   it("composes youth laser tag and arcade, with climbing only on premium", async () => {
     const rows = await plans(facts({ guestMix: "mostly_children" }));
     const good = tier(rows, EVENT_PLAN_TIERS.BUDGET);
+    const recommended = tier(rows, EVENT_PLAN_TIERS.BEST_FIT);
     const premium = tier(rows, EVENT_PLAN_TIERS.PREMIUM);
-    expect(slugs(good)).toEqual(expect.arrayContaining(["pizza-pitcher-combo", "unlimited-laser-tag-90", "unlimited-arcade-1h"]));
+    expect(slugs(good)).toEqual(expect.arrayContaining(["pizza-pitcher-combo", "unlimited-laser-tag-90"]));
+    expect(slugs(good)).not.toContain("unlimited-arcade-1h");
+    expect(slugs(recommended)).toEqual(expect.arrayContaining(["slider-bar", "unlimited-laser-tag-90", "unlimited-arcade-1h"]));
+    expect(slugs(premium)).toEqual(
+      expect.arrayContaining(["smokehouse-bbq", "unlimited-laser-tag-90", "unlimited-arcade-1h"]),
+    );
     expect(slugs(good)).not.toContain("climbers-cove-90");
-    expect(slugs(premium)).toContain("climbers-cove-90");
-    expect(good?.payload.itinerary?.[0]?.label).toMatch(/Pizza/);
+    expect(slugs(premium)).not.toContain("climbers-cove-90");
+    expect(good?.payload.itinerary?.[0]?.label).toMatch(/Laser/);
+    expect(good?.payload.itinerary?.some((row) => /Pizza/i.test(row.label))).toBe(false);
+    expect(products.find((row) => row.slug === "pizza-pitcher-combo")?.containsAlcohol).not.toBe(true);
+  });
+
+  it("never auto-includes alcohol on mixed or adult recommendations", async () => {
+    const mixed = await plans(facts({ guestMix: "mixed_ages", attractionInterestIds: ["bowling"] }), {
+      organizationId: "org",
+      inquiry: facts({ guestMix: "mixed_ages", attractionInterestIds: ["bowling"] }),
+      products,
+      profiles,
+      resourceRequirements: [],
+      currency: "USD",
+      attractionSelections: [{ interestSlug: "bowling", productIds: ["bowling-1h"] }],
+    });
+    expect(slugs(tier(mixed, EVENT_PLAN_TIERS.BUDGET))).toEqual(expect.arrayContaining(["bowling-1h", "pizza-pitcher-combo"]));
+    expect(slugs(tier(mixed, EVENT_PLAN_TIERS.BEST_FIT))).toEqual(expect.arrayContaining(["bowling-1h", "slider-bar"]));
+    expect(slugs(tier(mixed, EVENT_PLAN_TIERS.PREMIUM))).toEqual(
+      expect.arrayContaining(["bowling-1h", "smokehouse-bbq"]),
+    );
+    const alcoholFood: LoadedCatalogProduct = {
+      ...products.find((row) => row.slug === "fajita-bar")!,
+      id: "tenant-ale",
+      slug: "tenant-ale",
+      name: "Tenant Ale",
+      containsAlcohol: true,
+    };
+    const adultProfile = profiles.find((row) => row.audience === "ADULTS")!;
+    const adults = await plans(facts({ diningPreference: "WANTS_FOOD" }), {
+      organizationId: "org",
+      inquiry: facts({ diningPreference: "WANTS_FOOD" }),
+      products: [...products, alcoholFood],
+      profiles: [
+        {
+          ...adultProfile,
+          payload: {
+            ...adultProfile.payload,
+            composition: {
+              ...adultProfile.payload.composition!,
+              foodStrategies: {
+                ...adultProfile.payload.composition!.foodStrategies,
+                value: ["tenant-ale", "pizza-pitcher-combo"],
+              },
+            },
+          },
+        },
+        ...profiles.filter((row) => row.audience !== "ADULTS"),
+      ],
+      resourceRequirements: [],
+      currency: "USD",
+    });
+    for (const row of [...mixed, ...adults]) {
+      expect(slugs(row)).not.toContain("tenant-ale");
+      expect(slugs(row)).not.toContain("beer-wall");
+    }
+    expect(slugs(tier(adults, EVENT_PLAN_TIERS.BUDGET))).toContain("pizza-pitcher-combo");
+  });
+
+  it("lets a pizza request select pizza and never lets youth or mixed bypass a flagged alcohol SKU", async () => {
+    const adultExplicit = await plans(facts({ diningPreference: "pizza-pitcher-combo" }));
+    expect(slugs(tier(adultExplicit, EVENT_PLAN_TIERS.BUDGET))).toContain("pizza-pitcher-combo");
+    expect(slugs(tier(adultExplicit, EVENT_PLAN_TIERS.BUDGET))).not.toContain("fajita-bar");
+
+    const youthExplicit = await plans(facts({ guestMix: "mostly_children", diningPreference: "pizza-pitcher-combo" }));
+    expect(youthExplicit.length).toBeGreaterThan(0);
+    for (const row of youthExplicit) {
+      expect(slugs(row)).toContain("pizza-pitcher-combo");
+      expect(slugs(row)).not.toContain("fajita-bar");
+    }
+
+    const youthMapped = await plans(facts({ guestMix: "mostly_children", diningPreference: "pizza_light" }));
+    for (const row of youthMapped) {
+      expect(slugs(row)).toContain("pizza-pitcher-combo");
+      expect(slugs(row)).not.toContain("fajita-bar");
+    }
+
+    const fajitaRequest = await plans(facts({ guestMix: "mostly_children", diningPreference: "catered_fajita" }));
+    expect(fajitaRequest.length).toBeGreaterThan(0);
+    for (const row of fajitaRequest) {
+      expect(slugs(row)).toContain("fajita-bar");
+      expect(slugs(row)).not.toContain("pizza-pitcher-combo");
+    }
+
+    const alcoholFood: LoadedCatalogProduct = {
+      ...products.find((row) => row.slug === "fajita-bar")!,
+      id: "tenant-ale",
+      slug: "tenant-ale",
+      name: "Tenant Ale",
+      containsAlcohol: true,
+    };
+    const youthProfile = profiles.find((row) => row.audience === "KIDS_YOUTH")!;
+    const youthAlcohol = await plans(facts({ guestMix: "mostly_children", diningPreference: "tenant-ale" }), {
+      organizationId: "org",
+      inquiry: facts({ guestMix: "mostly_children", diningPreference: "tenant-ale" }),
+      products: [...products, alcoholFood],
+      profiles: [youthProfile],
+      resourceRequirements: [],
+      currency: "USD",
+    });
+    for (const row of youthAlcohol) {
+      expect(slugs(row)).not.toContain("tenant-ale");
+    }
+    expect(slugs(tier(youthAlcohol, EVENT_PLAN_TIERS.BUDGET))).toContain("pizza-pitcher-combo");
+
+    const mixedMapped = await plans(
+      facts({ guestMix: "mixed_ages", diningPreference: "pizza_light", attractionInterestIds: ["bowling"] }),
+      {
+        organizationId: "org",
+        inquiry: facts({ guestMix: "mixed_ages", diningPreference: "pizza_light", attractionInterestIds: ["bowling"] }),
+        products,
+        profiles,
+        resourceRequirements: [],
+        currency: "USD",
+        attractionSelections: [{ interestSlug: "bowling", productIds: ["bowling-1h"] }],
+      },
+    );
+    expect(mixedMapped.length).toBeGreaterThan(0);
+    for (const row of mixedMapped) {
+      expect(slugs(row)).toContain("pizza-pitcher-combo");
+      expect(slugs(row)).not.toContain("fajita-bar");
+    }
+  });
+
+  it("blocks an alcohol-containing package from the fallback and inclusion paths", async () => {
+    const alcoholPackage: LoadedCatalogProduct = {
+      ...products.find((row) => row.slug === "have-a-ball-bowling")!,
+      slug: "youth-pitcher-party",
+      id: "youth-pitcher-party",
+      name: "Youth Pitcher Party",
+      containsAlcohol: true,
+      experienceGrants: [
+        {
+          organizationId: "org",
+          experienceKey: "pizza-pitcher-combo",
+          kind: "FOOD",
+          durationMinutesPerParticipant: null,
+          sessionsPerParticipant: null,
+          servings: 30,
+          participantRule: "ALL_GUESTS",
+          fixedParticipants: null,
+          creditCents: null,
+          simultaneousGuestCapacity: null,
+          rotationMinutesPerParticipant: null,
+          minAge: null,
+          minWeightLbs: null,
+          requiresParticipantBreakdown: false,
+          optionalBenefit: false,
+        },
+      ],
+    };
+    const youthProfile = profiles.find((row) => row.audience === "KIDS_YOUTH");
+    expect(youthProfile).toBeTruthy();
+    const patched = [
+      {
+        ...youthProfile!,
+        payload: {
+          ...youthProfile!.payload,
+          defaultPackageSlugs: {
+            good: "youth-pitcher-party",
+            better: "have-a-blast",
+            best: "have-it-all",
+          },
+          composition: undefined,
+        },
+      },
+      ...profiles.filter((row) => row.audience !== "KIDS_YOUTH"),
+    ];
+    const rows = await plans(facts({ guestMix: "mostly_children" }), {
+      organizationId: "org",
+      inquiry: facts({ guestMix: "mostly_children" }),
+      products: [...products, alcoholPackage],
+      profiles: patched,
+      resourceRequirements: [],
+      currency: "USD",
+    });
+    for (const row of rows) {
+      expect(slugs(row)).not.toContain("youth-pitcher-party");
+    }
+    expect(slugs(tier(rows, EVENT_PLAN_TIERS.BUDGET))).toContain("pizza-pitcher-combo");
+  });
+
+  it("keeps valid nonalcoholic food upgrades on the pizza dining ladder", async () => {
+    const rows = await plans(facts({ guestMix: "mostly_children", guestCount: 20 }));
+    expect(tier(rows, EVENT_PLAN_TIERS.BUDGET)?.payload.dining.label).toMatch(/Pizza/);
+    expect(tier(rows, EVENT_PLAN_TIERS.BEST_FIT)?.payload.dining.label).toMatch(/Slider/);
+    expect(tier(rows, EVENT_PLAN_TIERS.PREMIUM)?.payload.dining.label).toMatch(/Smokehouse|BBQ/);
+    expect(tier(rows, EVENT_PLAN_TIERS.BUDGET)?.payload.lineItems?.find((row) => row.slug === "pizza-pitcher-combo")?.quantity).toBe(5);
+    expect(tier(rows, EVENT_PLAN_TIERS.BUDGET)?.payload.lineItems?.find((row) => row.slug === "pizza-pitcher-combo")?.totalCents).toBe(10_000);
+    expect(tier(rows, EVENT_PLAN_TIERS.BUDGET)!.estimatedTotalCents).toBeLessThan(
+      tier(rows, EVENT_PLAN_TIERS.BEST_FIT)!.estimatedTotalCents,
+    );
+    expect(tier(rows, EVENT_PLAN_TIERS.BEST_FIT)!.estimatedTotalCents).toBeLessThan(
+      tier(rows, EVENT_PLAN_TIERS.PREMIUM)!.estimatedTotalCents,
+    );
   });
 
   it("keeps explicit axe and bowling on every tier and one axe duration", async () => {
@@ -175,11 +376,21 @@ describe("deterministic tier composition", () => {
   it("omits a room on Good when private space was not requested", async () => {
     const rows = await plans(facts({ spacePreference: "no_preference" }));
     expect(slugs(tier(rows, EVENT_PLAN_TIERS.BUDGET))).not.toEqual(expect.arrayContaining(["skybox", "lower-event-room"]));
-    expect(slugs(tier(rows, EVENT_PLAN_TIERS.PREMIUM))).toContain("skybox");
+    expect(slugs(tier(rows, EVENT_PLAN_TIERS.PREMIUM))).not.toEqual(expect.arrayContaining(["skybox", "lower-event-room"]));
   });
 
   it("swaps only Good food to fit a total budget and keeps explicit interests", async () => {
-    const open = await plans(facts());
+    const adult = structuredClone(profiles.find((row) => row.audience === "ADULTS")!);
+    adult.payload.composition!.foodStrategies.value = ["fajita-bar", "pizza-pitcher-combo", "breakfast-bar"];
+    const swapProfiles = [adult, ...profiles.filter((row) => row.audience !== "ADULTS")];
+    const open = await plans(facts(), {
+      organizationId: "org",
+      inquiry: facts(),
+      products,
+      profiles: swapProfiles,
+      resourceRequirements: [],
+      currency: "USD",
+    });
     const openGood = tier(open, EVENT_PLAN_TIERS.BUDGET);
     const explicitFacts = facts({
       budgetMax: (openGood?.estimatedTotalCents ?? 0) - 1,
@@ -189,7 +400,7 @@ describe("deterministic tier composition", () => {
       organizationId: "org",
       inquiry: explicitFacts,
       products,
-      profiles,
+      profiles: swapProfiles,
       resourceRequirements: [],
       currency: "USD",
       attractionSelections: [
@@ -198,7 +409,7 @@ describe("deterministic tier composition", () => {
       ],
     });
     const tightGood = tier(tight, EVENT_PLAN_TIERS.BUDGET);
-    expect(slugs(tightGood)).toContain("breakfast-bar");
+    expect(slugs(tightGood)).toContain("pizza-pitcher-combo");
     expect(slugs(tightGood)).toContain("axe-throwing-30");
     expect(slugs(tightGood)).toContain("bowling-1h");
     expect(tightGood?.payload.budgetFit).toBe("WITHIN_RANGE");
@@ -212,7 +423,8 @@ describe("deterministic tier composition", () => {
     expect(bowlingPrice(tightGood)).toBe(bowlingPrice(openGood));
     expect(slugs(tier(tight, EVENT_PLAN_TIERS.BEST_FIT))).toContain("axe-throwing-60");
     expect(slugs(tier(tight, EVENT_PLAN_TIERS.BEST_FIT))).toContain("bowling-1h");
-    expect(slugs(tier(tight, EVENT_PLAN_TIERS.PREMIUM))).toContain("unlimited-arcade-1h");
+    expect(slugs(tier(tight, EVENT_PLAN_TIERS.PREMIUM))).not.toContain("unlimited-arcade-1h");
+    expect(slugs(tier(tight, EVENT_PLAN_TIERS.PREMIUM))).toContain("smokehouse-bbq");
     const flexible = await plans(facts({ budgetFlexible: true }));
     expect(tier(flexible, EVENT_PLAN_TIERS.BUDGET)?.payload.budgetFit).toBe("FLEXIBLE");
   });
@@ -406,7 +618,7 @@ describe("deterministic tier composition", () => {
       resourceRequirements: [],
       currency: "USD",
     });
-    expect(slugs(tier(legacy, EVENT_PLAN_TIERS.BUDGET))).toContain("fajita-bar");
+    expect(slugs(tier(legacy, EVENT_PLAN_TIERS.BUDGET))).toContain("pizza-pitcher-combo");
     const bareProfile = structuredClone(profiles.find((row) => row.audience === "ADULTS")!);
     bareProfile.payload.composition!.foodStrategies = { value: [], standard: [], premium: [] };
     const emptyFood = await plans(facts(), {
@@ -499,7 +711,8 @@ describe("deterministic tier composition", () => {
     const tightGood = tier(tight, EVENT_PLAN_TIERS.BUDGET);
     expect(slugs(tightGood)).not.toContain("unlimited-arcade-1h");
     expect(slugs(tightGood)).toEqual(expect.arrayContaining(["axe-throwing-30", "bowling-1h"]));
-    expect(slugs(tier(tight, EVENT_PLAN_TIERS.PREMIUM))).toContain("unlimited-arcade-1h");
+    expect(slugs(tier(tight, EVENT_PLAN_TIERS.PREMIUM))).not.toContain("unlimited-arcade-1h");
+    expect(slugs(tier(tight, EVENT_PLAN_TIERS.PREMIUM))).toContain("smokehouse-bbq");
     expect(tightGood?.payload.budgetExplanationCode).toBe("ABOVE_BUDGET");
     const quoted = tightGood?.payload.lineItems?.find((row) => row.slug === "bowling-1h")?.unitPriceCents;
     const openQuoted = tier(roomy, EVENT_PLAN_TIERS.BUDGET)?.payload.lineItems?.find((row) => row.slug === "bowling-1h")?.unitPriceCents;
@@ -573,7 +786,7 @@ describe("deterministic tier composition", () => {
       })),
     });
     expect(itinerary.itinerary.some((row) => row.label === "Fountain Drinks")).toBe(false);
-    expect(itinerary.eventLengthMinutes).toBe(120);
+    expect(itinerary.eventLengthMinutes).toBe(60);
   });
 
   it("uses the next configured room when the first room's resources conflict", async () => {
@@ -627,7 +840,7 @@ describe("deterministic tier composition", () => {
     expect(good?.payload.beverages?.map((row) => row.name)).toEqual(["Fountain Drinks"]);
     expect(good?.payload.includedItems?.some((row) => row.name === "Fountain Drinks")).toBe(false);
     expect(good?.payload.lineItems?.filter((row) => row.slug === "fountain-drinks")).toHaveLength(1);
-    expect(good?.payload.durationMinutes).toBe(120);
+    expect(good?.payload.durationMinutes).toBe(60);
     expect(good?.payload.spaces[0]?.durationMinutes).toBe(180);
     expect(good?.availabilityValidated).toBe(true);
   });

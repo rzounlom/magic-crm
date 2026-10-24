@@ -116,19 +116,20 @@ describe("recommendation composition snapshots (postgres)", () => {
     const recommended = await planSlugs(generations.organizationId, created.inquiryId, EVENT_PLAN_TIERS.BEST_FIT);
     const premium = await planSlugs(generations.organizationId, created.inquiryId, EVENT_PLAN_TIERS.PREMIUM);
 
-    expect(good.slugs).toEqual(expect.arrayContaining(["axe-throwing-30", "bowling-1h", "fajita-bar", "lower-event-room"]));
+    expect(good.slugs).toEqual(expect.arrayContaining(["axe-throwing-30", "bowling-1h", "pizza-pitcher-combo", "lower-event-room"]));
     expect(good.slugs).not.toEqual(expect.arrayContaining(["axe-throwing-60", "unlimited-arcade-1h", "skybox", "beer-wall"]));
     expect(recommended.slugs).toEqual(expect.arrayContaining(["axe-throwing-60", "bowling-1h", "slider-bar", "lower-event-room"]));
     expect(recommended.slugs).not.toContain("unlimited-arcade-1h");
     expect(premium.slugs).toEqual(
-      expect.arrayContaining(["axe-throwing-60", "bowling-1h", "smokehouse-bbq", "unlimited-arcade-1h", "skybox"]),
+      expect.arrayContaining(["axe-throwing-60", "bowling-1h", "smokehouse-bbq", "skybox"]),
     );
+    expect(premium.slugs).not.toContain("unlimited-arcade-1h");
     expect(good.payload.budgetExplanationCode).toBe("NO_BUDGET");
     expect(good.payload.beverages ?? []).toEqual([]);
     expect(good.payload.durationMinutes).not.toBe(good.payload.spaces[0]?.durationMinutes);
     expect(recommended.plan.customerFacingReason).toMatch(/Slider Bar/);
     expect(premium.plan.customerFacingReason).toMatch(/Smokehouse BBQ/);
-    expect(premium.plan.customerFacingReason).toMatch(/Arcade/);
+    expect(premium.plan.customerFacingReason).not.toMatch(/Arcade/);
 
     const profile = await db.recommendationProfile.findFirstOrThrow({
       where: { organizationId: generations.organizationId, audience: "ADULTS" },
@@ -143,7 +144,7 @@ describe("recommendation composition snapshots (postgres)", () => {
       data: { payload: edited as Prisma.InputJsonValue },
     });
     const reread = await planSlugs(generations.organizationId, created.inquiryId, EVENT_PLAN_TIERS.BUDGET);
-    expect(reread.slugs).toContain("fajita-bar");
+    expect(reread.slugs).toContain("pizza-pitcher-combo");
     expect(reread.payload.budgetExplanationCode).toBe("NO_BUDGET");
     await db.recommendationProfile.update({
       where: { id: profile.id },
@@ -212,7 +213,7 @@ describe("recommendation composition snapshots (postgres)", () => {
     expect(lowGood.slugs.includes("axe-throwing-30") && lowGood.slugs.includes("axe-throwing-60")).toBe(false);
     expect(lowPremium.slugs).toContain("axe-throwing-60");
     expect(lowPremium.slugs).toContain("bowling-1h");
-    expect(lowPremium.slugs).toContain("unlimited-arcade-1h");
+    expect(lowPremium.slugs).not.toContain("unlimited-arcade-1h");
     const lowGoodTotal = lowGood.plan.estimatedTotalCents ?? 0;
     const lowPremiumTotal = lowPremium.plan.estimatedTotalCents ?? 0;
     if (lowGoodTotal > 150_000) {
@@ -352,7 +353,106 @@ describe("recommendation composition snapshots (postgres)", () => {
     expect(good.slugs).not.toContain("skybox");
     expect(recommended.slugs).not.toContain("lower-event-room");
     expect(recommended.slugs).not.toContain("skybox");
-    expect(premium.slugs).toContain("skybox");
-    expect(good.slugs).toEqual(expect.arrayContaining(["axe-throwing-30", "bowling-1h", "fajita-bar"]));
+    expect(premium.slugs).not.toContain("skybox");
+    expect(premium.slugs).not.toContain("lower-event-room");
+    expect(good.slugs).toEqual(expect.arrayContaining(["axe-throwing-30", "bowling-1h", "pizza-pitcher-combo"]));
+  }, 60_000);
+
+  it("uses pizza and soda on Good for youth and mixed, with slider and BBQ upgrades", async () => {
+    const youth = await createPublicInquiry(
+      db,
+      {
+        organizationSlug: generations.slug,
+        rateLimitKey: `comp-youth:${crypto.randomUUID()}`,
+        firstName: "Casey",
+        lastName: "Nguyen",
+        email: `comp.youth.${crypto.randomUUID()}@example.com`,
+        eventType: "Birthday Party",
+        preferredDate: "2026-11-07",
+        startTime: "14:00",
+        guestCount: 20,
+        guestMix: "mostly_children",
+        foodPreference: "WANTS_FOOD",
+        privateSpacePreference: "NO_PREFERENCE",
+        budgetPreference: "FLEXIBLE",
+        submissionId: `sub_${crypto.randomUUID()}`,
+      },
+      undefined,
+      unlimitedLimiter,
+    );
+    const youthGood = await planSlugs(generations.organizationId, youth.inquiryId, EVENT_PLAN_TIERS.BUDGET);
+    const youthRecommended = await planSlugs(generations.organizationId, youth.inquiryId, EVENT_PLAN_TIERS.BEST_FIT);
+    const youthPremium = await planSlugs(generations.organizationId, youth.inquiryId, EVENT_PLAN_TIERS.PREMIUM);
+    expect(youthGood.slugs).toContain("pizza-pitcher-combo");
+    expect(youthGood.slugs).not.toContain("fajita-bar");
+    expect(youthRecommended.slugs).toContain("slider-bar");
+    expect(youthPremium.slugs).toContain("smokehouse-bbq");
+    expect(youthGood.payload.lineItems?.find((row) => row.slug === "pizza-pitcher-combo")?.quantity).toBe(5);
+    expect(youthGood.payload.beverages ?? []).toEqual([]);
+    expect(youthGood.slugs).not.toContain("beer-wall");
+
+    const mixed = await createPublicInquiry(
+      db,
+      {
+        organizationSlug: generations.slug,
+        rateLimitKey: `comp-mixed:${crypto.randomUUID()}`,
+        firstName: "Casey",
+        lastName: "Nguyen",
+        email: `comp.mixed.${crypto.randomUUID()}@example.com`,
+        eventType: "Birthday Party",
+        preferredDate: "2026-11-07",
+        startTime: "14:00",
+        guestCount: 20,
+        guestMix: "mixed_ages",
+        foodPreference: "WANTS_FOOD",
+        privateSpacePreference: "NO_PREFERENCE",
+        budgetPreference: "FLEXIBLE",
+        attractionMode: "known",
+        attractionInterestIds: [axeAndBowlingIds[1] ?? ""],
+        submissionId: `sub_${crypto.randomUUID()}`,
+      },
+      undefined,
+      unlimitedLimiter,
+    );
+    const mixedGood = await planSlugs(generations.organizationId, mixed.inquiryId, EVENT_PLAN_TIERS.BUDGET);
+    const mixedRecommended = await planSlugs(generations.organizationId, mixed.inquiryId, EVENT_PLAN_TIERS.BEST_FIT);
+    const mixedPremium = await planSlugs(generations.organizationId, mixed.inquiryId, EVENT_PLAN_TIERS.PREMIUM);
+    expect(mixedGood.slugs).toEqual(expect.arrayContaining(["bowling-1h", "pizza-pitcher-combo"]));
+    expect(mixedGood.slugs).not.toContain("fajita-bar");
+    expect(mixedRecommended.slugs).toContain("slider-bar");
+    expect(mixedPremium.slugs).toContain("smokehouse-bbq");
+    expect(mixedGood.slugs).not.toContain("beer-wall");
+
+    const youthBypass = await createPublicInquiry(
+      db,
+      {
+        organizationSlug: generations.slug,
+        rateLimitKey: `comp-youth-alc:${crypto.randomUUID()}`,
+        firstName: "Casey",
+        lastName: "Nguyen",
+        email: `comp.youth.alc.${crypto.randomUUID()}@example.com`,
+        eventType: "Birthday Party",
+        preferredDate: "2026-11-07",
+        startTime: "14:00",
+        guestCount: 20,
+        guestMix: "mostly_children",
+        diningPreference: "pizza_light",
+        privateSpacePreference: "NO_PREFERENCE",
+        budgetPreference: "FLEXIBLE",
+        submissionId: `sub_${crypto.randomUUID()}`,
+      },
+      undefined,
+      unlimitedLimiter,
+    );
+    const youthPizzaPlans = await db.eventPlanRecommendation.findMany({
+      where: { organizationId: generations.organizationId, inquiryId: youthBypass.inquiryId, kind: EVENT_PLAN_KINDS.RECOMMENDATION },
+    });
+    expect(youthPizzaPlans.length).toBeGreaterThan(0);
+    for (const plan of youthPizzaPlans) {
+      const payload = readEventPlanPayload(plan.payload);
+      const planSlugs = [...new Set((payload.lineItems ?? []).map((row) => row.slug))];
+      expect(planSlugs).toContain("pizza-pitcher-combo");
+      expect(planSlugs).not.toContain("fajita-bar");
+    }
   }, 60_000);
 });

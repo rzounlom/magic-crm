@@ -6,7 +6,8 @@ import {
 import { getPublicRateLimiter, type RateLimiter } from "@/lib/ai/rate-limiter";
 import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
 import { engineDiningPreference } from "@/lib/event-planner/intake-contract";
-import { readEventPlanPayload } from "@/lib/event-planner/payload";
+import { isEventPlanScheduleInfeasible, readEventPlanPayload } from "@/lib/event-planner/payload";
+import { SCHEDULE_INFEASIBLE_CUSTOMER_NOTE } from "@/types/event-planner";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
 import { InquiryError } from "@/server/errors";
@@ -690,6 +691,7 @@ export async function selectPublicEventPlan(
   }
 
   const planPayload = readEventPlanPayload(plan.payload);
+  const scheduleNeedsReview = isEventPlanScheduleInfeasible(planPayload);
   const locationId = await resolveInquiryLocationId(database, conversation.inquiry);
   const inventory = await database.resourceType.findMany({
     where: { organizationId: conversation.organizationId },
@@ -741,7 +743,9 @@ export async function selectPublicEventPlan(
         aiHandlingEnabled: false,
         humanHandoffRequestedAt: conversation.inquiry.humanHandoffRequestedAt ?? new Date(),
         humanHandoffReason: READY_FOR_HUMAN_REASONS.CUSTOMER_SELECTED_PLAN,
-        internalSummary: `Customer submitted an inquiry for ${plan.title} (${plan.tier}). No booking was created and inventory is not reserved.`,
+        internalSummary: scheduleNeedsReview
+          ? `Customer submitted an inquiry for ${plan.title} (${plan.tier}). Requested activities do not fit the event window. No booking was created and inventory is not reserved.`
+          : `Customer submitted an inquiry for ${plan.title} (${plan.tier}). No booking was created and inventory is not reserved.`,
       },
     }),
     database.eventPlanRecommendation.update({
@@ -846,6 +850,12 @@ export async function bookPublicEventPlan(
   }
 
   const planPayload = readEventPlanPayload(plan.payload);
+  if (isEventPlanScheduleInfeasible(planPayload)) {
+    throw new InquiryError(
+      "SCHEDULE_INFEASIBLE",
+      planPayload.scheduleLimitation?.trim() || SCHEDULE_INFEASIBLE_CUSTOMER_NOTE,
+    );
+  }
   if (planPayload.coverageFeasibility && planPayload.coverageFeasibility !== "FEASIBLE") {
     throw new InquiryError(
       "WORKING_PLAN_INVALID",

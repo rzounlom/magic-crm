@@ -7,6 +7,16 @@ import {
   type ExperienceGrant,
   type FoodInclusion,
 } from "@/server/catalog/experience-coverage";
+import {
+  inquiryAudienceFromFacts,
+  productEligibleForInquiry,
+} from "@/server/catalog/alcohol-eligibility";
+import {
+  autoAddAudienceAllowed,
+  fitsRemainingMinutes,
+  hasOverlappingExperience,
+  remainingScheduledMinutes,
+} from "@/server/catalog/meaningful-upgrade";
 import { customerActivityName } from "@/server/catalog/scheduling-behavior";
 import type { PlannerInquiryFacts } from "@/server/event-planner/build-event-plans";
 import {
@@ -36,9 +46,12 @@ export type CompositionProduct = {
   weekendOnly: boolean;
   fulfillmentGroup: string | null;
   durationMinutes?: number | null;
+  audience?: string | null;
+  schedulingBehavior?: string | null;
   experienceSessions?: number | null;
   experienceGrants?: ExperienceGrant[] | null;
   foodInclusion?: FoodInclusion | null;
+  containsAlcohol?: boolean | null;
 };
 
 type CatalogProduct = CompositionProduct;
@@ -193,6 +206,16 @@ export function selectFoodWithinBudget(input: {
   return input.primarySlug;
 }
 
+function foodAllowed<T extends CatalogProduct>(
+  product: T,
+  inquiry: PlannerInquiryFacts,
+): boolean {
+  return productEligibleForInquiry(product, {
+    audience: inquiryAudienceFromFacts(inquiry.guestMix),
+    diningPreference: inquiry.diningPreference,
+  });
+}
+
 function explicitFoodSlug(
   inquiry: PlannerInquiryFacts,
   profile: RecommendationProfilePayload,
@@ -202,11 +225,18 @@ function explicitFoodSlug(
     return null;
   }
   const mapped = profile.diningPreferenceMap?.[inquiry.diningPreference];
-  if (mapped && productsBySlug.has(mapped)) {
-    return mapped;
+  if (mapped) {
+    const product = productsBySlug.get(mapped);
+    if (product && foodAllowed(product, inquiry)) {
+      return mapped;
+    }
+    return null;
   }
   if (!inquiry.diningPreference.includes("_") && productsBySlug.has(inquiry.diningPreference)) {
-    return inquiry.diningPreference;
+    const product = productsBySlug.get(inquiry.diningPreference);
+    if (product && foodAllowed(product, inquiry)) {
+      return inquiry.diningPreference;
+    }
   }
   return null;
 }
@@ -215,15 +245,19 @@ function strategyFoodSlug<T extends CatalogProduct>(
   strategy: FoodTierStrategy,
   profile: RecommendationProfilePayload,
   productsBySlug: Map<string, T>,
-  eventDate: string | null,
-  guestCount: number,
+  inquiry: PlannerInquiryFacts,
   isWeekend: (date: string) => boolean,
 ): string | null {
   const slugs = profile.composition?.foodStrategies[strategy] ?? [];
   return (
     slugs.find((slug) => {
       const product = productsBySlug.get(slug);
-      return Boolean(product && fitsGuests(product, guestCount) && usable(product, eventDate, isWeekend));
+      return Boolean(
+        product &&
+          fitsGuests(product, inquiry.guestCount) &&
+          usable(product, inquiry.desiredDate, isWeekend) &&
+          foodAllowed(product, inquiry),
+      );
     }) ?? null
   );
 }
@@ -272,6 +306,7 @@ function chooseSpace<T extends CatalogProduct>(input: {
   const fits = (product: T | undefined): product is T =>
     Boolean(
       product &&
+        product.kind === PRODUCT_KINDS.RENTAL &&
         fitsGuests(product, input.inquiry.guestCount) &&
         usable(product, input.inquiry.desiredDate, input.isWeekend),
     );
@@ -318,12 +353,22 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
   const chosen: T[] = [];
   const seen = new Set<string>();
   const unfulfilled: string[] = [];
-  const push = (product: T | null | undefined, exclusiveGroup = true) => {
+  const inquiryAudience = inquiryAudienceFromFacts(input.inquiry.guestMix);
+  // Dining is served inside the requested window, not stacked as extra sequential time.
+  const reservedDiningMinutes = 0;
+  const push = (
+    product: T | null | undefined,
+    options: { exclusiveGroup?: boolean; explicit?: boolean; ignoreDuration?: boolean } = {},
+  ) => {
+    const exclusiveGroup = options.exclusiveGroup !== false;
     if (!product || seen.has(product.id)) {
-      return;
+      return false;
     }
     if (!usable(product, input.inquiry.desiredDate, input.isWeekend)) {
-      return;
+      return false;
+    }
+    if (!foodAllowed(product, input.inquiry)) {
+      return false;
     }
     if (
       assessPackageDiningEligibility({
@@ -333,18 +378,43 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
         foodInclusion: product.foodInclusion ?? null,
       }) === PACKAGE_INTAKE_ELIGIBILITY.INELIGIBLE
     ) {
-      return;
+      return false;
+    }
+    if (!autoAddAudienceAllowed(product.audience, inquiryAudience, options.explicit === true)) {
+      return false;
+    }
+    if (
+      !options.explicit &&
+      product.kind === PRODUCT_KINDS.RENTAL &&
+      !wantsPrivateSpace(input.inquiry.spacePreference) &&
+      !input.tier.includeSpace
+    ) {
+      return false;
     }
     if (exclusiveGroup) {
       const sameVariant = chosen.find(
         (row) => row.fulfillmentGroup && row.fulfillmentGroup === product.fulfillmentGroup,
       );
       if (sameVariant) {
-        return;
+        return false;
+      }
+    }
+    if (!options.explicit && hasOverlappingExperience(chosen, product)) {
+      return false;
+    }
+    if (!options.ignoreDuration && !options.explicit) {
+      const remaining = remainingScheduledMinutes({
+        requestedMinutes: input.inquiry.desiredDurationMinutes,
+        reservedMinutes: product.kind === PRODUCT_KINDS.FOOD ? 0 : reservedDiningMinutes,
+        chosen,
+      });
+      if (!fitsRemainingMinutes(product, remaining)) {
+        return false;
       }
     }
     seen.add(product.id);
     chosen.push(product);
+    return true;
   };
 
   const explicit = input.attractionMode === ATTRACTION_MODES.KNOWN && (input.selections.length > 0 || input.directProductIds.length > 0);
@@ -373,7 +443,7 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
         unfulfilled.push(selection.interestSlug);
         continue;
       }
-      push(product, false);
+      push(product, { exclusiveGroup: false, explicit: true });
     }
     for (const id of input.directProductIds) {
       const product = input.productsById.get(id) ?? input.productsBySlug.get(id);
@@ -391,7 +461,7 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
         unfulfilled.push(id);
         continue;
       }
-      push(product, false);
+      push(product, { exclusiveGroup: false, explicit: true });
     }
   } else {
     for (const slug of input.tier.coreAttractionSlugs) {
@@ -419,18 +489,20 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
   // Only an explicit "none" omits dining. Older rows stored not_sure for "yes".
   if (input.inquiry.diningPreference !== "none") {
     const explicitFood = explicitFoodSlug(input.inquiry, input.profile, input.productsBySlug);
+    const overrideProduct = input.foodSlugOverride ? input.productsBySlug.get(input.foodSlugOverride) : undefined;
+    const safeOverride =
+      overrideProduct && foodAllowed(overrideProduct, input.inquiry) ? input.foodSlugOverride : null;
     const foodSlug =
       explicitFood ??
-      input.foodSlugOverride ??
+      safeOverride ??
       strategyFoodSlug(
         input.tier.foodStrategy,
         input.profile,
         input.productsBySlug,
-        input.inquiry.desiredDate,
-        input.inquiry.guestCount,
+        input.inquiry,
         input.isWeekend,
       );
-    push(foodSlug ? input.productsBySlug.get(foodSlug) : null);
+    push(foodSlug ? input.productsBySlug.get(foodSlug) : null, { ignoreDuration: true });
     const optional = new Set(input.tier.budgetOptionalUpgradeSlugs ?? []);
     for (const slug of input.tier.beverageSlugs ?? []) {
       if (input.omitBudgetOptionalUpgrades && optional.has(slug)) {
@@ -438,7 +510,7 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
       }
       const product = input.productsBySlug.get(slug);
       if (product && fitsGuests(product, input.inquiry.guestCount)) {
-        push(product);
+        push(product, { ignoreDuration: true });
       }
     }
   }
@@ -450,10 +522,10 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
     if (!room) {
       spaceUnmet = true;
     } else {
-      push(room);
+      push(room, { ignoreDuration: true });
     }
-  } else if (input.tier.includeSpace) {
-    push(room);
+  } else if (input.tier.includeSpace && input.inquiry.spacePreference !== "none") {
+    push(room, { ignoreDuration: true });
   }
 
   return { products: chosen, unfulfilledInterestSlugs: unfulfilled, spaceUnmet };

@@ -135,6 +135,7 @@ export const INQUIRY_ERROR_CODES = [
   "PLAN_NOT_FOUND",
   "INQUIRY_NOT_FOUND",
   "WORKING_PLAN_INVALID",
+  "SCHEDULE_INFEASIBLE",
   "STALE_INQUIRY",
   "INQUIRY_ALREADY_BOOKED",
   "AVAILABILITY_CHANGED",
@@ -154,6 +155,8 @@ const INQUIRY_USER_MESSAGES: Record<InquiryErrorCode, string> = {
   PLAN_NOT_FOUND: "We could not find that event plan.",
   INQUIRY_NOT_FOUND: "That inquiry could not be found.",
   WORKING_PLAN_INVALID: "Check the working event plan and try again.",
+  SCHEDULE_INFEASIBLE:
+    "These requested activities need more time than the event window. Submit an inquiry so our team can help adjust the plan.",
   STALE_INQUIRY: "This inquiry was updated by someone else. Refresh and try again.",
   INQUIRY_ALREADY_BOOKED: "This event plan has already been finalized.",
   AVAILABILITY_CHANGED:

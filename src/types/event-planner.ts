@@ -116,6 +116,9 @@ export const DINING_PREFERENCE_LABELS: Record<DiningPreference, string> = {
   none: "No Food Needed",
 };
 
+/** Shown when food is wanted but no catalog/knowledge product can be confirmed. */
+export const UNCONFIRMED_DINING_LABEL = "Dining to be confirmed";
+
 export const BUDGET_BAND_VALUES = [
   "under_1500",
   "1500_3000",
@@ -151,6 +154,22 @@ export const CUSTOMER_AVAILABILITY_NOTE =
 
 export const BOOK_NOW_EXPLANATION =
   "Booking is finalized after the required payment and a final availability check.";
+
+/** Occupancy can look open while operating hours are still unvalidated. */
+export const CUSTOMER_OCCUPANCY_NOTE =
+  "Inventory occupancy looks open for this sample itinerary. Operating hours and a final check still need confirmation.";
+
+export const CONTINUE_PACKAGE_EXPLANATION =
+  "This saves a booking request. It does not confirm the date, reserve inventory, or collect payment.";
+
+export const SCHEDULE_INFEASIBLE_CUSTOMER_NOTE =
+  "These requested activities need more time than the event window. This package is not ready to book. Submit an inquiry and our team will help adjust the plan.";
+
+export const PACKAGE_PRESENTATION = {
+  budget: { label: "Good", subtitle: "Great Value" },
+  best_fit: { label: "Recommended", subtitle: "Best Balance" },
+  premium: { label: "Premium", subtitle: "Elevated Experience" },
+} as const;
 
 export const CUSTOMER_SELECTED_HANDOFF_REASON = "Customer selected plan — ready to book";
 
@@ -279,6 +298,9 @@ export type EventPlanPayload = {
   depositPreviewPercent?: number | null;
   depositPreviewNote?: string;
   itinerary?: EventPlanItinerarySegment[];
+  /** False when timed activities cannot all fit in the requested window. */
+  itineraryPrecise?: boolean;
+  scheduleLimitation?: string | null;
   suggestedStartTimes?: string[];
   requestedStartTime?: string | null;
   itineraryAdjusted?: boolean;

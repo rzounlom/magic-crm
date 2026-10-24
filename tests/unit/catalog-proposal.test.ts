@@ -140,6 +140,42 @@ describe("catalog proposal selection", () => {
     expect(good.map((row) => row.slug)).toEqual(["have-a-ball-bowling", "pizza-pitcher-combo"]);
   });
 
+  it("does not auto-include a flagged alcohol food SKU on the fallback path", () => {
+    const alcoholPizza = catalogProduct({
+      id: "pizza",
+      slug: "pizza-pitcher-combo",
+      name: "Pizza",
+      kind: PRODUCT_KINDS.FOOD,
+      containsAlcohol: true,
+    });
+    const productsWithFlag = [...products.filter((row) => row.slug !== "pizza-pitcher-combo"), alcoholPizza];
+    const good = selectCatalogProductsForTier({
+      tierKey: "good",
+      addOnSlugs: [],
+      includeSpace: false,
+      attractionMode: ATTRACTION_MODES.RECOMMEND,
+      profile,
+      productsBySlug: new Map(productsWithFlag.map((row) => [row.slug, row])),
+      productsById: new Map(productsWithFlag.map((row) => [row.id, row])),
+      inquiry: {
+        eventType: "Birthday Party",
+        eventGoal: "Celebration",
+        guestCount: 12,
+        guestMix: "mostly_children",
+        desiredDurationMinutes: 120,
+        desiredDate: "2026-10-17",
+        desiredStartTime: "14:00",
+        budgetMin: null,
+        budgetMax: null,
+        diningPreference: "pizza_light",
+        spacePreference: "no_preference",
+        attractionInterestIds: [],
+        customerNotes: null,
+      },
+    });
+    expect(good.map((row) => row.slug)).toEqual(["have-a-ball-bowling"]);
+  });
+
   it("lets explicit attractions override defaults, including Have a Ball mini golf", () => {
     const good = selectCatalogProductsForTier({
       tierKey: "good",
