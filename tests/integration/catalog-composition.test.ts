@@ -2,9 +2,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { Prisma } from "@/generated/prisma/client";
 import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
-import { readEventPlanPayload } from "@/lib/event-planner/payload";
+import { isEventPlanScheduleInfeasible, readEventPlanPayload } from "@/lib/event-planner/payload";
 import { loadBookingCatalogDataset } from "@/server/catalog/load-dataset";
 import { importBookingCatalog } from "@/server/services/catalog-import-service";
+import { bookPublicEventPlan } from "@/server/services/event-plan-service";
 import { createPublicInquiry } from "@/server/services/inquiry-service";
 import { provisionOrganization } from "@/server/services/provision-organization";
 import { EVENT_PLAN_KINDS } from "@/types/inquiry";
@@ -454,5 +455,53 @@ describe("recommendation composition snapshots (postgres)", () => {
       expect(planSlugs).toContain("pizza-pitcher-combo");
       expect(planSlugs).not.toContain("fajita-bar");
     }
+  }, 60_000);
+
+  it("refuses ordinary booking when requested activities overflow the event window", async () => {
+    const interests = await db.attractionInterest.findMany({
+      where: { organizationId: generations.organizationId, slug: { in: ["laser-tag", "arcade"] } },
+      select: { id: true, slug: true },
+    });
+    const laserId = interests.find((row) => row.slug === "laser-tag")?.id;
+    const arcadeId = interests.find((row) => row.slug === "arcade")?.id;
+    expect(laserId && arcadeId).toBeTruthy();
+    const created = await createPublicInquiry(
+      db,
+      {
+        organizationSlug: generations.slug,
+        rateLimitKey: `comp-overflow:${crypto.randomUUID()}`,
+        firstName: "Casey",
+        lastName: "Nguyen",
+        email: `comp.overflow.${crypto.randomUUID()}@example.com`,
+        eventType: "Birthday Party",
+        preferredDate: "2026-10-17",
+        startTime: "14:00",
+        guestCount: 20,
+        guestMix: "mostly_children",
+        desiredDurationMinutes: 120,
+        foodPreference: "WANTS_FOOD",
+        privateSpacePreference: "NO_PREFERENCE",
+        budgetPreference: "FLEXIBLE",
+        attractionMode: "known",
+        attractionInterestIds: [laserId ?? "", arcadeId ?? ""],
+        submissionId: `sub_${crypto.randomUUID()}`,
+      },
+      undefined,
+      unlimitedLimiter,
+    );
+    const good = await planSlugs(generations.organizationId, created.inquiryId, EVENT_PLAN_TIERS.BUDGET);
+    expect(good.slugs).toEqual(expect.arrayContaining(["unlimited-laser-tag-90", "unlimited-arcade-1h"]));
+    expect(good.payload.scheduleLimitation).toMatch(/longer than the requested 2 hours/i);
+    expect(isEventPlanScheduleInfeasible(good.payload)).toBe(true);
+    await expect(
+      bookPublicEventPlan(
+        db,
+        { token: created.publicToken, planId: good.plan.id, rateLimitKey: created.publicToken },
+        unlimitedLimiter,
+      ),
+    ).rejects.toMatchObject({ code: "SCHEDULE_INFEASIBLE" });
+    expect(
+      await db.booking.count({ where: { organizationId: generations.organizationId, inquiryId: created.inquiryId } }),
+    ).toBe(0);
   }, 60_000);
 });

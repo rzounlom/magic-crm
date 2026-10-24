@@ -182,18 +182,48 @@ describe("customer package presentation", () => {
     expect(customerTaxNote(unresolved, "USD")).not.toContain("$");
   });
 
-  it("treats an overflow timeline as schedule-infeasible without treating missing hours as a conflict", () => {
-    expect(isEventPlanScheduleInfeasible(payload())).toBe(false);
-    expect(isEventPlanScheduleInfeasible(payload({ itineraryPrecise: true, scheduleLimitation: null }))).toBe(false);
-    expect(isEventPlanScheduleInfeasible(payload({ itineraryPrecise: false }))).toBe(true);
+  it("A: blocks booking only when timed activities overflow the requested window", () => {
+    expect(
+      isEventPlanScheduleInfeasible(
+        payload({
+          itineraryPrecise: false,
+          scheduleLimitation:
+            "These activities need 2 hours 30 minutes, which is longer than the requested 2 hours.",
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("B: does not block when clocks are a sample and no conflict is proven", () => {
+    expect(isEventPlanScheduleInfeasible(payload({ itineraryPrecise: false, scheduleLimitation: null }))).toBe(false);
+  });
+
+  it("C: does not block flexible dining included without a guaranteed dining clock", () => {
     expect(
       isEventPlanScheduleInfeasible(
         payload({
           itineraryPrecise: true,
-          scheduleLimitation: "These activities need 2 hours 30 minutes, which is longer than the requested 2 hours.",
+          scheduleLimitation: null,
+          dining: { label: "Pizza & Pitcher Combination", priceCents: 10000 },
+          includedItems: [{ knowledgeItemId: "pizza", name: "Pizza & Pitcher Combination" }],
+          itinerary: [{ startTime: "14:00", endTime: "15:00", label: "Bowling", role: "ACTIVITY" }],
         }),
       ),
-    ).toBe(true);
+    ).toBe(false);
+  });
+
+  it("D: does not block when operating hours or staffing are still unconfirmed", () => {
+    expect(
+      isEventPlanScheduleInfeasible(
+        payload({
+          itineraryPrecise: true,
+          scheduleLimitation: "   ",
+          spaceUnconfirmed: true,
+          customerAvailabilityNote:
+            "Inventory occupancy looks open for this sample itinerary. Operating hours and a final check still need confirmation.",
+        }),
+      ),
+    ).toBe(false);
   });
 
   it("orders comparison against the previous present tier", () => {

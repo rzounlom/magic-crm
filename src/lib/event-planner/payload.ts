@@ -86,12 +86,12 @@ export function isBestFitTier(tier: string): boolean {
   return tier === EVENT_PLAN_TIERS.BEST_FIT;
 }
 
-/** Requested timed activities cannot all fit in the customer’s event window. */
+/**
+ * Proven schedule conflict only: requested timed activities exceed the event window.
+ * A sample/unclocked timeline, flexible dining, or unconfirmed hours is not enough.
+ */
 export function isEventPlanScheduleInfeasible(
   payload: Pick<EventPlanPayload, "itineraryPrecise" | "scheduleLimitation">,
 ): boolean {
-  if (payload.itineraryPrecise === false) {
-    return true;
-  }
   return typeof payload.scheduleLimitation === "string" && payload.scheduleLimitation.trim().length > 0;
 }

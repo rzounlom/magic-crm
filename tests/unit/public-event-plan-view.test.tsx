@@ -1066,6 +1066,54 @@ describe("catalog-backed and fallback proposals", () => {
     expect(html).not.toContain("This option is not available at the requested time.");
   });
 
+  it("still allows continue when clocks are a sample but no schedule conflict is proven", () => {
+    const html = renderToStaticMarkup(
+      <PublicEventPlanView
+        organizationName="Riverside Fun Center"
+        currency="USD"
+        token="sample-token"
+        inquiry={{
+          customerFirstName: "Ada",
+          guestCount: 12,
+          eventGoal: "Birthday Party",
+          selectedEventPlanId: null,
+        }}
+        plans={[
+          {
+            id: "sample-good",
+            tier: EVENT_PLAN_TIERS.BUDGET,
+            title: "Good",
+            estimatedTotalCents: 70000,
+            currency: "USD",
+            durationMinutes: 120,
+            customerFacingReason: "Bowling and pizza.",
+            availabilityStatus: "NOT_VALIDATED",
+            payload: {
+              guestCount: 12,
+              eventDate: "2026-10-17",
+              startTime: "14:00",
+              durationMinutes: 120,
+              activities: [{ knowledgeItemId: "bowl", name: "Bowling", quantity: 1, priceCents: 0 }],
+              dining: { label: "Pizza & Pitcher Combination", priceCents: 8000 },
+              spaces: [],
+              schedule: ["Bowling (60 minutes)", "Pizza & Pitcher Combination included during the event"],
+              itinerary: [],
+              itineraryPrecise: false,
+              scheduleLimitation: null,
+              customerAvailabilityNote:
+                "Inventory occupancy looks open for this sample itinerary. Operating hours and a final check still need confirmation.",
+              pricingComplete: true,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(html).toContain("Continue with this package");
+    expect(html).toContain("Pizza &amp; Pitcher Combination");
+    expect(html).toContain("Operating hours and a final check still need confirmation");
+    expect(html).not.toContain("longer than the requested");
+  });
+
   it("lets a feasible package continue while blocking an infeasible sibling", () => {
     const html = renderToStaticMarkup(
       <PublicEventPlanView

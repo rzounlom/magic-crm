@@ -16,6 +16,7 @@ export async function cleanupStaleTestInvitationFixtures(database: PrismaClient)
 }> {
   assertTestDatabaseClient(database);
   const stale = await database.teamInvitation.findMany({
+    where: { clerkOrganizationInvitationId: { startsWith: "orginv_" } },
     select: { id: true, clerkOrganizationInvitationId: true },
   });
   const ids = stale
