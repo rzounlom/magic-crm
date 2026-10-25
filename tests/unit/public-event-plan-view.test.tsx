@@ -123,7 +123,7 @@ describe("public event plan view", () => {
     expect(html).toContain("Mix of Kids &amp; Adults");
     expect(html).toContain("Pizza &amp; Light Fare");
     expect(html).toContain("Recommended");
-    expect(html).toContain("About this package");
+    expect(html).toContain("What&#x27;s included");
     expect(html).toContain("Great Value");
     expect(html).toContain("Best Balance");
     expect(html).toContain("Elevated Experience");
@@ -131,29 +131,33 @@ describe("public event plan view", () => {
     expect(html).toContain("Recommended");
     expect(html).toContain("Premium");
     expect(html).toContain("$3,800");
-    expect(html).toContain("$2,300 above your preferred range");
+    expect(html).not.toContain("below your preferred range");
+    expect(html).not.toContain("above your preferred range");
     expect(html).not.toContain("text-destructive");
     expect(html).toContain("Estimated deposit");
     expect(html).toContain("(30%)");
-    expect(html).toContain("Laser Tag - 90 minutes");
-    expect(html).toContain("Continue with this package");
-    expect(html).toContain("Submit inquiry");
+    expect(html).toContain("Laser Tag — 90 minutes");
+    expect(html).toContain("Request this package");
+    expect(html).toContain("Request a follow-up");
     expect(html).not.toContain("Book Now");
     expect(html).not.toContain("Most Popular");
     const detailsAt = html.indexOf("data-plan-details");
     const actionsAt = html.indexOf("data-plan-actions");
     expect(detailsAt).toBeGreaterThan(-1);
     expect(actionsAt).toBeGreaterThan(detailsAt);
-    expect(html.indexOf("Continue with this package")).toBeGreaterThan(actionsAt);
-    expect(html.indexOf("Submit inquiry")).toBeGreaterThan(actionsAt);
-    expect(html.slice(detailsAt, actionsAt)).toContain("Activities &amp; Experiences");
-    expect(html.slice(detailsAt, actionsAt)).not.toContain("Continue with this package");
-    expect(html).toContain("Activities &amp; Experiences");
-    expect(html).toContain("Food &amp; Drinks");
+    expect(html.indexOf("Request this package")).toBeGreaterThan(actionsAt);
+    expect(html.indexOf("Request a follow-up")).toBeGreaterThan(actionsAt);
+    expect(html.slice(detailsAt, actionsAt)).toContain("What&#x27;s included");
+    expect(html.slice(detailsAt, actionsAt)).not.toContain("Request this package");
+    expect(html).toContain("What&#x27;s included");
+    expect(html).not.toContain("Activities &amp; Experiences");
+    expect(html).not.toContain("Food &amp; Drinks");
+    expect(html).not.toContain("About this package");
     expect(html).toContain("3 hours");
-    expect(html).toContain("Final availability will be confirmed by our event team.");
-    expect(html).toContain("This saves a booking request");
-    expect(html).toContain("Booking is finalized after the required payment");
+    expect(html).toContain("Packages are estimates");
+    expect(html).toContain("Requesting a package saves a booking request");
+    expect(html).not.toContain("This saves a booking request. It does not confirm the date");
+    expect(html).not.toContain("This saves this package as your preference");
     expect(html).not.toContain("Event Assistant");
     expect(html).not.toContain("AI Sales");
     expect(html).not.toContain("LLM");
@@ -162,8 +166,11 @@ describe("public event plan view", () => {
     expect(html).not.toContain("model confidence");
     expect(html).toContain("Sample itinerary");
     expect(html).not.toContain("Sample timeline");
-    expect(html).toContain("5:30 PM–6:30 PM Dining: Fajita Bar");
-    expect(html).toContain("6:30 PM–7:00 PM Axe Throwing");
+    expect(html).toContain("5:30–6:30 PM");
+    expect(html).toContain("Dining · Fajita Bar");
+    expect(html).toContain("6:30–7:00 PM");
+    expect(html).toContain("Axe Throwing");
+    expect(html).not.toContain("Dining: Fajita Bar");
     expect(html).not.toContain("17:30–18:30");
     expect(html).not.toMatch(/overflow-y-auto/);
   });
@@ -209,7 +216,7 @@ describe("public event plan view", () => {
     expect(html).toContain("events team will follow up");
     expect(html).toContain("Inventory is not reserved");
     expect(html).toContain("The time is not held");
-    expect(html).not.toContain("Continue with this package");
+    expect(html).not.toContain("Request this package");
     expect(html).not.toContain("Book Now");
   });
 
@@ -304,7 +311,7 @@ describe("public event plan view", () => {
     expect(html).toContain("Your Event Is Confirmed");
     expect(html).toContain("RIV-2026-00001");
     expect(html).toContain("24 guests");
-    expect(html).not.toContain("Continue with this package");
+    expect(html).not.toContain("Request this package");
     expect(html).not.toContain("Book Now");
     expect(html).not.toContain("not reserved yet");
   });
@@ -362,7 +369,7 @@ describe("public event plan view", () => {
     expect(html).toContain("Estimated deposit");
     expect(html).toContain("inventory is not reserved");
     expect(html).toContain("Online payment is not enabled");
-    expect(html).not.toContain("Continue with this package");
+    expect(html).not.toContain("Request this package");
     expect(html).not.toContain("Book Now");
     expect(html).not.toContain("24-hour hold");
     expect(html).not.toContain("Held until");
@@ -381,6 +388,9 @@ describe("public event plan view", () => {
     expect(source).toContain('pendingLabel="Saving…"');
     expect(source).toContain('pendingLabel="Submitting…"');
     expect(source).toContain("onSafeSubmitAttempt");
+    expect(source).toContain("reservePublicEventPlanAction");
+    expect(source).toContain("selectPublicEventPlanAction");
+    expect(source.indexOf("reservePublicEventPlanAction")).toBeLessThan(source.lastIndexOf("selectPublicEventPlanAction"));
   });
 
   it("does not claim current availability when status is NOT_VALIDATED, while still allowing a booking request", () => {
@@ -422,7 +432,7 @@ describe("public event plan view", () => {
         ]}
       />,
     );
-    expect(html).toContain("Continue with this package");
+    expect(html).toContain("Request this package");
     expect(html).toContain("Live inventory still needs confirmation before booking.");
     expect(html).not.toContain("Currently available");
     expect(html).not.toContain("Your date is confirmed");
@@ -498,12 +508,12 @@ describe("public event plan view", () => {
     expect(html).not.toContain("18:30");
     expect(html).toContain("Adjusted from your requested time");
     expect(html).toContain("This option is not available at the requested time.");
-    expect(html).toContain("Continue with this package");
+    expect(html).toContain("Request this package");
     expect(html).not.toContain("Currently available");
     const mobile = html.slice(html.indexOf('data-proposal-mobile'), html.indexOf('data-proposal-desktop'));
     const desktop = html.slice(html.indexOf('data-proposal-desktop'));
-    expect(mobile.split(">Continue with this package<").length - 1).toBe(1);
-    expect(desktop.split(">Continue with this package<").length - 1).toBe(1);
+    expect(mobile.split(">Request this package<").length - 1).toBe(1);
+    expect(desktop.split(">Request this package<").length - 1).toBe(1);
   });
 
   it("formats proposal copy once and keeps each tenant deposit percent", () => {
@@ -562,7 +572,7 @@ describe("public event plan view", () => {
     const tenantA = renderPercent(25, 30750);
     const tenantB = renderPercent(30, 36900);
     for (const html of [tenantA, tenantB]) {
-      expect(html).toContain("Adds Unlimited Arcade Play for a broader experience.");
+      expect(html).toContain("Unlimited Arcade Play and Fajita Bar dining");
       expect(html).toContain("This option is 3 hours because it adds an hour of Unlimited Arcade Play.");
       expect(html).toContain("adjusted to start at 4:00 PM");
       expect(html).toContain("4:00 AM");
@@ -655,15 +665,15 @@ describe("mobile proposal comparison", () => {
     expect(mobile?.getAttribute("role")).toBe("tabpanel");
 
     const mobileRegion = within(mobile as HTMLElement);
-    expect(mobileRegion.getAllByRole("button", { name: /Continue with this package/ })).toHaveLength(1);
-    expect(mobileRegion.getAllByRole("button", { name: /Submit inquiry/ })).toHaveLength(1);
+    expect(mobileRegion.getAllByRole("button", { name: /Request this package/ })).toHaveLength(1);
+    expect(mobileRegion.getAllByRole("button", { name: /Request a follow-up/ })).toHaveLength(1);
     expect(mobileRegion.getAllByDisplayValue("recommended-plan")).toHaveLength(2);
 
     await user.click(good);
     expect(good.getAttribute("aria-selected")).toBe("true");
     expect(mobileRegion.getAllByDisplayValue("good-plan")).toHaveLength(2);
     expect(mobileRegion.queryByDisplayValue("recommended-plan")).toBeNull();
-    expect(mobileRegion.getAllByRole("button", { name: /Continue with this package/ })).toHaveLength(1);
+    expect(mobileRegion.getAllByRole("button", { name: /Request this package/ })).toHaveLength(1);
 
     await user.click(premium);
     expect(premium.getAttribute("aria-selected")).toBe("true");
@@ -673,6 +683,9 @@ describe("mobile proposal comparison", () => {
     expect(desktop?.querySelectorAll("article")).toHaveLength(3);
     expect(mobile?.querySelector("[data-plan-details]")?.className).not.toMatch(/overflow-y-auto/);
     expect(desktop?.querySelector("[data-plan-details]")?.className).not.toMatch(/overflow-y-auto/);
+    expect(mobile?.className).toContain("overflow-x-hidden");
+    expect(desktop?.className).toContain("overflow-x-hidden");
+    expect(articles.every((article) => article.className.includes("min-w-0"))).toBe(true);
   });
 });
 
@@ -683,6 +696,7 @@ function catalogLine(
   kind: string,
   quantity: number,
   unitPriceCents: number,
+  unitLabel?: string,
 ) {
   return {
     productId,
@@ -690,6 +704,7 @@ function catalogLine(
     name,
     kind,
     quantity,
+    unitLabel,
     unitPriceCents,
     totalCents: quantity * unitPriceCents,
   };
@@ -730,7 +745,7 @@ function generationsCatalogPlan(
       pricingComplete: true,
       lineItems: [
         catalogLine("bowling-1h", "bowling-1h", "1 Hour Bowling", PRODUCT_KINDS.ATTRACTION, 1, 18000),
-        catalogLine("food", diningSlug, diningName, PRODUCT_KINDS.FOOD, diningQuantity, diningUnitCents),
+        catalogLine("food", diningSlug, diningName, PRODUCT_KINDS.FOOD, diningQuantity, diningUnitCents, diningQuantity === 5 ? "combo" : "person"),
       ],
       ...extras,
     },
@@ -807,18 +822,20 @@ describe("catalog-backed and fallback proposals", () => {
     expect(html).toContain("Birthday Party");
     expect(html).toContain("20 guests");
     expect(html).toContain("Mostly Kids / Youth");
-    expect(html).toContain("5 × Pizza &amp; Pitcher Combination at $20 = $100");
-    expect(html).toContain("20 × Slider Bar at $30 = $600");
-    expect(html).toContain("20 × Smokehouse BBQ at $35 = $700");
-    expect(html).toContain("Upgraded from Pizza &amp; Pitcher Combination to Slider Bar");
-    expect(html).toContain("Upgraded from Slider Bar to Smokehouse BBQ");
+    expect(html).toContain("Pizza &amp; Pitcher Combination — 5 combos");
+    expect(html).toContain("Slider Bar — 20 guests");
+    expect(html).toContain("Smokehouse BBQ — 20 guests");
+    expect(html).toContain("Bowling and Pizza &amp; Pitcher Combination dining");
+    expect(html).toContain("Bowling with upgraded Slider Bar dining");
+    expect(html).toContain("Bowling with upgraded Smokehouse BBQ dining");
     expect(html).not.toContain("Adds 1 Hour Bowling");
     expect(html).not.toContain("Includes private event space");
     expect(html).not.toContain("Most Popular");
     expect(html).toContain('value="gen-good"');
     expect(html).toContain('value="gen-rec"');
     expect(html).toContain('value="gen-prem"');
-    expect(html).toContain("Inventory occupancy looks open");
+    expect(html).toContain("Packages are estimates");
+    expect(html).not.toContain("Inventory occupancy looks open");
     expect(html).not.toContain("Your date is confirmed");
     expect(html).not.toContain("Book Now");
   });
@@ -894,7 +911,7 @@ describe("catalog-backed and fallback proposals", () => {
     expect(html).toContain("Not specified");
     expect(html).toContain("Pizza &amp; Light Fare");
     expect(html).toContain("A component breakdown is not available for this estimate.");
-    expect(html).toContain("Adds Go-Karts");
+    expect(html).toContain("Bowling and Go-Karts");
     expect(html).not.toContain("5 × Pizza");
     expect(html).not.toContain("Pizza &amp; Pitcher Combination");
     expect(html).not.toContain("Slider Bar");
@@ -1013,7 +1030,7 @@ describe("catalog-backed and fallback proposals", () => {
     expect(html).not.toContain("prepared packages for Ada");
     expect(html).not.toContain("Compare what is included");
     expect(html).toContain('value="only-good"');
-    expect(html).toContain("Continue with this package");
+    expect(html).toContain("Request this package");
   });
 
   it("shows an overflow as a sample list instead of invented clock times", () => {
@@ -1063,8 +1080,8 @@ describe("catalog-backed and fallback proposals", () => {
     expect(html).toContain("longer than the requested 2 hours");
     expect(html).not.toContain("2:00 PM–3:30 PM");
     expect(html).not.toContain("3:30 PM–4:30 PM");
-    expect(html).not.toContain("Continue with this package");
-    expect(html).toContain("Submit inquiry");
+    expect(html).not.toContain("Request this package");
+    expect(html).toContain("Request a follow-up");
     expect(html).not.toContain("This option is not available at the requested time.");
   });
 
@@ -1110,9 +1127,9 @@ describe("catalog-backed and fallback proposals", () => {
         ]}
       />,
     );
-    expect(html).toContain("Continue with this package");
+    expect(html).toContain("Request this package");
     expect(html).toContain("Pizza &amp; Pitcher Combination");
-    expect(html).toContain("Operating hours and a final check still need confirmation");
+    expect(html).toContain("Packages are estimates");
     expect(html).not.toContain("longer than the requested");
   });
 
@@ -1181,8 +1198,8 @@ describe("catalog-backed and fallback proposals", () => {
     );
     expect(html).toContain('value="feasible-good"');
     expect(html).toContain('value="infeasible-premium"');
-    expect(html.split(">Continue with this package<").length - 1).toBe(2);
-    expect(html).toContain("Submit inquiry");
+    expect(html.split(">Request this package<").length - 1).toBe(2);
+    expect(html).toContain("Request a follow-up");
     expect(html).toContain("longer than the requested 2 hours");
     expect(html).not.toContain("Your date is confirmed");
   });
@@ -1191,5 +1208,216 @@ describe("catalog-backed and fallback proposals", () => {
     const planPage = readFileSync(path.join(process.cwd(), "src/app/plan/[token]/page.tsx"), "utf8");
     expect(planPage).toContain("PublicCustomerShell");
     expect(planPage).not.toContain("contained");
+  });
+});
+
+function bowlingOnlyPlan(
+  id: string,
+  tier: string,
+  diningName: string,
+  diningSlug: string,
+  diningQuantity: number,
+  diningUnitCents: number,
+  diningUnit: string,
+  extras: Record<string, unknown> = {},
+) {
+  const bowlingCents = 12000;
+  const shoeCents = 7000;
+  const diningTotal = diningQuantity * diningUnitCents;
+  return {
+    id,
+    tier,
+    title: tier,
+    estimatedTotalCents: bowlingCents + shoeCents + diningTotal,
+    currency: "USD",
+    durationMinutes: 180,
+    customerFacingReason: `${diningName} package.`,
+    availabilityStatus: "AVAILABLE",
+    payload: {
+      catalogBacked: true,
+      guestCount: 20,
+      eventDate: "2026-10-24",
+      startTime: "17:00",
+      durationMinutes: 180,
+      activities: [
+        { knowledgeItemId: "bowl", productId: "bowling-1h", name: "Bowling - 1 Hour", quantity: 2, unitLabel: "lane", priceCents: bowlingCents },
+      ],
+      dining: { label: diningName, quantity: diningQuantity, priceCents: diningTotal },
+      spaces: [],
+      schedule: [],
+      itinerary: [
+        {
+          startTime: "17:00",
+          endTime: "18:00",
+          label: `Dining: ${diningName}`,
+          role: "DINING",
+          durationMinutes: 60,
+        },
+        {
+          startTime: "18:00",
+          endTime: "19:00",
+          label: "Bowling",
+          role: "ACTIVITY",
+          durationMinutes: 60,
+        },
+      ],
+      itineraryPrecise: true,
+      pricingComplete: true,
+      lineItems: [
+        catalogLine("bowling-1h", "bowling-1h", "Bowling - 1 Hour", PRODUCT_KINDS.ATTRACTION, 2, 6000, "lane"),
+        catalogLine("bowling-1h", "bowling-1h", "Bowling - 1 Hour shoes", PRODUCT_KINDS.ATTRACTION, 20, 350, "pair"),
+        catalogLine("food", diningSlug, diningName, PRODUCT_KINDS.FOOD, diningQuantity, diningUnitCents, diningUnit),
+      ],
+      ...extras,
+    },
+  };
+}
+
+describe("simplified bowling-only package cards", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  const bowlingPlans = [
+    bowlingOnlyPlan("bowl-good", EVENT_PLAN_TIERS.BUDGET, "Pizza & Pitcher Combination", "pizza-pitcher-combo", 5, 2000, "combo"),
+    bowlingOnlyPlan(
+      "bowl-rec",
+      EVENT_PLAN_TIERS.BEST_FIT,
+      "Slider Bar",
+      "slider-bar",
+      20,
+      3000,
+      "person",
+      {
+        compositionDelta: {
+          comparedWithTier: EVENT_PLAN_TIERS.BUDGET,
+          addedProductNames: [],
+          foodFrom: "Pizza & Pitcher Combination",
+          foodTo: "Slider Bar",
+          spaceAdded: null,
+          fulfillmentChanges: [],
+        },
+      },
+    ),
+    bowlingOnlyPlan(
+      "bowl-prem",
+      EVENT_PLAN_TIERS.PREMIUM,
+      "Smokehouse BBQ",
+      "smokehouse-bbq",
+      20,
+      3500,
+      "person",
+      {
+        compositionDelta: {
+          comparedWithTier: EVENT_PLAN_TIERS.BEST_FIT,
+          addedProductNames: [],
+          foodFrom: "Slider Bar",
+          foodTo: "Smokehouse BBQ",
+          spaceAdded: null,
+          fulfillmentChanges: [],
+        },
+      },
+    ),
+  ];
+
+  function renderBowlingCards() {
+    return (
+      <PublicEventPlanView
+        organizationName="Generations Adventureplex"
+        currency="USD"
+        token="bowling-token"
+        inquiry={{
+          customerFirstName: "Sam",
+          guestCount: 20,
+          eventGoal: "Birthday Party",
+          eventType: "Birthday Party",
+          desiredDate: "2026-10-24",
+          desiredStartTime: "17:00",
+          guestMix: "mostly_adults",
+          diningPreference: "yes",
+          selectedEventPlanId: null,
+        }}
+        plans={bowlingPlans}
+      />
+    );
+  }
+
+  it("renders all three bowling-only tiers with accurate totals and inclusions", () => {
+    const html = renderToStaticMarkup(renderBowlingCards());
+    expect(html).toContain("Great Value");
+    expect(html).toContain("Best Balance");
+    expect(html).toContain("Elevated Experience");
+    expect(html).toContain("$290");
+    expect(html).toContain("$790");
+    expect(html).toContain("$890");
+    expect(html).toContain("$14.50 per guest · 20 guests");
+    expect(html).toContain("$39.50 per guest · 20 guests");
+    expect(html).toContain("$44.50 per guest · 20 guests");
+    expect(html).toContain("Bowling — 1 hour");
+    expect(html).toContain("Bowling shoes for 20 guests");
+    expect(html).toContain("Pizza &amp; Pitcher Combination — 5 combos");
+    expect(html).toContain("Slider Bar — 20 guests");
+    expect(html).toContain("Smokehouse BBQ — 20 guests");
+    expect(html).toContain("Bowling and Pizza &amp; Pitcher Combination dining");
+    expect(html).toContain("Bowling with upgraded Slider Bar dining");
+    expect(html).toContain("Bowling with upgraded Smokehouse BBQ dining");
+    expect(html).not.toContain("Arcade");
+    expect(html).not.toContain("Axe Throwing");
+    expect(html).not.toContain("Laser Tag");
+    expect(html).not.toContain("Activities &amp; Experiences");
+    expect(html).not.toContain("About this package");
+    expect(html).toContain("5:00–6:00 PM");
+    expect(html).toContain("Dining · Pizza &amp; Pitcher Combination");
+    expect(html).toContain("Dining · Slider Bar");
+    expect(html).toContain("Dining · Smokehouse BBQ");
+    expect(html).toContain("6:00–7:00 PM");
+    expect(html).toContain("Bowling: $120");
+    expect(html).toContain("Bowling shoes: $70");
+    expect(html).toContain("Pizza &amp; Pitcher Combination: $100");
+    expect(html).toContain("Slider Bar: $600");
+    expect(html).toContain("Smokehouse BBQ: $700");
+    expect(html).toContain("Estimated total: $290");
+    expect(html).toContain("Estimated total: $790");
+    expect(html).toContain("Estimated total: $890");
+    expect(html).toContain("Packages are estimates");
+    expect(html).toContain("Request this package");
+    expect(html).toContain("Request a follow-up");
+    expect(html).not.toContain("below your preferred range");
+    expect(html).not.toContain("This saves a booking request. It does not confirm the date");
+    expect(html).not.toContain("This saves this package as your preference");
+    expect(html).toContain("outline-transparent");
+    expect(html).toContain("border-border");
+  });
+
+  it("keeps the price breakdown collapsed until a customer opens it", async () => {
+    const user = userEvent.setup();
+    render(renderBowlingCards());
+    const desktop = document.querySelector("[data-proposal-desktop]") as HTMLElement;
+    const disclosures = desktop.querySelectorAll<HTMLDetailsElement>("[data-price-breakdown-disclosure]");
+    expect(disclosures).toHaveLength(3);
+    for (const disclosure of disclosures) {
+      expect(disclosure.open).toBe(false);
+      expect(disclosure.getAttribute("open")).toBeNull();
+    }
+    const good = disclosures[0];
+    await user.click(within(good).getByText("View price breakdown"));
+    expect(good.open).toBe(true);
+    expect(good.textContent).toContain("Bowling: $120");
+    expect(good.textContent).toContain("Bowling shoes: $70");
+    expect(good.textContent).toContain("Pizza & Pitcher Combination: $100");
+    expect(good.textContent).toContain("Estimated total: $290");
+  });
+
+  it("highlights Recommended and keeps both customer actions wired to existing handlers", () => {
+    const html = renderToStaticMarkup(renderBowlingCards());
+    const desktop = html.slice(html.indexOf("data-proposal-desktop"));
+    expect(desktop).toContain("outline-primary/40");
+    expect(desktop.split("outline-primary/40").length - 1).toBe(1);
+    const source = readFileSync(path.join(process.cwd(), "src/components/layout/public-event-plan-view.tsx"), "utf8");
+    expect(source).toContain("submit(event, reservePublicEventPlanAction");
+    expect(source).toContain("submit(event, selectPublicEventPlanAction");
+    expect(html).toContain('value="bowl-good"');
+    expect(html).toContain('value="bowl-rec"');
+    expect(html).toContain('value="bowl-prem"');
   });
 });

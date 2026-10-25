@@ -162,8 +162,14 @@ export const CUSTOMER_OCCUPANCY_NOTE =
 export const CONTINUE_PACKAGE_EXPLANATION =
   "This saves a booking request. It does not confirm the date, reserve inventory, or collect payment.";
 
+export const FOLLOW_UP_PACKAGE_EXPLANATION =
+  "This saves this package as your preference so our team can follow up. No booking is created and inventory is not reserved.";
+
+export const CUSTOMER_PACKAGE_ESTIMATE_NOTE =
+  "Packages are estimates. Dates and availability are subject to confirmation. No payment is collected on this page, and your event is not reserved until booking is finalized.";
+
 export const SCHEDULE_INFEASIBLE_CUSTOMER_NOTE =
-  "These requested activities need more time than the event window. This package is not ready to book. Submit an inquiry and our team will help adjust the plan.";
+  "These requested activities need more time than the event window. This package is not ready to book. Request a follow-up and our team will help adjust the plan.";
 
 export const PACKAGE_PRESENTATION = {
   budget: { label: "Good", subtitle: "Great Value" },
