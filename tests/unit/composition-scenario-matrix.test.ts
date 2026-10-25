@@ -169,7 +169,7 @@ describe("Phase 4 composition scenario matrix", () => {
     expect(slugs(premium)).not.toContain("axe-throwing-60");
     expect(good.durationMinutes).toBe(180);
     expect(good.payload.itineraryPrecise).not.toBe(false);
-    expect((good.payload.itinerary ?? []).some((row) => row.role === "DINING")).toBe(false);
+    expect((good.payload.itinerary ?? []).some((row) => row.role === "DINING")).toBe(true);
     expect(drafts).toHaveLength(3);
   });
 
@@ -269,15 +269,12 @@ describe("Phase 4 composition scenario matrix", () => {
       }),
       [{ interestSlug: "bowling", productIds: ["bowling-1h"] }],
     );
-    const good = tier(drafts, EVENT_PLAN_TIERS.BUDGET);
-    const recommended = present(drafts, EVENT_PLAN_TIERS.BEST_FIT) ?? present(drafts, EVENT_PLAN_TIERS.PREMIUM);
-    expect(recommended).toBeTruthy();
-    expect(slugs(good)).toEqual(["bowling-1h"]);
-    expect(slugs(recommended!)).toEqual(["bowling-1h", "unlimited-arcade-1h"]);
-    expect(activityMinutes(recommended!)).toBeLessThanOrEqual(120);
-    expect(upgrades(good, recommended!).map((row) => row.kind)).toEqual(["added_activity"]);
-    expect(slugs(recommended!).some((slug) => slug.includes("pizza") || slug.includes("bar"))).toBe(false);
-    expect(present(drafts, EVENT_PLAN_TIERS.PREMIUM) && present(drafts, EVENT_PLAN_TIERS.BEST_FIT)).toBeFalsy();
+    const remaining = drafts[0];
+    expect(remaining).toBeTruthy();
+    expect(slugs(remaining!)).toEqual(["bowling-1h"]);
+    expect(drafts.every((draft) => slugs(draft).join(",") === "bowling-1h")).toBe(true);
+    expect(activityMinutes(remaining!)).toBeLessThanOrEqual(120);
+    expect(slugs(remaining!).some((slug) => slug.includes("pizza") || slug.includes("bar") || slug.includes("arcade"))).toBe(false);
   });
 
   it("7. Adults, no food, no private room", async () => {
@@ -429,9 +426,8 @@ describe("Phase 5 youth interests and schedule windows", () => {
       [{ interestSlug: "laser-tag", productIds: ["unlimited-laser-tag-90"] }],
     );
     expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BUDGET))).toEqual(["unlimited-laser-tag-90", "pizza-pitcher-combo"]);
-    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BEST_FIT))).toEqual(
-      expect.arrayContaining(["unlimited-laser-tag-90", "unlimited-arcade-1h", "slider-bar"]),
-    );
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.BEST_FIT))).toEqual(["unlimited-laser-tag-90", "slider-bar"]);
+    expect(slugs(tier(drafts, EVENT_PLAN_TIERS.PREMIUM))).toEqual(["unlimited-laser-tag-90", "smokehouse-bbq"]);
     expect(drafts).toHaveLength(3);
   });
 
@@ -461,7 +457,8 @@ describe("Phase 5 youth interests and schedule windows", () => {
     );
     const good = tier(drafts, EVENT_PLAN_TIERS.BUDGET);
     expect(slugs(good)).toEqual(["unlimited-laser-tag-90", "unlimited-arcade-1h", "pizza-pitcher-combo"]);
-    expect(good.payload.itineraryPrecise).not.toBe(false);
+    expect(good.payload.itineraryPrecise).toBe(false);
+    expect(good.payload.scheduleLimitation).toMatch(/longer than the requested 3 hours/i);
     expect(good.durationMinutes).toBe(180);
   });
 

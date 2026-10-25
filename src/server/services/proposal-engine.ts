@@ -15,6 +15,7 @@ import {
   type ExperienceGrant,
   type FoodInclusion,
 } from "@/server/catalog/experience-coverage";
+import { diningBlockMinutes, diningIsSequential, diningPlacementFromProfile } from "@/server/catalog/dining-placement";
 import { composeEventItinerary, itinerarySpanMinutes, scheduleLimitationText, type ItineraryProduct } from "@/server/catalog/itinerary";
 import {
   addedScheduledActivities,
@@ -256,6 +257,7 @@ async function quoteSelection(input: {
   const itineraryDraft = composeEventItinerary({
     startTime: requestedStartTime,
     foodFirst: input.profile.foodFirst,
+    diningPlacement: input.profile.diningPlacement,
     products: selectedProducts,
     fallbackMinutes: input.inquiry.desiredDurationMinutes ?? 60,
     requestedMinutes: input.inquiry.desiredDurationMinutes,
@@ -406,6 +408,7 @@ export async function buildCatalogEventPlans(input: {
 }): Promise<EventPlanDraft[]> {
   const audience = audienceFromGuestMix(input.inquiry.guestMix);
   const attractionMode = attractionModeFromIntake({
+    attractionMode: input.inquiry.attractionMode,
     attractionInterestIds: input.inquiry.attractionInterestIds,
   });
   const profile = profileForAudience(input.profiles, audience);
@@ -739,6 +742,7 @@ export async function buildCatalogEventPlans(input: {
         requestedStartTime,
         durationMinutes,
         foodFirst: profile.foodFirst,
+        diningPlacement: profile.diningPlacement,
         products: selectedProducts,
         baseRequirements,
         queryPhaseMs: () => input.availabilityProvider?.lastQueryPhaseMs ?? 0,
@@ -808,9 +812,15 @@ export async function buildCatalogEventPlans(input: {
           : coverageFeasibility === COVERAGE_FEASIBILITY.INFEASIBLE
             ? "This option does not cover every selected experience."
             : null;
-    const neededActivityMinutes = selected
-      .filter((row) => row.kind === "ATTRACTION" || row.kind === "PACKAGE")
-      .reduce((sum, row) => sum + (row.durationMinutes && row.durationMinutes > 0 ? row.durationMinutes : 0), 0);
+    const diningPlacement = diningPlacementFromProfile(profile);
+    const diningMinutes = diningIsSequential(diningPlacement)
+      ? selected.filter((row) => row.kind === "FOOD").reduce((sum, row) => sum + diningBlockMinutes(row), 0)
+      : 0;
+    const neededActivityMinutes =
+      selected
+        .filter((row) => row.kind === "ATTRACTION" || row.kind === "PACKAGE")
+        .reduce((sum, row) => sum + (row.durationMinutes && row.durationMinutes > 0 ? row.durationMinutes : 0), 0) +
+      diningMinutes;
     const scheduleLimitation = scheduleLimitationText({
       overflowActivityNames: quote.overflowActivityNames,
       requestedMinutes: input.inquiry.desiredDurationMinutes,
@@ -853,7 +863,7 @@ export async function buildCatalogEventPlans(input: {
         ? `Recommended mix for this group: ${names}.`
         : `Includes ${names}.`) + exclusiveNote;
     const explicitSelections =
-      attractionMode === ATTRACTION_MODES.KNOWN && (input.attractionSelections?.length ?? 0) > 0;
+      (input.attractionSelections?.length ?? 0) > 0 || (input.directAttractionProductIds?.length ?? 0) > 0;
     const experience = delta
       ? compositionReason({ current: selected, previous: previousProducts, explicitSelections })
       : optionExperienceSentence(added.map((row) => row.name), fallbackReason);

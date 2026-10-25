@@ -1,3 +1,4 @@
+import type { DiningPlacement } from "@/server/catalog/dining-placement";
 import { composeEventItinerary, type ItineraryProduct } from "@/server/catalog/itinerary";
 import { resolveSchedulingBehavior } from "@/server/catalog/scheduling-behavior";
 import { PRODUCT_SCHEDULING_BEHAVIORS } from "@/types/catalog";
@@ -75,6 +76,7 @@ function isSequencedProduct(product: ItineraryProduct): boolean {
 export function candidateProductOrders(input: {
   products: ItineraryProduct[];
   foodFirst: boolean;
+  diningPlacement?: DiningPlacement | string | null;
 }): ItineraryProduct[][] {
   const sequenced = input.products.filter(isSequencedProduct);
   const food = sequenced.filter((row) => resolveSchedulingBehavior(row) === "DINING");
@@ -90,6 +92,7 @@ export async function searchViableStructuredItinerary(input: {
   requestedStartTime: string | null;
   durationMinutes: number;
   foodFirst: boolean;
+  diningPlacement?: DiningPlacement | string | null;
   products: ItineraryProduct[];
   baseRequirements: PlanResourceRequirement[];
   check: (input: {
@@ -112,7 +115,11 @@ export async function searchViableStructuredItinerary(input: {
   }
   const dayStart = input.dayStartMinute ?? SCHEDULE_DAY_START_MINUTE;
   const dayEnd = input.dayEndMinute ?? SCHEDULE_DAY_END_MINUTE;
-  const orders = candidateProductOrders({ products: input.products, foodFirst: input.foodFirst });
+  const orders = candidateProductOrders({
+    products: input.products,
+    foodFirst: input.foodFirst,
+    diningPlacement: input.diningPlacement,
+  });
   let originalConflictLabels: string[] = [];
   let candidatesEvaluated = 0;
   const started = Date.now();
@@ -129,6 +136,7 @@ export async function searchViableStructuredItinerary(input: {
       const composed = composeEventItinerary({
         startTime,
         foodFirst: input.foodFirst,
+        diningPlacement: input.diningPlacement,
         preserveOrder: true,
         products,
         fallbackMinutes: input.durationMinutes,

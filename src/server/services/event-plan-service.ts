@@ -72,6 +72,7 @@ function toPlannerFacts(inquiry: {
   diningPreference: string | null;
   spacePreference: string | null;
   attractionInterestIds: Prisma.JsonValue | null;
+  attractionMode?: string | null;
   customerNotes: string | null;
 }): PlannerInquiryFacts {
   return {
@@ -88,6 +89,7 @@ function toPlannerFacts(inquiry: {
     diningPreference: engineDiningPreference(inquiry.diningPreference),
     spacePreference: inquiry.spacePreference,
     attractionInterestIds: attractionInterestIdsFromJson(inquiry.attractionInterestIds),
+    attractionMode: inquiry.attractionMode,
     customerNotes: inquiry.customerNotes,
   };
 }

@@ -2,6 +2,14 @@ import { formatDurationMinutes } from "@/lib/event-planner/labels";
 import type { ItinerarySegment } from "@/types/catalog";
 import { PRODUCT_SCHEDULING_BEHAVIORS } from "@/types/catalog";
 import {
+  diningBlockMinutes,
+  diningIsSequential,
+  diningPlacementFromFlags,
+  diningSegmentLabel,
+  type DiningPlacement,
+} from "@/server/catalog/dining-placement";
+import {
+  customerActivityName,
   resolveSchedulingBehavior,
   type ResolvedSchedulingRole,
 } from "@/server/catalog/scheduling-behavior";
@@ -21,7 +29,7 @@ export type ItineraryProduct = {
 };
 
 export type ComposedItinerary = {
-  /** Dining overlays, activities, and overlapping space windows. */
+  /** Dining blocks, activities, and overlapping space windows. */
   itinerary: ItinerarySegment[];
   eventLengthMinutes: number;
   includedItems: ItineraryProduct[];
@@ -50,6 +58,7 @@ function isFlexibleDining(product: ItineraryProduct): boolean {
 export function composeEventItinerary(input: {
   startTime: string | null;
   foodFirst: boolean;
+  diningPlacement?: DiningPlacement | string | null;
   products: ItineraryProduct[];
   preserveOrder?: boolean;
   /** Used only when the proposal has no timed content and no requested window. */
@@ -57,23 +66,63 @@ export function composeEventItinerary(input: {
   /** Customer-requested event length. Never shortened or lengthened. */
   requestedMinutes?: number | null;
 }): ComposedItinerary {
+  const placement = diningPlacementFromFlags(input.foodFirst, input.diningPlacement);
   const start = parseMinutes(input.startTime);
   const windowMinutes =
     input.requestedMinutes && input.requestedMinutes > 0 ? input.requestedMinutes : null;
+  const allDining = input.products.filter((product) => roleOf(product) === "DINING");
+  const sequentialDining =
+    placement === "none" ? [] : diningIsSequential(placement) ? allDining : allDining.filter((product) => !isFlexibleDining(product));
+  const flexibleDining =
+    placement === "none"
+      ? allDining
+      : diningIsSequential(placement)
+        ? []
+        : allDining.filter(isFlexibleDining);
   const includedItems = input.products.filter(
-    (product) => roleOf(product) === PRODUCT_SCHEDULING_BEHAVIORS.NON_SCHEDULED || isFlexibleDining(product),
-  );
-  const timedDining = input.products.filter(
-    (product) => roleOf(product) === "DINING" && !isFlexibleDining(product),
+    (product) =>
+      roleOf(product) === PRODUCT_SCHEDULING_BEHAVIORS.NON_SCHEDULED ||
+      flexibleDining.some((row) => row.id === product.id),
   );
   const sequencedProducts = input.products.filter((product) => roleOf(product) === PRODUCT_SCHEDULING_BEHAVIORS.SCHEDULED);
-  // Dining is concurrent/flexible, so foodFirst no longer reorders the activity clock.
   const ordered = input.preserveOrder ? sequencedProducts : [...sequencedProducts];
 
   let cursor = start;
   const segments: ItinerarySegment[] = [];
   const sequenced: ComposedItinerary["sequenced"] = [];
   const overflowActivityNames: string[] = [];
+  let overflowing = false;
+
+  const fits = (duration: number) =>
+    windowMinutes == null || cursor - start + duration <= windowMinutes;
+
+  const pushDining = (products: ItineraryProduct[]) => {
+    for (const [index, product] of products.entries()) {
+      const duration = diningBlockMinutes(product);
+      if (overflowing || !fits(duration)) {
+        overflowing = true;
+        overflowActivityNames.push(product.name);
+        continue;
+      }
+      const next = cursor + duration;
+      segments.push({
+        id: `seg-dining-${product.id}-${index}`,
+        startTime: minutesToClock(cursor),
+        endTime: minutesToClock(next),
+        label: diningSegmentLabel(product.name),
+        productId: product.id,
+        startOffsetMinutes: cursor - start,
+        durationMinutes: duration,
+        consumesInventory: false,
+        role: "DINING",
+      });
+      cursor = next;
+    }
+  };
+
+  if (placement === "first") {
+    pushDining(sequentialDining);
+  }
 
   for (const [index, product] of ordered.entries()) {
     const duration = sequencedDuration(product);
@@ -81,7 +130,8 @@ export function composeEventItinerary(input: {
       includedItems.push(product);
       continue;
     }
-    if (windowMinutes != null && cursor - start + duration > windowMinutes) {
+    if (overflowing || !fits(duration)) {
+      overflowing = true;
       overflowActivityNames.push(product.name);
       continue;
     }
@@ -101,10 +151,11 @@ export function composeEventItinerary(input: {
     cursor = next;
   }
 
-  const activitySpan = cursor - start;
-  if (windowMinutes != null) {
-    for (const [index, product] of timedDining.entries()) {
-      const duration = sequencedDuration(product);
+  if (placement === "last") {
+    pushDining(sequentialDining);
+  } else if (placement === "flexible" && windowMinutes != null) {
+    for (const [index, product] of sequentialDining.entries()) {
+      const duration = diningBlockMinutes(product);
       if (!duration) {
         includedItems.push(product);
         continue;
@@ -114,7 +165,7 @@ export function composeEventItinerary(input: {
         id: `seg-dining-${product.id}-${index}`,
         startTime: minutesToClock(start),
         endTime: minutesToClock(start + overlay),
-        label: product.name,
+        label: diningSegmentLabel(product.name),
         productId: product.id,
         startOffsetMinutes: 0,
         durationMinutes: overlay,
@@ -122,12 +173,13 @@ export function composeEventItinerary(input: {
         role: "DINING",
       });
     }
-  } else {
-    for (const product of timedDining) {
+  } else if (placement === "flexible") {
+    for (const product of sequentialDining) {
       includedItems.push(product);
     }
   }
 
+  const activitySpan = cursor - start;
   const rooms = input.products.filter((product) => roleOf(product) === PRODUCT_SCHEDULING_BEHAVIORS.SPACE_WINDOW);
   const roomMinutes = rooms.reduce((max, product) => Math.max(max, product.durationMinutes ?? 0), 0);
   const eventLengthMinutes =
@@ -165,19 +217,9 @@ export function composeEventItinerary(input: {
 export function itinerarySpanMinutes(
   segments: Array<{ startTime: string; endTime: string; role?: string | null }>,
 ): number {
-  const timed = segments.filter((segment) => segment.role !== "SPACE" && segment.role !== "DINING" && segment.startTime && segment.endTime);
+  const timed = segments.filter((segment) => segment.role !== "SPACE" && segment.startTime && segment.endTime);
   if (timed.length === 0) {
-    const dining = segments.filter((segment) => segment.role === "DINING" && segment.startTime && segment.endTime);
-    if (dining.length === 0) {
-      return 0;
-    }
-    const starts = dining.map((segment) => parseClockToMinutes(segment.startTime) ?? 0);
-    const ends = dining.map((segment) => {
-      const start = parseClockToMinutes(segment.startTime) ?? 0;
-      const end = parseClockToMinutes(segment.endTime) ?? start;
-      return end <= start ? end + 24 * 60 : end;
-    });
-    return Math.max(...ends) - Math.min(...starts);
+    return 0;
   }
   const starts = timed.map((segment) => parseClockToMinutes(segment.startTime) ?? 0);
   const ends = timed.map((segment) => {
@@ -192,6 +234,7 @@ export function buildItinerary(input: {
   startTime: string | null;
   durationMinutes: number;
   foodFirst: boolean;
+  diningPlacement?: DiningPlacement | string | null;
   products: ItineraryProduct[];
   preserveOrder?: boolean;
 }): ItinerarySegment[] {
@@ -215,8 +258,18 @@ export function scheduleLimitationText(input: {
     return null;
   }
   const requested = input.requestedMinutes && input.requestedMinutes > 0 ? input.requestedMinutes : null;
+  const named = input.overflowActivityNames.map((name) => customerActivityName(name));
+  const listed =
+    named.length <= 1
+      ? named[0]
+      : named.length === 2
+        ? `${named[0]} and ${named[1]}`
+        : `${named.slice(0, -1).join(", ")}, and ${named[named.length - 1]}`;
+  const preserved = listed
+    ? ` ${listed} still ${named.length === 1 ? "needs" : "need"} to be scheduled.`
+    : "";
   if (!requested) {
-    return "These activities need a longer event window than we can confirm from the request.";
+    return `These activities need a longer event window than we can confirm from the request.${preserved} The timeline is a sample until our team confirms the flow.`;
   }
-  return `These activities need ${formatDurationMinutes(input.neededMinutes)}, which is longer than the requested ${formatDurationMinutes(requested)}. The timeline is a sample until our team confirms the flow.`;
+  return `These activities need ${formatDurationMinutes(input.neededMinutes)}, which is longer than the requested ${formatDurationMinutes(requested)}.${preserved} The timeline is a sample until our team confirms the flow.`;
 }

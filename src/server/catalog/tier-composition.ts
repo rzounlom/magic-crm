@@ -20,7 +20,6 @@ import {
 import { customerActivityName } from "@/server/catalog/scheduling-behavior";
 import type { PlannerInquiryFacts } from "@/server/event-planner/build-event-plans";
 import {
-  ATTRACTION_MODES,
   BUDGET_EXPLANATION_CODES,
   BUDGET_FITS,
   PRODUCT_KINDS,
@@ -417,7 +416,7 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
     return true;
   };
 
-  const explicit = input.attractionMode === ATTRACTION_MODES.KNOWN && (input.selections.length > 0 || input.directProductIds.length > 0);
+  const explicit = input.selections.length > 0 || input.directProductIds.length > 0;
   if (
     !explicit &&
     explicitAttractionSelectionMissing({
@@ -480,9 +479,16 @@ export function composeTierProducts<T extends CatalogProduct>(input: {
       continue;
     }
     const product = input.productsBySlug.get(slug);
-    if (product && fitsGuests(product, input.inquiry.guestCount)) {
-      push(product);
+    if (!product || !fitsGuests(product, input.inquiry.guestCount)) {
+      continue;
     }
+    if (
+      explicit &&
+      (product.kind === PRODUCT_KINDS.ATTRACTION || product.kind === PRODUCT_KINDS.PACKAGE)
+    ) {
+      continue;
+    }
+    push(product);
   }
 
   // Unknown or null diningPreference still follows the tier food strategy.

@@ -56,6 +56,7 @@ export type PlannerInquiryFacts = {
   diningPreference: string | null;
   spacePreference: string | null;
   attractionInterestIds: string[];
+  attractionMode?: string | null;
   customerNotes: string | null;
 };
 

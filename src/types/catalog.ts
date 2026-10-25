@@ -270,6 +270,11 @@ export type RecommendationProfilePayload = {
   diningPreferenceMap?: Record<string, string>;
   /** Tenant itinerary preference: food before attractions when true. */
   foodFirst: boolean;
+  /**
+   * Organization itinerary policy. When omitted, `foodFirst` maps to `first` and
+   * otherwise to `flexible`. Other tenants may use last, flexible, or none.
+   */
+  diningPlacement?: "first" | "last" | "flexible" | "none";
   goodAddOnSlugs: string[];
   betterAddOnSlugs: string[];
   bestAddOnSlugs: string[];
