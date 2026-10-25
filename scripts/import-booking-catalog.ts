@@ -5,6 +5,7 @@ import { config } from "dotenv";
 
 import { createPrismaClient } from "@/lib/db/create-client";
 import { parseRuntimeEnv } from "@/lib/env/validation";
+import { formatCatalogImportReport } from "@/server/catalog/catalog-import-diff";
 import { loadBookingCatalogDataset } from "@/server/catalog/load-dataset";
 import { importBookingCatalog } from "@/server/services/catalog-import-service";
 
@@ -18,6 +19,10 @@ if (process.env.NODE_ENV === "production") {
 
 config();
 config({ path: ".env.local", override: true });
+
+function hasFlag(name: string): boolean {
+  return process.argv.includes(name);
+}
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(name);
@@ -48,60 +53,42 @@ async function main() {
   const slug = arg("--slug")?.trim().toLowerCase();
   if (!slug) {
     throw new Error(
-      "Usage: npm run tenant:import-booking-catalog -- --slug <organizationSlug> --confirm IMPORT",
+      "Usage: npm run tenant:import-booking-catalog -- --slug <organizationSlug> [--dry-run | --confirm IMPORT]",
     );
   }
 
+  const dryRun = hasFlag("--dry-run");
   const dataset = loadBookingCatalogDataset();
   const env = parseRuntimeEnv(process.env);
   const database = createPrismaClient(env.DATABASE_URL);
   try {
-    const organization = await database.organization.findFirst({
-      where: { slug },
-      select: { name: true, slug: true },
-    });
-    if (!organization) {
-      throw new Error(`No organization found for slug "${slug}".`);
+    if (dryRun) {
+      const preview = await importBookingCatalog(database, {
+        organizationSlug: slug,
+        dataset,
+        dryRun: true,
+      });
+      console.info(formatCatalogImportReport(preview, { dryRun: true, applied: false }));
+      return;
     }
 
-    console.info("Import development booking catalog?");
-    console.info(`  Organization: ${organization.name}`);
-    console.info(`  Slug: ${organization.slug}`);
-    console.info(`  Products: ${dataset.products.length}`);
-    console.info(`  Resource types: ${dataset.resourceTypes.length}`);
-    console.info(`  Ambiguities: ${dataset.ambiguities.length}`);
+    const preview = await importBookingCatalog(database, {
+      organizationSlug: slug,
+      dataset,
+      dryRun: true,
+    });
+    console.info(formatCatalogImportReport(preview, { dryRun: true, applied: false }));
 
-    const confirmed = await readConfirm("Type IMPORT to confirm: ");
+    const confirmed = await readConfirm("Type IMPORT to apply this tenant-scoped catalog update: ");
     if (confirmed !== "IMPORT") {
       throw new Error("Aborted. Type IMPORT to confirm before writing catalog data.");
     }
 
     const result = await importBookingCatalog(database, {
-      organizationSlug: organization.slug,
+      organizationSlug: slug,
       dataset,
     });
-
-    console.info("Booking catalog import complete.");
-    console.info(`  Organization: ${result.organizationName}`);
-    console.info(`  Slug: ${result.organizationSlug}`);
-    console.info(
-      `  Categories created/updated/unchanged: ${result.categoriesCreated}/${result.categoriesUpdated}/${result.categoriesUnchanged}`,
-    );
-    console.info(
-      `  Products created/updated/unchanged: ${result.productsCreated}/${result.productsUpdated}/${result.productsUnchanged}`,
-    );
-    console.info(
-      `  Resource types created/updated/unchanged: ${result.resourceTypesCreated}/${result.resourceTypesUpdated}/${result.resourceTypesUnchanged}`,
-    );
-    console.info(`  Numbered resources created/unchanged: ${result.resourcesCreated}/${result.resourcesUnchanged}`);
-    console.info(
-      `  Profiles created/updated/unchanged: ${result.profilesCreated}/${result.profilesUpdated}/${result.profilesUnchanged}`,
-      `  Attraction interests created/updated/unchanged: ${result.interestsCreated}/${result.interestsUpdated}/${result.interestsUnchanged}`,
-    );
-    console.info("  Unresolved source ambiguities:");
-    for (const item of result.ambiguities) {
-      console.info(`    [${item.severity}] ${item.code}: ${item.message}`);
-    }
+    console.info(formatCatalogImportReport(result, { dryRun: false, applied: true }));
   } finally {
     await database.$disconnect();
   }
