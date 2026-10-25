@@ -60,8 +60,8 @@ describe("public event plan view", () => {
               spaces: [],
               schedule: ["Bowling first."],
               itinerary: [
-                { startTime: "17:30", endTime: "18:30", label: "Fajita Bar" },
-                { startTime: "18:30", endTime: "19:00", label: "Axe Throwing" },
+                { startTime: "17:30", endTime: "18:30", label: "Fajita Bar", role: "DINING" },
+                { startTime: "18:30", endTime: "19:00", label: "Axe Throwing", role: "ACTIVITY" },
               ],
               pricingComplete: true,
               depositPreviewCents: 114000,
@@ -160,7 +160,9 @@ describe("public event plan view", () => {
     expect(html).not.toContain("chat");
     expect(html).not.toContain("recommendation engine");
     expect(html).not.toContain("model confidence");
-    expect(html).toContain("5:30 PM–6:30 PM Fajita Bar");
+    expect(html).toContain("Sample itinerary");
+    expect(html).not.toContain("Sample timeline");
+    expect(html).toContain("5:30 PM–6:30 PM Dining: Fajita Bar");
     expect(html).toContain("6:30 PM–7:00 PM Axe Throwing");
     expect(html).not.toContain("17:30–18:30");
     expect(html).not.toMatch(/overflow-y-auto/);

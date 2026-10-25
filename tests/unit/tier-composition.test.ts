@@ -133,8 +133,8 @@ describe("deterministic tier composition", () => {
     );
     expect(slugs(good)).not.toContain("climbers-cove-90");
     expect(slugs(premium)).not.toContain("climbers-cove-90");
-    expect(good?.payload.itinerary?.[0]?.label).toMatch(/Laser/);
-    expect(good?.payload.itinerary?.some((row) => /Pizza/i.test(row.label))).toBe(false);
+    expect(good?.payload.itinerary?.[0]?.label).toMatch(/Dining:.*Pizza/);
+    expect(good?.payload.itinerary?.some((row) => /Laser/i.test(row.label))).toBe(true);
     expect(products.find((row) => row.slug === "pizza-pitcher-combo")?.containsAlcohol).not.toBe(true);
   });
 
@@ -786,7 +786,8 @@ describe("deterministic tier composition", () => {
       })),
     });
     expect(itinerary.itinerary.some((row) => row.label === "Fountain Drinks")).toBe(false);
-    expect(itinerary.eventLengthMinutes).toBe(60);
+    expect(itinerary.itinerary.some((row) => row.role === "DINING")).toBe(true);
+    expect(itinerary.eventLengthMinutes).toBe(120);
   });
 
   it("uses the next configured room when the first room's resources conflict", async () => {

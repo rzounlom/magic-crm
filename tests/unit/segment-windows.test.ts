@@ -42,9 +42,10 @@ describe("segment resource windows", () => {
       ],
     });
     expect(itinerary.map((row) => [row.label, row.startTime, row.endTime, row.startOffsetMinutes])).toEqual([
-      ["Axe Throwing", "17:30", "18:00", 0],
-      ["Bowling", "18:00", "19:00", 30],
-      ["Arcade", "19:00", "19:30", 90],
+      ["Dining: Food", "17:30", "18:30", 0],
+      ["Axe Throwing", "18:30", "19:00", 60],
+      ["Bowling", "19:00", "20:00", 90],
+      ["Arcade", "20:00", "20:30", 150],
     ]);
   });
 
@@ -63,10 +64,10 @@ describe("segment resource windows", () => {
       [requirement("Axe Throwing", "axe", "axe"), requirement("Bowling", "bowl", "bowling")],
       { itinerary, startTime: "17:30" },
     );
-    expect(stamped[0]?.windowStartTime).toBe("17:30");
-    expect(stamped[0]?.windowEndTime).toBe("18:00");
-    expect(stamped[1]?.windowStartTime).toBe("18:00");
-    expect(stamped[1]?.windowEndTime).toBe("19:00");
+    expect(stamped[0]?.windowStartTime).toBe("18:30");
+    expect(stamped[0]?.windowEndTime).toBe("19:00");
+    expect(stamped[1]?.windowStartTime).toBe("19:00");
+    expect(stamped[1]?.windowEndTime).toBe("20:00");
   });
 
   it("keeps legacy snapshots without itinerary on the full event window", () => {
@@ -89,7 +90,7 @@ describe("segment resource windows", () => {
       ],
     });
     const shifted = shiftItineraryToStart(original, "18:00");
-    expect(shifted.map((row) => `${row.startTime}–${row.endTime}`)).toEqual(["18:00–18:30"]);
+    expect(shifted.map((row) => `${row.startTime}–${row.endTime}`)).toEqual(["18:00–19:00", "19:00–19:30"]);
   });
 
   it("writes a customer-facing adjustment note without resource ids", () => {

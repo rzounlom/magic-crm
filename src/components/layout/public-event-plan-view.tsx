@@ -735,7 +735,7 @@ function PlanOptionCard({
           />
         </PlanSection>
 
-        <PlanSection title="Sample timeline">
+        <PlanSection title="Sample itinerary">
           {payload.itineraryPrecise === false ? (
             <div>
               {payload.schedule.length > 0 ? (
@@ -753,7 +753,10 @@ function PlanOptionCard({
             <ul className="list-disc space-y-1 pl-5">
               {sampleItinerary.map((segment) => (
                 <li key={`${segment.startTime}-${segment.label}`}>
-                  {formatItineraryRange(segment.startTime, segment.endTime)} {formatCustomerDurationText(segment.label)}
+                  {formatItineraryRange(segment.startTime, segment.endTime)}{" "}
+                  {segment.role === "DINING" && !/^dining\s*:/i.test(segment.label)
+                    ? `Dining: ${formatCustomerDurationText(segment.label)}`
+                    : formatCustomerDurationText(segment.label)}
                 </li>
               ))}
             </ul>

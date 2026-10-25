@@ -33,7 +33,7 @@ function minutes(value: string): number {
 }
 
 describe("proposal itinerary coherence", () => {
-  it("uses requested event length and does not treat flexible dining as extra time", () => {
+  it("uses requested event length and sequences dining first when configured", () => {
     const twoHours = composeEventItinerary({
       startTime: "16:00",
       foodFirst: true,
@@ -45,9 +45,11 @@ describe("proposal itinerary coherence", () => {
     });
     expect(twoHours.eventLengthMinutes).toBe(120);
     expect(twoHours.precise).toBe(true);
-    expect(twoHours.itinerary.filter((row) => row.role === "DINING")).toEqual([]);
-    expect(twoHours.includedItems.some((row) => row.name === "Fajita Bar")).toBe(true);
-    expect(itinerarySpanMinutes(twoHours.itinerary)).toBe(60);
+    expect(twoHours.itinerary.filter((row) => row.role === "DINING").map((row) => `${row.startTime}–${row.endTime} ${row.label}`)).toEqual([
+      "16:00–17:00 Dining: Fajita Bar",
+    ]);
+    expect(twoHours.includedItems.some((row) => row.name === "Fajita Bar")).toBe(false);
+    expect(itinerarySpanMinutes(twoHours.itinerary)).toBe(120);
     expect(formatDurationMinutes(twoHours.eventLengthMinutes)).toBe("2 hours");
 
     const threeHours = composeEventItinerary({
@@ -61,7 +63,7 @@ describe("proposal itinerary coherence", () => {
       ],
     });
     expect(threeHours.eventLengthMinutes).toBe(180);
-    expect(itinerarySpanMinutes(threeHours.itinerary)).toBe(120);
+    expect(itinerarySpanMinutes(threeHours.itinerary)).toBe(180);
     expect(formatEventDuration(90)).toBe("1 hour 30 minutes");
     expect(formatDurationMinutes(396)).toBe("6 hours 36 minutes");
     expect(formatEventDuration(300)).toBe("5 hours");
@@ -91,25 +93,27 @@ describe("proposal itinerary coherence", () => {
           validated: true,
           available: !overlaps && eventLengthMinutes === 120 && startTime !== "17:00",
           note: "",
-          types: overlaps
-            ? [{ resourceTypeSlug: "bowling-lane", resourceTypeName: "Bowling", requestedQuantity: 4, availableQuantity: 0, inventoryConfigured: true, conflict: true, requiresStaffConfiguration: false }]
-            : [],
+          types:
+            overlaps || startTime === "17:00"
+              ? [{ resourceTypeSlug: "bowling-lane", resourceTypeName: "Bowling", requestedQuantity: 4, availableQuantity: 0, inventoryConfigured: true, conflict: true, requiresStaffConfiguration: false }]
+              : [],
         };
       },
     });
-    expect(result?.startTime).toBe("16:00");
+    expect(result?.startTime).toBe("17:30");
     expect(result?.eventLengthMinutes).toBe(120);
     expect(result?.itinerary.filter((row) => row.role !== "SPACE").map((row) => `${row.startTime}–${row.endTime} ${row.label}`)).toEqual([
-      "16:00–17:00 Bowling - 1 Hour",
+      "17:30–18:30 Dining: Fajita Bar",
+      "18:30–19:30 Bowling - 1 Hour",
     ]);
     const bowling = result?.requirements.find((row) => row.productId === "bowl");
-    expect(bowling?.windowStartTime).toBe("16:00");
-    expect(bowling?.windowEndTime).toBe("17:00");
-    expect(result?.adjustmentNote).toContain("16:00");
+    expect(bowling?.windowStartTime).toBe("18:30");
+    expect(bowling?.windowEndTime).toBe("19:30");
+    expect(result?.adjustmentNote).toContain("17:30");
     expect(result?.adjustmentNote).toContain("overlaps existing Bowling reservations");
     const rendered = formatCustomerFacingClocks(result?.adjustmentNote);
-    expect(rendered).toContain("4:00 PM");
-    expect(rendered).not.toMatch(/AM PM|PM AM|\b16:00\b/);
+    expect(rendered).toContain("5:30 PM");
+    expect(rendered).not.toMatch(/AM PM|PM AM|\b17:30\b/);
   });
 
   it("names scheduled time added beyond the base option", () => {
@@ -195,17 +199,20 @@ describe("proposal itinerary coherence", () => {
       ],
     });
     expect(composed.eventLengthMinutes).toBe(180);
-    expect(composed.includedItems.map((row) => row.name)).toEqual(expect.arrayContaining(["Laser Plex Card", "Fajita Bar"]));
-    expect(composed.includedItems).toHaveLength(2);
+    expect(composed.includedItems.map((row) => row.name)).toEqual(["Laser Plex Card"]);
+    expect(composed.includedItems).toHaveLength(1);
     const sample = composed.itinerary.filter((row) => row.role !== "SPACE");
-    expect(sample.map((row) => `${row.startTime}–${row.endTime}`)).toEqual(["17:00–18:00", "18:00–19:00"]);
+    expect(sample.map((row) => `${row.startTime}–${row.endTime} ${row.label}`)).toEqual([
+      "17:00–18:00 Dining: Fajita Bar",
+      "18:00–19:00 Bowling - 1 Hour",
+      "19:00–20:00 Unlimited Arcade - 1 Hour",
+    ]);
     expect(sample.some((row) => row.label === "Laser Plex Card")).toBe(false);
-    expect(sample.some((row) => row.label === "Fajita Bar")).toBe(false);
     expect(sample.some((row) => row.durationMinutes === 36)).toBe(false);
     const sky = composed.itinerary.find((row) => row.role === "SPACE");
     expect(sky?.startTime).toBe("17:00");
     expect(sky?.endTime).toBe("20:00");
-    expect(itinerarySpanMinutes(sample)).toBe(120);
+    expect(itinerarySpanMinutes(sample)).toBe(180);
 
     const stamped = stampPlanResourceWindows({
       startTime: "17:00",
@@ -217,8 +224,8 @@ describe("proposal itinerary coherence", () => {
       ],
     });
     expect(stamped.find((row) => row.productId === "bowl")).toMatchObject({
-      windowStartTime: "17:00",
-      windowEndTime: "18:00",
+      windowStartTime: "18:00",
+      windowEndTime: "19:00",
     });
     expect(stamped.find((row) => row.productId === "sky")).toMatchObject({
       windowStartTime: "17:00",
@@ -239,7 +246,7 @@ describe("proposal itinerary coherence", () => {
       ],
     });
     expect(good.eventLengthMinutes).toBe(120);
-    expect(itinerarySpanMinutes(good.itinerary)).toBe(60);
+    expect(itinerarySpanMinutes(good.itinerary)).toBe(120);
     const room = good.itinerary.find((row) => row.role === "SPACE");
     expect(room?.startTime).toBe("17:00");
     expect(room?.endTime).toBe("20:00");
@@ -285,7 +292,7 @@ describe("proposal itinerary coherence", () => {
       ],
     });
     expect(premium.eventLengthMinutes).toBe(180);
-    expect(itinerarySpanMinutes(premium.itinerary.filter((row) => row.role !== "SPACE"))).toBe(120);
+    expect(itinerarySpanMinutes(premium.itinerary.filter((row) => row.role !== "SPACE"))).toBe(180);
     const premiumRoom = premium.itinerary.find((row) => row.role === "SPACE");
     expect(premiumRoom?.durationMinutes).toBe(180);
     expect(premiumRoom?.endTime).toBe("20:00");
@@ -304,9 +311,12 @@ describe("proposal itinerary coherence", () => {
     });
     expect(overflow.eventLengthMinutes).toBe(120);
     expect(overflow.precise).toBe(false);
-    expect(overflow.overflowActivityNames).toEqual(["1 Hour Unlimited Arcade Play"]);
-    expect(itinerarySpanMinutes(overflow.itinerary)).toBe(90);
-    expect(overflow.itinerary.some((row) => row.endTime > "16:00" && row.role === "ACTIVITY")).toBe(false);
+    expect(overflow.overflowActivityNames).toEqual([
+      "Unlimited Laser Tag - 90 Minutes",
+      "1 Hour Unlimited Arcade Play",
+    ]);
+    expect(itinerarySpanMinutes(overflow.itinerary)).toBe(60);
+    expect(overflow.itinerary.some((row) => row.role === "ACTIVITY")).toBe(false);
   });
 
   it("passes the inquiry's requested duration into proposal explanations", () => {
