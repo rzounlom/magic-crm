@@ -16,6 +16,7 @@ export type EmployeeNavItemId =
   | "schedule"
   | "salesKnowledge"
   | "resources"
+  | "catalogSync"
   | "team"
   | "security";
 
@@ -81,6 +82,14 @@ export const EMPLOYEE_NAV_ITEMS: readonly EmployeeNavItem[] = [
     label: "Resources",
     group: "catalog",
     permission: PERMISSIONS.INVENTORY_MANAGE,
+    mobile: "more",
+  },
+  {
+    id: "catalogSync",
+    href: "/app/admin/catalog-sync",
+    label: "Catalog sync",
+    group: "catalog",
+    permission: PERMISSIONS.CATALOG_MANAGE,
     mobile: "more",
   },
   {

@@ -42,6 +42,7 @@ describe("employee navigation helpers", () => {
     expect(byId.bookings.permission).toBe(PERMISSIONS.EVENTS_VIEW);
     expect(byId.schedule.permission).toBe(PERMISSIONS.CALENDAR_VIEW);
     expect(byId.resources.permission).toBe(PERMISSIONS.INVENTORY_MANAGE);
+    expect(byId.catalogSync.permission).toBe(PERMISSIONS.CATALOG_MANAGE);
     expect(byId.team.permission).toBe(PERMISSIONS.USERS_VIEW);
     expect(byId.security.permission).toBe(PERMISSIONS.SECURITY_GROUPS_VIEW);
     expect(byId.salesKnowledge.permission).toBe(PERMISSIONS.AI_VIEW);
@@ -55,6 +56,7 @@ describe("employee navigation helpers", () => {
     expect(hrefs).toContain("/app/bookings");
     expect(hrefs).toContain("/app/schedule");
     expect(hrefs).toContain("/app/admin/resources");
+    expect(hrefs).toContain("/app/admin/catalog-sync");
     expect(hrefs).toContain("/app/admin/team");
     expect(hrefs).toContain("/app/admin/security-groups");
     expect(hrefs).toContain("/app/admin/ai/knowledge");
@@ -77,6 +79,7 @@ describe("employee navigation helpers", () => {
     expect(moreIds).toContain("overview");
     expect(moreIds).toContain("salesKnowledge");
     expect(moreIds).toContain("resources");
+    expect(moreIds).toContain("catalogSync");
     expect(moreIds).toContain("team");
     expect(moreIds).toContain("security");
     expect(moreIds).not.toContain("inquiries");

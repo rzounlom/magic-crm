@@ -286,3 +286,36 @@ export class BookingError extends Error {
 export function isBookingError(error: unknown): error is BookingError {
   return error instanceof BookingError;
 }
+
+export const CATALOG_SYNC_ERROR_CODES = [
+  "TENANT_NOT_ELIGIBLE",
+  "CONFIRMATION_REQUIRED",
+  "UNEXPECTED_PLAN",
+] as const;
+
+export type CatalogSyncErrorCode = (typeof CATALOG_SYNC_ERROR_CODES)[number];
+
+const CATALOG_SYNC_USER_MESSAGES: Record<CatalogSyncErrorCode, string> = {
+  TENANT_NOT_ELIGIBLE:
+    "This catalog file is only for the Generations customer organization. The signed-in organization does not match.",
+  CONFIRMATION_REQUIRED: "Type the exact confirmation phrase to apply catalog changes.",
+  UNEXPECTED_PLAN: "The dry-run includes unexpected destructive changes. The catalog was not updated.",
+};
+
+export class CatalogSyncError extends Error {
+  readonly code: CatalogSyncErrorCode;
+
+  constructor(code: CatalogSyncErrorCode, message?: string) {
+    super(message ?? CATALOG_SYNC_USER_MESSAGES[code]);
+    this.name = "CatalogSyncError";
+    this.code = code;
+  }
+
+  get userMessage(): string {
+    return this.message;
+  }
+}
+
+export function isCatalogSyncError(error: unknown): error is CatalogSyncError {
+  return error instanceof CatalogSyncError;
+}
