@@ -1,5 +1,5 @@
 export type SecurityActionResult =
-  | { ok: true; title?: string; message?: string; redirectTo?: string }
+  | { ok: true; title?: string; message?: string; redirectTo?: string; refresh?: boolean }
   | {
       ok: false;
       code?: string;

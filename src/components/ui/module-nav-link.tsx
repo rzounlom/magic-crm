@@ -94,6 +94,9 @@ function iconPath(href: string) {
   if (href.startsWith("/app/admin/resources")) {
     return "M3 8.5 8 3.5l5 5M5 8.5V13h6V8.5";
   }
+  if (href.startsWith("/app/admin/catalog-sync")) {
+    return "M3.5 8h9M8 3.5v9M4.5 5.5 3.5 8l1 2.5M11.5 5.5l1 2.5-1 2.5";
+  }
   if (href.startsWith("/app/admin/team")) {
     return "M5.5 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM2.5 13c.4-2 1.6-3 3-3s2.6 1 3 3M10.5 6.5a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2ZM10 10c1.2 0 2.2.7 2.7 2";
   }
