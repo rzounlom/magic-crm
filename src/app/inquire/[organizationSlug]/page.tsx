@@ -8,6 +8,8 @@ import { customerFacingOrganizationName } from "@/lib/inquiries/organization-dis
 import { isInquiryError } from "@/server/errors";
 import { listPublicPlannerCatalog } from "@/server/services/event-plan-service";
 
+export const dynamic = "force-dynamic";
+
 async function loadPublicPlanner(organizationSlug: string) {
   try {
     return await listPublicPlannerCatalog(db, organizationSlug);

@@ -12,6 +12,21 @@ function isLocalHostname(hostname: string): boolean {
 }
 
 /**
+ * Prefer explicit APP_URL. On Vercel, fall back to the current deployment host
+ * so Preview does not need a hardcoded production origin.
+ */
+export function resolveRuntimeAppUrl(source: NodeJS.Dict<string>): string | undefined {
+  if (source.APP_URL?.trim()) {
+    return source.APP_URL;
+  }
+  const vercelUrl = source.VERCEL_URL?.trim();
+  if (source.VERCEL === "1" && vercelUrl) {
+    return vercelUrl.includes("://") ? vercelUrl : `https://${vercelUrl}`;
+  }
+  return undefined;
+}
+
+/**
  * Trusted application origin from server configuration.
  * Rejects credentials, query strings, fragments, and non-local http.
  */
