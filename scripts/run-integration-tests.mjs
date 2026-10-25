@@ -7,4 +7,5 @@ runWithTestEnv("corepack", [
   "run",
   "--config",
   "vitest.integration.config.mts",
+  ...process.argv.slice(2),
 ]);

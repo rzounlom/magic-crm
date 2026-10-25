@@ -101,6 +101,8 @@ const coverageGrantSchema = z.object({
 const intakeDeclarationsSchema = z
   .object({
     foodInclusion: z.enum(["NONE", "UNKNOWN"]).optional(),
+    /** Tenant-declared alcoholic content. Absent means the product is not treated as alcohol. */
+    containsAlcohol: z.boolean().optional(),
   })
   .optional()
   .nullable();

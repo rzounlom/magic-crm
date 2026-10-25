@@ -543,17 +543,18 @@ describe("proposal capacity integration", () => {
 });
 
 describe("generations mixed catalog configuration", () => {
-  it("requires an explicit attraction and does not default mixed groups to bowling", () => {
+  it("defaults mixed groups to bowling and does not require an explicit attraction", () => {
     const dataset = parseBookingCatalogDataset(
       JSON.parse(readFileSync(path.join(process.cwd(), "scripts/data/generations-booking/booking-catalog.json"), "utf8")),
     );
     const mixed = dataset.recommendationProfiles.find((row) => row.audience === "MIXED");
     const payload = mixed?.payload as RecommendationProfilePayload;
-    expect(payload.requireExplicitAttractions).toBe(true);
-    expect(payload.defaultAttractionSlugs).toEqual([]);
-    expect(payload.composition?.tiers.good.coreAttractionSlugs).toEqual([]);
-    expect(payload.composition?.tiers.better.coreAttractionSlugs).toEqual([]);
-    expect(payload.composition?.tiers.best.coreAttractionSlugs).toEqual([]);
+    expect(payload.requireExplicitAttractions).not.toBe(true);
+    expect(payload.defaultAttractionSlugs).toEqual(["bowling-1h"]);
+    expect(payload.composition?.tiers.good.coreAttractionSlugs).toEqual(["bowling-1h"]);
+    expect(payload.composition?.tiers.better.coreAttractionSlugs).toEqual(["bowling-1h"]);
+    expect(payload.composition?.tiers.best.coreAttractionSlugs).toEqual(["bowling-1h"]);
+    expect(payload.composition?.tiers.best.upgradeSlugs).not.toContain("axe-throwing-60");
     const adults = dataset.recommendationProfiles.find((row) => row.audience === "ADULTS");
     const adultPayload = adults?.payload as RecommendationProfilePayload;
     expect(adultPayload.requireExplicitAttractions).not.toBe(true);

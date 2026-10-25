@@ -176,7 +176,8 @@ describe("buildEventPlans", () => {
     expect(bestFit.estimatedTotalCents).toBeLessThanOrEqual(540_000);
     expect(budget.estimatedTotalCents).toBeLessThan(bestFit.estimatedTotalCents);
     expect(premium.estimatedTotalCents).toBeGreaterThan(bestFit.estimatedTotalCents);
-    expect(budget.durationMinutes).toBeLessThan(premium.durationMinutes);
+    expect(budget.durationMinutes).toBe(180);
+    expect(premium.durationMinutes).toBe(180);
     expect(new Set(drafts.map((row) => JSON.stringify(row.payload.activities.map((a) => a.knowledgeItemId)))).size).toBeGreaterThan(1);
   });
 
@@ -285,6 +286,35 @@ describe("buildEventPlans", () => {
       true,
     );
     expect(drafts[1].payload.activities.some((row) => row.knowledgeItemId === "kart")).toBe(true);
+  });
+
+  it("does not present a dining preference label as a purchased item when no food products exist", () => {
+    const drafts = buildEventPlans({
+      inquiry: { ...inquiry, diningPreference: "not_sure", spacePreference: "no_preference" },
+      currency: "USD",
+      knowledge: [item({ id: "bowl", name: "Bowling", priceText: "$12/person" })],
+    });
+    expect(drafts).toHaveLength(3);
+    expect(drafts.every((row) => row.payload.dining.label === "Dining to be confirmed")).toBe(true);
+    expect(drafts.every((row) => row.payload.dining.priceCents === 0)).toBe(true);
+    expect(drafts.every((row) => row.durationMinutes === 180)).toBe(true);
+    expect(drafts.every((row) => row.payload.spaces.length === 0)).toBe(true);
+  });
+
+  it("does not stack overlapping bowling products just to raise the price", () => {
+    const drafts = buildEventPlans({
+      inquiry: { ...inquiry, diningPreference: "none", spacePreference: "no_preference", attractionInterestIds: ["r1"] },
+      currency: "USD",
+      knowledge: [
+        item({ id: "r1", name: "R1 Bowling", priceText: "$30/lane", maxGuests: 6 }),
+        item({ id: "r5", name: "R5 Bowling", priceText: "$45/lane", maxGuests: 6 }),
+        item({ id: "laser", name: "Laser Tag", priceText: "$10/person" }),
+      ],
+    });
+    for (const draft of drafts) {
+      const bowling = draft.payload.activities.filter((row) => /bowling/i.test(row.name));
+      expect(bowling).toHaveLength(1);
+    }
   });
 
   it("returns no plans when tenant knowledge has no eligible attractions", () => {

@@ -144,8 +144,10 @@ describe("multi-tenant catalog engines", () => {
         { id: "bowl", name: "Bowling", kind: "ATTRACTION", durationMinutes: 60 },
       ],
     });
-    expect(alpha[0]?.label).toBe("Pizza Combo");
-    expect(beta[0]?.label).toBe("Bowling");
+    expect(alpha.map((row) => row.label)).toEqual(["Bowling"]);
+    expect(beta.map((row) => row.label)).toEqual(["Bowling"]);
+    expect(alpha.some((row) => row.label === "Snack Combo")).toBe(false);
+    expect(beta.some((row) => row.label === "Pizza Combo")).toBe(false);
   });
 
   it("ignores foreign catalog IDs and never copies another tenant's products into a snapshot", async () => {

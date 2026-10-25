@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 
+import { containsAlcoholFromDeclarations } from "@/server/catalog/alcohol-eligibility";
 import { catalogPriceFromRow } from "@/server/catalog/pricing";
 import { pricingPromotionFromRow, type PricingPromotionRule } from "@/server/catalog/promotions";
 import { loadTaxConfigForProposal, type LoadedTaxConfig } from "@/server/catalog/load-tax-config";
@@ -111,6 +112,7 @@ export async function loadCatalogForProposal(
     experienceSessions: product.experienceGrants.find((grant) => grant.kind === COVERAGE_KINDS.ACTIVITY)?.sessionsPerParticipant ?? null,
     experienceGrants: product.experienceGrants.map((grant) => grantFromRow(grant)),
     foodInclusion: foodInclusionFromDeclarations(product.intakeDeclarations),
+    containsAlcohol: containsAlcoholFromDeclarations(product.intakeDeclarations),
   }));
 
   const loadedProfiles: LoadedRecommendationProfile[] = profiles.map((row) => ({

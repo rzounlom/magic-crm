@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ApplicationUrlError, parseApplicationOrigin } from "./application-url";
+import { ApplicationUrlError, parseApplicationOrigin, resolveRuntimeAppUrl } from "./application-url";
 import { databaseTargetFromUrl, databaseTargetsMatch, sanitizeDatabaseTarget } from "./database-target";
 
 const POSTGRES_PROTOCOLS = new Set(["postgres:", "postgresql:"]);
@@ -104,7 +104,7 @@ function issueMessages(error: z.ZodError): string[] {
 export function parseRuntimeEnv(source: NodeJS.Dict<string>): RuntimeEnv {
   const result = runtimeEnvSchema.safeParse({
     DATABASE_URL: source.DATABASE_URL,
-    APP_URL: source.APP_URL,
+    APP_URL: resolveRuntimeAppUrl(source),
     CLERK_SECRET_KEY: source.CLERK_SECRET_KEY || undefined,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: source.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || undefined,
     OPENAI_API_KEY: source.OPENAI_API_KEY || undefined,

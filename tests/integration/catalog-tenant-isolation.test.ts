@@ -139,8 +139,8 @@ describe("catalog tenant isolation (postgres)", () => {
       expect(betaPayload.lineItems?.some((item) => item.slug === "axe-throwing")).toBeFalsy();
       expect(alphaPayload.resourceRequirements?.find((row) => row.resourceTypeSlug === "bowling-lane")?.quantity).toBe(5);
       expect(betaPayload.resourceRequirements?.find((row) => row.resourceTypeSlug === "bowling-lane")?.quantity).toBe(2);
-      expect(alphaPayload.itinerary?.[0]?.label).toMatch(/Pizza/i);
-      expect(betaPayload.itinerary?.[0]?.label).not.toMatch(/Snack/i);
+      expect(alphaPayload.itinerary?.some((row) => /Pizza/i.test(row.label))).toBe(false);
+      expect(betaPayload.itinerary?.some((row) => /Snack/i.test(row.label))).toBe(false);
 
       const alphaKids = await createPublicInquiry(
         db,

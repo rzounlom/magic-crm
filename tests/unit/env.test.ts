@@ -41,6 +41,25 @@ describe("parseRuntimeEnv", () => {
     expect(() => parseRuntimeEnv({ DATABASE_URL: validPostgresUrl })).toThrow(/APP_URL is required/);
   });
 
+  it("derives APP_URL from VERCEL_URL on Vercel when APP_URL is unset", () => {
+    const env = parseRuntimeEnv({
+      DATABASE_URL: validPostgresUrl,
+      VERCEL: "1",
+      VERCEL_URL: "magic-crm-git-preview.vercel.app",
+    });
+    expect(env.APP_URL).toBe("https://magic-crm-git-preview.vercel.app");
+  });
+
+  it("prefers explicit APP_URL over VERCEL_URL", () => {
+    const env = parseRuntimeEnv({
+      DATABASE_URL: validPostgresUrl,
+      APP_URL: "https://crm.example.com",
+      VERCEL: "1",
+      VERCEL_URL: "magic-crm-git-preview.vercel.app",
+    });
+    expect(env.APP_URL).toBe("https://crm.example.com");
+  });
+
   it("accepts a production https origin and localhost http", () => {
     expect(
       parseRuntimeEnv({

@@ -7,6 +7,8 @@ import { customerFacingOrganizationName } from "@/lib/inquiries/organization-dis
 import { isInquiryError } from "@/server/errors";
 import { getPublicEventPlanByToken } from "@/server/services/event-plan-service";
 
+export const dynamic = "force-dynamic";
+
 async function loadPublicEventPlan(token: string) {
   try {
     return await getPublicEventPlanByToken(db, token);
@@ -32,7 +34,7 @@ export default async function PublicEventPlanPage({
   const organizationName = customerFacingOrganizationName(view.organizationName);
 
   return (
-    <PublicCustomerShell contained organizationName={organizationName}>
+    <PublicCustomerShell organizationName={organizationName}>
       <PublicEventPlanView
         organizationName={organizationName}
         currency={view.currency}

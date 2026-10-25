@@ -12,6 +12,8 @@ import { ensureProvisionedTenant } from "@/server/services/provision-organizatio
 import { syncUserProfileIdentityIfMissing } from "@/server/services/sync-user-profile-identity";
 import { applyPendingTeamInvitations } from "@/server/team/apply-pending-invitations";
 
+export const dynamic = "force-dynamic";
+
 /** Deduplicate provision work if layout and a child both trigger it in one request. */
 const ensureProvisionedTenantOnce = cache(async () => {
   const clerkAuth = await readTrustedClerkAuth();

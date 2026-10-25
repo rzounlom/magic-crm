@@ -47,6 +47,11 @@
       "message": "Beer Wall is not in either workbook and was not invented as a catalog SKU."
     },
     {
+      "code": "PIZZA_PITCHER_FOUNTAIN",
+      "severity": "info",
+      "message": "Authoritative catering menu: pizza-pitcher-combo is one large 1-topping pizza plus one pitcher of fountain beverage (nonalcoholic soda) at $20 per combo, serving 4-5 guests. A prior containsAlcohol flag was a data error and was removed. Beer Wall remains a separate optional enhancement and is not a catalog SKU. Pop Pitcher is listed in the rulebook at $8 and is not a catalog SKU."
+    },
+    {
       "code": "HAVE_A_BALL_VARIANTS",
       "severity": "info",
       "message": "Have a Ball bowling and mini golf are two fulfillment variants. Proposals pick one from the customer attraction choice."
@@ -1663,7 +1668,7 @@
       "maxGuests": null,
       "weekendOnly": false,
       "fulfillmentGroup": null,
-      "shortDescription": "Combination: Pizza & Pitcher Combination.",
+      "shortDescription": "One large 1-topping pizza and one pitcher of fountain beverage.",
       "coverage": [
         {
           "experienceKey": "pizza-pitcher-combo",
@@ -1974,15 +1979,15 @@
         "premiumSpaceSlug": "lower-event-room",
         "composition": {
           "foodStrategies": {
-            "value": ["pizza-pitcher-combo"],
-            "standard": ["fajita-bar"],
-            "premium": ["slider-bar"]
+            "value": ["pizza-pitcher-combo", "fajita-bar"],
+            "standard": ["slider-bar"],
+            "premium": ["smokehouse-bbq"]
           },
           "spaceSlugs": ["lower-event-room", "skybox"],
           "tiers": {
             "good": {
               "foodStrategy": "value",
-              "coreAttractionSlugs": ["unlimited-laser-tag-90", "unlimited-arcade-1h"],
+              "coreAttractionSlugs": ["unlimited-laser-tag-90"],
               "upgradeSlugs": [],
               "fulfillmentByInterest": {},
               "includeSpace": false,
@@ -1991,8 +1996,8 @@
             },
             "better": {
               "foodStrategy": "standard",
-              "coreAttractionSlugs": ["unlimited-laser-tag-90", "unlimited-arcade-1h"],
-              "upgradeSlugs": [],
+              "coreAttractionSlugs": ["unlimited-laser-tag-90"],
+              "upgradeSlugs": ["unlimited-arcade-1h"],
               "fulfillmentByInterest": {},
               "includeSpace": false,
               "spaceFit": "tightest",
@@ -2000,12 +2005,12 @@
             },
             "best": {
               "foodStrategy": "premium",
-              "coreAttractionSlugs": ["unlimited-laser-tag-90", "unlimited-arcade-1h"],
-              "upgradeSlugs": ["climbers-cove-90"],
+              "coreAttractionSlugs": ["unlimited-laser-tag-90"],
+              "upgradeSlugs": ["unlimited-arcade-1h"],
               "fulfillmentByInterest": {},
               "includeSpace": false,
               "spaceFit": "largest",
-              "spaceSlugOrder": ["skybox", "lower-event-room"]
+              "spaceSlugOrder": ["climbers-cove-90", "skybox", "lower-event-room"]
             }
           }
         }
@@ -2022,7 +2027,7 @@
         "defaultAttractionSlugs": [
           "axe-throwing-60"
         ],
-        "defaultFoodSlug": "slider-bar",
+        "defaultFoodSlug": "pizza-pitcher-combo",
         "diningPreferenceMap": {
           "pizza_light": "pizza-pitcher-combo",
           "catered_slider": "slider-bar",
@@ -2040,7 +2045,7 @@
         "premiumSpaceSlug": "skybox",
         "composition": {
           "foodStrategies": {
-            "value": ["fajita-bar", "breakfast-bar"],
+            "value": ["pizza-pitcher-combo", "fajita-bar", "breakfast-bar"],
             "standard": ["slider-bar"],
             "premium": ["smokehouse-bbq"]
           },
@@ -2067,9 +2072,9 @@
             "best": {
               "foodStrategy": "premium",
               "coreAttractionSlugs": ["axe-throwing-60", "bowling-1h"],
-              "upgradeSlugs": ["unlimited-arcade-1h"],
+              "upgradeSlugs": [],
               "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
-              "includeSpace": true,
+              "includeSpace": false,
               "spaceFit": "largest",
               "spaceSlugOrder": ["skybox", "lower-event-room"]
             }
@@ -2085,8 +2090,8 @@
           "better": "laser-plex-package",
           "best": "play-axtion"
         },
-        "defaultAttractionSlugs": [],
-        "requireExplicitAttractions": true,
+        "defaultAttractionSlugs": ["bowling-1h"],
+        "requireExplicitAttractions": false,
         "defaultFoodSlug": "pizza-pitcher-combo",
         "diningPreferenceMap": {
           "pizza_light": "pizza-pitcher-combo",
@@ -2104,36 +2109,36 @@
         "premiumSpaceSlug": "lower-event-room",
         "composition": {
           "foodStrategies": {
-            "value": ["pizza-pitcher-combo"],
-            "standard": ["fajita-bar"],
-            "premium": ["slider-bar"]
+            "value": ["pizza-pitcher-combo", "fajita-bar"],
+            "standard": ["slider-bar"],
+            "premium": ["smokehouse-bbq"]
           },
           "spaceSlugs": ["lower-event-room", "skybox"],
           "tiers": {
             "good": {
               "foodStrategy": "value",
-              "coreAttractionSlugs": [],
+              "coreAttractionSlugs": ["bowling-1h"],
               "upgradeSlugs": [],
-              "fulfillmentByInterest": {},
+              "fulfillmentByInterest": { "bowling": "bowling-1h" },
               "includeSpace": false,
               "spaceFit": "tightest",
               "spaceSlugOrder": ["lower-event-room", "skybox"]
             },
             "better": {
               "foodStrategy": "standard",
-              "coreAttractionSlugs": [],
-              "upgradeSlugs": [],
-              "fulfillmentByInterest": {},
+              "coreAttractionSlugs": ["bowling-1h"],
+              "upgradeSlugs": ["unlimited-arcade-1h"],
+              "fulfillmentByInterest": { "bowling": "bowling-1h" },
               "includeSpace": false,
               "spaceFit": "tightest",
               "spaceSlugOrder": ["lower-event-room", "skybox"]
             },
             "best": {
               "foodStrategy": "premium",
-              "coreAttractionSlugs": [],
-              "upgradeSlugs": ["axe-throwing-60"],
-              "fulfillmentByInterest": { "axe-throwing": "axe-throwing-60" },
-              "includeSpace": true,
+              "coreAttractionSlugs": ["bowling-1h"],
+              "upgradeSlugs": ["unlimited-arcade-1h"],
+              "fulfillmentByInterest": { "bowling": "bowling-1h" },
+              "includeSpace": false,
               "spaceFit": "largest",
               "spaceSlugOrder": ["skybox", "lower-event-room"]
             }

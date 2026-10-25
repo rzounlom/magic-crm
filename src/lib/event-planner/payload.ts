@@ -50,6 +50,8 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     depositPreviewPercent: payload.depositPreviewPercent ?? null,
     depositPreviewNote: payload.depositPreviewNote,
     itinerary: Array.isArray(payload.itinerary) ? payload.itinerary : [],
+    itineraryPrecise: payload.itineraryPrecise !== false,
+    scheduleLimitation: payload.scheduleLimitation ?? null,
     suggestedStartTimes: Array.isArray(payload.suggestedStartTimes) ? payload.suggestedStartTimes : [],
     requestedStartTime: payload.requestedStartTime ?? payload.startTime ?? null,
     itineraryAdjusted: payload.itineraryAdjusted === true,
@@ -82,4 +84,14 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
 
 export function isBestFitTier(tier: string): boolean {
   return tier === EVENT_PLAN_TIERS.BEST_FIT;
+}
+
+/**
+ * Proven schedule conflict only: requested timed activities exceed the event window.
+ * A sample/unclocked timeline, flexible dining, or unconfirmed hours is not enough.
+ */
+export function isEventPlanScheduleInfeasible(
+  payload: Pick<EventPlanPayload, "itineraryPrecise" | "scheduleLimitation">,
+): boolean {
+  return typeof payload.scheduleLimitation === "string" && payload.scheduleLimitation.trim().length > 0;
 }

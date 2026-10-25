@@ -1,4 +1,4 @@
-import { buildItinerary, itinerarySpanMinutes } from "@/server/catalog/itinerary";
+import { buildItinerary } from "@/server/catalog/itinerary";
 import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
 import { applyAvailabilityProvider, type PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import {
@@ -197,8 +197,7 @@ export async function generateRecommendations(
         storedRequirements: input.storedRequirements,
       });
       const builtItinerary = itineraryFromKnowledgeDraft(draft, input.knowledge);
-      const spanMinutes = itinerarySpanMinutes(builtItinerary.filter(isSampleItinerarySegment));
-      const durationMinutes = spanMinutes > 0 ? spanMinutes : draft.durationMinutes;
+      const durationMinutes = draft.durationMinutes;
       const structuredPayload = {
         ...draft.payload,
         durationMinutes,

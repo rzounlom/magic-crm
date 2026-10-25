@@ -25,6 +25,7 @@ export function PendingSubmitButton({
   form,
   variant,
   size = "md",
+  "aria-label": ariaLabel,
 }: {
   pendingLabel: string;
   children: ReactNode;
@@ -33,6 +34,7 @@ export function PendingSubmitButton({
   /** When set, applies shared Button visual styles (opt-in for gradual migration). */
   variant?: ButtonVariant;
   size?: ButtonSize;
+  "aria-label"?: string;
 }) {
   const pending = useContext(PendingActionContext);
 
@@ -47,6 +49,7 @@ export function PendingSubmitButton({
           : cn("cursor-pointer disabled:cursor-not-allowed", className)
       }
       aria-busy={pending}
+      aria-label={ariaLabel}
     >
       {pending ? <LoadingIndicator label={pendingLabel} /> : children}
     </button>
