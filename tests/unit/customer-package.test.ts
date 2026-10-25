@@ -6,9 +6,15 @@ import {
   customerTaxNote,
   describeTierImprovements,
   formatComponentPrice,
+  formatSampleItineraryRange,
   isUnresolvedDining,
   itemizedTotalMatchesEstimate,
+  packageDistinctionSummary,
+  packageInclusionLines,
+  packagePriceBreakdownRows,
+  packageSpecificAvailabilityNote,
   previousTierInSet,
+  sampleItineraryDetail,
   summarizeCustomerEvent,
 } from "@/lib/event-planner/customer-package";
 import { isEventPlanScheduleInfeasible } from "@/lib/event-planner/payload";
@@ -224,6 +230,100 @@ describe("customer package presentation", () => {
         }),
       ),
     ).toBe(false);
+  });
+
+  it("builds inclusion and price-breakdown rows from catalog line items", () => {
+    const bowling = payload({
+      lineItems: [
+        {
+          productId: "bowling-1h",
+          slug: "bowling-1h",
+          name: "Bowling - 1 Hour",
+          kind: PRODUCT_KINDS.ATTRACTION,
+          quantity: 2,
+          unitLabel: "lane",
+          unitPriceCents: 6000,
+          totalCents: 12000,
+        },
+        {
+          productId: "bowling-1h",
+          slug: "bowling-1h",
+          name: "Bowling - 1 Hour shoes",
+          kind: PRODUCT_KINDS.ATTRACTION,
+          quantity: 20,
+          unitLabel: "pair",
+          unitPriceCents: 350,
+          totalCents: 7000,
+        },
+        {
+          productId: "food",
+          slug: "pizza-pitcher-combo",
+          name: "Pizza & Pitcher Combination",
+          kind: PRODUCT_KINDS.FOOD,
+          quantity: 5,
+          unitLabel: "combo",
+          unitPriceCents: 2000,
+          totalCents: 10000,
+        },
+      ],
+    });
+    expect(packageInclusionLines(bowling)).toEqual([
+      "Bowling — 1 hour",
+      "Bowling shoes for 20 guests",
+      "Pizza & Pitcher Combination — 5 combos",
+    ]);
+    expect(packagePriceBreakdownRows(bowling, "USD")).toEqual([
+      { label: "Bowling", amount: "$120" },
+      { label: "Bowling shoes", amount: "$70" },
+      { label: "Pizza & Pitcher Combination", amount: "$100" },
+    ]);
+  });
+
+  it("describes dining-only upgrades without inventing attraction changes", () => {
+    const good = payload();
+    const recommended = payload({
+      dining: { label: "Slider Bar", priceCents: 60000 },
+      compositionDelta: {
+        comparedWithTier: EVENT_PLAN_TIERS.BUDGET,
+        addedProductNames: [],
+        foodFrom: "Pizza & Pitcher Combination",
+        foodTo: "Slider Bar",
+        spaceAdded: null,
+        fulfillmentChanges: [],
+      },
+    });
+    expect(packageDistinctionSummary(good, null)).toBe("Bowling and Pizza & Pitcher Combination dining");
+    expect(packageDistinctionSummary(recommended, good)).toBe("Bowling with upgraded Slider Bar dining");
+    expect(
+      packageDistinctionSummary(
+        payload({
+          compositionDelta: {
+            comparedWithTier: EVENT_PLAN_TIERS.BUDGET,
+            addedProductNames: [],
+            foodFrom: null,
+            foodTo: null,
+            spaceAdded: null,
+            fulfillmentChanges: [],
+          },
+        }),
+        good,
+      ),
+    ).toBeNull();
+  });
+
+  it("formats dining-first sample itinerary copy without inventing blocks", () => {
+    expect(formatSampleItineraryRange("17:00", "18:00")).toBe("5:00–6:00 PM");
+    expect(sampleItineraryDetail({ startTime: "17:00", endTime: "18:00", label: "Dining: Slider Bar", role: "DINING" })).toBe(
+      "Dining · Slider Bar",
+    );
+    expect(sampleItineraryDetail({ startTime: "18:00", endTime: "19:00", label: "Bowling", role: "ACTIVITY" })).toBe("Bowling");
+  });
+
+  it("omits generic availability copy from the package card", () => {
+    expect(packageSpecificAvailabilityNote({ availabilityStatus: "AVAILABLE" })).toBeNull();
+    expect(packageSpecificAvailabilityNote({ availabilityStatus: "UNAVAILABLE" })).toBe(
+      "This option is not available at the requested time.",
+    );
   });
 
   it("orders comparison against the previous present tier", () => {

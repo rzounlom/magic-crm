@@ -1,12 +1,15 @@
+import { customerActivityName } from "@/server/catalog/scheduling-behavior";
 import {
+  formatCustomerDurationMinutes,
   formatCustomerDurationText,
   formatDiningPreference,
+  formatDurationMinutes,
   formatEventDuration,
   formatGuestMix,
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
-import { formatEventLocalDateTime } from "@/lib/inquiries/tenant-datetime";
+import { formatEventLocalDateTime, formatEventLocalTime } from "@/lib/inquiries/tenant-datetime";
 import { INQUIRY_AUDIENCES, PRODUCT_KINDS } from "@/types/catalog";
 import {
   CUSTOMER_AVAILABILITY_NOTE,
@@ -16,6 +19,7 @@ import {
   PACKAGE_PRESENTATION,
   UNCONFIRMED_DINING_LABEL,
   type EventPlanDining,
+  type EventPlanItinerarySegment,
   type EventPlanLineItem,
   type EventPlanPayload,
 } from "@/types/event-planner";
@@ -214,6 +218,18 @@ export function customerAvailabilityCopy(input: {
   return input.customerAvailabilityNote?.trim() || CUSTOMER_AVAILABILITY_NOTE;
 }
 
+const GENERIC_AVAILABILITY_NOTES = new Set([CUSTOMER_AVAILABILITY_NOTE, CUSTOMER_OCCUPANCY_NOTE]);
+
+/** Package-specific warnings only. Generic confirmation language belongs below the comparison. */
+export function packageSpecificAvailabilityNote(input: {
+  availabilityStatus?: string | null;
+  itineraryAdjusted?: boolean;
+  customerAvailabilityNote?: string | null;
+}): string | null {
+  const copy = customerAvailabilityCopy(input);
+  return GENERIC_AVAILABILITY_NOTES.has(copy) ? null : copy;
+}
+
 export function customerTaxNote(
   tax: TaxBreakdownSnapshot | undefined,
   currency: string,
@@ -299,4 +315,285 @@ function firstPresent(...values: Array<string | null | undefined>): string | nul
 
 function uniqueLines(lines: string[]): string[] {
   return [...new Set(lines.filter((row) => row.trim().length > 0))];
+}
+
+const SHOE_NAME = /\bshoes\b/i;
+const DURATION_IN_NAME = /\b(\d+)\s*(minutes?|mins?|hours?|hrs?)\b/i;
+
+export function isShoeLineItem(item: Pick<EventPlanLineItem, "name" | "unitLabel">): boolean {
+  return item.unitLabel === "pair" || SHOE_NAME.test(item.name);
+}
+
+export function packageInclusionLines(payload: EventPlanPayload): string[] {
+  const guestCount = payload.guestCount;
+  const items = payload.lineItems ?? [];
+  const lines: string[] = [];
+
+  if (items.length > 0) {
+    const activities = items.filter((row) => classifyProductKind(row.kind) === "activity" && !isShoeLineItem(row));
+    const shoes = items.filter((row) => isShoeLineItem(row));
+    const addons = items.filter((row) => classifyProductKind(row.kind) === "addon" && !isShoeLineItem(row));
+    const foods = items.filter((row) => classifyProductKind(row.kind) === "food");
+    const spaces = items.filter((row) => classifyProductKind(row.kind) === "space");
+
+    lines.push(...activities.map((row) => formatActivityInclusion(row, payload)));
+    lines.push(...shoes.map((row) => formatShoeInclusion(row)));
+    lines.push(...addons.map((row) => formatNamedQuantity(formatCustomerDurationText(row.name), row.quantity, row.unitLabel, guestCount)));
+    if (foods.length > 0) {
+      lines.push(...foods.map((row) => formatFoodInclusion(row, guestCount)));
+    } else {
+      lines.push(...fallbackDiningLines(payload));
+    }
+    lines.push(...(payload.beverages ?? []).map((item) => formatNamedQuantity(item.name, item.quantity ?? 1, item.unitLabel, guestCount)));
+    if (spaces.length > 0) {
+      lines.push(...spaces.map((row) => formatCustomerDurationText(row.name)));
+    } else {
+      lines.push(...payload.spaces.map((space) => formatCustomerDurationText(space.name)));
+    }
+    return uniqueLines(lines);
+  }
+
+  lines.push(
+    ...payload.activities.map((activity) => {
+      const duration = durationTextForName(activity.name, payload);
+      const name = customerActivityName(formatCustomerDurationText(activity.name));
+      return duration ? `${name} — ${duration}` : name;
+    }),
+  );
+  lines.push(...fallbackDiningLines(payload));
+  lines.push(...(payload.beverages ?? []).map((item) => formatNamedQuantity(item.name, item.quantity ?? 1, item.unitLabel, guestCount)));
+  lines.push(...payload.spaces.map((space) => formatCustomerDurationText(space.name)));
+  lines.push(
+    ...(payload.includedItems ?? []).map((item) =>
+      formatNamedQuantity(formatCustomerDurationText(item.name), item.quantity ?? 1, item.unitLabel, guestCount),
+    ),
+  );
+  return uniqueLines(lines);
+}
+
+export function packagePriceBreakdownRows(
+  payload: EventPlanPayload,
+  currency: string,
+): Array<{ label: string; amount: string }> {
+  return (payload.lineItems ?? []).map((item) => ({
+    label: priceBreakdownLabel(item),
+    amount: formatMoneyFromCents(item.totalCents, currency),
+  }));
+}
+
+export function packageDistinctionSummary(
+  current: EventPlanPayload,
+  previous: EventPlanPayload | null,
+): string | null {
+  const activities = uniqueActivityNames(current);
+  const dining = resolvedDiningLabel(current);
+  const activityList = joinEnglish(activities);
+
+  if (!previous) {
+    if (activityList && dining) {
+      return `${activityList} and ${dining} dining`;
+    }
+    return activityList || dining;
+  }
+
+  const previousActivities = new Set(uniqueActivityNames(previous));
+  const addedActivities = activities.filter((name) => !previousActivities.has(name));
+  const previousDining = resolvedDiningLabel(previous);
+  const foodChanged = Boolean(dining && previousDining && dining !== previousDining);
+  const spaceAdded = current.spaces.some((space) => !previous.spaces.some((row) => row.name === space.name));
+  const delta = current.compositionDelta;
+  const deltaFoodOnly = Boolean(
+    delta &&
+      delta.foodFrom &&
+      delta.foodTo &&
+      delta.addedProductNames.length === 0 &&
+      !delta.spaceAdded &&
+      delta.fulfillmentChanges.length === 0,
+  );
+  const deltaAddedOnly = Boolean(
+    delta &&
+      !delta.foodFrom &&
+      !delta.foodTo &&
+      !delta.spaceAdded &&
+      delta.fulfillmentChanges.length === 0 &&
+      delta.addedProductNames.length > 0,
+  );
+
+  if (describeTierImprovements(previous, current).length === 0 && addedActivities.length === 0 && !foodChanged && !spaceAdded) {
+    return null;
+  }
+  if ((deltaFoodOnly || (foodChanged && addedActivities.length === 0 && !spaceAdded)) && activityList && dining) {
+    return `${activityList} with upgraded ${dining} dining`;
+  }
+  if (deltaAddedOnly || (addedActivities.length > 0 && !foodChanged && !spaceAdded)) {
+    return activityList || null;
+  }
+  if (activityList && dining && (foodChanged || addedActivities.length > 0)) {
+    return `${activityList} with ${dining} dining`;
+  }
+  if (spaceAdded && activityList) {
+    const spaceName = current.spaces.find((space) => !previous.spaces.some((row) => row.name === space.name))?.name;
+    return spaceName ? `${activityList} with ${formatCustomerDurationText(spaceName)}` : activityList;
+  }
+  return activityList || dining;
+}
+
+export function sampleItineraryDetail(segment: EventPlanItinerarySegment): string {
+  const raw = formatCustomerDurationText(segment.label).trim();
+  const diningName = raw.replace(/^dining\s*[:·-]\s*/i, "").trim();
+  if (segment.role === "DINING" || /^dining\s*[:·-]/i.test(raw)) {
+    return diningName ? `Dining · ${diningName}` : "Dining";
+  }
+  return customerActivityName(diningName || raw);
+}
+
+/** Compact range such as `5:00–6:00 PM` when both clocks share a period. */
+export function formatSampleItineraryRange(start: string, end: string): string {
+  const startLabel = formatEventLocalTime(start);
+  const endLabel = formatEventLocalTime(end);
+  if (!startLabel || !endLabel) {
+    return [startLabel, endLabel].filter(Boolean).join("–");
+  }
+  const startPeriod = startLabel.replace(/^.*\s/, "");
+  const endPeriod = endLabel.replace(/^.*\s/, "");
+  const startClock = startLabel.replace(/\s*[AP]M$/i, "");
+  if (startPeriod === endPeriod) {
+    return `${startClock}–${endLabel}`;
+  }
+  return `${startLabel}–${endLabel}`;
+}
+
+function formatActivityInclusion(item: EventPlanLineItem, payload: EventPlanPayload): string {
+  const name = customerActivityName(formatCustomerDurationText(item.name));
+  const duration = durationTextForName(item.name, payload);
+  return duration ? `${name} — ${duration}` : name;
+}
+
+function formatShoeInclusion(item: EventPlanLineItem): string {
+  const base = customerActivityName(formatCustomerDurationText(item.name.replace(/\s*shoes\s*$/i, "").trim()));
+  const quantity = item.quantity > 0 ? item.quantity : null;
+  return quantity ? `${base} shoes for ${quantity} guests` : `${base} shoes`;
+}
+
+function formatFoodInclusion(item: EventPlanLineItem, guestCount: number): string {
+  return formatNamedQuantity(formatCustomerDurationText(item.name), item.quantity, item.unitLabel, guestCount);
+}
+
+function formatNamedQuantity(
+  name: string,
+  quantity: number,
+  unitLabel: string | null | undefined,
+  guestCount: number,
+): string {
+  const phrase = quantityPhrase(quantity, unitLabel, guestCount);
+  return phrase ? `${name} — ${phrase}` : name;
+}
+
+function quantityPhrase(
+  quantity: number,
+  unitLabel: string | null | undefined,
+  guestCount: number,
+): string | null {
+  if (quantity < 1) {
+    return null;
+  }
+  const unit = unitLabel?.trim().toLowerCase() ?? "";
+  if (unit === "person" || unit === "guest") {
+    return `${quantity} ${quantity === 1 ? "guest" : "guests"}`;
+  }
+  if (unit === "combo") {
+    return `${quantity} ${quantity === 1 ? "combo" : "combos"}`;
+  }
+  if (unit === "pair") {
+    return `for ${quantity} guests`;
+  }
+  if (unit) {
+    const plural = quantity === 1 || unit.endsWith("s") ? unit : `${unit}s`;
+    return `${quantity} ${plural}`;
+  }
+  if (quantity > 1 && quantity === guestCount) {
+    return `${quantity} guests`;
+  }
+  if (quantity > 1) {
+    return String(quantity);
+  }
+  return null;
+}
+
+function durationTextForName(name: string, payload: EventPlanPayload): string | null {
+  const fromName = DURATION_IN_NAME.exec(name);
+  if (fromName) {
+    const count = Number(fromName[1]);
+    if (Number.isFinite(count)) {
+      const minutes = /^h/i.test(fromName[2]) ? count * 60 : count;
+      return formatCustomerDurationMinutes(minutes) || formatDurationMinutes(minutes);
+    }
+  }
+  const activityName = customerActivityName(formatCustomerDurationText(name)).toLowerCase();
+  const matching = payload.itinerary?.find((segment) => {
+    const label = customerActivityName(formatCustomerDurationText(segment.label)).toLowerCase();
+    return label === activityName || label.includes(activityName) || activityName.includes(label);
+  });
+  if (matching?.durationMinutes && matching.durationMinutes > 0) {
+    return formatDurationMinutes(matching.durationMinutes);
+  }
+  return null;
+}
+
+function uniqueActivityNames(payload: EventPlanPayload): string[] {
+  const fromActivities = payload.activities.map((row) => customerActivityName(formatCustomerDurationText(row.name)));
+  if (fromActivities.length > 0) {
+    return uniqueLines(fromActivities);
+  }
+  return uniqueLines(
+    (payload.lineItems ?? [])
+      .filter((row) => classifyProductKind(row.kind) === "activity" && !isShoeLineItem(row))
+      .map((row) => customerActivityName(formatCustomerDurationText(row.name))),
+  );
+}
+
+function resolvedDiningLabel(payload: EventPlanPayload): string | null {
+  if (payload.dining.label === DINING_PREFERENCE_LABELS.none || isUnresolvedDining(payload.dining)) {
+    return null;
+  }
+  const label = formatCustomerDurationText(payload.dining.label).trim();
+  return label || null;
+}
+
+function fallbackDiningLines(payload: EventPlanPayload): string[] {
+  if (payload.dining.label === DINING_PREFERENCE_LABELS.none) {
+    return ["No food included"];
+  }
+  if (isUnresolvedDining(payload.dining)) {
+    return [UNCONFIRMED_DINING_LABEL];
+  }
+  const quantity = payload.dining.quantity;
+  if (quantity && quantity > 1) {
+    const unit = quantity === payload.guestCount ? "guests" : String(quantity);
+    return unit === "guests"
+      ? [`${payload.dining.label} — ${quantity} guests`]
+      : [`${payload.dining.label} — ${quantity}`];
+  }
+  return payload.dining.label.trim() ? [payload.dining.label] : [];
+}
+
+function priceBreakdownLabel(item: EventPlanLineItem): string {
+  if (isShoeLineItem(item)) {
+    const base = customerActivityName(formatCustomerDurationText(item.name.replace(/\s*shoes\s*$/i, "").trim()));
+    return `${base} shoes`;
+  }
+  if (classifyProductKind(item.kind) === "food") {
+    return formatCustomerDurationText(item.name);
+  }
+  return customerActivityName(formatCustomerDurationText(item.name));
+}
+
+function joinEnglish(names: string[]): string {
+  if (names.length <= 1) {
+    return names[0] ?? "";
+  }
+  if (names.length === 2) {
+    return `${names[0]} and ${names[1]}`;
+  }
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
 }

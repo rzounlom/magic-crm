@@ -7,19 +7,17 @@ import { useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } 
 import { PUBLIC_CONTENT_CLASS } from "@/components/layout/public-content";
 import { BlockingMutation } from "@/components/ui/blocking-mutation";
 import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pending-submit-button";
-import { PriceBreakdown } from "@/components/ui/price-breakdown";
-import { budgetFitCustomerText } from "@/lib/event-planner/budget-fit";
 import {
-  classifyProductKind,
-  customerAvailabilityCopy,
   customerTaxNote,
-  describeTierImprovements,
-  formatComponentPrice,
-  isUnresolvedDining,
+  formatSampleItineraryRange,
   itemizedTotalMatchesEstimate,
-  matchingLineItem,
+  packageDistinctionSummary,
+  packageInclusionLines,
   packagePresentation,
+  packagePriceBreakdownRows,
+  packageSpecificAvailabilityNote,
   previousTierInSet,
+  sampleItineraryDetail,
   sharedDurationMinutes,
   summarizeCustomerEvent,
 } from "@/lib/event-planner/customer-package";
@@ -32,7 +30,6 @@ import {
   formatEventLocalDateTime,
   formatEventLocalTime,
   formatItineraryLine,
-  formatItineraryRange,
   formatOrganizationTimestamp,
 } from "@/lib/inquiries/tenant-datetime";
 import { onSafeSubmitAttempt } from "@/lib/ui/confirm-gate";
@@ -42,15 +39,10 @@ import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
 import { reservePublicEventPlanAction, selectPublicEventPlanAction } from "@/server/actions/public-inquiry";
 import { BOOKING_STATUSES } from "@/types/booking";
 import {
-  BOOK_NOW_EXPLANATION,
-  CONTINUE_PACKAGE_EXPLANATION,
   CUSTOMER_AVAILABILITY_NOTE,
+  CUSTOMER_PACKAGE_ESTIMATE_NOTE,
   SCHEDULE_INFEASIBLE_CUSTOMER_NOTE,
-  DINING_PREFERENCE_LABELS,
   EVENT_PLAN_TIERS,
-  UNCONFIRMED_DINING_LABEL,
-  type EventPlanLineItem,
-  type EventPlanPayload,
 } from "@/types/event-planner";
 import { INQUIRY_SALES_STAGES } from "@/types/inquiry";
 import { PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
@@ -215,8 +207,8 @@ export function PublicEventPlanView({
           </h1>
           <p className="page-description mt-2 max-w-3xl">
             {plans.length === 1
-              ? `${personalEventPlannerTitle(organizationName)} prepared a package for ${firstName}. Review what is included, then continue with this package or submit an inquiry. Continuing saves a booking request. It does not confirm the date or reserve inventory.`
-              : `${personalEventPlannerTitle(organizationName)} prepared packages for ${firstName}. Compare what is included, then continue with a package or submit an inquiry. Continuing saves a booking request. It does not confirm the date or reserve inventory.`}
+              ? `${personalEventPlannerTitle(organizationName)} prepared a package for ${firstName}. Review what is included, then request this package or request a follow-up. Requesting a package saves a booking request. It does not confirm the date or reserve inventory.`
+              : `${personalEventPlannerTitle(organizationName)} prepared packages for ${firstName}. Compare what is included, then request a package or request a follow-up. Requesting a package saves a booking request. It does not confirm the date or reserve inventory.`}
           </p>
           <AdjustmentNotice note={adjustmentNote ? formatCustomerFacingClocks(adjustmentNote) : undefined} />
         </>
@@ -550,7 +542,7 @@ function ProposalComparison({
         role="tabpanel"
         aria-labelledby={mobilePlan ? `proposal-tier-${mobilePlan.tier}` : undefined}
         data-proposal-mobile
-        className="lg:hidden"
+        className="min-w-0 overflow-x-hidden lg:hidden"
       >
         {mobilePlan ? (
           <PlanOptionCard
@@ -564,7 +556,7 @@ function ProposalComparison({
           />
         ) : null}
       </div>
-      <div data-proposal-desktop className="hidden items-start gap-4 lg:grid lg:grid-cols-3">
+      <div data-proposal-desktop className="hidden min-w-0 items-start gap-4 overflow-x-hidden lg:grid lg:grid-cols-3">
         {plans.map((plan) => (
           <PlanOptionCard
             key={plan.id}
@@ -578,6 +570,9 @@ function ProposalComparison({
           />
         ))}
       </div>
+      <p data-package-estimate-note className="mt-5 max-w-3xl text-sm text-muted-foreground">
+        {CUSTOMER_PACKAGE_ESTIMATE_NOTE}
+      </p>
     </div>
   );
 }
@@ -623,19 +618,14 @@ function PlanOptionCard({
     plan.durationMinutes ?? payload.durationMinutes,
   );
   const availabilityNote = formatCustomerFacingClocks(
-    customerAvailabilityCopy({
+    packageSpecificAvailabilityNote({
       availabilityStatus: plan.availabilityStatus,
       itineraryAdjusted: payload.itineraryAdjusted,
       customerAvailabilityNote: payload.customerAvailabilityNote,
     }),
   );
+  const distinction = packageDistinctionSummary(payload, previousPayload);
   const recommendation = formatCustomerDurationText(formatCustomerFacingClocks(plan.customerFacingReason));
-  const budgetLine = budgetFitCustomerText({
-    code: payload.budgetExplanationCode,
-    differenceCents: payload.budgetDifferenceCents,
-    currency: displayCurrency,
-    preservedSelections: payload.budgetPreservedSelections === true,
-  });
   const durationNote = formatCustomerFacingClocks(payload.durationNote);
   const unavailable =
     plan.availabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE ||
@@ -647,16 +637,17 @@ function PlanOptionCard({
     !unavailable &&
     !scheduleInfeasible &&
     plan.availabilityStatus !== PLAN_AVAILABILITY_STATUSES.AVAILABILITY_CHANGED;
-  const upgrades = describeTierImprovements(previousPayload, payload);
-  const previousLabel = previous ? packagePresentation(previous.tier).label : null;
   const taxNote = customerTaxNote(payload.taxBreakdown, displayCurrency);
   const itemized = itemizedTotalMatchesEstimate(payload, plan.estimatedTotalCents);
+  const inclusions = packageInclusionLines(payload);
+  const priceRows = packagePriceBreakdownRows(payload, displayCurrency);
+  const resolvedTotal = payload.pricingComplete === true || total > 0;
 
   return (
     <article
       data-plan-card
       aria-current={selected ? "true" : undefined}
-      className={`box-border flex w-full flex-col rounded-[var(--radius-card)] border outline-2 -outline-offset-2 ${
+      className={`box-border flex min-w-0 w-full flex-col rounded-[var(--radius-card)] border outline-2 -outline-offset-2 ${
         recommended ? "border-primary shadow-[var(--shadow-card)] outline-primary/40" : "border-border outline-transparent"
       } ${selected ? "bg-primary/5" : "bg-surface"}`}
     >
@@ -665,81 +656,81 @@ function PlanOptionCard({
           {presentation.label}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">{presentation.subtitle}</p>
-        <h2 className="mt-2 text-lg font-semibold break-words">{plan.title}</h2>
-        <PriceBreakdown
-          className="mt-3"
-          density="compact"
-          currency={displayCurrency}
-          totalCents={total}
-          pricingComplete={payload.pricingComplete === true}
-          guestCount={guestCount}
-          perPersonCents={perPerson}
-          depositPreviewCents={payload.depositPreviewCents}
-          depositPreviewPercent={payload.depositPreviewPercent}
-          budgetLine={budgetLine}
-        />
+        <p
+          data-price-breakdown
+          data-pricing-resolved={resolvedTotal ? "true" : "false"}
+          className="mt-4 text-3xl font-semibold tracking-tight text-foreground"
+        >
+          {resolvedTotal ? formatMoneyFromCents(total, displayCurrency) : "Pricing to confirm"}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Estimated total</p>
+        {resolvedTotal && perPerson != null && guestCount ? (
+          <p className="mt-1 text-sm text-foreground/80">
+            {formatMoneyFromCents(perPerson, displayCurrency)} per guest · {guestCount} guests
+          </p>
+        ) : guestCount ? (
+          <p className="mt-1 text-sm text-foreground/80">{guestCount} guests</p>
+        ) : null}
+        {distinction ? (
+          <p className="mt-3 text-sm text-foreground/80">{distinction}</p>
+        ) : recommendation ? (
+          <p className="mt-3 text-sm text-foreground/80">{recommendation}</p>
+        ) : null}
       </div>
-      <div data-plan-details className="px-5 py-4">
-        {upgrades.length > 0 && previousLabel ? (
-          <PlanSection title={`What this adds over ${previousLabel}`}>
-            <ul data-upgrade-lines className="list-disc space-y-1 pl-5">
-              {upgrades.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </PlanSection>
-        ) : null}
-
-        <PlanSection title="Activities & Experiences">
-          <InclusionList
-            emptyLabel="To be confirmed with our team"
-            items={activityLines(payload, displayCurrency)}
-          />
-        </PlanSection>
-
-        <PlanSection title="Food & Drinks">
-          <InclusionList
-            emptyLabel={
-              payload.dining.label === DINING_PREFERENCE_LABELS.none
-                ? "No food included"
-                : isUnresolvedDining(payload.dining)
-                  ? UNCONFIRMED_DINING_LABEL
-                  : payload.dining.label
-            }
-            items={foodLines(payload, displayCurrency)}
-          />
-        </PlanSection>
-
-        {spaceLines(payload, displayCurrency).length > 0 || payload.spaceUnconfirmed ? (
-          <PlanSection title="Private Space / Room">
-            {payload.spaceUnconfirmed && spaceLines(payload, displayCurrency).length === 0 ? (
+      <div data-plan-details className="min-w-0 px-5 py-4">
+        <PlanSection title="What's included">
+          {payload.spaceUnconfirmed && !payload.spaces.length ? (
+            <div className="space-y-2">
+              <InclusionList emptyLabel="To be confirmed with our team" items={inclusions} />
               <p>Private space could not be confirmed for this option.</p>
-            ) : (
-              <InclusionList items={spaceLines(payload, displayCurrency)} />
-            )}
-          </PlanSection>
-        ) : null}
-
-        {addonLines(payload, displayCurrency).length > 0 ? (
-          <PlanSection title="Additional Inclusions">
-            <InclusionList items={addonLines(payload, displayCurrency)} />
-          </PlanSection>
-        ) : null}
-
-        <PlanSection title="Price details">
-          <PackagePriceDetails
-            payload={payload}
-            currency={displayCurrency}
-            itemized={itemized}
-            taxNote={taxNote}
-          />
+            </div>
+          ) : (
+            <InclusionList emptyLabel="To be confirmed with our team" items={inclusions} />
+          )}
         </PlanSection>
+
+        <details data-price-breakdown-disclosure className="mt-5 overflow-hidden rounded-md border border-border bg-muted/40 text-sm">
+          <summary className="cursor-pointer px-3 py-2 font-medium text-foreground outline-2 -outline-offset-2 outline-transparent focus-visible:outline-primary">
+            View price breakdown
+          </summary>
+          <div className="border-t border-border px-3 py-2 text-foreground/80">
+            {priceRows.length > 0 ? (
+              <ul className="space-y-1">
+                {priceRows.map((row) => (
+                  <li key={`${row.label}-${row.amount}`}>
+                    {row.label}: {row.amount}
+                  </li>
+                ))}
+                {resolvedTotal ? (
+                  <li className="pt-1 font-medium text-foreground">
+                    Estimated total: {formatMoneyFromCents(total, displayCurrency)}
+                  </li>
+                ) : null}
+              </ul>
+            ) : (
+              <p>A component breakdown is not available for this estimate.</p>
+            )}
+            {priceRows.length > 0 && !itemized ? (
+              <p className="mt-2">This estimate includes items that are not listed individually.</p>
+            ) : null}
+            {payload.depositPreviewCents != null && payload.pricingComplete ? (
+              <p className="mt-2">
+                {formatEstimatedDepositLine(
+                  payload.depositPreviewCents,
+                  payload.depositPreviewPercent,
+                  displayCurrency,
+                )}
+              </p>
+            ) : null}
+            {taxNote ? <p className="mt-2">{taxNote}</p> : null}
+          </div>
+        </details>
 
         <PlanSection title="Sample itinerary">
           {payload.itineraryPrecise === false ? (
             <div>
               {payload.schedule.length > 0 ? (
-                <ul className="list-disc space-y-1 pl-5">
+                <ul className="space-y-3">
                   {payload.schedule.map((row) => (
                     <li key={row}>{formatCustomerDurationText(row)}</li>
                   ))}
@@ -750,18 +741,18 @@ function PlanOptionCard({
               {payload.scheduleLimitation ? <p className="mt-2">{payload.scheduleLimitation}</p> : null}
             </div>
           ) : sampleItinerary.length > 0 ? (
-            <ul className="list-disc space-y-1 pl-5">
+            <ol className="space-y-3">
               {sampleItinerary.map((segment) => (
-                <li key={`${segment.startTime}-${segment.label}`}>
-                  {formatItineraryRange(segment.startTime, segment.endTime)}{" "}
-                  {segment.role === "DINING" && !/^dining\s*:/i.test(segment.label)
-                    ? `Dining: ${formatCustomerDurationText(segment.label)}`
-                    : formatCustomerDurationText(segment.label)}
+                <li key={`${segment.startTime}-${segment.label}`} className="min-w-0">
+                  <p className="font-medium text-foreground">
+                    {formatSampleItineraryRange(segment.startTime, segment.endTime)}
+                  </p>
+                  <p>{sampleItineraryDetail(segment)}</p>
                 </li>
               ))}
-            </ul>
+            </ol>
           ) : payload.schedule.length > 0 ? (
-            <ul className="list-disc space-y-1 pl-5">
+            <ul className="space-y-3">
               {payload.schedule.map((row) => (
                 <li key={row}>{formatCustomerDurationText(formatItineraryLine(row))}</li>
               ))}
@@ -777,10 +768,12 @@ function PlanOptionCard({
           </PlanSection>
         ) : null}
 
-        <PlanSection title="Availability">
-          <p>{availabilityNote}</p>
-          {payload.itineraryAdjusted && adjustedWindow ? <p className="mt-2">Adjusted to: {adjustedWindow}</p> : null}
-        </PlanSection>
+        {availabilityNote || (payload.itineraryAdjusted && adjustedWindow) ? (
+          <PlanSection title="Availability">
+            {availabilityNote ? <p>{availabilityNote}</p> : null}
+            {payload.itineraryAdjusted && adjustedWindow ? <p className="mt-2">Adjusted to: {adjustedWindow}</p> : null}
+          </PlanSection>
+        ) : null}
 
         {payload.itineraryAdjusted ? (
           <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
@@ -794,32 +787,23 @@ function PlanOptionCard({
           </p>
         ) : null}
 
-        <PlanSection title="About this package">
-          <p>{recommendation}</p>
-          {durationNote && !recommendation.includes(durationNote) ? <p className="mt-2">{durationNote}</p> : null}
-          {payload.itineraryAdjusted && (payload.adjustmentNote || payload.customerAvailabilityNote) ? (
-            <p className="mt-2">
-              {formatCustomerFacingClocks(payload.adjustmentNote || payload.customerAvailabilityNote)}
-            </p>
-          ) : null}
-          <p className="mt-2 text-xs text-foreground/55">{CUSTOMER_AVAILABILITY_NOTE}</p>
-          {scheduleInfeasible ? (
-            <p className="mt-2 text-xs text-foreground/70">
-              {payload.scheduleLimitation?.trim() || SCHEDULE_INFEASIBLE_CUSTOMER_NOTE}
-            </p>
-          ) : (
-            <>
-              <p className="mt-2 text-xs text-foreground/55">{CONTINUE_PACKAGE_EXPLANATION}</p>
-              <p className="mt-2 text-xs text-foreground/55">{BOOK_NOW_EXPLANATION}</p>
-            </>
-          )}
-          {payload.suggestedStartTimes && payload.suggestedStartTimes.length > 0 ? (
-            <p className="mt-2 text-xs text-foreground/70">
-              Nearby times to consider:{" "}
-              {payload.suggestedStartTimes.map((time) => formatEventLocalTime(time) ?? time).join(", ")}.
-            </p>
-          ) : null}
-        </PlanSection>
+        {durationNote ? <p className="mt-3 text-sm text-foreground/80">{durationNote}</p> : null}
+        {payload.itineraryAdjusted && (payload.adjustmentNote || payload.customerAvailabilityNote) ? (
+          <p className="mt-2 text-sm text-foreground/80">
+            {formatCustomerFacingClocks(payload.adjustmentNote || payload.customerAvailabilityNote)}
+          </p>
+        ) : null}
+        {scheduleInfeasible ? (
+          <p className="mt-3 text-sm text-foreground/70">
+            {payload.scheduleLimitation?.trim() || SCHEDULE_INFEASIBLE_CUSTOMER_NOTE}
+          </p>
+        ) : null}
+        {payload.suggestedStartTimes && payload.suggestedStartTimes.length > 0 ? (
+          <p className="mt-2 text-sm text-foreground/70">
+            Nearby times to consider:{" "}
+            {payload.suggestedStartTimes.map((time) => formatEventLocalTime(time) ?? time).join(", ")}.
+          </p>
+        ) : null}
       </div>
 
       <div data-plan-actions className="border-t border-border px-5 py-4">
@@ -839,109 +823,6 @@ function PlanOptionCard({
       </div>
     </article>
   );
-}
-
-function PackagePriceDetails({
-  payload,
-  currency,
-  itemized,
-  taxNote,
-}: {
-  payload: EventPlanPayload;
-  currency: string;
-  itemized: boolean;
-  taxNote: string | null;
-}) {
-  const priced = (payload.lineItems ?? [])
-    .map((item) => formatComponentPrice(item, currency))
-    .filter((row): row is string => Boolean(row));
-  return (
-    <div className="space-y-2">
-      {priced.length > 0 ? (
-        <ul className="list-disc space-y-1 pl-5">
-          {priced.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      ) : (
-        <p>A component breakdown is not available for this estimate.</p>
-      )}
-      {priced.length > 0 && !itemized ? (
-        <p>This estimate includes items that are not listed individually.</p>
-      ) : null}
-      {taxNote ? <p>{taxNote}</p> : null}
-    </div>
-  );
-}
-
-function activityLines(payload: EventPlanPayload, currency: string): string[] {
-  if (payload.activities.length > 0) {
-    return payload.activities.map((activity) => {
-      const priced = matchingLineItem(payload, { name: activity.name, productId: activity.productId });
-      if (priced) {
-        return formatComponentPrice(priced, currency) ?? formatCustomerDurationText(activity.name);
-      }
-      const quantity =
-        activity.quantity > 1 && activity.unitLabel ? ` · ${activity.quantity} ${activity.unitLabel}s` : "";
-      return `${formatCustomerDurationText(activity.name)}${quantity}`;
-    });
-  }
-  return (payload.lineItems ?? [])
-    .filter((row) => classifyProductKind(row.kind) === "activity")
-    .map((row) => formatComponentPrice(row, currency) ?? formatCustomerDurationText(row.name));
-}
-
-function foodLines(payload: EventPlanPayload, currency: string): string[] {
-  const foodItems = (payload.lineItems ?? []).filter((row) => classifyProductKind(row.kind) === "food");
-  const lines = foodItems.map((row) => formatComponentPrice(row, currency) ?? formatCustomerDurationText(row.name));
-  const beverageLines = (payload.beverages ?? []).map((item) => {
-    const quantity = item.quantity ? ` · ${item.quantity}${item.unitLabel ? ` ${item.unitLabel}` : ""}` : "";
-    return `${formatCustomerDurationText(item.name)}${quantity}`;
-  });
-  if (lines.length > 0) {
-    return [...lines, ...beverageLines];
-  }
-  if (isUnresolvedDining(payload.dining) || payload.dining.label === DINING_PREFERENCE_LABELS.none) {
-    return beverageLines;
-  }
-  if (payload.dining.label.trim()) {
-    return [payload.dining.label, ...beverageLines];
-  }
-  return beverageLines;
-}
-
-function spaceLines(payload: EventPlanPayload, currency: string): string[] {
-  const rentalItems = (payload.lineItems ?? []).filter((row) => classifyProductKind(row.kind) === "space");
-  if (rentalItems.length > 0) {
-    return rentalItems.map((row) => spaceLineFromItem(row, currency));
-  }
-  return payload.spaces.map((space) => {
-    const window =
-      space.startTime && space.endTime ? formatItineraryRange(space.startTime, space.endTime) : null;
-    const reservation =
-      space.durationMinutes && space.durationMinutes > 0
-        ? `${formatEventDuration(space.durationMinutes)} reservation`
-        : null;
-    return [formatCustomerDurationText(space.name), reservation, window].filter(Boolean).join(" · ");
-  });
-}
-
-function spaceLineFromItem(item: EventPlanLineItem, currency: string): string {
-  return formatComponentPrice(item, currency) ?? formatCustomerDurationText(item.name);
-}
-
-function addonLines(payload: EventPlanPayload, currency: string): string[] {
-  const addons = (payload.lineItems ?? []).filter((row) => classifyProductKind(row.kind) === "addon");
-  const fromItems = addons.map((row) => formatComponentPrice(row, currency) ?? formatCustomerDurationText(row.name));
-  const extras = (payload.includedItems ?? []).map((item) => {
-    const quantity = item.quantity ? ` · ${item.quantity}${item.unitLabel ? ` ${item.unitLabel}` : ""}` : "";
-    return `${formatCustomerDurationText(item.name)}${quantity}`;
-  });
-  return uniqueDisplayLines([...fromItems, ...extras]);
-}
-
-function uniqueDisplayLines(lines: string[]): string[] {
-  return [...new Set(lines.filter((row) => row.trim().length > 0))];
 }
 
 function InclusionList({ items, emptyLabel }: { items: string[]; emptyLabel?: string }) {
@@ -1002,7 +883,7 @@ function ChoosePlanButton({
     const formData = new FormData(event.currentTarget);
     pendingRef.current = true;
     setPendingLabel(
-      action === reservePublicEventPlanAction ? "Saving your booking request…" : "Submitting your inquiry…",
+      action === reservePublicEventPlanAction ? "Saving your booking request…" : "Saving your follow-up request…",
     );
     setPending(true);
     await yieldToPaint();
@@ -1037,14 +918,14 @@ function ChoosePlanButton({
               <input type="hidden" name="planId" value={planId} />
               <PendingSubmitButton
                 pendingLabel="Saving…"
-                aria-label={`Continue with this package: ${planLabel}`}
+                aria-label={`Request this package: ${planLabel}`}
                 className={
                   emphasized
-                    ? "w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-                    : "w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
+                    ? "min-h-11 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                    : "min-h-11 w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
                 }
               >
-                Continue with this package
+                Request this package
               </PendingSubmitButton>
             </form>
           ) : scheduleInfeasible ? (
@@ -1056,20 +937,17 @@ function ChoosePlanButton({
               This option is not available at the requested time.
             </p>
           )}
-          <form onSubmit={(event) => submit(event, selectPublicEventPlanAction, "Unable to submit inquiry")}>
+          <form onSubmit={(event) => submit(event, selectPublicEventPlanAction, "Unable to request a follow-up")}>
             <input type="hidden" name="token" value={token} />
             <input type="hidden" name="planId" value={planId} />
             <PendingSubmitButton
               pendingLabel="Submitting…"
-              aria-label={`Submit inquiry: ${planLabel}`}
-              className="w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
+              aria-label={`Request a follow-up: ${planLabel}`}
+              className="min-h-11 w-full rounded-md border border-border px-4 py-2 text-sm font-medium"
             >
-              Submit inquiry
+              Request a follow-up
             </PendingSubmitButton>
           </form>
-          {allowContinue ? (
-            <p className="text-xs text-muted-foreground">{CONTINUE_PACKAGE_EXPLANATION}</p>
-          ) : null}
         </div>
       </PendingActionProvider>
       <BlockingMutation active={pending} label={pendingLabel} />
