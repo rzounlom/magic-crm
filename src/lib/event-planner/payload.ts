@@ -79,6 +79,8 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     coverageAssessment: payload.coverageAssessment,
     compositionDelta: payload.compositionDelta,
     selectionAvailability: payload.selectionAvailability,
+    wpQuoteDraft: payload.wpQuoteDraft,
+    employeeApprovedQuote: payload.employeeApprovedQuote,
   };
 }
 

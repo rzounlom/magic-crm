@@ -64,7 +64,15 @@ export function summarizePlanChanges(
   return changes;
 }
 
+/**
+ * Prefer snapshotted quote `lineItems` when present (WP / employee-approved quotes).
+ * Falls back to activity + dining + space priceCents for legacy catalog plans.
+ */
 export function planPayloadTotal(payload: EventPlanPayload): number {
+  const lines = payload.lineItems ?? [];
+  if (lines.length > 0) {
+    return lines.reduce((sum, row) => sum + (row.totalCents || 0), 0);
+  }
   return (
     payload.activities.reduce((sum, row) => sum + (row.priceCents || 0), 0) +
     (payload.dining.priceCents || 0) +

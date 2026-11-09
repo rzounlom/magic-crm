@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import {
+  WP_CUSTOMER_QUOTE_DELIVERY_CODES,
   WP_PLUGIN_DEFAULT_ESTIMATE_LABEL,
   isUnverifiedWpPrivatePricing,
   isWpPrivatePricingVerifiedForCustomerQuote,
+  resolveWpCustomerQuoteDeliveryPolicy,
   shouldSuppressCustomerPlanNotificationForWpIntake,
 } from "@/server/event-planner/wp-parity/pricing-verification";
 
@@ -43,6 +45,16 @@ describe("WP pricing verification guard", () => {
     expect(isUnverifiedWpPrivatePricing({ status: "ready", pricingSource: "plugin_defaults" })).toBe(
       true,
     );
+    expect(
+      resolveWpCustomerQuoteDeliveryPolicy({
+        status: "ready",
+        pricingSource: "approved_plugin_baseline",
+      }),
+    ).toMatchObject({
+      canApprove: true,
+      canDeliver: false,
+      code: WP_CUSTOMER_QUOTE_DELIVERY_CODES.APPROVED_BASELINE_PENDING_OPERATIONAL_VERIFICATION,
+    });
   });
 
   it("suppresses customer plan emails for WP public intakes with unverified pricing", () => {

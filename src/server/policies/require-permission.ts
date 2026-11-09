@@ -116,6 +116,17 @@ export async function requirePermission(
   }
 }
 
+/** Require every listed permission (server-side AND). */
+export async function requirePermissions(
+  ctx: Pick<RequestContext, "organizationId" | "userId">,
+  permissions: readonly PermissionKey[],
+  database: AuthorizationDatabase,
+): Promise<void> {
+  for (const permission of permissions) {
+    await requirePermission(ctx, permission, database);
+  }
+}
+
 export function invalidatePermissionCache(
   ctx: Pick<RequestContext, "organizationId" | "userId">,
 ): void {

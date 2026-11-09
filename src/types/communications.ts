@@ -8,6 +8,8 @@ export type CommunicationChannel =
 export const COMMUNICATION_KINDS = {
   PLAN_SELECTION_CONFIRMATION: "PLAN_SELECTION_CONFIRMATION",
   BOOKING_CONFIRMATION: "BOOKING_CONFIRMATION",
+  /** Employee-approved WP/staff quote link. Delivery uses existing stub/skip until a provider exists. */
+  EMPLOYEE_APPROVED_QUOTE: "EMPLOYEE_APPROVED_QUOTE",
 } as const;
 
 export type CommunicationKind = (typeof COMMUNICATION_KINDS)[keyof typeof COMMUNICATION_KINDS];

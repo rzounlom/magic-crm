@@ -355,6 +355,61 @@ export type EventPlanPayload = {
     types: import("@/types/resource-schedule").ResourceTypeAvailability[];
     note: string;
   };
+  /**
+   * Staff quote draft provenance from private WordPress parity calculation.
+   * Present only on AGENT_WORKING drafts created from WP intake — not a customer quote.
+   */
+  wpQuoteDraft?: {
+    source: "wordpress_parity_private_calculation";
+    pricingSource: string;
+    rulesVersion: string | null;
+    pricingRevision: string | null;
+    calculatedAt: string | null;
+    planName: string;
+    planDate: string;
+    originalSubtotalCents?: number;
+    originalTaxCents?: number;
+    originalTotalCents?: number;
+    subtotalCents: number;
+    taxCents: number;
+    totalCents: number;
+    warnings: string[];
+    catalogPriceDiscrepancies: Array<{
+      wpKey: string;
+      productSlug: string;
+      wpCents: number;
+      magicCatalogCents: number;
+      note: string;
+    }>;
+    selectedAttractions: string[];
+    unpriced: boolean;
+    hardReview: boolean;
+    staffEdit?: {
+      editedAt: string;
+      editedByUserProfileId: string;
+      reason: string;
+      wordpressParityExact: false;
+    };
+    employeeApproval?: {
+      approvedAt: string;
+      approvedByUserProfileId: string;
+      note: string | null;
+      deliveryAttempted: boolean;
+      deliveryCompleted: boolean;
+      deliveryBlockedCode: string | null;
+      deliveryBlockedMessage: string | null;
+    };
+  };
+  /**
+   * Customer-safe marker for a single employee-approved WP quote (no Good/Recommended/Premium set).
+   * Must not include staff warnings, catalog discrepancies, or pricing-source internals.
+   */
+  employeeApprovedQuote?: {
+    marker: "employee_approved_wordpress_quote";
+    approvedAt: string;
+    availabilityConfirmed: boolean;
+    availabilityNote: string;
+  };
 };
 
 export type EventPlanDraft = {

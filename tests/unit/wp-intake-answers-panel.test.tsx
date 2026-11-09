@@ -72,7 +72,8 @@ describe("WpIntakeAnswersPanel pricing source", () => {
     );
     expect(html).not.toContain("ESTIMATE — Plugin-default pricing");
     expect(html).toContain("configuration revision 889a29ae88d4:approved_plugin_baseline");
-    expect(html).toContain("Do not send a final customer quote until operational go-live");
+    expect(html).toContain("Create a staff quote draft from the private calculation");
+    expect(html).toContain("Do not send a customer quote, create holds, or request payment until explicitly approved");
   });
 
   it("shows incomplete state and lists missing keys", () => {

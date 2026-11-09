@@ -14,6 +14,7 @@ import {
   findWpIntakeMetadata,
   WpIntakeAnswersPanel,
 } from "@/components/layout/wp-intake-answers-panel";
+import { WpStaffQuoteDraftPanel } from "@/components/layout/wp-staff-quote-draft-panel";
 import {
   WP_ATTRACTION_ANSWER_LABELS,
   WP_ATTRACTION_KEYS,
@@ -40,6 +41,10 @@ import {
   sendEmployeeInquiryMessageAction,
   takeOverInquiryAction,
 } from "@/server/actions/inquiries";
+import {
+  readWpQuoteDraftProvenance,
+  resolveWpCustomerQuoteDeliveryPolicy,
+} from "@/server/event-planner/wp-parity";
 import { EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { listInquiryActivity, listWorkspaceKnowledge } from "@/server/services/live-agent-service";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
@@ -67,6 +72,8 @@ type InquiryDetailView =
       canRelease: boolean;
       canConfirm: boolean;
       canCancel: boolean;
+      canApproveQuotes: boolean;
+      canOverrideQuotePricing: boolean;
       timeZone: string;
       resourceCheck: Awaited<ReturnType<typeof getInquiryPlanAvailabilitySnapshot>> | null;
       knowledge: Awaited<ReturnType<typeof listWorkspaceKnowledge>>;
@@ -80,8 +87,18 @@ type InquiryDetailView =
 async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
   try {
     const ctx = await getRequestContext();
-    const [inquiry, canManage, canManageInventory, canHold, canRelease, canConfirm, canCancel, timeZone] =
-      await Promise.all([
+    const [
+      inquiry,
+      canManage,
+      canManageInventory,
+      canHold,
+      canRelease,
+      canConfirm,
+      canCancel,
+      canApproveQuotes,
+      canOverrideQuotePricing,
+      timeZone,
+    ] = await Promise.all([
       getInquiryDetail(ctx, db, id),
       hasPermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, db),
       hasPermission(ctx, PERMISSIONS.INVENTORY_MANAGE, db),
@@ -89,6 +106,8 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       hasPermission(ctx, PERMISSIONS.EVENTS_EDIT, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CONFIRM, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CANCEL, db),
+      hasPermission(ctx, PERMISSIONS.CRM_QUOTES_APPROVE, db),
+      hasPermission(ctx, PERMISSIONS.CRM_QUOTES_PRICE_OVERRIDE, db),
       getCurrentTenantTimezone(ctx, db),
     ]);
     if (!inquiry) {
@@ -121,6 +140,8 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       canRelease,
       canConfirm,
       canCancel,
+      canApproveQuotes,
+      canOverrideQuotePricing,
       timeZone,
       resourceCheck,
       knowledge,
@@ -160,6 +181,8 @@ export default async function InquiryDetailPage({
     canRelease,
     canConfirm,
     canCancel,
+    canApproveQuotes,
+    canOverrideQuotePricing,
     timeZone,
     resourceCheck,
     knowledge,
@@ -178,6 +201,19 @@ export default async function InquiryDetailPage({
     inquiry.eventPlanRecommendations.find((plan) => plan.id === inquiry.agentWorkingPlanId) ??
     inquiry.eventPlanRecommendations.find((plan) => plan.kind === EVENT_PLAN_KINDS.AGENT_WORKING) ??
     null;
+  const wpStaffDraftProvenance = workingPlan
+    ? readWpQuoteDraftProvenance(workingPlan.payload)
+    : null;
+  const wpDeliveryPolicy = wpIntake
+    ? resolveWpCustomerQuoteDeliveryPolicy(wpIntake.privateCalculation)
+    : null;
+  const wpSnapshotReady =
+    wpIntake?.privateCalculation.status === "ready" &&
+    Boolean(
+      wpIntake.privateCalculation.snapshot &&
+        typeof wpIntake.privateCalculation.snapshot === "object" &&
+        (wpIntake.privateCalculation.snapshot as { valid?: unknown }).valid === true,
+    );
   const displayName =
     inquiry.customerGroupName ||
     [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
@@ -189,7 +225,8 @@ export default async function InquiryDetailPage({
       : ""
   }`;
 
-  if (selectedPlan) {
+  // WP staff drafts stay on the inquiry detail surface — Live Agent catalog reprice is not WP-safe yet.
+  if (selectedPlan && !wpStaffDraftProvenance) {
     return (
       <>
         <AcknowledgeInquiryView inquiryId={inquiry.id} />
@@ -455,6 +492,20 @@ export default async function InquiryDetailPage({
           <p className="text-foreground/60">Customer notes</p>
           <p className="mt-1 whitespace-pre-wrap text-foreground/80">{inquiry.customerNotes}</p>
         </div>
+      ) : null}
+
+      {wpIntake ? (
+        <WpStaffQuoteDraftPanel
+          inquiryId={inquiry.id}
+          canManage={canManage}
+          canApproveQuotes={canApproveQuotes}
+          canOverrideQuotePricing={canOverrideQuotePricing}
+          canCreate={wpSnapshotReady}
+          draft={workingPlan && wpStaffDraftProvenance ? workingPlan : null}
+          provenance={wpStaffDraftProvenance}
+          deliveryPolicy={wpDeliveryPolicy}
+          customerEmail={inquiry.customerEmail}
+        />
       ) : null}
 
       {wpIntake ? <WpIntakeAnswersPanel metadata={wpIntake} /> : null}
