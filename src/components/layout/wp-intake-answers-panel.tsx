@@ -33,6 +33,14 @@ type WpParityPlanSnapshot = {
     subtotal_cents: number;
     tax_cents: number;
   }>;
+  itinerary: Array<{
+    start_minute: number;
+    end_minute: number;
+    label: string;
+    group: string;
+    start?: string;
+    end?: string;
+  }>;
 };
 
 type WpParitySnapshot =
@@ -140,12 +148,44 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
         : [];
   const banner = pricingBanner(privateCalculation, missingKeys);
 
+  const nextSteps =
+    privateCalculation.pricingSource === "plugin_defaults"
+      ? [
+          "Review the customer answers and private recommendation below.",
+          "Verify pricing against live venue rates before quoting the customer.",
+          "Confirm inventory/availability for the preferred date and attractions.",
+          "Follow up by email or note — do not publish plugin-default totals as a quote.",
+        ]
+      : privateCalculation.pricingSource === "incomplete" || privateCalculation.status === "incomplete"
+        ? [
+            "Pricing configuration is incomplete — calculate or price manually.",
+            "Review customer answers, then follow up with verified options.",
+          ]
+        : [
+            "Review the customer answers and private recommendation below.",
+            "Confirm inventory/availability, then follow up with the customer.",
+          ];
+
   return (
     <div className="mt-8 rounded-md border border-border px-4 py-4" data-wp-intake-answers>
-      <h2 className="text-sm font-medium text-foreground">WordPress intake answers</h2>
+      <h2 className="text-sm font-medium text-foreground">Event request details</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Stored for staff review ({metadata.intakeVersion}). Not shown as public packages.
+        Complete WordPress-style answers for staff review ({metadata.intakeVersion}). Not published as
+        customer packages.
       </p>
+
+      <div
+        className="mt-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-3 text-sm"
+        data-wp-next-steps
+      >
+        <p className="font-medium text-foreground">Suggested next steps</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-foreground/80">
+          {nextSteps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      </div>
+
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
         <Item label="Company" value={answers.company} />
         <Item label="Referral" value={answers.referral} />
@@ -170,8 +210,10 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
         />
       </dl>
       <div className="mt-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">Attractions</p>
-        <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">
+          Attraction preferences
+        </p>
+        <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2" data-wp-attraction-answers>
           {WP_ATTRACTION_KEYS.map((key) => (
             <li key={key}>
               {WP_ATTRACTION_LABELS[key]}: {WP_ATTRACTION_ANSWER_LABELS[answers.attractions[key]]}
@@ -249,9 +291,25 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
   );
 }
 
+function formatClock(row: WpParityPlanSnapshot["itinerary"][number]): string {
+  if (row.start && row.end) {
+    return `${row.start} – ${row.end}`;
+  }
+  const fmt = (minute: number) => {
+    const normalized = ((minute % (24 * 60)) + 24 * 60) % (24 * 60);
+    const hours = Math.floor(normalized / 60);
+    const mins = normalized % 60;
+    const suffix = hours >= 12 ? "PM" : "AM";
+    const display = hours % 12 === 0 ? 12 : hours % 12;
+    return `${display}:${mins.toString().padStart(2, "0")} ${suffix}`;
+  };
+  return `${fmt(row.start_minute)} – ${fmt(row.end_minute)}`;
+}
+
 function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }) {
+  const itinerary = Array.isArray(plan.itinerary) ? plan.itinerary : [];
   return (
-    <div className="rounded-md bg-muted/40 px-3 py-3">
+    <div className="rounded-md bg-muted/40 px-3 py-3" data-wp-plan-card>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-medium text-foreground">
           {title}: {plan.name}
@@ -275,15 +333,33 @@ function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }
         <p className="mt-1 text-xs text-muted-foreground">No attractions selected in this configuration.</p>
       )}
       {plan.review.length > 0 ? (
-        <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-800 dark:text-amber-200">
-          {plan.review.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        <div className="mt-2" data-wp-plan-warnings>
+          <p className="text-xs font-medium text-amber-900 dark:text-amber-100">Scheduling / capacity warnings</p>
+          <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-amber-800 dark:text-amber-200">
+            {plan.review.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {itinerary.length > 0 ? (
+        <div className="mt-3" data-wp-plan-itinerary>
+          <p className="text-xs font-medium text-foreground/70">Suggested itinerary</p>
+          <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+            {itinerary.map((row, index) => (
+              <li key={`${row.label}-${row.start_minute}-${index}`}>
+                <span className="tabular-nums text-foreground/80">{formatClock(row)}</span>
+                {" · "}
+                {row.label}
+                {row.group && row.group !== "All guests" ? ` (${row.group})` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
       {plan.items.length > 0 ? (
-        <details className="mt-2">
-          <summary className="cursor-pointer text-xs font-medium text-foreground/70">Line items</summary>
+        <div className="mt-3" data-wp-plan-items>
+          <p className="text-xs font-medium text-foreground/70">Itemized estimate</p>
           <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
             {plan.items.map((item, index) => (
               <li key={`${item.label}-${index}`}>
@@ -292,7 +368,7 @@ function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }
               </li>
             ))}
           </ul>
-        </details>
+        </div>
       ) : null}
     </div>
   );

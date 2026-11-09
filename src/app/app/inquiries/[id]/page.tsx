@@ -14,6 +14,11 @@ import {
   findWpIntakeMetadata,
   WpIntakeAnswersPanel,
 } from "@/components/layout/wp-intake-answers-panel";
+import {
+  WP_ATTRACTION_ANSWER_LABELS,
+  WP_ATTRACTION_KEYS,
+  WP_ATTRACTION_LABELS,
+} from "@/lib/event-planner/wp-intake-contract";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { db } from "@/lib/db";
 import {
@@ -313,6 +318,24 @@ export default async function InquiryDetailPage({
         />
       </div>
 
+      {wpIntake ? (
+        <div className="mt-6 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
+          <p className="font-medium">Public event request — staff review required</p>
+          <p className="mt-1 text-foreground/80">
+            {formatReadyForHumanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)} No
+            public package, booking, or payment was created. Use the private recommendation below after
+            verifying pricing.
+          </p>
+        </div>
+      ) : inquiry.humanHandoffReason && !inquiry.selectedEventPlanId ? (
+        <div className="mt-4 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
+          <p className="font-medium">Needs staff follow-up</p>
+          <p className="mt-1 text-foreground/80">
+            {formatReadyForHumanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)}
+          </p>
+        </div>
+      ) : null}
+
       <dl className="mt-8 grid gap-4 border-t border-border pt-6 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-foreground/60">Customer / group</dt>
@@ -347,7 +370,13 @@ export default async function InquiryDetailPage({
         </div>
         <div>
           <dt className="text-foreground/60">Guests</dt>
-          <dd className="mt-1">{inquiry.guestCount ?? "—"}</dd>
+          <dd className="mt-1">
+            {wpIntake
+              ? `${wpIntake.answers.adults} adults · ${wpIntake.answers.children} children (${inquiry.guestCount ?? wpIntake.answers.adults + wpIntake.answers.children} total)`
+              : inquiry.adultGuestCount != null || inquiry.childGuestCount != null
+                ? `${inquiry.adultGuestCount ?? 0} adults · ${inquiry.childGuestCount ?? 0} children (${inquiry.guestCount ?? "—"} total)`
+                : (inquiry.guestCount ?? "—")}
+          </dd>
         </div>
         <div>
           <dt className="text-foreground/60">Guest mix</dt>
@@ -362,11 +391,15 @@ export default async function InquiryDetailPage({
         <div>
           <dt className="text-foreground/60">Budget</dt>
           <dd className="mt-1">
-            {formatIntakeBudget({
-              budgetPreference: inquiry.budgetPreference,
-              budgetMin: inquiry.budgetMin,
-              budgetMax: inquiry.budgetMax,
-            })}
+            {wpIntake
+              ? wpIntake.answers.hasBudget === "yes" && wpIntake.answers.budgetCents != null
+                ? `$${(wpIntake.answers.budgetCents / 100).toFixed(2)}`
+                : "Flexible"
+              : formatIntakeBudget({
+                  budgetPreference: inquiry.budgetPreference,
+                  budgetMin: inquiry.budgetMin,
+                  budgetMax: inquiry.budgetMax,
+                })}
           </dd>
         </div>
         <div>
@@ -375,24 +408,45 @@ export default async function InquiryDetailPage({
         </div>
         <div>
           <dt className="text-foreground/60">Food</dt>
-          <dd className="mt-1">{formatDiningPreference(inquiry.diningPreference)}</dd>
+          <dd className="mt-1">
+            {wpIntake ? wpIntake.answers.food : formatDiningPreference(inquiry.diningPreference)}
+          </dd>
         </div>
-        {inquiry.beveragePreference ? (
+        {wpIntake || inquiry.beveragePreference ? (
           <div>
             <dt className="text-foreground/60">Beverages</dt>
-            <dd className="mt-1">{formatBeveragePreference(inquiry.beveragePreference)}</dd>
+            <dd className="mt-1">
+              {wpIntake
+                ? `Craft: ${wpIntake.answers.craft}`
+                : formatBeveragePreference(inquiry.beveragePreference)}
+            </dd>
           </div>
         ) : null}
         <div>
           <dt className="text-foreground/60">Private space</dt>
-          <dd className="mt-1">{formatSpacePreference(inquiry.spacePreference)}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Attraction interests</dt>
           <dd className="mt-1">
-            {inquiry.attractionInterestNames.length > 0
-              ? inquiry.attractionInterestNames.join(", ")
-              : "—"}
+            {wpIntake
+              ? wpIntake.answers.privateRoom
+              : formatSpacePreference(inquiry.spacePreference)}
+          </dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-foreground/60">Attraction preferences</dt>
+          <dd className="mt-1">
+            {wpIntake ? (
+              <ul className="grid gap-1 sm:grid-cols-2">
+                {WP_ATTRACTION_KEYS.map((key) => (
+                  <li key={key}>
+                    {WP_ATTRACTION_LABELS[key]}:{" "}
+                    {WP_ATTRACTION_ANSWER_LABELS[wpIntake.answers.attractions[key]]}
+                  </li>
+                ))}
+              </ul>
+            ) : inquiry.attractionInterestNames.length > 0 ? (
+              inquiry.attractionInterestNames.join(", ")
+            ) : (
+              "—"
+            )}
           </dd>
         </div>
       </dl>
@@ -409,14 +463,6 @@ export default async function InquiryDetailPage({
         <div className="mt-8 rounded-md border border-border px-4 py-4">
           <h2 className="text-sm font-medium text-foreground">Planner summary</h2>
           <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/80">{inquiry.internalSummary}</p>
-        </div>
-      ) : null}
-      {inquiry.humanHandoffReason && !inquiry.selectedEventPlanId ? (
-        <div className="mt-4 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
-          <p className="font-medium">Needs staff follow-up</p>
-          <p className="mt-1 text-foreground/80">
-            {formatReadyForHumanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)}
-          </p>
         </div>
       ) : null}
 
