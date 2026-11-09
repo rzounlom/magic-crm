@@ -24,6 +24,7 @@ import { recordAuditEvent } from "@/server/services/audit";
 import { findNearbyAvailableStarts } from "@/server/services/nearby-availability";
 import { upsertPendingBookingFromPlan } from "@/server/services/pending-booking-service";
 import { checkResourceAvailability } from "@/server/services/resource-availability-service";
+import { readWpQuoteDraftProvenance } from "@/server/event-planner/wp-parity";
 import type { EventPlanPayload, EventPlanRotation } from "@/types/event-planner";
 import { EVENT_PLAN_KINDS, INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGES, SALES_KNOWLEDGE_TYPES } from "@/types/inquiry";
 import { BOOKING_STATUSES } from "@/types/booking";
@@ -290,6 +291,12 @@ export async function saveAgentWorkingPlan(
     throw new InquiryError("PLAN_NOT_FOUND");
   }
   const draft = await copySelectedPlanToWorkingDraft(database, inquiry.id, ctx.organizationId);
+  if (readWpQuoteDraftProvenance(draft.payload)) {
+    throw new InquiryError(
+      "WORKING_PLAN_INVALID",
+      "This WordPress staff quote draft cannot be repriced from the MagiCRM catalog yet. Refresh it from the private calculation instead.",
+    );
+  }
   const locationId = await resolveInquiryLocationId(database, inquiry);
   const { knowledge } = await loadCatalog(database, ctx.organizationId, locationId);
   const byId = new Map(knowledge.map((item) => [item.id, item]));

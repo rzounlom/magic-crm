@@ -176,9 +176,9 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
       : privateCalculation.pricingSource === "approved_plugin_baseline"
         ? [
             "Review the customer answers and private recommendation below.",
-            "Confirm inventory/availability and customer-specific requirements.",
-            "Do not send a final customer quote until operational go-live price verification is complete.",
-            "Do not create bookings, holds, or payment requests from this private estimate alone.",
+            "Create a staff quote draft from the private calculation (editable MagiCRM working draft).",
+            "Confirm inventory/availability before any hold or booking.",
+            "Do not send a customer quote, create holds, or request payment until explicitly approved.",
           ]
         : privateCalculation.pricingSource === "incomplete" || privateCalculation.status === "incomplete"
           ? [

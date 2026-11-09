@@ -14,6 +14,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   "booking.confirmation_attempted": "Booking confirmation attempted",
   "booking.confirmation_conflict": "Booking confirmation hit an availability conflict",
   "inquiry.started_working": "Started working this inquiry",
+  "inquiry.wp_quote_draft_created": "Staff quote draft created from WordPress calculation",
+  "inquiry.wp_quote_draft_refreshed": "Staff quote draft refreshed from WordPress calculation",
   "inquiry.working_plan_updated": "Working version updated",
   "inquiry.ready_to_finalize": "Marked ready to finalize",
   "inquiry.internal_note_added": "Internal note added",

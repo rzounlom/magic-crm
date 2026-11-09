@@ -26,6 +26,8 @@ export type AuditAction =
   | "inquiry.submitted_for_followup"
   | "inquiry.availability_checked"
   | "inquiry.started_working"
+  | "inquiry.wp_quote_draft_created"
+  | "inquiry.wp_quote_draft_refreshed"
   | "inquiry.working_plan_updated"
   | "inquiry.ready_to_finalize"
   | "inquiry.converted_to_booking"

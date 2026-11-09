@@ -43,7 +43,10 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [17-generations-pricing-baseline.md](./17-generations-pricing-baseline.md) | Adopt WP pricing as Generations baseline |
 | [17-pricing-reconciliation.md](./17-pricing-reconciliation.md) | WP export ↔ MagicCRM catalog reconcile report |
 | [18-approved-plugin-baseline-activation.md](./18-approved-plugin-baseline-activation.md) | Activate approved plugin catalog for Generations |
+| [19-phase-7-infrastructure-audit.md](./19-phase-7-infrastructure-audit.md) | Phase 7 reuse / avoid-auto-trigger audit |
+| [20-phase-7-wp-to-quote-draft.md](./20-phase-7-wp-to-quote-draft.md) | WP calc → staff quote draft mapping + flow |
+| [21-phase-7-final-report.md](./21-phase-7-final-report.md) | Phase 7 deliverable report |
 
 ## Branch
 
-`wp-generations-pricing-baseline` from customer `origin/main`. No Scenario Lab; no Production catalog overwrite until a live WordPress export is imported and approved.
+`phase-7-staff-quote-draft` from Production `ab0178d` / `origin/main`. Staff-controlled quote draft only. No Scenario Lab; no Production catalog overwrite; no auto customer quote.

@@ -355,6 +355,33 @@ export type EventPlanPayload = {
     types: import("@/types/resource-schedule").ResourceTypeAvailability[];
     note: string;
   };
+  /**
+   * Staff quote draft provenance from private WordPress parity calculation.
+   * Present only on AGENT_WORKING drafts created from WP intake — not a customer quote.
+   */
+  wpQuoteDraft?: {
+    source: "wordpress_parity_private_calculation";
+    pricingSource: string;
+    rulesVersion: string | null;
+    pricingRevision: string | null;
+    calculatedAt: string | null;
+    planName: string;
+    planDate: string;
+    subtotalCents: number;
+    taxCents: number;
+    totalCents: number;
+    warnings: string[];
+    catalogPriceDiscrepancies: Array<{
+      wpKey: string;
+      productSlug: string;
+      wpCents: number;
+      magicCatalogCents: number;
+      note: string;
+    }>;
+    selectedAttractions: string[];
+    unpriced: boolean;
+    hardReview: boolean;
+  };
 };
 
 export type EventPlanDraft = {

@@ -14,6 +14,7 @@ import {
   findWpIntakeMetadata,
   WpIntakeAnswersPanel,
 } from "@/components/layout/wp-intake-answers-panel";
+import { WpStaffQuoteDraftPanel } from "@/components/layout/wp-staff-quote-draft-panel";
 import {
   WP_ATTRACTION_ANSWER_LABELS,
   WP_ATTRACTION_KEYS,
@@ -40,6 +41,7 @@ import {
   sendEmployeeInquiryMessageAction,
   takeOverInquiryAction,
 } from "@/server/actions/inquiries";
+import { readWpQuoteDraftProvenance } from "@/server/event-planner/wp-parity";
 import { EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { listInquiryActivity, listWorkspaceKnowledge } from "@/server/services/live-agent-service";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
@@ -178,6 +180,16 @@ export default async function InquiryDetailPage({
     inquiry.eventPlanRecommendations.find((plan) => plan.id === inquiry.agentWorkingPlanId) ??
     inquiry.eventPlanRecommendations.find((plan) => plan.kind === EVENT_PLAN_KINDS.AGENT_WORKING) ??
     null;
+  const wpStaffDraftProvenance = workingPlan
+    ? readWpQuoteDraftProvenance(workingPlan.payload)
+    : null;
+  const wpSnapshotReady =
+    wpIntake?.privateCalculation.status === "ready" &&
+    Boolean(
+      wpIntake.privateCalculation.snapshot &&
+        typeof wpIntake.privateCalculation.snapshot === "object" &&
+        (wpIntake.privateCalculation.snapshot as { valid?: unknown }).valid === true,
+    );
   const displayName =
     inquiry.customerGroupName ||
     [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
@@ -189,7 +201,8 @@ export default async function InquiryDetailPage({
       : ""
   }`;
 
-  if (selectedPlan) {
+  // WP staff drafts stay on the inquiry detail surface — Live Agent catalog reprice is not WP-safe yet.
+  if (selectedPlan && !wpStaffDraftProvenance) {
     return (
       <>
         <AcknowledgeInquiryView inquiryId={inquiry.id} />
@@ -455,6 +468,16 @@ export default async function InquiryDetailPage({
           <p className="text-foreground/60">Customer notes</p>
           <p className="mt-1 whitespace-pre-wrap text-foreground/80">{inquiry.customerNotes}</p>
         </div>
+      ) : null}
+
+      {wpIntake ? (
+        <WpStaffQuoteDraftPanel
+          inquiryId={inquiry.id}
+          canManage={canManage}
+          canCreate={wpSnapshotReady}
+          draft={workingPlan && wpStaffDraftProvenance ? workingPlan : null}
+          provenance={wpStaffDraftProvenance}
+        />
       ) : null}
 
       {wpIntake ? <WpIntakeAnswersPanel metadata={wpIntake} /> : null}

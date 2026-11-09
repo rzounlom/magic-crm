@@ -109,6 +109,18 @@ export {
   snapshotIncompleteWpParity,
   snapshotWpParityResult,
 } from "@/server/event-planner/wp-parity/snapshot";
+export {
+  WP_KNOWN_CATALOG_DISCREPANCIES,
+  WP_QUOTE_DRAFT_SOURCE,
+  buildWpStaffQuoteDraft,
+  readWpQuoteDraftProvenance,
+} from "@/server/event-planner/wp-parity/quote-draft";
+export type {
+  BuildWpStaffQuoteDraftInput,
+  BuildWpStaffQuoteDraftResult,
+  WpCatalogPriceDiscrepancy,
+  WpQuoteDraftProvenance,
+} from "@/server/event-planner/wp-parity/quote-draft";
 export type {
   WpParityDaySnapshot,
   WpParityInquirySummary,
