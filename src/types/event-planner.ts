@@ -367,6 +367,9 @@ export type EventPlanPayload = {
     calculatedAt: string | null;
     planName: string;
     planDate: string;
+    originalSubtotalCents?: number;
+    originalTaxCents?: number;
+    originalTotalCents?: number;
     subtotalCents: number;
     taxCents: number;
     totalCents: number;
@@ -381,6 +384,31 @@ export type EventPlanPayload = {
     selectedAttractions: string[];
     unpriced: boolean;
     hardReview: boolean;
+    staffEdit?: {
+      editedAt: string;
+      editedByUserProfileId: string;
+      reason: string;
+      wordpressParityExact: false;
+    };
+    employeeApproval?: {
+      approvedAt: string;
+      approvedByUserProfileId: string;
+      note: string | null;
+      deliveryAttempted: boolean;
+      deliveryCompleted: boolean;
+      deliveryBlockedCode: string | null;
+      deliveryBlockedMessage: string | null;
+    };
+  };
+  /**
+   * Customer-safe marker for a single employee-approved WP quote (no Good/Recommended/Premium set).
+   * Must not include staff warnings, catalog discrepancies, or pricing-source internals.
+   */
+  employeeApprovedQuote?: {
+    marker: "employee_approved_wordpress_quote";
+    approvedAt: string;
+    availabilityConfirmed: boolean;
+    availabilityNote: string;
   };
 };
 

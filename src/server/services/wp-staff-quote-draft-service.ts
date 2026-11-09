@@ -1,24 +1,41 @@
-import type { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
+import { createPublicConversationToken } from "@/lib/ai/public-conversation-token";
+import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
 import { parseWpIntakeMessageMetadata } from "@/lib/event-planner/wp-intake-contract";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { InquiryError } from "@/server/errors";
 import {
   WP_KNOWN_CATALOG_DISCREPANCIES,
+  applyWpStaffQuoteEdits,
   buildWpStaffQuoteDraft,
+  readEmployeeApprovedQuoteMarker,
+  readWpQuoteDraftProvenance,
+  resolveWpCustomerQuoteDeliveryPolicy,
+  toCustomerFacingWpQuotePayload,
   type WpParitySnapshot,
+  type WpStaffQuoteLineEdit,
 } from "@/server/event-planner/wp-parity";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent } from "@/server/services/audit";
+import { checkInquiryAvailability } from "@/server/services/live-agent-service";
 import {
   EVENT_PLAN_KINDS,
   INQUIRY_SALES_STAGES,
   INQUIRY_STATUSES,
   INQUIRY_WORKFLOW_STAGES,
 } from "@/types/inquiry";
+import { EVENT_PLAN_TIERS, type EventPlanPayload } from "@/types/event-planner";
 import { PERMISSIONS } from "@/types/permissions";
+import { PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
+import {
+  COMMUNICATION_CHANNELS,
+  COMMUNICATION_KINDS,
+  COMMUNICATION_SKIP_REASONS,
+  COMMUNICATION_STATUSES,
+} from "@/types/communications";
 
 type Db = PrismaClient;
 
@@ -216,5 +233,421 @@ export async function createWpStaffQuoteDraftFromInquiry(
     estimatedTotalCents: working.estimatedTotalCents,
     provenance: built.provenance,
     refreshed: Boolean(existingWorking),
+  };
+}
+
+async function loadWpWorkingDraft(database: Db, organizationId: string, inquiryId: string) {
+  const inquiry = await database.inquiry.findFirst({
+    where: { id: inquiryId, organizationId },
+    include: {
+      eventPlanRecommendations: true,
+      conversations: {
+        include: { messages: { orderBy: { createdAt: "asc" } } },
+        take: 1,
+      },
+      organization: { select: { name: true, currency: true } },
+    },
+  });
+  if (!inquiry) {
+    throw new InquiryError("INQUIRY_NOT_FOUND");
+  }
+  if (inquiry.status === INQUIRY_STATUSES.BOOKED) {
+    throw new InquiryError("INQUIRY_ALREADY_BOOKED");
+  }
+  const working =
+    inquiry.eventPlanRecommendations.find((row) => row.id === inquiry.agentWorkingPlanId) ??
+    inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING);
+  if (!working) {
+    throw new InquiryError("WORKING_PLAN_INVALID", "Create a staff quote draft first.");
+  }
+  const provenance = readWpQuoteDraftProvenance(working.payload);
+  if (!provenance) {
+    throw new InquiryError("WORKING_PLAN_INVALID", "Working plan is not a WordPress staff quote draft.");
+  }
+  const wpIntake = findWpIntakeFromMessages(inquiry.conversations[0]?.messages);
+  return { inquiry, working, provenance, wpIntake };
+}
+
+/**
+ * Explicit staff edits to WP quote line items / schedule. Never looks up MagiCRM catalog prices.
+ */
+export async function updateWpStaffQuoteDraft(
+  ctx: RequestContext,
+  database: Db,
+  inquiryId: string,
+  input: {
+    guestCount: number;
+    eventDate: string | null;
+    startTime: string | null;
+    durationMinutes: number;
+    lineItems: WpStaffQuoteLineEdit[];
+    adjustmentNote?: string | null;
+    editReason: string;
+  },
+) {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const { inquiry, working } = await loadWpWorkingDraft(database, ctx.organizationId, inquiryId);
+  const applied = applyWpStaffQuoteEdits({
+    payload: working.payload as EventPlanPayload,
+    guestCount: input.guestCount,
+    eventDate: input.eventDate,
+    startTime: input.startTime,
+    durationMinutes: input.durationMinutes,
+    lineItems: input.lineItems,
+    adjustmentNote: input.adjustmentNote,
+    editedByUserProfileId: ctx.userId,
+    editReason: input.editReason,
+  });
+  if (!applied.ok) {
+    throw new InquiryError("WORKING_PLAN_INVALID", applied.error);
+  }
+
+  const updated = await database.eventPlanRecommendation.update({
+    where: { id: working.id },
+    data: {
+      estimatedTotalCents: applied.estimatedTotalCents,
+      guestCount: input.guestCount,
+      durationMinutes: input.durationMinutes,
+      availabilityValidated: false,
+      availabilityStatus: PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED,
+      availabilityNote: "Availability re-check required after staff quote edits.",
+      availabilityCheckedAt: null,
+      title: working.title.startsWith("Staff draft")
+        ? working.title
+        : `Staff draft — edited`,
+      payload: applied.payload as object,
+    },
+  });
+
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "inquiry.wp_quote_draft_edited",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: {
+      eventPlanRecommendationId: updated.id,
+      totalCents: applied.estimatedTotalCents,
+      reason: input.editReason.trim(),
+    },
+  });
+
+  return {
+    planId: updated.id,
+    estimatedTotalCents: updated.estimatedTotalCents,
+    provenance: readWpQuoteDraftProvenance(updated.payload),
+  };
+}
+
+export async function checkWpStaffQuoteAvailability(
+  ctx: RequestContext,
+  database: Db,
+  inquiryId: string,
+) {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  await loadWpWorkingDraft(database, ctx.organizationId, inquiryId);
+  return checkInquiryAvailability(ctx, database, inquiryId);
+}
+
+/**
+ * Employee approve (+ optional customer delivery when pricing policy allows).
+ * Never creates inventory holds. Never auto-runs on inquiry submit.
+ */
+export async function approveAndSendWpStaffQuote(
+  ctx: RequestContext,
+  database: Db,
+  inquiryId: string,
+  input?: { approvalNote?: string | null; forceResend?: boolean },
+) {
+  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  const { inquiry, working, provenance, wpIntake } = await loadWpWorkingDraft(
+    database,
+    ctx.organizationId,
+    inquiryId,
+  );
+
+  const email = inquiry.customerEmail?.trim();
+  if (!email || !email.includes("@")) {
+    throw new InquiryError("INVALID_INTAKE", "Customer email is required before sending a quote.");
+  }
+
+  const policy = resolveWpCustomerQuoteDeliveryPolicy(
+    wpIntake?.privateCalculation ?? {
+      status: "ready" as const,
+      pricingSource:
+        provenance.pricingSource === "tenant_live" ||
+        provenance.pricingSource === "approved_plugin_baseline" ||
+        provenance.pricingSource === "plugin_defaults" ||
+        provenance.pricingSource === "incomplete"
+          ? provenance.pricingSource
+          : "plugin_defaults",
+    },
+  );
+  if (!policy.canApprove) {
+    throw new InquiryError("WORKING_PLAN_INVALID", policy.message);
+  }
+
+  const availability = await checkInquiryAvailability(ctx, database, inquiryId);
+  const refreshedWorking = await database.eventPlanRecommendation.findFirstOrThrow({
+    where: { id: working.id, organizationId: ctx.organizationId },
+  });
+  if (refreshedWorking.availabilityStatus === PLAN_AVAILABILITY_STATUSES.UNAVAILABLE) {
+    throw new InquiryError(
+      "WORKING_PLAN_INVALID",
+      `Availability conflict: ${availability.conflictLabels.join(", ") || availability.note}. Resolve conflicts before approving the quote.`,
+    );
+  }
+
+  const availabilityConfirmed =
+    refreshedWorking.availabilityValidated &&
+    refreshedWorking.availabilityStatus === PLAN_AVAILABILITY_STATUSES.AVAILABLE;
+  const availabilityNote = availabilityConfirmed
+    ? refreshedWorking.availabilityNote || "Resources checked available at quote time."
+    : refreshedWorking.availabilityNote ||
+      "Resource availability could not be fully validated from this WordPress draft. Final availability will be confirmed by our event team.";
+
+  const approvedAt = new Date().toISOString();
+  const workingPayload = refreshedWorking.payload as EventPlanPayload;
+  const priorApproval = readWpQuoteDraftProvenance(workingPayload)?.employeeApproval;
+
+  // Idempotent delivery short-circuit.
+  const existingCustomerQuote = inquiry.eventPlanRecommendations.find(
+    (row) =>
+      row.kind === EVENT_PLAN_KINDS.RECOMMENDATION &&
+      readEmployeeApprovedQuoteMarker(row.payload),
+  );
+  if (
+    existingCustomerQuote &&
+    priorApproval?.deliveryCompleted &&
+    !input?.forceResend &&
+    existingCustomerQuote.estimatedTotalCents === refreshedWorking.estimatedTotalCents
+  ) {
+    return {
+      approved: true,
+      delivered: true,
+      idempotent: true,
+      planId: existingCustomerQuote.id,
+      workingPlanId: working.id,
+      estimatedTotalCents: existingCustomerQuote.estimatedTotalCents,
+      policy,
+      planPath: null as string | null,
+      planUrl: null as string | null,
+      message: "Quote was already approved and delivered. No duplicate send.",
+    };
+  }
+
+  const nextProvenance = {
+    ...provenance,
+    ...readWpQuoteDraftProvenance(workingPayload),
+    employeeApproval: {
+      approvedAt,
+      approvedByUserProfileId: ctx.userId,
+      note: input?.approvalNote?.trim() || null,
+      deliveryAttempted: policy.canDeliver,
+      deliveryCompleted: false,
+      deliveryBlockedCode: policy.canDeliver ? null : policy.code,
+      deliveryBlockedMessage: policy.canDeliver ? null : policy.message,
+    },
+  } as NonNullable<ReturnType<typeof readWpQuoteDraftProvenance>>;
+
+  await database.eventPlanRecommendation.update({
+    where: { id: working.id },
+    data: {
+      payload: {
+        ...workingPayload,
+        wpQuoteDraft: nextProvenance,
+      } as object,
+    },
+  });
+
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "inquiry.wp_quote_approved",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: {
+      workingPlanId: working.id,
+      totalCents: refreshedWorking.estimatedTotalCents,
+      pricingSource: provenance.pricingSource,
+      deliveryAllowed: policy.canDeliver,
+      deliveryCode: policy.code,
+      availabilityConfirmed,
+      availabilityStatus: refreshedWorking.availabilityStatus,
+    },
+  });
+
+  if (!policy.canDeliver) {
+    return {
+      approved: true,
+      delivered: false,
+      idempotent: false,
+      planId: null as string | null,
+      workingPlanId: working.id,
+      estimatedTotalCents: refreshedWorking.estimatedTotalCents,
+      policy,
+      planPath: null as string | null,
+      planUrl: null as string | null,
+      message: policy.message,
+    };
+  }
+
+  const customerPayload = toCustomerFacingWpQuotePayload({
+    workingPayload: {
+      ...workingPayload,
+      wpQuoteDraft: nextProvenance,
+    },
+    approvedAt,
+    availabilityConfirmed,
+    availabilityNote,
+  });
+
+  const recommendationData = {
+    organizationId: ctx.organizationId,
+    inquiryId: inquiry.id,
+    kind: EVENT_PLAN_KINDS.RECOMMENDATION,
+    tier: EVENT_PLAN_TIERS.BEST_FIT,
+    title: provenance.planName || "Your event quote",
+    sortOrder: 0,
+    estimatedTotalCents: refreshedWorking.estimatedTotalCents ?? 0,
+    currency: refreshedWorking.currency || inquiry.organization.currency || "USD",
+    guestCount: refreshedWorking.guestCount,
+    durationMinutes: refreshedWorking.durationMinutes,
+    customerFacingReason:
+      "Employee-approved quote prepared from your event request. This is not a confirmed reservation.",
+    availabilityValidated: availabilityConfirmed,
+    availabilityNote,
+    availabilityStatus: refreshedWorking.availabilityStatus ?? PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED,
+    availabilityCheckedAt: refreshedWorking.availabilityCheckedAt,
+    payload: customerPayload as object,
+  };
+
+  const published = existingCustomerQuote
+    ? await database.eventPlanRecommendation.update({
+        where: { id: existingCustomerQuote.id },
+        data: recommendationData,
+      })
+    : await database.eventPlanRecommendation.create({ data: recommendationData });
+
+  // Rotate conversation token so staff can share a fresh /plan link (WP thank-you never published plans).
+  const conversation = inquiry.conversations[0];
+  if (!conversation) {
+    throw new InquiryError("CONVERSATION_NOT_FOUND");
+  }
+  const { token, hash } = createPublicConversationToken();
+  await database.conversation.update({
+    where: { id: conversation.id },
+    data: { publicTokenHash: hash },
+  });
+
+  const planPath = `/plan/${token}`;
+  const appUrl = process.env.APP_URL?.trim();
+  if (!appUrl) {
+    throw new InquiryError(
+      "WORKING_PLAN_INVALID",
+      "APP_URL is not configured, so a customer quote link cannot be created.",
+    );
+  }
+  const notification = personalEventPlanNotification({
+    customerEmail: email,
+    customerFirstName: inquiry.customerFirstName,
+    customerLastName: inquiry.customerLastName,
+    organizationName: inquiry.organization.name,
+    planPath,
+    appUrl,
+    eventDate: customerPayload.eventDate,
+  });
+
+  await database.communicationEvent.create({
+    data: {
+      organizationId: ctx.organizationId,
+      channel: COMMUNICATION_CHANNELS.EMAIL,
+      kind: COMMUNICATION_KINDS.EMPLOYEE_APPROVED_QUOTE,
+      status: COMMUNICATION_STATUSES.SKIPPED,
+      skipReason: COMMUNICATION_SKIP_REASONS.NO_EMAIL_PROVIDER,
+      toAddress: email,
+      subject: `Your ${inquiry.organization.name} event quote`,
+      inquiryId: inquiry.id,
+      payload: {
+        ...notification,
+        planId: published.id,
+        estimatedTotalCents: published.estimatedTotalCents,
+        approvedAt,
+        reserved: false,
+      } as Prisma.InputJsonValue,
+    },
+  });
+
+  await database.inquiry.update({
+    where: { id: inquiry.id },
+    data: {
+      salesStage: INQUIRY_SALES_STAGES.PROPOSAL_READY,
+      status: INQUIRY_STATUSES.AWAITING_CUSTOMER,
+      recommendationsGeneratedAt: new Date(),
+      agentWorkingPlanId: working.id,
+      // Customer has not accepted yet — keep selection on the working draft for staff.
+      selectedEventPlanId: working.id,
+    },
+  });
+
+  await database.eventPlanRecommendation.update({
+    where: { id: working.id },
+    data: {
+      payload: {
+        ...workingPayload,
+        wpQuoteDraft: {
+          ...nextProvenance,
+          employeeApproval: {
+            ...nextProvenance.employeeApproval!,
+            deliveryAttempted: true,
+            deliveryCompleted: true,
+            deliveryBlockedCode: null,
+            deliveryBlockedMessage: null,
+          },
+        },
+      } as object,
+    },
+  });
+
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "inquiry.wp_quote_delivered",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: {
+      recommendationId: published.id,
+      workingPlanId: working.id,
+      planUrl: notification.planUrl,
+      emailSkipped: true,
+      skipReason: COMMUNICATION_SKIP_REASONS.NO_EMAIL_PROVIDER,
+      totalCents: published.estimatedTotalCents,
+    },
+  });
+
+  await recordAuditEvent(database, {
+    organizationId: ctx.organizationId,
+    actorUserProfileId: ctx.userId,
+    action: "communication.employee_approved_quote_skipped",
+    resourceType: "inquiry",
+    resourceId: inquiry.id,
+    metadata: {
+      kind: COMMUNICATION_KINDS.EMPLOYEE_APPROVED_QUOTE,
+      skipReason: COMMUNICATION_SKIP_REASONS.NO_EMAIL_PROVIDER,
+      planId: published.id,
+    },
+  });
+
+  return {
+    approved: true,
+    delivered: true,
+    idempotent: false,
+    planId: published.id,
+    workingPlanId: working.id,
+    estimatedTotalCents: published.estimatedTotalCents,
+    policy,
+    planPath,
+    planUrl: notification.planUrl,
+    message: "Quote approved and published for the customer. Email provider is not configured — notification was recorded as skipped.",
   };
 }

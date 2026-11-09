@@ -80,6 +80,7 @@ export function readEventPlanPayload(value: unknown): EventPlanPayload {
     compositionDelta: payload.compositionDelta,
     selectionAvailability: payload.selectionAvailability,
     wpQuoteDraft: payload.wpQuoteDraft,
+    employeeApprovedQuote: payload.employeeApprovedQuote,
   };
 }
 

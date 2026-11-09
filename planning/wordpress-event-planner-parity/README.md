@@ -46,6 +46,8 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [19-phase-7-infrastructure-audit.md](./19-phase-7-infrastructure-audit.md) | Phase 7 reuse / avoid-auto-trigger audit |
 | [20-phase-7-wp-to-quote-draft.md](./20-phase-7-wp-to-quote-draft.md) | WP calc → staff quote draft mapping + flow |
 | [21-phase-7-final-report.md](./21-phase-7-final-report.md) | Phase 7 deliverable report |
+| [22-phase-7b-quote-delivery-audit.md](./22-phase-7b-quote-delivery-audit.md) | Phase 7B delivery audit + pricing gate |
+| [23-phase-7b-final-report.md](./23-phase-7b-final-report.md) | Phase 7B approve/send report |
 
 ## Branch
 

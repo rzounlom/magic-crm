@@ -110,17 +110,36 @@ export {
   snapshotWpParityResult,
 } from "@/server/event-planner/wp-parity/snapshot";
 export {
+  WP_APPROVED_QUOTE_MARKER,
   WP_KNOWN_CATALOG_DISCREPANCIES,
   WP_QUOTE_DRAFT_SOURCE,
+  applyWpStaffQuoteEdits,
   buildWpStaffQuoteDraft,
+  readEmployeeApprovedQuoteMarker,
   readWpQuoteDraftProvenance,
+  toCustomerFacingWpQuotePayload,
 } from "@/server/event-planner/wp-parity/quote-draft";
 export type {
+  ApplyWpStaffQuoteEditsInput,
   BuildWpStaffQuoteDraftInput,
   BuildWpStaffQuoteDraftResult,
+  EmployeeApprovedQuoteMarker,
   WpCatalogPriceDiscrepancy,
   WpQuoteDraftProvenance,
+  WpStaffQuoteLineEdit,
 } from "@/server/event-planner/wp-parity/quote-draft";
+export {
+  WP_CUSTOMER_QUOTE_DELIVERY_CODES,
+  isUnverifiedWpPrivatePricing,
+  isWpPrivatePricingVerifiedForCustomerQuote,
+  resolveWpCustomerQuoteDeliveryPolicy,
+  shouldSuppressCustomerPlanNotificationForWpIntake,
+  wpPrivateCalculationFromMessageMetadata,
+} from "@/server/event-planner/wp-parity/pricing-verification";
+export type {
+  WpCustomerQuoteDeliveryCode,
+  WpCustomerQuoteDeliveryPolicy,
+} from "@/server/event-planner/wp-parity/pricing-verification";
 export type {
   WpParityDaySnapshot,
   WpParityInquirySummary,

@@ -41,7 +41,10 @@ import {
   sendEmployeeInquiryMessageAction,
   takeOverInquiryAction,
 } from "@/server/actions/inquiries";
-import { readWpQuoteDraftProvenance } from "@/server/event-planner/wp-parity";
+import {
+  readWpQuoteDraftProvenance,
+  resolveWpCustomerQuoteDeliveryPolicy,
+} from "@/server/event-planner/wp-parity";
 import { EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { listInquiryActivity, listWorkspaceKnowledge } from "@/server/services/live-agent-service";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
@@ -182,6 +185,9 @@ export default async function InquiryDetailPage({
     null;
   const wpStaffDraftProvenance = workingPlan
     ? readWpQuoteDraftProvenance(workingPlan.payload)
+    : null;
+  const wpDeliveryPolicy = wpIntake
+    ? resolveWpCustomerQuoteDeliveryPolicy(wpIntake.privateCalculation)
     : null;
   const wpSnapshotReady =
     wpIntake?.privateCalculation.status === "ready" &&
@@ -477,6 +483,8 @@ export default async function InquiryDetailPage({
           canCreate={wpSnapshotReady}
           draft={workingPlan && wpStaffDraftProvenance ? workingPlan : null}
           provenance={wpStaffDraftProvenance}
+          deliveryPolicy={wpDeliveryPolicy}
+          customerEmail={inquiry.customerEmail}
         />
       ) : null}
 

@@ -5,6 +5,10 @@ import { unstable_rethrow } from "next/navigation";
 import { useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 
 import { PUBLIC_CONTENT_CLASS } from "@/components/layout/public-content";
+import {
+  isEmployeeApprovedQuotePlan,
+  PublicApprovedQuoteView,
+} from "@/components/layout/public-approved-quote-view";
 import { BlockingMutation } from "@/components/ui/blocking-mutation";
 import { PendingActionProvider, PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
@@ -154,6 +158,29 @@ export function PublicEventPlanView({
     diningPreference: inquiry.diningPreference,
     spacePreference: inquiry.spacePreference,
   });
+
+  const approvedOnly =
+    !confirmed &&
+    !pending &&
+    !finalized &&
+    !reserved &&
+    plans.length === 1 &&
+    plans[0] &&
+    isEmployeeApprovedQuotePlan(plans[0]);
+  if (approvedOnly && plans[0]) {
+    return (
+      <PublicApprovedQuoteView
+        organizationName={organizationName}
+        currency={currency}
+        plan={plans[0]}
+        token={token}
+        customerFirstName={inquiry.customerFirstName}
+        selectedEventPlanId={inquiry.selectedEventPlanId}
+        desiredDate={inquiry.desiredDate}
+        desiredStartTime={inquiry.desiredStartTime}
+      />
+    );
+  }
 
   return (
     <section className={`${PUBLIC_CONTENT_CLASS} py-6 sm:py-8`}>

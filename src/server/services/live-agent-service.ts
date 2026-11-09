@@ -835,11 +835,17 @@ export async function adoptRecommendationAsWorkingPlan(
   if (!selected) {
     throw new InquiryError("PLAN_NOT_FOUND");
   }
+  const existingWorking = inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING);
+  if (existingWorking && readWpQuoteDraftProvenance(existingWorking.payload)) {
+    throw new InquiryError(
+      "WORKING_PLAN_INVALID",
+      "This inquiry has a WordPress staff quote draft. Do not replace it with a catalog recommendation — edit or refresh the WP draft instead.",
+    );
+  }
   await database.inquiry.update({
     where: { id: inquiry.id },
     data: { selectedEventPlanId: selected.id },
   });
-  const existingWorking = inquiry.eventPlanRecommendations.find((row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING);
   if (existingWorking) {
     await database.eventPlanRecommendation.update({
       where: { id: existingWorking.id },

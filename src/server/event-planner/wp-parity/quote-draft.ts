@@ -22,6 +22,24 @@ export type WpCatalogPriceDiscrepancy = {
   note: string;
 };
 
+export type WpQuoteDraftStaffEdit = {
+  editedAt: string;
+  editedByUserProfileId: string;
+  reason: string;
+  /** Exact WP calculation parity no longer claimed after a staff edit. */
+  wordpressParityExact: false;
+};
+
+export type WpQuoteDraftEmployeeApproval = {
+  approvedAt: string;
+  approvedByUserProfileId: string;
+  note: string | null;
+  deliveryAttempted: boolean;
+  deliveryCompleted: boolean;
+  deliveryBlockedCode: string | null;
+  deliveryBlockedMessage: string | null;
+};
+
 export type WpQuoteDraftProvenance = {
   source: typeof WP_QUOTE_DRAFT_SOURCE;
   pricingSource: string;
@@ -30,6 +48,10 @@ export type WpQuoteDraftProvenance = {
   calculatedAt: string | null;
   planName: string;
   planDate: string;
+  /** Original WordPress calculation amounts (preserved across staff edits). */
+  originalSubtotalCents: number;
+  originalTaxCents: number;
+  originalTotalCents: number;
   subtotalCents: number;
   taxCents: number;
   totalCents: number;
@@ -38,6 +60,28 @@ export type WpQuoteDraftProvenance = {
   selectedAttractions: AttractionKey[];
   unpriced: boolean;
   hardReview: boolean;
+  staffEdit?: WpQuoteDraftStaffEdit;
+  employeeApproval?: WpQuoteDraftEmployeeApproval;
+};
+
+export type WpStaffQuoteLineEdit = {
+  slug: string;
+  name: string;
+  quantity: number;
+  unitPriceCents: number;
+  kind?: string;
+};
+
+export type ApplyWpStaffQuoteEditsInput = {
+  payload: EventPlanPayload;
+  guestCount: number;
+  eventDate: string | null;
+  startTime: string | null;
+  durationMinutes: number;
+  lineItems: WpStaffQuoteLineEdit[];
+  adjustmentNote?: string | null;
+  editedByUserProfileId: string;
+  editReason: string;
 };
 
 export type BuildWpStaffQuoteDraftInput = {
@@ -252,6 +296,9 @@ export function buildWpStaffQuoteDraft(
     calculatedAt: input.snapshot.calculated_at,
     planName: plan.name,
     planDate: dayDate,
+    originalSubtotalCents: plan.subtotal_cents,
+    originalTaxCents: plan.tax_cents,
+    originalTotalCents: plan.total_cents,
     subtotalCents: plan.subtotal_cents,
     taxCents: plan.tax_cents,
     totalCents: plan.total_cents,
@@ -360,5 +407,182 @@ export function readWpQuoteDraftProvenance(payload: unknown): WpQuoteDraftProven
   if (provenance.source !== WP_QUOTE_DRAFT_SOURCE) {
     return null;
   }
+  // Backfill original* for drafts created before Phase 7B.
+  if (typeof provenance.originalTotalCents !== "number") {
+    provenance.originalSubtotalCents = provenance.subtotalCents;
+    provenance.originalTaxCents = provenance.taxCents;
+    provenance.originalTotalCents = provenance.totalCents;
+  }
   return provenance;
+}
+
+function integerCents(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.round(value);
+}
+
+/**
+ * Apply explicit staff edits without MagiCRM catalog lookup.
+ * Totals are recomputed from edited line items (integer cents).
+ */
+export function applyWpStaffQuoteEdits(
+  input: ApplyWpStaffQuoteEditsInput,
+): { ok: true; payload: EventPlanPayload; estimatedTotalCents: number } | { ok: false; error: string } {
+  const provenance = readWpQuoteDraftProvenance(input.payload);
+  if (!provenance) {
+    return { ok: false, error: "Not a WordPress staff quote draft." };
+  }
+  if (input.guestCount < 1) {
+    return { ok: false, error: "Guest count must be at least 1." };
+  }
+  if (input.durationMinutes < 30) {
+    return { ok: false, error: "Duration must be at least 30 minutes." };
+  }
+  const reason = input.editReason.trim();
+  if (reason.length < 3) {
+    return { ok: false, error: "Provide a short reason for the quote edit." };
+  }
+  if (input.lineItems.length === 0) {
+    return { ok: false, error: "Add at least one quote line item." };
+  }
+
+  const lineItems: EventPlanLineItem[] = input.lineItems.map((row, index) => {
+    const quantity = Math.max(0, integerCents(row.quantity));
+    const unitPriceCents = integerCents(row.unitPriceCents);
+    return {
+      productId: "",
+      slug: row.slug.trim() || `wp-edited-${index + 1}`,
+      name: row.name.trim() || `Line ${index + 1}`,
+      kind: row.kind?.trim() || "WP_LINE",
+      quantity: Math.max(1, quantity),
+      unitLabel: null,
+      unitPriceCents,
+      totalCents: Math.max(1, quantity) * unitPriceCents,
+    };
+  });
+
+  const taxCents = lineItems
+    .filter((row) => row.kind === "TAX" || /tax/i.test(row.slug) || /tax/i.test(row.name))
+    .reduce((sum, row) => sum + row.totalCents, 0);
+  const totalCents = lineItems.reduce((sum, row) => sum + row.totalCents, 0);
+  const subtotalCents = totalCents - taxCents;
+
+  const nextProvenance: WpQuoteDraftProvenance = {
+    ...provenance,
+    planDate: input.eventDate ?? provenance.planDate,
+    subtotalCents,
+    taxCents,
+    totalCents,
+    staffEdit: {
+      editedAt: new Date().toISOString(),
+      editedByUserProfileId: input.editedByUserProfileId,
+      reason,
+      wordpressParityExact: false,
+    },
+    // Edits invalidate a prior approval until re-approved.
+    employeeApproval: undefined,
+  };
+
+  const payload: EventPlanPayload = {
+    ...input.payload,
+    guestCount: input.guestCount,
+    eventDate: input.eventDate,
+    startTime: input.startTime,
+    durationMinutes: input.durationMinutes,
+    lineItems,
+    adjustmentNote: input.adjustmentNote?.trim() || input.payload.adjustmentNote,
+    customerAvailabilityNote:
+      "Staff-edited quote draft from WordPress calculation. Availability not confirmed. Not sent to customer.",
+    depositPreviewNote:
+      taxCents > 0
+        ? `Includes tax of $${(taxCents / 100).toFixed(2)} in line items (not MagiCRM tax engine).`
+        : input.payload.depositPreviewNote,
+    wpQuoteDraft: nextProvenance,
+  };
+
+  return { ok: true, payload, estimatedTotalCents: totalCents };
+}
+
+export const WP_APPROVED_QUOTE_MARKER = "employee_approved_wordpress_quote" as const;
+
+export type EmployeeApprovedQuoteMarker = {
+  marker: typeof WP_APPROVED_QUOTE_MARKER;
+  approvedAt: string;
+  /** Customer-safe availability disclaimer when inventory was not confirmed. */
+  availabilityConfirmed: boolean;
+  availabilityNote: string;
+};
+
+/**
+ * Strip staff-only WP metadata for a customer-facing RECOMMENDATION payload.
+ * Keeps integer-cent line items and event details; drops internal warnings/discrepancies.
+ */
+export function toCustomerFacingWpQuotePayload(input: {
+  workingPayload: EventPlanPayload;
+  approvedAt: string;
+  availabilityConfirmed: boolean;
+  availabilityNote: string;
+}): EventPlanPayload {
+  const { workingPayload } = input;
+  return {
+    organizationId: workingPayload.organizationId,
+    locationId: workingPayload.locationId ?? null,
+    guestCount: workingPayload.guestCount,
+    eventDate: workingPayload.eventDate,
+    startTime: workingPayload.startTime,
+    durationMinutes: workingPayload.durationMinutes,
+    activities: workingPayload.activities.map((row) => ({
+      ...row,
+      // Hide internal mapping notes from customers.
+      priceText: undefined,
+    })),
+    dining: {
+      label: workingPayload.dining.label,
+      priceCents: workingPayload.dining.priceCents,
+    },
+    beverages: workingPayload.beverages,
+    spaces: workingPayload.spaces.map((row) => ({
+      knowledgeItemId: row.knowledgeItemId,
+      name: row.name,
+      priceCents: row.priceCents,
+      startTime: row.startTime,
+      endTime: row.endTime,
+      durationMinutes: row.durationMinutes,
+    })),
+    schedule: workingPayload.schedule,
+    pricingComplete: true,
+    catalogBacked: false,
+    lineItems: workingPayload.lineItems,
+    itinerary: workingPayload.itinerary,
+    itineraryPrecise: workingPayload.itineraryPrecise,
+    depositPreviewPercent: workingPayload.depositPreviewPercent,
+    depositPreviewCents: workingPayload.depositPreviewCents,
+    customerAvailabilityNote: input.availabilityConfirmed
+      ? undefined
+      : input.availabilityNote ||
+        "Final resource availability will be confirmed by our event team.",
+    employeeApprovedQuote: {
+      marker: WP_APPROVED_QUOTE_MARKER,
+      approvedAt: input.approvedAt,
+      availabilityConfirmed: input.availabilityConfirmed,
+      availabilityNote: input.availabilityNote,
+    },
+  };
+}
+
+export function readEmployeeApprovedQuoteMarker(payload: unknown): EmployeeApprovedQuoteMarker | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+  const value = (payload as { employeeApprovedQuote?: unknown }).employeeApprovedQuote;
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const marker = value as EmployeeApprovedQuoteMarker;
+  if (marker.marker !== WP_APPROVED_QUOTE_MARKER) {
+    return null;
+  }
+  return marker;
 }
