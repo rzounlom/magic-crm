@@ -10,6 +10,10 @@ import { InquiryArchiveActions } from "@/components/layout/inquiry-archive-actio
 import { InquiryFunnel } from "@/components/layout/inquiry-funnel";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
+import {
+  findWpIntakeMetadata,
+  WpIntakeAnswersPanel,
+} from "@/components/layout/wp-intake-answers-panel";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { db } from "@/lib/db";
 import {
@@ -161,6 +165,7 @@ export default async function InquiryDetailPage({
     holdReadiness,
   } = view;
   const conversation = inquiry.conversations[0];
+  const wpIntake = findWpIntakeMetadata(conversation?.messages);
   const selectedPlan = inquiry.eventPlanRecommendations.find(
     (plan) => plan.id === inquiry.selectedEventPlanId,
   );
@@ -397,6 +402,8 @@ export default async function InquiryDetailPage({
           <p className="mt-1 whitespace-pre-wrap text-foreground/80">{inquiry.customerNotes}</p>
         </div>
       ) : null}
+
+      {wpIntake ? <WpIntakeAnswersPanel metadata={wpIntake} /> : null}
 
       {inquiry.internalSummary ? (
         <div className="mt-8 rounded-md border border-border px-4 py-4">

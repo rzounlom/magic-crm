@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     // Playwright artifacts (generated; not application source)
     "playwright-report/**",
     "test-results/**",
+    // Local tool caches (micromamba PHP, parity export scratch)
+    "tmp/**",
   ]),
 ]);
 

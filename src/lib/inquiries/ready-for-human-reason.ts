@@ -5,6 +5,7 @@ export const READY_FOR_HUMAN_REASONS = {
   GENERATION_FAILED: "GENERATION_FAILED",
   STAFF_ASSISTANCE: "STAFF_ASSISTANCE",
   MANUAL_ESCALATION: "MANUAL_ESCALATION",
+  PUBLIC_EVENT_REQUEST: "PUBLIC_EVENT_REQUEST",
 } as const;
 
 export type ReadyForHumanReason =
@@ -22,6 +23,8 @@ const READY_FOR_HUMAN_LABELS: Record<ReadyForHumanReason, string> = {
     "Personal Event Planner could not finish recommendations. A team member should follow up.",
   [READY_FOR_HUMAN_REASONS.STAFF_ASSISTANCE]: "Customer needs staff assistance.",
   [READY_FOR_HUMAN_REASONS.MANUAL_ESCALATION]: "Employee took over.",
+  [READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST]:
+    "Public event request submitted for staff review. No public package was published.",
 };
 
 export function formatReadyForHumanReason(

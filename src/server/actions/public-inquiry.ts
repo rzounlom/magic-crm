@@ -6,8 +6,13 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { isInquiryError } from "@/server/errors";
 import { readPublicIntakeFields } from "@/server/inquiries/intake-validation";
+import { readWpPublicIntakeFromFormData } from "@/server/inquiries/wp-intake-validation";
 import { bookPublicEventPlan, selectPublicEventPlan } from "@/server/services/event-plan-service";
-import { createPublicInquiry, submitPublicConversationMessage } from "@/server/services/inquiry-service";
+import {
+  createPublicInquiry,
+  createPublicWpEventInquiry,
+  submitPublicConversationMessage,
+} from "@/server/services/inquiry-service";
 import { readSalesAgentRuntime } from "@/server/ai/sales-agent-runtime";
 import type { SecurityActionResult } from "@/types/security-action";
 
@@ -70,6 +75,65 @@ export async function submitPublicInquiryAction(formData: FormData): Promise<Sec
       title: "Inquiry received",
       message: "Your personalized event options are ready.",
       redirectTo: `/plan/${result.publicToken}`,
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+    if (isInquiryError(error)) {
+      return { ok: false, code: error.code, title: "Unable to send inquiry", message: error.userMessage };
+    }
+    throw error;
+  }
+}
+
+/** WordPress Event Planner 3.3.0 thank-you submit — no /plan redirect, no Booking. */
+export async function submitPublicWpEventInquiryAction(
+  formData: FormData,
+): Promise<SecurityActionResult> {
+  try {
+    const slug = String(formData.get("organizationSlug") ?? "");
+    const fields = readWpPublicIntakeFromFormData(formData);
+    if (!fields.success) {
+      return {
+        ok: false,
+        code: "INVALID_INTAKE",
+        title: "Check the form",
+        message: "Check the highlighted fields and try again.",
+        fieldErrors: fields.fieldErrors,
+      };
+    }
+    const result = await createPublicWpEventInquiry(db, {
+      organizationSlug: slug,
+      rateLimitKey: await rateLimitIdentity(slug),
+      firstName: fields.data.firstName,
+      lastName: fields.data.lastName,
+      company: fields.data.company,
+      phone: fields.data.phone,
+      email: fields.data.email,
+      eventType: fields.data.eventType,
+      dates: fields.data.dates,
+      time: fields.data.time,
+      adults: fields.data.adults,
+      children: fields.data.children,
+      duration: fields.data.duration,
+      otherHours: fields.data.otherHours,
+      attractions: fields.data.attractions,
+      food: fields.data.food,
+      privateRoom: fields.data.privateRoom,
+      craft: fields.data.craft,
+      hasBudget: fields.data.hasBudget,
+      budget: fields.data.budgetCents != null ? fields.data.budgetCents / 100 : null,
+      description: fields.data.description,
+      comments: fields.data.comments,
+      referral: fields.data.referral,
+      companyWebsite: fields.data.companyWebsite,
+      submissionId: fields.data.submissionId,
+    });
+    return {
+      ok: true,
+      title: "Thank you, we’re on it!",
+      message:
+        "Our Events Team will review your inquiry and follow up with recommendations. This inquiry does not reserve a date or confirm pricing.",
+      redirectTo: `/inquire/${result.organizationSlug}/thanks`,
     };
   } catch (error) {
     unstable_rethrow(error);

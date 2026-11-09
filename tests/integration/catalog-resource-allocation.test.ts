@@ -50,7 +50,9 @@ const EXPECTED: Record<
     bowlingMinutes: 60,
     roomSlug: "skybox",
     roomName: "Skybox",
-    includesArcade: true,
+    // Explicit axe+bowling interests only — premium no longer auto-adds arcade
+    // (aligned with catalog-composition premium expectations).
+    includesArcade: false,
   },
 };
 

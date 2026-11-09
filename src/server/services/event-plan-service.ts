@@ -13,6 +13,10 @@ import { resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
 import { InquiryError } from "@/server/errors";
 import type { PlanAvailabilityProvider } from "@/server/event-planner/availability";
 import {
+  shouldSuppressCustomerPlanNotificationForWpIntake,
+  wpPrivateCalculationFromMessageMetadata,
+} from "@/server/event-planner/wp-parity/pricing-verification";
+import {
   attractionInterestIdsFromJson,
   type PlannerInquiryFacts,
   type PlannerKnowledgeItem,
@@ -45,6 +49,7 @@ import {
   INQUIRY_SALES_STAGES,
   INQUIRY_STATUSES,
   INQUIRY_WORKFLOW_STAGES,
+  MESSAGE_SENDER_TYPES,
   SALES_KNOWLEDGE_TYPES,
 } from "@/types/inquiry";
 import { RESOURCE_QUANTITY_RULES, type ResourceQuantityRule } from "@/types/resource-schedule";
@@ -356,6 +361,30 @@ export async function generateEventPlansForInquiry(
     throw new InquiryError("PLAN_NOT_FOUND");
   }
 
+  let planNotification = input.planNotification;
+  let customerNotificationSuppressedReason: string | null = null;
+  if (planNotification) {
+    const intakeMessage = await database.conversationMessage.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        senderType: MESSAGE_SENDER_TYPES.CUSTOMER,
+        conversation: { inquiryId: inquiry.id, organizationId: input.organizationId },
+      },
+      orderBy: { createdAt: "asc" },
+      select: { metadata: true },
+    });
+    const privateCalculation = wpPrivateCalculationFromMessageMetadata(intakeMessage?.metadata);
+    const guard = shouldSuppressCustomerPlanNotificationForWpIntake({
+      humanHandoffReason: inquiry.humanHandoffReason,
+      planNotificationRequested: true,
+      privateCalculation,
+    });
+    if (guard.suppress) {
+      planNotification = undefined;
+      customerNotificationSuppressedReason = guard.reason;
+    }
+  }
+
   const locationId = await resolveInquiryLocationId(database, inquiry);
   const resourceWhere = resourcesInLocationWhere(locationId);
   const [organization, knowledge, resourceCatalog, storedRequirementRows, locationRow] = await Promise.all([
@@ -535,8 +564,14 @@ export async function generateEventPlansForInquiry(
     resourceId: inquiry.id,
     metadata: {
       planCount: drafts.length,
-      ...(input.planNotification
-        ? { planUrl: input.planNotification.planUrl, eventDate: input.planNotification.eventDate }
+      ...(planNotification
+        ? { planUrl: planNotification.planUrl, eventDate: planNotification.eventDate }
+        : {}),
+      ...(customerNotificationSuppressedReason
+        ? {
+            customerNotificationSuppressed: true,
+            customerNotificationSuppressedReason,
+          }
         : {}),
     },
   });

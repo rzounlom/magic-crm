@@ -1,0 +1,308 @@
+import {
+  WP_ATTRACTION_ANSWER_LABELS,
+  WP_ATTRACTION_KEYS,
+  WP_ATTRACTION_LABELS,
+  WP_PLUGIN_DEFAULT_ESTIMATE_LABEL,
+  parseWpIntakeMessageMetadata,
+  type WpIntakeMessageMetadata,
+} from "@/lib/event-planner/wp-intake-contract";
+
+type MessageLike = {
+  metadata?: unknown;
+};
+
+/** Mirrors `WP_PARITY_SNAPSHOT_VERSION` without importing server/crypto into the UI tree. */
+const WP_PARITY_SNAPSHOT_VERSION = 1;
+
+type WpParityPlanSnapshot = {
+  name: string;
+  total_cents: number;
+  subtotal_cents: number;
+  tax_cents: number;
+  per_guest_cents: number;
+  dining_minutes: number;
+  required_minutes: number;
+  fits_duration: boolean;
+  hard_review: boolean;
+  selected_attractions: string[];
+  review: string[];
+  why: string | null;
+  items: Array<{
+    label: string;
+    quantity: number;
+    subtotal_cents: number;
+    tax_cents: number;
+  }>;
+};
+
+type WpParitySnapshot =
+  | {
+      snapshot_version: number;
+      valid: true;
+      dates: Array<{
+        date: string;
+        recommendation: WpParityPlanSnapshot;
+        alternatives: WpParityPlanSnapshot[];
+      }>;
+    }
+  | {
+      snapshot_version: number;
+      valid: false;
+      errors: Record<string, string>;
+      missing_keys?: string[];
+    };
+
+export function findWpIntakeMetadata(
+  messages: MessageLike[] | null | undefined,
+): WpIntakeMessageMetadata | null {
+  if (!messages?.length) {
+    return null;
+  }
+  for (const message of messages) {
+    const parsed = parseWpIntakeMessageMetadata(message.metadata);
+    if (parsed) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function parseSnapshot(value: unknown): WpParitySnapshot | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as { snapshot_version?: unknown; valid?: unknown };
+  if (record.snapshot_version !== WP_PARITY_SNAPSHOT_VERSION) {
+    return null;
+  }
+  if (record.valid !== true && record.valid !== false) {
+    return null;
+  }
+  return value as WpParitySnapshot;
+}
+
+type PricingBanner = {
+  tone: "warning" | "success" | "danger";
+  title: string;
+  detail: string;
+};
+
+function pricingBanner(
+  meta: WpIntakeMessageMetadata["privateCalculation"],
+  missingKeys: string[],
+): PricingBanner | null {
+  if (meta.status === "incomplete" || meta.pricingSource === "incomplete") {
+    return {
+      tone: "danger",
+      title: "Incomplete — needs staff review",
+      detail:
+        missingKeys.length > 0
+          ? `No price was calculated. Missing pricing configuration: ${missingKeys.join(", ")}.`
+          : "No price was calculated because pricing configuration is incomplete.",
+    };
+  }
+  if (meta.pricingSource === "plugin_defaults") {
+    return {
+      tone: "warning",
+      title: WP_PLUGIN_DEFAULT_ESTIMATE_LABEL,
+      detail:
+        "Private staff estimate only. Do not send these totals to the customer until live venue pricing is verified. No booking, hold, or public proposal is created from this calculation.",
+    };
+  }
+  if (meta.pricingSource === "tenant_live") {
+    return {
+      tone: "success",
+      title: "Calculated with tenant_live verified pricing",
+      detail: "Prices come from this organization’s verified WP-parity pricing pack.",
+    };
+  }
+  return null;
+}
+
+const BANNER_TONE_CLASS: Record<PricingBanner["tone"], string> = {
+  warning: "border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100",
+  success: "border-emerald-500/50 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100",
+  danger: "border-destructive/50 bg-destructive/10 text-destructive",
+};
+
+function money(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMetadata }) {
+  const { answers, privateCalculation } = metadata;
+  const snapshot = parseSnapshot(privateCalculation.snapshot);
+  const missingKeys =
+    privateCalculation.missingKeys && privateCalculation.missingKeys.length > 0
+      ? privateCalculation.missingKeys
+      : snapshot?.valid === false
+        ? (snapshot.missing_keys ?? [])
+        : [];
+  const banner = pricingBanner(privateCalculation, missingKeys);
+
+  return (
+    <div className="mt-8 rounded-md border border-border px-4 py-4" data-wp-intake-answers>
+      <h2 className="text-sm font-medium text-foreground">WordPress intake answers</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Stored for staff review ({metadata.intakeVersion}). Not shown as public packages.
+      </p>
+      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+        <Item label="Company" value={answers.company} />
+        <Item label="Referral" value={answers.referral} />
+        <Item label="Preferred dates" value={answers.dates.join(", ")} />
+        <Item label="Start time" value={answers.time} />
+        <Item label="Adults" value={String(answers.adults)} />
+        <Item label="Children" value={String(answers.children)} />
+        <Item
+          label="Duration"
+          value={`${answers.duration}${answers.otherHours != null ? ` (${answers.otherHours}h)` : ""} · ${answers.minutes} min`}
+        />
+        <Item label="Food" value={answers.food} />
+        <Item label="Private room" value={answers.privateRoom} />
+        <Item label="Craft beverages" value={answers.craft} />
+        <Item
+          label="Budget"
+          value={
+            answers.hasBudget === "yes" && answers.budgetCents != null
+              ? money(answers.budgetCents)
+              : "Flexible"
+          }
+        />
+      </dl>
+      <div className="mt-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">Attractions</p>
+        <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+          {WP_ATTRACTION_KEYS.map((key) => (
+            <li key={key}>
+              {WP_ATTRACTION_LABELS[key]}: {WP_ATTRACTION_ANSWER_LABELS[answers.attractions[key]]}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="mt-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">Occasion</p>
+        <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/80">{answers.description}</p>
+      </div>
+      {answers.comments ? (
+        <div className="mt-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">Comments</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/80">{answers.comments}</p>
+        </div>
+      ) : null}
+
+      <div className="mt-6 rounded-md border border-dashed border-border px-3 py-3 text-sm" data-wp-private-calc>
+        <p className="font-medium text-foreground">Private recommendation (staff only)</p>
+        {banner ? (
+          <div
+            className={`mt-2 rounded-md border px-3 py-2 ${BANNER_TONE_CLASS[banner.tone]}`}
+            data-wp-pricing-source={privateCalculation.pricingSource ?? "unknown"}
+          >
+            <p className="font-medium">{banner.title}</p>
+            <p className="mt-0.5 text-xs">{banner.detail}</p>
+            {missingKeys.length > 0 ? (
+              <ul className="mt-1 list-disc pl-4 text-xs" data-wp-missing-keys>
+                {missingKeys.map((key) => (
+                  <li key={key}>{key}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+        <p className="mt-1 text-muted-foreground">
+          Status: {privateCalculation.status}
+          {privateCalculation.rulesVersion ? ` · rules ${privateCalculation.rulesVersion}` : ""}
+          {privateCalculation.pricingRevision
+            ? ` · pricing ${privateCalculation.pricingRevision}`
+            : ""}
+          {privateCalculation.pricingSource ? ` · ${privateCalculation.pricingSource}` : ""}
+        </p>
+        {privateCalculation.summary ? (
+          <p className="mt-1 text-muted-foreground">{privateCalculation.summary}</p>
+        ) : null}
+        {privateCalculation.errorMessage ? (
+          <p className="mt-2 text-destructive">{privateCalculation.errorMessage}</p>
+        ) : null}
+        {snapshot?.valid === false && Object.keys(snapshot.errors).length > 0 ? (
+          <p className="mt-2 text-destructive">
+            Calculator validation errors: {Object.values(snapshot.errors).join(" ")}
+          </p>
+        ) : null}
+        {snapshot?.valid === true
+          ? snapshot.dates.map((day) => (
+              <div key={day.date} className="mt-4 space-y-3 border-t border-border/70 pt-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">
+                  {day.date}
+                </p>
+                <PlanCard title="Main recommendation" plan={day.recommendation} />
+                {day.alternatives.map((plan, index) => (
+                  <PlanCard key={`${day.date}-alt-${index}`} title={`Alternative ${index + 1}`} plan={plan} />
+                ))}
+              </div>
+            ))
+          : null}
+        <p className="mt-3 text-xs text-muted-foreground">
+          These totals are private staff estimates. They do not reserve inventory, create bookings, or
+          publish a customer quote. Availability and eligibility still require confirmation.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }) {
+  return (
+    <div className="rounded-md bg-muted/40 px-3 py-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-medium text-foreground">
+          {title}: {plan.name}
+        </p>
+        <p className="text-sm tabular-nums text-foreground">{money(plan.total_cents)}</p>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Subtotal {money(plan.subtotal_cents)} · tax {money(plan.tax_cents)} · per guest{" "}
+        {money(plan.per_guest_cents)}
+        {plan.dining_minutes ? ` · dining ${plan.dining_minutes}m` : " · no separate dining block"}
+        {` · required ${plan.required_minutes}m`}
+        {!plan.fits_duration ? " · does not fit requested duration" : ""}
+        {plan.hard_review ? " · hard review" : ""}
+      </p>
+      {plan.why ? <p className="mt-1 text-xs text-muted-foreground">{plan.why}</p> : null}
+      {plan.selected_attractions.length > 0 ? (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Attractions: {plan.selected_attractions.join(", ")}
+        </p>
+      ) : (
+        <p className="mt-1 text-xs text-muted-foreground">No attractions selected in this configuration.</p>
+      )}
+      {plan.review.length > 0 ? (
+        <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-800 dark:text-amber-200">
+          {plan.review.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : null}
+      {plan.items.length > 0 ? (
+        <details className="mt-2">
+          <summary className="cursor-pointer text-xs font-medium text-foreground/70">Line items</summary>
+          <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+            {plan.items.map((item, index) => (
+              <li key={`${item.label}-${index}`}>
+                {item.label} × {item.quantity} — {money(item.subtotal_cents)}
+                {item.tax_cents ? ` (+${money(item.tax_cents)} tax)` : ""}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
+function Item({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-foreground/60">{label}</dt>
+      <dd className="mt-1 text-foreground">{value}</dd>
+    </div>
+  );
+}

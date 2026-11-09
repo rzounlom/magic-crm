@@ -24,6 +24,20 @@ import {
   publicConversationMessageSchema,
   publicIntakeSchema,
 } from "@/server/inquiries/intake-validation";
+import { wpPublicIntakeSchema } from "@/server/inquiries/wp-intake-validation";
+import {
+  attractionModeFromWpAnswers,
+  beveragePreferenceFromWp,
+  buildWpIntakeMessageMetadata,
+  diningPreferenceFromWp,
+  formatWpIntakeMessage,
+  guestMixFromAdultsChildren,
+  spacePreferenceFromWp,
+  truncateForColumn,
+  WP_INTAKE_LIMITS,
+  yesAttractionKeys,
+} from "@/lib/event-planner/wp-intake-contract";
+import { calculatePrivateWpRecommendationForOrganization } from "@/server/event-planner/wp-parity/from-intake";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
@@ -278,6 +292,201 @@ export async function createPublicInquiry(
     inquiryId: created.inquiry.id,
     conversationId: created.conversation.id,
     publicToken: token,
+  };
+}
+
+export type PublicWpEventInquiryInput = {
+  organizationSlug: string;
+  rateLimitKey: string;
+  firstName: string;
+  lastName: string;
+  company: string;
+  phone: string;
+  email: string;
+  eventType: string;
+  dates: string[];
+  time: string;
+  adults: number;
+  children: number;
+  duration: string;
+  otherHours?: number | null;
+  attractions: Record<string, string>;
+  food: string;
+  privateRoom: string;
+  craft: string;
+  hasBudget: string;
+  budget?: number | null;
+  description: string;
+  comments?: string | null;
+  referral: string;
+  companyWebsite?: string;
+  submissionId: string;
+};
+
+/**
+ * WordPress Event Planner 3.3.0 thank-you path.
+ * Persists the inquiry for staff follow-up. Does not generate public packages,
+ * create bookings, hold inventory, or redirect to /plan.
+ */
+export async function createPublicWpEventInquiry(
+  database: InquiryDb,
+  input: PublicWpEventInquiryInput,
+  rateLimiter: RateLimiter = getPublicRateLimiter(),
+) {
+  const parsed = wpPublicIntakeSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new InquiryError("INVALID_INTAKE");
+  }
+  if (isHoneypotFilled(parsed.data.companyWebsite)) {
+    throw new InquiryError("INVALID_INTAKE");
+  }
+
+  const limited = await rateLimiter.consume(`wp-intake:${input.rateLimitKey}`, 5, 10 * 60_000);
+  if (!limited.ok) {
+    throw new InquiryError("RATE_LIMITED");
+  }
+
+  const organization = await resolvePublicInquiryOrganization(database, input.organizationSlug);
+  const locationId = await resolvePrimaryLocationId(database, organization.id);
+  const answers = {
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName,
+    company: parsed.data.company,
+    phone: parsed.data.phone,
+    email: parsed.data.email,
+    eventType: parsed.data.eventType,
+    dates: parsed.data.dates,
+    time: parsed.data.time,
+    adults: parsed.data.adults,
+    children: parsed.data.children,
+    duration: parsed.data.duration,
+    otherHours: parsed.data.otherHours,
+    minutes: parsed.data.minutes,
+    attractions: parsed.data.attractions,
+    food: parsed.data.food,
+    privateRoom: parsed.data.privateRoom,
+    craft: parsed.data.craft,
+    hasBudget: parsed.data.hasBudget,
+    budgetCents: parsed.data.budgetCents,
+    description: parsed.data.description,
+    comments: parsed.data.comments,
+    referral: parsed.data.referral,
+  };
+  const guestCount = answers.adults + answers.children;
+  const guestMix = guestMixFromAdultsChildren(answers.adults, answers.children);
+  const yesKeys = yesAttractionKeys(answers.attractions);
+  const { token, hash } = createPublicConversationToken();
+  const desiredDate = new Date(`${answers.dates[0]}T00:00:00.000Z`);
+  const intakeText = formatWpIntakeMessage(answers);
+  // Pure calculator — failure must never drop the customer submission.
+  // No tenant_live WP-parity pack exists yet (live WP admin overrides were not available), so
+  // this resolves to plugin_defaults and records pricingSource + organizationId. Do not invent
+  // tenant prices from the MagicCRM catalog here.
+  const privateCalc = calculatePrivateWpRecommendationForOrganization(answers, {
+    organizationId: organization.id,
+    allowPluginDefaults: true,
+  });
+  const metadata = buildWpIntakeMessageMetadata(answers, {
+    status: privateCalc.status,
+    rulesVersion: privateCalc.rulesVersion,
+    pricingRevision: privateCalc.pricingRevision,
+    pricingSource: privateCalc.pricingSource,
+    organizationId: privateCalc.organizationId,
+    missingKeys: privateCalc.missingKeys,
+    summary: privateCalc.summary,
+    snapshot: privateCalc.snapshot,
+    errorMessage: privateCalc.errorMessage,
+  });
+
+  const createdInquiry = await database.inquiry.create({
+    data: {
+      organizationId: organization.id,
+      locationId,
+      status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+      source: INQUIRY_SOURCES.WEB,
+      customerFirstName: answers.firstName,
+      customerLastName: answers.lastName,
+      customerGroupName: answers.company,
+      customerEmail: answers.email,
+      customerEmailNormalized: parsed.data.emailNormalized,
+      customerPhone: answers.phone,
+      eventType: answers.eventType,
+      occasion: truncateForColumn(answers.description, WP_INTAKE_LIMITS.occasionColumn),
+      eventGoal: answers.eventType,
+      desiredDate,
+      desiredStartTime: answers.time,
+      guestCount,
+      adultGuestCount: answers.adults,
+      childGuestCount: answers.children,
+      guestMix,
+      desiredDurationMinutes: answers.minutes,
+      budgetMin: null,
+      budgetMax: answers.budgetCents,
+      budgetPreference: answers.hasBudget === "yes" ? null : "FLEXIBLE",
+      diningPreference: diningPreferenceFromWp(answers.food),
+      beveragePreference: beveragePreferenceFromWp(answers.craft),
+      spacePreference: spacePreferenceFromWp(answers.privateRoom),
+      // Interest IDs require tenant catalog mapping; yes/no/open keys live in metadata until then.
+      attractionInterestIds: [],
+      customerNotes: answers.comments
+        ? truncateForColumn(answers.comments, WP_INTAKE_LIMITS.notesColumn)
+        : null,
+      aiHandlingEnabled: false,
+      salesStage: INQUIRY_SALES_STAGES.INQUIRY,
+      humanHandoffReason: READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST,
+      audience: audienceFromGuestMix(guestMix),
+      attractionMode: attractionModeFromWpAnswers(answers.attractions),
+      conversations: {
+        create: {
+          channel: CONVERSATION_CHANNELS.WEB,
+          publicTokenHash: hash,
+          lastMessageAt: new Date(),
+          messages: {
+            create: {
+              direction: MESSAGE_DIRECTIONS.INBOUND,
+              senderType: MESSAGE_SENDER_TYPES.CUSTOMER,
+              content: intakeText,
+              clientSubmissionId: parsed.data.submissionId,
+              metadata: metadata as Prisma.InputJsonValue,
+            },
+          },
+        },
+      },
+    },
+    select: {
+      id: true,
+      conversations: { select: { id: true }, take: 1 },
+    },
+  });
+  const createdConversation = createdInquiry.conversations[0];
+  if (!createdConversation) {
+    throw new InquiryError("INVALID_INTAKE");
+  }
+
+  await recordAuditEvent(database, {
+    organizationId: organization.id,
+    action: "inquiry.created",
+    resourceType: "inquiry",
+    resourceId: createdInquiry.id,
+    metadata: {
+      source: INQUIRY_SOURCES.WEB,
+      channel: CONVERSATION_CHANNELS.WEB,
+      intakeVersion: metadata.intakeVersion,
+      yesAttractions: yesKeys.join(","),
+      publicPackagesPublished: false,
+      bookingCreated: false,
+      privateCalculationStatus: privateCalc.status,
+      privateCalculationRulesVersion: privateCalc.rulesVersion ?? "",
+      privateCalculationPricingRevision: privateCalc.pricingRevision ?? "",
+    },
+  });
+
+  return {
+    inquiryId: createdInquiry.id,
+    conversationId: createdConversation.id,
+    publicToken: token,
+    organizationSlug: organization.slug,
+    privateCalculationStatus: privateCalc.status,
   };
 }
 
