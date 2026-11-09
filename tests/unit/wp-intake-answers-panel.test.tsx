@@ -44,6 +44,8 @@ describe("WpIntakeAnswersPanel pricing source", () => {
     const html = render({ status: "ready", pricingSource: "plugin_defaults" });
     expect(html).toContain("ESTIMATE — Plugin-default pricing. Verify before sending to customer.");
     expect(html).toContain("Do not send these totals to the customer");
+    expect(html).toContain("Suggested next steps");
+    expect(html).toContain("Verify pricing against live venue rates");
   });
 
   it("labels tenant_live verified pricing", () => {
@@ -60,5 +62,53 @@ describe("WpIntakeAnswersPanel pricing source", () => {
     expect(html).toContain("Incomplete — needs staff review");
     expect(html).toContain("catalog.bowling.shoes");
     expect(html).toContain("packages");
+  });
+
+  it("shows itinerary and itemized estimate for a ready snapshot", () => {
+    const html = render({
+      status: "ready",
+      pricingSource: "plugin_defaults",
+      snapshot: {
+        snapshot_version: 1,
+        valid: true,
+        dates: [
+          {
+            date: "2026-12-01",
+            recommendation: {
+              name: "Custom Package",
+              total_cents: 10000,
+              subtotal_cents: 9300,
+              tax_cents: 700,
+              per_guest_cents: 250,
+              dining_minutes: 30,
+              required_minutes: 120,
+              fits_duration: true,
+              hard_review: false,
+              selected_attractions: ["bowling"],
+              review: ["Verify lane availability."],
+              why: "Fits requested attractions.",
+              items: [{ label: "Bowling", quantity: 4, subtotal_cents: 8000, tax_cents: 0 }],
+              itinerary: [
+                {
+                  start_minute: 0,
+                  end_minute: 60,
+                  label: "Bowling",
+                  group: "All guests",
+                  start: "1:00 PM",
+                  end: "2:00 PM",
+                },
+              ],
+            },
+            alternatives: [],
+          },
+        ],
+      },
+    });
+    expect(html).toContain("Suggested itinerary");
+    expect(html).toContain("1:00 PM – 2:00 PM");
+    expect(html).toContain("Itemized estimate");
+    expect(html).toContain("Bowling × 4");
+    expect(html).toContain("Scheduling / capacity warnings");
+    expect(html).toContain("Verify lane availability.");
   });
 });
