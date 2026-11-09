@@ -20,6 +20,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   "inquiry.wp_quote_approved": "Staff quote approved",
   "inquiry.wp_quote_delivered": "Staff quote published for customer",
   "communication.employee_approved_quote_skipped": "Quote notification recorded (email skipped — no provider)",
+  "communication.employee_approved_quote_failed": "Quote notification failed to send",
   "inquiry.working_plan_updated": "Working version updated",
   "inquiry.ready_to_finalize": "Marked ready to finalize",
   "inquiry.internal_note_added": "Internal note added",

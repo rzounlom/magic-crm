@@ -3,6 +3,10 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { bookingConfirmationBlockers } from "@/lib/bookings/confirmation-blockers";
 import { bookingNumberPrefix, formatBookingNumber } from "@/lib/bookings/booking-number";
 import { holdCoverageErrors } from "@/lib/bookings/hold-coverage";
+import {
+  wpApprovedQuoteInventoryBlockers,
+} from "@/lib/bookings/confirmation-blockers";
+import { assertApprovedQuoteAmountsConsistent } from "@/lib/inquiries/approved-quote-amounts";
 import { planPayloadTotal } from "@/lib/inquiries/plan-diff";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
@@ -248,7 +252,19 @@ export async function upsertPendingBookingFromPlan(
     flow: input.source === "customer_book_now" ? "public_pending_booking" : "employee_pending_booking",
   });
   const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
-  const totalCents = plan.estimatedTotalCents ?? planPayloadTotal(payload);
+  const amountCheck = assertApprovedQuoteAmountsConsistent({
+    estimatedTotalCents: plan.estimatedTotalCents ?? planPayloadTotal(payload),
+    payload,
+    onlyForEmployeeApprovedQuote: true,
+  });
+  if (!amountCheck.ok) {
+    throw new InquiryError("WORKING_PLAN_INVALID", amountCheck.error);
+  }
+  const inventoryBlock = wpApprovedQuoteInventoryBlockers(payload);
+  if (inventoryBlock.length > 0) {
+    throw new InquiryError("WORKING_PLAN_INVALID", inventoryBlock.join(" "));
+  }
+  const totalCents = amountCheck.totalCents;
   const items = lineItemsFromPayload(payload);
   const depositPercent = depositPercentFromTenant(inquiry.organization.depositPercent);
   const year = Number(eventDate.slice(0, 4)) || tenantYear(inquiry.organization.timezone);
@@ -576,8 +592,21 @@ export async function confirmPendingBooking(
   });
   const instants = { startsAt: guarded.startsAt, endsAt: guarded.endsAt };
   const pendingHoursException = guarded.pendingHoursException;
-  const totalCents =
+  const candidateTotal =
     (working ?? selected)?.estimatedTotalCents ?? existing?.totalCents ?? planPayloadTotal(payload);
+  const amountCheck = assertApprovedQuoteAmountsConsistent({
+    estimatedTotalCents: candidateTotal,
+    payload,
+    onlyForEmployeeApprovedQuote: true,
+  });
+  if (!amountCheck.ok) {
+    throw new InquiryError("WORKING_PLAN_INVALID", amountCheck.error);
+  }
+  const inventoryBlock = wpApprovedQuoteInventoryBlockers(payload);
+  if (inventoryBlock.length > 0) {
+    throw new InquiryError("WORKING_PLAN_INVALID", inventoryBlock.join(" "));
+  }
+  const totalCents = amountCheck.totalCents;
   const items = lineItemsFromPayload(payload);
   const year = Number(eventDate.slice(0, 4));
   const depositPercent = depositPercentFromTenant(inquiry.organization.depositPercent);

@@ -63,6 +63,8 @@ function money(cents: number, currency = "USD"): string {
 export function WpStaffQuoteDraftPanel({
   inquiryId,
   canManage,
+  canApproveQuotes,
+  canOverrideQuotePricing,
   canCreate,
   draft,
   provenance,
@@ -71,6 +73,8 @@ export function WpStaffQuoteDraftPanel({
 }: {
   inquiryId: string;
   canManage: boolean;
+  canApproveQuotes: boolean;
+  canOverrideQuotePricing: boolean;
   /** Ready private WP snapshot exists. */
   canCreate: boolean;
   draft: DraftPlan | null;
@@ -273,7 +277,13 @@ export function WpStaffQuoteDraftPanel({
                           type="number"
                           name={`lineUnitCents_${index}`}
                           defaultValue={item.unitPriceCents}
-                          className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                          readOnly={!canOverrideQuotePricing}
+                          title={
+                            canOverrideQuotePricing
+                              ? undefined
+                              : "Pricing overrides require crm.quotes.price_override"
+                          }
+                          className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm read-only:bg-muted/40"
                         />
                       </label>
                     </div>
@@ -324,7 +334,7 @@ export function WpStaffQuoteDraftPanel({
                 </SecurityActionForm>
               </div>
 
-              {deliveryPolicy?.canApprove ? (
+              {deliveryPolicy?.canApprove && canApproveQuotes ? (
                 <SecurityActionForm
                   action={approveAndSendWpStaffQuoteAction}
                   className="space-y-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-3"
@@ -357,6 +367,11 @@ export function WpStaffQuoteDraftPanel({
                       : "Approve quote (delivery gated)"}
                   </PendingSubmitButton>
                 </SecurityActionForm>
+              ) : null}
+              {deliveryPolicy?.canApprove && canManage && !canApproveQuotes ? (
+                <p className="text-xs text-muted-foreground" data-wp-quote-approve-denied>
+                  Approval requires the Event Sales (or admin) quote approval permission.
+                </p>
               ) : null}
 
               {deliveryPolicy?.canPreview && payload ? (

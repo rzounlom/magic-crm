@@ -292,4 +292,80 @@ describe("WP staff quote approval and delivery", () => {
       AuthorizationError,
     );
   }, 90_000);
+
+  it("allows Event Sales to approve and blocks price overrides without permission", async () => {
+    const tenant = await provisionTenant("sales-role");
+    const created = await createWpInquiry(tenant);
+    await setPrivatePricingSource(created.inquiryId, "approved_plugin_baseline");
+    await createWpStaffQuoteDraftFromInquiry(tenant.ctx, db, created.inquiryId);
+
+    const salesGroup = await db.securityGroup.findFirstOrThrow({
+      where: { organizationId: tenant.organizationId, systemKey: SYSTEM_GROUP_KEYS.EVENT_SALES },
+    });
+    const sales = await db.userProfile.create({
+      data: {
+        organizationId: tenant.organizationId,
+        clerkUserId: `user_${crypto.randomUUID()}`,
+        defaultLocationId: tenant.locationId,
+        email: `sales-${crypto.randomUUID()}@example.test`,
+        firstName: "Event",
+        lastName: "Sales",
+      },
+    });
+    await db.securityGroupMember.create({
+      data: {
+        organizationId: tenant.organizationId,
+        securityGroupId: salesGroup.id,
+        userProfileId: sales.id,
+      },
+    });
+    const salesCtx = await resolveRequestContext(
+      {
+        clerkUserId: sales.clerkUserId,
+        clerkOrganizationId: tenant.organization.clerkOrganizationId,
+      },
+      db,
+    );
+
+    const working = await db.eventPlanRecommendation.findFirstOrThrow({
+      where: { inquiryId: created.inquiryId, kind: EVENT_PLAN_KINDS.AGENT_WORKING },
+    });
+    const payload = working.payload as {
+      lineItems: Array<{ slug: string; name: string; quantity: number; unitPriceCents: number; kind: string }>;
+      guestCount: number;
+      eventDate: string | null;
+      startTime: string | null;
+    };
+
+    await expect(
+      updateWpStaffQuoteDraft(salesCtx, db, created.inquiryId, {
+        guestCount: payload.guestCount,
+        eventDate: payload.eventDate,
+        startTime: payload.startTime,
+        durationMinutes: working.durationMinutes ?? 180,
+        lineItems: payload.lineItems.map((row, index) =>
+          index === 0 ? { ...row, unitPriceCents: row.unitPriceCents + 25 } : row,
+        ),
+        editReason: "Try unit price override",
+      }),
+    ).rejects.toBeInstanceOf(AuthorizationError);
+
+    const qtyEdit = await updateWpStaffQuoteDraft(salesCtx, db, created.inquiryId, {
+      guestCount: payload.guestCount,
+      eventDate: payload.eventDate,
+      startTime: payload.startTime,
+      durationMinutes: working.durationMinutes ?? 180,
+      lineItems: payload.lineItems.map((row, index) =>
+        index === 0 ? { ...row, quantity: row.quantity + 1 } : row,
+      ),
+      editReason: "Increase quantity only",
+    });
+    expect(qtyEdit.estimatedTotalCents).toBeGreaterThan(working.estimatedTotalCents ?? 0);
+
+    const approved = await approveAndSendWpStaffQuote(salesCtx, db, created.inquiryId, {
+      approvalNote: "Sales approval",
+    });
+    expect(approved.approved).toBe(true);
+    expect(approved.delivered).toBe(false);
+  }, 90_000);
 });

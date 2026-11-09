@@ -48,7 +48,8 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [21-phase-7-final-report.md](./21-phase-7-final-report.md) | Phase 7 deliverable report |
 | [22-phase-7b-quote-delivery-audit.md](./22-phase-7b-quote-delivery-audit.md) | Phase 7B delivery audit + pricing gate |
 | [23-phase-7b-final-report.md](./23-phase-7b-final-report.md) | Phase 7B approve/send report |
+| [24-phase-7c-final-report.md](./24-phase-7c-final-report.md) | Phase 7C roles, email adapter, inventory, amount guards |
 
 ## Branch
 
-`phase-7-staff-quote-draft` from Production `ab0178d` / `origin/main`. Staff-controlled quote draft only. No Scenario Lab; no Production catalog overwrite; no auto customer quote.
+`phase-7-staff-quote-draft` from Production `ab0178d` / `origin/main`. Staff-controlled quote draft + approve/send + operational readiness. No Scenario Lab; no Production catalog overwrite; no live customer email until `tenant_live` + provider.

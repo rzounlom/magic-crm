@@ -72,6 +72,8 @@ type InquiryDetailView =
       canRelease: boolean;
       canConfirm: boolean;
       canCancel: boolean;
+      canApproveQuotes: boolean;
+      canOverrideQuotePricing: boolean;
       timeZone: string;
       resourceCheck: Awaited<ReturnType<typeof getInquiryPlanAvailabilitySnapshot>> | null;
       knowledge: Awaited<ReturnType<typeof listWorkspaceKnowledge>>;
@@ -85,8 +87,18 @@ type InquiryDetailView =
 async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
   try {
     const ctx = await getRequestContext();
-    const [inquiry, canManage, canManageInventory, canHold, canRelease, canConfirm, canCancel, timeZone] =
-      await Promise.all([
+    const [
+      inquiry,
+      canManage,
+      canManageInventory,
+      canHold,
+      canRelease,
+      canConfirm,
+      canCancel,
+      canApproveQuotes,
+      canOverrideQuotePricing,
+      timeZone,
+    ] = await Promise.all([
       getInquiryDetail(ctx, db, id),
       hasPermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, db),
       hasPermission(ctx, PERMISSIONS.INVENTORY_MANAGE, db),
@@ -94,6 +106,8 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       hasPermission(ctx, PERMISSIONS.EVENTS_EDIT, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CONFIRM, db),
       hasPermission(ctx, PERMISSIONS.EVENTS_CANCEL, db),
+      hasPermission(ctx, PERMISSIONS.CRM_QUOTES_APPROVE, db),
+      hasPermission(ctx, PERMISSIONS.CRM_QUOTES_PRICE_OVERRIDE, db),
       getCurrentTenantTimezone(ctx, db),
     ]);
     if (!inquiry) {
@@ -126,6 +140,8 @@ async function loadInquiryDetailView(id: string): Promise<InquiryDetailView> {
       canRelease,
       canConfirm,
       canCancel,
+      canApproveQuotes,
+      canOverrideQuotePricing,
       timeZone,
       resourceCheck,
       knowledge,
@@ -165,6 +181,8 @@ export default async function InquiryDetailPage({
     canRelease,
     canConfirm,
     canCancel,
+    canApproveQuotes,
+    canOverrideQuotePricing,
     timeZone,
     resourceCheck,
     knowledge,
@@ -480,6 +498,8 @@ export default async function InquiryDetailPage({
         <WpStaffQuoteDraftPanel
           inquiryId={inquiry.id}
           canManage={canManage}
+          canApproveQuotes={canApproveQuotes}
+          canOverrideQuotePricing={canOverrideQuotePricing}
           canCreate={wpSnapshotReady}
           draft={workingPlan && wpStaffDraftProvenance ? workingPlan : null}
           provenance={wpStaffDraftProvenance}

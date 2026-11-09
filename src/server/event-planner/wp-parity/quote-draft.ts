@@ -557,6 +557,7 @@ export function toCustomerFacingWpQuotePayload(input: {
     lineItems: workingPayload.lineItems,
     itinerary: workingPayload.itinerary,
     itineraryPrecise: workingPayload.itineraryPrecise,
+    resourceRequirements: workingPayload.resourceRequirements,
     depositPreviewPercent: workingPayload.depositPreviewPercent,
     depositPreviewCents: workingPayload.depositPreviewCents,
     customerAvailabilityNote: input.availabilityConfirmed

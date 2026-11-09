@@ -140,6 +140,18 @@ export type {
   WpCustomerQuoteDeliveryCode,
   WpCustomerQuoteDeliveryPolicy,
 } from "@/server/event-planner/wp-parity/pricing-verification";
+export {
+  WP_ATTRACTION_INVENTORY_MAPPINGS,
+  WP_PRICING_COMPONENT_CLASSES,
+  buildWpDraftResourceRequirements,
+  wpAttractionsRequiringInventoryForBooking,
+} from "@/server/event-planner/wp-parity/inventory-mapping";
+export type {
+  OrgResourceTypeRow,
+  WpAttractionInventoryMapping,
+  WpInventoryClass,
+  WpPricingComponentClass,
+} from "@/server/event-planner/wp-parity/inventory-mapping";
 export type {
   WpParityDaySnapshot,
   WpParityInquirySummary,

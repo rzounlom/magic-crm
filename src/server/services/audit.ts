@@ -32,6 +32,7 @@ export type AuditAction =
   | "inquiry.wp_quote_approved"
   | "inquiry.wp_quote_delivered"
   | "communication.employee_approved_quote_skipped"
+  | "communication.employee_approved_quote_failed"
   | "inquiry.working_plan_updated"
   | "inquiry.ready_to_finalize"
   | "inquiry.converted_to_booking"

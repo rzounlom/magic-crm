@@ -9,6 +9,10 @@ export const PERMISSIONS = {
   LOCATIONS_MANAGE: "locations.manage",
   CRM_INQUIRIES_VIEW: "crm.inquiries.view",
   CRM_INQUIRIES_MANAGE: "crm.inquiries.manage",
+  /** Approve and send employee-controlled customer quotes (standard path). */
+  CRM_QUOTES_APPROVE: "crm.quotes.approve",
+  /** Change quote unit prices / totals away from the approved calculation baseline. */
+  CRM_QUOTES_PRICE_OVERRIDE: "crm.quotes.price_override",
   CRM_CUSTOMERS_VIEW: "crm.customers.view",
   CRM_CUSTOMERS_MANAGE: "crm.customers.manage",
   EVENTS_VIEW: "events.view",
@@ -61,6 +65,18 @@ const CATALOG: readonly PermissionCatalogEntry[] = [
   { key: PERMISSIONS.LOCATIONS_MANAGE, module: "locations", name: "Manage locations", description: "Create and update locations." },
   { key: PERMISSIONS.CRM_INQUIRIES_VIEW, module: "crm", name: "View inquiries", description: "See sales inquiries." },
   { key: PERMISSIONS.CRM_INQUIRIES_MANAGE, module: "crm", name: "Manage inquiries", description: "Create and update sales inquiries." },
+  {
+    key: PERMISSIONS.CRM_QUOTES_APPROVE,
+    module: "crm",
+    name: "Approve quotes",
+    description: "Approve and send employee-prepared customer quotes.",
+  },
+  {
+    key: PERMISSIONS.CRM_QUOTES_PRICE_OVERRIDE,
+    module: "crm",
+    name: "Override quote pricing",
+    description: "Change quote line prices away from the approved calculation baseline.",
+  },
   { key: PERMISSIONS.CRM_CUSTOMERS_VIEW, module: "crm", name: "View customers", description: "See customer records." },
   { key: PERMISSIONS.CRM_CUSTOMERS_MANAGE, module: "crm", name: "Manage customers", description: "Create and update customer records." },
   { key: PERMISSIONS.EVENTS_VIEW, module: "events", name: "View events", description: "See event bookings." },

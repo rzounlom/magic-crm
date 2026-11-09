@@ -4,6 +4,7 @@ import { createPublicConversationToken } from "@/lib/ai/public-conversation-toke
 import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
 import { parseWpIntakeMessageMetadata } from "@/lib/event-planner/wp-intake-contract";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
+import { createEmailProvider } from "@/server/communications/email-provider";
 import { InquiryError } from "@/server/errors";
 import {
   WP_KNOWN_CATALOG_DISCREPANCIES,
@@ -16,8 +17,9 @@ import {
   type WpParitySnapshot,
   type WpStaffQuoteLineEdit,
 } from "@/server/event-planner/wp-parity";
+import { buildWpDraftResourceRequirements } from "@/server/event-planner/wp-parity/inventory-mapping";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
-import { requirePermission } from "@/server/policies/require-permission";
+import { requirePermission, requirePermissions } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent } from "@/server/services/audit";
 import { checkInquiryAvailability } from "@/server/services/live-agent-service";
@@ -27,7 +29,7 @@ import {
   INQUIRY_STATUSES,
   INQUIRY_WORKFLOW_STAGES,
 } from "@/types/inquiry";
-import { EVENT_PLAN_TIERS, type EventPlanPayload } from "@/types/event-planner";
+import { EVENT_PLAN_TIERS, type EventPlanLineItem, type EventPlanPayload } from "@/types/event-planner";
 import { PERMISSIONS } from "@/types/permissions";
 import { PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 import {
@@ -58,6 +60,57 @@ function isValidWpSnapshot(value: unknown): value is Extract<WpParitySnapshot, {
   }
   const record = value as { valid?: unknown; dates?: unknown };
   return record.valid === true && Array.isArray(record.dates);
+}
+
+function isUnitPriceOverride(
+  previous: EventPlanLineItem[] | undefined,
+  next: WpStaffQuoteLineEdit[],
+): boolean {
+  const prior = previous ?? [];
+  for (const row of next) {
+    const match = prior.find((item) => item.slug === row.slug);
+    if (match && match.unitPriceCents !== row.unitPriceCents) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function attachWpInventoryRequirements(
+  database: Db,
+  organizationId: string,
+  payload: EventPlanPayload,
+  selectedAttractions: readonly string[],
+): Promise<EventPlanPayload> {
+  const resourceTypes = await database.resourceType.findMany({
+    where: { organizationId, active: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      inventoryConfigured: true,
+      active: true,
+    },
+  });
+  const mapped = buildWpDraftResourceRequirements({
+    selectedAttractions: selectedAttractions as Array<
+      "bowling" | "axe" | "laser" | "golf" | "climbing" | "arcade"
+    >,
+    guestCount: payload.guestCount,
+    durationMinutes: payload.durationMinutes,
+    resourceTypes,
+  });
+  const notes = [...(payload.adjustmentNote ? [payload.adjustmentNote] : [])];
+  if (mapped.unmappedReservableAttractions.length > 0) {
+    notes.push(
+      `Unmapped reservable attractions (inventory not configured): ${mapped.unmappedReservableAttractions.join(", ")}.`,
+    );
+  }
+  return {
+    ...payload,
+    resourceRequirements: mapped.requirements,
+    adjustmentNote: notes.length > 0 ? notes.join(" ") : payload.adjustmentNote,
+  };
 }
 
 async function loadMagicCatalogCentsBySlug(
@@ -148,6 +201,13 @@ export async function createWpStaffQuoteDraftFromInquiry(
     throw new InquiryError("WORKING_PLAN_INVALID", built.error);
   }
 
+  const payloadWithInventory = await attachWpInventoryRequirements(
+    database,
+    ctx.organizationId,
+    built.draft.payload,
+    built.provenance.selectedAttractions,
+  );
+
   const existingWorking = inquiry.eventPlanRecommendations.find(
     (row) => row.kind === EVENT_PLAN_KINDS.AGENT_WORKING,
   );
@@ -167,7 +227,7 @@ export async function createWpStaffQuoteDraftFromInquiry(
     availabilityNote: built.draft.availabilityNote,
     availabilityStatus: built.draft.availabilityStatus ?? "NOT_VALIDATED",
     availabilityCheckedAt: null as Date | null,
-    payload: built.draft.payload as object,
+    payload: payloadWithInventory as object,
   };
 
   const working = existingWorking
@@ -286,9 +346,17 @@ export async function updateWpStaffQuoteDraft(
   },
 ) {
   await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
-  const { inquiry, working } = await loadWpWorkingDraft(database, ctx.organizationId, inquiryId);
+  const { inquiry, working, provenance } = await loadWpWorkingDraft(
+    database,
+    ctx.organizationId,
+    inquiryId,
+  );
+  const previousPayload = working.payload as EventPlanPayload;
+  if (isUnitPriceOverride(previousPayload.lineItems, input.lineItems)) {
+    await requirePermission(ctx, PERMISSIONS.CRM_QUOTES_PRICE_OVERRIDE, database);
+  }
   const applied = applyWpStaffQuoteEdits({
-    payload: working.payload as EventPlanPayload,
+    payload: previousPayload,
     guestCount: input.guestCount,
     eventDate: input.eventDate,
     startTime: input.startTime,
@@ -301,6 +369,13 @@ export async function updateWpStaffQuoteDraft(
   if (!applied.ok) {
     throw new InquiryError("WORKING_PLAN_INVALID", applied.error);
   }
+
+  const payloadWithInventory = await attachWpInventoryRequirements(
+    database,
+    ctx.organizationId,
+    applied.payload,
+    provenance.selectedAttractions,
+  );
 
   const updated = await database.eventPlanRecommendation.update({
     where: { id: working.id },
@@ -315,7 +390,7 @@ export async function updateWpStaffQuoteDraft(
       title: working.title.startsWith("Staff draft")
         ? working.title
         : `Staff draft — edited`,
-      payload: applied.payload as object,
+      payload: payloadWithInventory as object,
     },
   });
 
@@ -359,7 +434,11 @@ export async function approveAndSendWpStaffQuote(
   inquiryId: string,
   input?: { approvalNote?: string | null; forceResend?: boolean },
 ) {
-  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_MANAGE, database);
+  await requirePermissions(
+    ctx,
+    [PERMISSIONS.CRM_INQUIRIES_MANAGE, PERMISSIONS.CRM_QUOTES_APPROVE],
+    database,
+  );
   const { inquiry, working, provenance, wpIntake } = await loadWpWorkingDraft(
     database,
     ctx.organizationId,
@@ -492,6 +571,9 @@ export async function approveAndSendWpStaffQuote(
     };
   }
 
+  // Customer delivery also requires the communications send permission.
+  await requirePermission(ctx, PERMISSIONS.COMMUNICATIONS_SEND, database);
+
   const customerPayload = toCustomerFacingWpQuotePayload({
     workingPayload: {
       ...workingPayload,
@@ -558,25 +640,75 @@ export async function approveAndSendWpStaffQuote(
     eventDate: customerPayload.eventDate,
   });
 
-  await database.communicationEvent.create({
-    data: {
+  const idempotencyKey = `employee_approved_quote:${inquiry.id}:${published.id}:${published.estimatedTotalCents}`;
+  const existingComm = await database.communicationEvent.findFirst({
+    where: {
       organizationId: ctx.organizationId,
-      channel: COMMUNICATION_CHANNELS.EMAIL,
-      kind: COMMUNICATION_KINDS.EMPLOYEE_APPROVED_QUOTE,
-      status: COMMUNICATION_STATUSES.SKIPPED,
-      skipReason: COMMUNICATION_SKIP_REASONS.NO_EMAIL_PROVIDER,
-      toAddress: email,
-      subject: `Your ${inquiry.organization.name} event quote`,
       inquiryId: inquiry.id,
-      payload: {
-        ...notification,
-        planId: published.id,
-        estimatedTotalCents: published.estimatedTotalCents,
-        approvedAt,
-        reserved: false,
-      } as Prisma.InputJsonValue,
+      kind: COMMUNICATION_KINDS.EMPLOYEE_APPROVED_QUOTE,
     },
+    orderBy: { createdAt: "desc" },
   });
+  const existingKey =
+    existingComm?.payload && typeof existingComm.payload === "object"
+      ? (existingComm.payload as { idempotencyKey?: string }).idempotencyKey
+      : null;
+
+  let emailStatus: (typeof COMMUNICATION_STATUSES)[keyof typeof COMMUNICATION_STATUSES] =
+    COMMUNICATION_STATUSES.SKIPPED;
+  let skipReason: string | null = COMMUNICATION_SKIP_REASONS.NO_EMAIL_PROVIDER;
+  let providerMessageId: string | null = null;
+  let emailProviderName = "none";
+
+  if (!input?.forceResend && existingKey === idempotencyKey) {
+    emailStatus =
+      (existingComm?.status as (typeof COMMUNICATION_STATUSES)[keyof typeof COMMUNICATION_STATUSES] | undefined) ??
+      COMMUNICATION_STATUSES.SKIPPED;
+    skipReason = existingComm?.skipReason ?? skipReason;
+    providerMessageId = existingComm?.providerMessageId ?? null;
+  } else {
+    const provider = createEmailProvider();
+    emailProviderName = provider.name;
+    const sendResult = await provider.send({
+      to: email,
+      subject: `Your ${inquiry.organization.name} event quote`,
+      textBody: `Your quote is ready: ${notification.planUrl}`,
+      idempotencyKey,
+      metadata: {
+        inquiryId: inquiry.id,
+        planId: published.id,
+        estimatedTotalCents: published.estimatedTotalCents ?? 0,
+      },
+    });
+    emailStatus = sendResult.status;
+    skipReason = sendResult.status === COMMUNICATION_STATUSES.SKIPPED ? sendResult.skipReason : null;
+    providerMessageId =
+      sendResult.status === COMMUNICATION_STATUSES.SENT ? sendResult.providerMessageId : null;
+
+    await database.communicationEvent.create({
+      data: {
+        organizationId: ctx.organizationId,
+        channel: COMMUNICATION_CHANNELS.EMAIL,
+        kind: COMMUNICATION_KINDS.EMPLOYEE_APPROVED_QUOTE,
+        status: emailStatus,
+        skipReason,
+        toAddress: email,
+        subject: `Your ${inquiry.organization.name} event quote`,
+        inquiryId: inquiry.id,
+        providerMessageId,
+        sentAt: emailStatus === COMMUNICATION_STATUSES.SENT ? new Date() : null,
+        payload: {
+          ...notification,
+          planId: published.id,
+          estimatedTotalCents: published.estimatedTotalCents,
+          approvedAt,
+          reserved: false,
+          idempotencyKey,
+          emailProvider: emailProviderName,
+        } as Prisma.InputJsonValue,
+      },
+    });
+  }
 
   await database.inquiry.update({
     where: { id: inquiry.id },
@@ -619,24 +751,42 @@ export async function approveAndSendWpStaffQuote(
       recommendationId: published.id,
       workingPlanId: working.id,
       planUrl: notification.planUrl,
-      emailSkipped: true,
-      skipReason: COMMUNICATION_SKIP_REASONS.NO_EMAIL_PROVIDER,
+      emailStatus,
+      skipReason,
+      emailProvider: emailProviderName,
       totalCents: published.estimatedTotalCents,
     },
   });
 
-  await recordAuditEvent(database, {
-    organizationId: ctx.organizationId,
-    actorUserProfileId: ctx.userId,
-    action: "communication.employee_approved_quote_skipped",
-    resourceType: "inquiry",
-    resourceId: inquiry.id,
-    metadata: {
-      kind: COMMUNICATION_KINDS.EMPLOYEE_APPROVED_QUOTE,
-      skipReason: COMMUNICATION_SKIP_REASONS.NO_EMAIL_PROVIDER,
-      planId: published.id,
-    },
-  });
+  if (emailStatus === COMMUNICATION_STATUSES.SKIPPED) {
+    await recordAuditEvent(database, {
+      organizationId: ctx.organizationId,
+      actorUserProfileId: ctx.userId,
+      action: "communication.employee_approved_quote_skipped",
+      resourceType: "inquiry",
+      resourceId: inquiry.id,
+      metadata: {
+        kind: COMMUNICATION_KINDS.EMPLOYEE_APPROVED_QUOTE,
+        skipReason,
+        planId: published.id,
+        emailProvider: emailProviderName,
+      },
+    });
+  } else if (emailStatus === COMMUNICATION_STATUSES.FAILED) {
+    await recordAuditEvent(database, {
+      organizationId: ctx.organizationId,
+      actorUserProfileId: ctx.userId,
+      action: "communication.employee_approved_quote_failed",
+      resourceType: "inquiry",
+      resourceId: inquiry.id,
+      metadata: {
+        kind: COMMUNICATION_KINDS.EMPLOYEE_APPROVED_QUOTE,
+        planId: published.id,
+        emailProvider: emailProviderName,
+        providerMessageId,
+      },
+    });
+  }
 
   return {
     approved: true,
@@ -648,6 +798,9 @@ export async function approveAndSendWpStaffQuote(
     policy,
     planPath,
     planUrl: notification.planUrl,
-    message: "Quote approved and published for the customer. Email provider is not configured — notification was recorded as skipped.",
+    message:
+      emailStatus === COMMUNICATION_STATUSES.SENT
+        ? "Quote approved, published, and emailed via the configured local/dev provider."
+        : "Quote approved and published for the customer. Email provider is not live — notification was recorded as skipped (no customer email sent).",
   };
 }
