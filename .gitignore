@@ -66,3 +66,6 @@ next-env.d.ts
 
 # generated Prisma Client (created by `pnpm db:generate`)
 /src/generated/
+
+# Local tool caches (micromamba PHP, parity exports)
+tmp/
