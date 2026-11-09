@@ -8,8 +8,9 @@ import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason"
 export { WP_PLUGIN_DEFAULT_ESTIMATE_LABEL };
 
 /**
- * Plugin-default and incomplete WP private calculations must never be published as
- * customer quotes. Only `tenant_live` + `ready` may be treated as verified pricing.
+ * Plugin-default, approved-plugin-baseline, and incomplete WP private calculations must
+ * never be published as customer quotes. Only `tenant_live` + `ready` may be treated as
+ * verified live pricing (approved baseline still requires pre-go-live revalidation).
  */
 export function isWpPrivatePricingVerifiedForCustomerQuote(
   calc: Pick<WpPrivateCalculationMeta, "status" | "pricingSource"> | null | undefined,

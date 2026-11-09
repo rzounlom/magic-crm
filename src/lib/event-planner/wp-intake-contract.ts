@@ -103,8 +103,18 @@ export type WpPrivateCalculationMeta = {
   status: "deferred" | "ready" | "failed" | "incomplete";
   rulesVersion: string | null;
   pricingRevision: string | null;
-  /** `plugin_defaults` = testing baseline; `tenant_live` = verified tenant pack; `incomplete` = blocked. */
-  pricingSource: "plugin_defaults" | "tenant_live" | "incomplete" | null;
+  /**
+   * `plugin_defaults` = unlabeled testing fallback;
+   * `approved_plugin_baseline` = owner-approved plugin catalog (not live DB export);
+   * `tenant_live` = verified live WordPress export;
+   * `incomplete` = blocked.
+   */
+  pricingSource:
+    | "plugin_defaults"
+    | "approved_plugin_baseline"
+    | "tenant_live"
+    | "incomplete"
+    | null;
   /** Organization the calculation was resolved for (tenant pricing precedence input). */
   organizationId?: string | null;
   /** Missing/invalid tenant pricing keys when `pricingSource`/`status` is `incomplete`. */
@@ -127,6 +137,14 @@ export const WP_APPROVED_RULES_VERSION = "2026-11-02";
 /** Staff-facing banner for unverified plugin-default WP private estimates. */
 export const WP_PLUGIN_DEFAULT_ESTIMATE_LABEL =
   "ESTIMATE — Plugin-default pricing. Verify before sending to customer.";
+
+/** Staff-facing title for owner-approved plugin catalog baseline (not live DB export). */
+export const WP_APPROVED_PLUGIN_BASELINE_LABEL =
+  "Pricing source: Generations-approved WordPress plugin baseline";
+
+/** Staff-facing status for approved baseline — go-live verification still required. */
+export const WP_APPROVED_PLUGIN_BASELINE_STATUS =
+  "Using Generations-approved Event Planner pricing. Final price verification required before operational go-live.";
 
 export function guestMixFromAdultsChildren(adults: number, children: number): "mostly_adults" | "mostly_children" | "mixed_ages" {
   if (adults > 0 && children === 0) {

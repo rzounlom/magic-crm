@@ -38,6 +38,8 @@ import {
   yesAttractionKeys,
 } from "@/lib/event-planner/wp-intake-contract";
 import { calculatePrivateWpRecommendationForOrganization } from "@/server/event-planner/wp-parity/from-intake";
+import { loadWpTenantParityConfig } from "@/server/event-planner/wp-parity/load-tenant-pricing";
+import type { WpTenantParityConfig } from "@/server/event-planner/wp-parity/tenant-config";
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
@@ -379,12 +381,31 @@ export async function createPublicWpEventInquiry(
   const desiredDate = new Date(`${answers.dates[0]}T00:00:00.000Z`);
   const intakeText = formatWpIntakeMessage(answers);
   // Pure calculator — failure must never drop the customer submission.
-  // No tenant_live WP-parity pack exists yet (live WP admin overrides were not available), so
-  // this resolves to plugin_defaults and records pricingSource + organizationId. Do not invent
-  // tenant prices from the MagicCRM catalog here.
+  // Prefer a tenant pack (live export or approved plugin baseline); otherwise unlabeled plugin_defaults.
+  // An invalid pack file must not silently fall back to plugin defaults.
+  // Do not invent tenant prices from the MagicCRM catalog here.
+  const loadedPack = loadWpTenantParityConfig(organization.id);
+  let tenantConfig: WpTenantParityConfig | null = null;
+  let allowPluginDefaults = true;
+  if (loadedPack.ok) {
+    tenantConfig = loadedPack.tenantConfig;
+  } else if (loadedPack.reason === "invalid") {
+    allowPluginDefaults = false;
+    tenantConfig = {
+      organizationId: organization.id,
+      rulesVersion: "",
+      pricingRevision: "",
+      pricingSource: "tenant_live",
+      catalog: {} as WpTenantParityConfig["catalog"],
+      packages: [],
+      attractionKeyMap: {},
+      incompleteKeys: [`pricing_pack_invalid:${loadedPack.detail}`],
+    };
+  }
   const privateCalc = calculatePrivateWpRecommendationForOrganization(answers, {
     organizationId: organization.id,
-    allowPluginDefaults: true,
+    tenantConfig,
+    allowPluginDefaults,
   });
   const metadata = buildWpIntakeMessageMetadata(answers, {
     status: privateCalc.status,

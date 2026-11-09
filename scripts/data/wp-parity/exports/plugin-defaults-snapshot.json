@@ -1,0 +1,176 @@
+{
+  "format": "gapnext_effective_pricing_v1",
+  "effective_source": "plugin_defaults_snapshot",
+  "plugin_version": "3.3.0",
+  "catalog_version": "2026-11-02",
+  "rules_version": "2026-11-02",
+  "exported_at": "2026-11-09T19:33:26.519Z",
+  "site_host": null,
+  "catalog_revision": "889a29ae88d4",
+  "packages_revision": null,
+  "prices_updated": null,
+  "tax": {
+    "food_beverage_rate": 0.07,
+    "note": "Hardcoded in Engine line-item tax for F&B; not a WP option."
+  },
+  "engine_embedded_rules": {
+    "weekday_specials": true,
+    "package_eligibility": true,
+    "arcade_credit_allocation": true,
+    "note": "Specials and eligibility live in Engine/Packages, not separate option rows."
+  },
+  "catalog_defaults": {
+    "bowling": {
+      "hour_weekday": 3000,
+      "hour_weekend": 4000,
+      "half_weekday": 1750,
+      "half_weekend": 2500,
+      "game_weekday": 600,
+      "game_weekend": 800,
+      "shoes": 350,
+      "exclusive_hour": 52500,
+      "exclusive_two": 75000,
+      "exclusive_peak": 85000,
+      "pins": 4999,
+      "all_access": 5500
+    },
+    "axe": {
+      "half": 1750,
+      "hour": 3000,
+      "xtreme": 4500,
+      "private": 150000,
+      "private_sat": 199500
+    },
+    "laser": {
+      "game": 800,
+      "pass": 2500,
+      "thursday": 2000,
+      "plex": 2000,
+      "games": 3999,
+      "blast": 2999,
+      "private": 55000,
+      "private_sat": 59900
+    },
+    "golf": {
+      "adult": 1000,
+      "child": 800
+    },
+    "climb": 500,
+    "pitcher": 800,
+    "drink_card": 800,
+    "food": {
+      "combo": 2000,
+      "boneless": 3699,
+      "traditional": 3849,
+      "pretzels": 2699,
+      "strips": 4999,
+      "salad": 2499,
+      "boards": 18113,
+      "cookies": 2070,
+      "brownies": 4554,
+      "fajita": 2500,
+      "slider": 3000,
+      "bbq": 3500
+    },
+    "rooms": {
+      "lower": 15000,
+      "upper": 25000,
+      "cove": 65000,
+      "lower_extra": 7500,
+      "upper_extra": 9900
+    },
+    "mezzanine": {
+      "sun_thu": 275000,
+      "fri": 475000,
+      "sat_before": 549500,
+      "sat_after": 599500,
+      "two": 309500
+    },
+    "facility": {
+      "before": 549500,
+      "sat_before": 879500,
+      "sun_thu_after": 599500,
+      "fri_after": 979500,
+      "sat_after": 1079500
+    }
+  },
+  "catalog_effective": {
+    "bowling": {
+      "hour_weekday": 3000,
+      "hour_weekend": 4000,
+      "half_weekday": 1750,
+      "half_weekend": 2500,
+      "game_weekday": 600,
+      "game_weekend": 800,
+      "shoes": 350,
+      "exclusive_hour": 52500,
+      "exclusive_two": 75000,
+      "exclusive_peak": 85000,
+      "pins": 4999,
+      "all_access": 5500
+    },
+    "axe": {
+      "half": 1750,
+      "hour": 3000,
+      "xtreme": 4500,
+      "private": 150000,
+      "private_sat": 199500
+    },
+    "laser": {
+      "game": 800,
+      "pass": 2500,
+      "thursday": 2000,
+      "plex": 2000,
+      "games": 3999,
+      "blast": 2999,
+      "private": 55000,
+      "private_sat": 59900
+    },
+    "golf": {
+      "adult": 1000,
+      "child": 800
+    },
+    "climb": 500,
+    "pitcher": 800,
+    "drink_card": 800,
+    "food": {
+      "combo": 2000,
+      "boneless": 3699,
+      "traditional": 3849,
+      "pretzels": 2699,
+      "strips": 4999,
+      "salad": 2499,
+      "boards": 18113,
+      "cookies": 2070,
+      "brownies": 4554,
+      "fajita": 2500,
+      "slider": 3000,
+      "bbq": 3500
+    },
+    "rooms": {
+      "lower": 15000,
+      "upper": 25000,
+      "cove": 65000,
+      "lower_extra": 7500,
+      "upper_extra": 9900
+    },
+    "mezzanine": {
+      "sun_thu": 275000,
+      "fri": 475000,
+      "sat_before": 549500,
+      "sat_after": 599500,
+      "two": 309500
+    },
+    "facility": {
+      "before": 549500,
+      "sat_before": 879500,
+      "sun_thu_after": 599500,
+      "fri_after": 979500,
+      "sat_after": 1079500
+    }
+  },
+  "price_overrides_option": {},
+  "price_diffs_from_defaults": {},
+  "custom_packages_all": [],
+  "custom_packages_active": []
+}

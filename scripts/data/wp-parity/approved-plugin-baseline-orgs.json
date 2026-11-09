@@ -1,0 +1,14 @@
+{
+  "format": "wp_approved_plugin_baseline_orgs_v1",
+  "catalogVersion": "2026-11-02",
+  "source": "approved_plugin_baseline",
+  "approvalBasis": "Generations owner confirmation — WordPress Event Planner 3.3.0 plugin files are the working baseline; final live-price revalidation pending before operational go-live.",
+  "finalLivePriceRevalidation": "pending",
+  "notes": [
+    "Canonical runtime registry: src/server/event-planner/wp-parity/data/approved-plugin-baseline-orgs.json",
+    "Keep this mirror in sync when editing organizationIds.",
+    "Organization IDs listed here receive the built-in plugin catalog as approved_plugin_baseline.",
+    "This is not a live WordPress database export."
+  ],
+  "organizationIds": ["mdutc2nkvpafezukeem8942v"]
+}

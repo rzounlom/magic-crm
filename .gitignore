@@ -69,3 +69,14 @@ next-env.d.ts
 
 # Local tool caches (micromamba PHP, parity exports)
 tmp/
+
+# Live WordPress pricing exports / tenant packs (may contain venue-specific overrides)
+scripts/data/wp-parity/exports/*
+!scripts/data/wp-parity/exports/.gitkeep
+!scripts/data/wp-parity/exports/plugin-defaults-snapshot.json
+scripts/data/wp-parity/tenant-packs/*
+!scripts/data/wp-parity/tenant-packs/.gitkeep
+!scripts/data/wp-parity/tenant-packs/README.md
+
+# Local WordPress exporter harness output (ZIP is produced by build-zip.sh)
+tools/wp-parity/wordpress-plugin-export/dist/local-test-output/

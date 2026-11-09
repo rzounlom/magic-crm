@@ -1,4 +1,8 @@
 import {
+  WP_APPROVED_PLUGIN_BASELINE_SOURCE,
+  WP_APPROVED_PLUGIN_BASELINE_WARNING,
+} from "@/server/event-planner/wp-parity/approved-plugin-baseline";
+import {
   WP_CATALOG_VERSION,
   wpCatalogDefaults,
   wpCatalogFieldKeys,
@@ -13,24 +17,29 @@ import type { EngineConfig } from "@/server/event-planner/wp-parity/types";
  *
  * Pricing precedence (highest first):
  *
- *   1. `tenant_live`     — a verified tenant WP-parity rule pack (catalog cents + packages +
- *                          attraction key map) loaded for the organization.
- *   2. `plugin_defaults` — Generations Event Planner 3.3.0 `Catalog::defaults()`, for
- *                          development / parity testing ONLY. Never verified live pricing.
+ *   1. Tenant pack (`tenant_live` or `approved_plugin_baseline`) supplied for the organization.
+ *   2. `plugin_defaults` — unlabeled Generations Event Planner 3.3.0 `Catalog::defaults()`,
+ *      only when explicitly allowed and no tenant pack was supplied.
+ *
+ * Pack kinds:
+ * - `tenant_live` — verified live WordPress DB export (overrides + custom packages).
+ * - `approved_plugin_baseline` — owner-approved plugin catalog files (no DB override claim).
  *
  * Rules:
- * - A tenant pack that is requested (supplied) but incomplete is NEVER silently completed
- *   from plugin defaults or from any other source. The result is `incomplete` with every
- *   missing key listed, and the calculation must go to hard staff review.
- * - Plugin defaults are used only when the caller explicitly allows them
- *   (`allowPluginDefaults: true`) AND no tenant pack was supplied.
- * - Live WordPress admin overrides (`gapnext_price_overrides`) were NOT available when this
- *   adapter was written, so no `tenant_live` pack exists yet. Nothing here derives prices
- *   from the MagicCRM catalog.
+ * - A tenant pack that is incomplete is NEVER silently completed from plugin defaults or the
+ *   MagicCRM catalog. Result is `incomplete` with missing keys listed.
+ * - Plugin defaults apply only when `allowPluginDefaults: true` and no tenant pack was supplied.
  * - This module is tenant-agnostic: it never branches on organization identity.
  */
 
-export type WpPricingSource = "plugin_defaults" | "tenant_live" | "incomplete";
+export type WpResolvedPricingSource =
+  | "plugin_defaults"
+  | "tenant_live"
+  | "approved_plugin_baseline";
+
+export type WpPricingSource = WpResolvedPricingSource | "incomplete";
+
+export type WpTenantPackPricingSource = "tenant_live" | "approved_plugin_baseline";
 
 /** Optional mapping from WP attraction keys to tenant product/interest ids. */
 export type WpAttractionKeyMap = Partial<
@@ -41,7 +50,7 @@ export type WpTenantParityConfig = {
   organizationId: string;
   rulesVersion: string;
   pricingRevision: string;
-  pricingSource: "tenant_live";
+  pricingSource: WpTenantPackPricingSource;
   /** Full catalog required: every `Catalog::fields()` key must be present as integer cents. */
   catalog: WpCatalog;
   packages: PackageDefinition[];
@@ -54,7 +63,7 @@ export type WpTenantParityConfig = {
 export type ResolveWpParityEngineConfigInput = {
   organizationId: string;
   tenantConfig?: WpTenantParityConfig | null;
-  /** Default `false`. Public intake passes `true` today so plugin-default behavior continues. */
+  /** Default `false`. Public intake passes `true` today so unlabeled plugin-default fallback continues for orgs without a pack. */
   allowPluginDefaults?: boolean;
 };
 
@@ -62,7 +71,7 @@ export type ResolvedWpParityEngineConfig = {
   ok: true;
   organizationId: string;
   config: EngineConfig;
-  pricingSource: "plugin_defaults" | "tenant_live";
+  pricingSource: WpResolvedPricingSource;
   pricingRevision: string;
   rulesVersion: string;
   attractionKeyMap: WpAttractionKeyMap;
@@ -88,6 +97,11 @@ export const WP_PLUGIN_DEFAULTS_WARNING =
   "Pricing uses Generations Event Planner 3.3.0 plugin defaults (testing baseline). These are not verified live tenant prices.";
 
 export const WP_MISSING_TENANT_CONFIG_KEY = "tenant_config";
+
+const TENANT_PACK_SOURCES: readonly WpTenantPackPricingSource[] = [
+  "tenant_live",
+  WP_APPROVED_PLUGIN_BASELINE_SOURCE,
+];
 
 function isValidCents(value: unknown): value is number {
   return (
@@ -116,6 +130,10 @@ function nonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function isTenantPackPricingSource(value: unknown): value is WpTenantPackPricingSource {
+  return typeof value === "string" && (TENANT_PACK_SOURCES as readonly string[]).includes(value);
+}
+
 /**
  * Keys that are missing or invalid in a tenant pack. Does not consult plugin defaults for
  * values — plugin defaults are consulted only for the list of required key names.
@@ -136,7 +154,7 @@ export function listWpTenantConfigMissingKeys(
   if (!nonEmpty(tenantConfig.pricingRevision)) {
     missing.push("pricingRevision");
   }
-  if ((tenantConfig.pricingSource as string) !== "tenant_live") {
+  if (!isTenantPackPricingSource(tenantConfig.pricingSource)) {
     missing.push("pricingSource");
   }
   if (!tenantConfig.catalog || typeof tenantConfig.catalog !== "object") {
@@ -162,13 +180,20 @@ export function listWpTenantConfigMissingKeys(
   return missing;
 }
 
+function warningsForPackSource(source: WpTenantPackPricingSource): string[] {
+  if (source === WP_APPROVED_PLUGIN_BASELINE_SOURCE) {
+    return [WP_APPROVED_PLUGIN_BASELINE_WARNING];
+  }
+  return [];
+}
+
 export function resolveWpParityEngineConfig(
   input: ResolveWpParityEngineConfigInput,
 ): WpParityEngineConfigResolution {
   const { organizationId, tenantConfig } = input;
   const allowPluginDefaults = input.allowPluginDefaults === true;
 
-  // 1. tenant_live — requested whenever a tenant pack is supplied. No fallback if incomplete.
+  // 1. Tenant pack — supplied pack wins. No silent fallback if incomplete.
   if (tenantConfig) {
     const missing = listWpTenantConfigMissingKeys(tenantConfig, organizationId);
     if (missing.length > 0) {
@@ -191,15 +216,15 @@ export function resolveWpParityEngineConfig(
         catalog: structuredClone(tenantConfig.catalog),
         packages: tenantConfig.packages.map((pack) => structuredClone(pack)),
       },
-      pricingSource: "tenant_live",
+      pricingSource: tenantConfig.pricingSource,
       pricingRevision: tenantConfig.pricingRevision,
       rulesVersion: tenantConfig.rulesVersion,
       attractionKeyMap: { ...tenantConfig.attractionKeyMap },
-      warnings: [],
+      warnings: warningsForPackSource(tenantConfig.pricingSource),
     };
   }
 
-  // 2. plugin_defaults — only when explicitly allowed (development / parity testing).
+  // 2. plugin_defaults — only when explicitly allowed (orgs without a tenant pack).
   if (allowPluginDefaults) {
     const catalog = wpCatalogDefaults();
     return {

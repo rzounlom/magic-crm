@@ -57,8 +57,53 @@ export type {
   WpAttractionKeyMap,
   WpParityEngineConfigResolution,
   WpPricingSource,
+  WpResolvedPricingSource,
+  WpTenantPackPricingSource,
   WpTenantParityConfig,
 } from "@/server/event-planner/wp-parity/tenant-config";
+export {
+  WP_APPROVED_PLUGIN_BASELINE_SOURCE,
+  WP_APPROVED_PLUGIN_BASELINE_WARNING,
+  buildApprovedPluginBaselineConfig,
+  loadApprovedPluginBaselineRegistry,
+  organizationUsesApprovedPluginBaseline,
+  tryBuildApprovedPluginBaselineConfig,
+} from "@/server/event-planner/wp-parity/approved-plugin-baseline";
+export type { ApprovedPluginBaselineRegistry } from "@/server/event-planner/wp-parity/approved-plugin-baseline";
+export {
+  WP_PRICING_EXPORT_FORMAT,
+  buildPluginDefaultsPricingExport,
+  effectiveCatalogFromOverrides,
+  importWpPricingExportToTenantConfig,
+  parseWpPricingExport,
+  wpPricingConfigurationHash,
+} from "@/server/event-planner/wp-parity/pricing-export";
+export type {
+  ImportWpPricingExportInput,
+  ImportWpPricingExportResult,
+  ParseWpPricingExportResult,
+  WpPricingExportEffectiveSource,
+  WpPricingExportTax,
+  WpPricingExportV1,
+} from "@/server/event-planner/wp-parity/pricing-export";
+export {
+  loadWpTenantParityConfig,
+  resolveWpTenantPackPath,
+  tryLoadWpTenantParityConfig,
+} from "@/server/event-planner/wp-parity/load-tenant-pricing";
+export type { LoadWpTenantPricingResult } from "@/server/event-planner/wp-parity/load-tenant-pricing";
+export {
+  WP_TO_MAGICCRM_PRICE_MAPPINGS,
+  formatReconcileReportMarkdown,
+  reconcileWpExportAgainstMagicCrmCatalog,
+} from "@/server/event-planner/wp-parity/reconcile-catalog";
+export type {
+  MagicCrmCatalogProduct,
+  MagicCrmCatalogProductPrice,
+  PriceMatchRow,
+  ReconcileReport,
+  WpToMagicCrmPriceMapping,
+} from "@/server/event-planner/wp-parity/reconcile-catalog";
 export {
   WP_PARITY_SNAPSHOT_VERSION,
   snapshotIncompleteWpParity,

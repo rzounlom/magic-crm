@@ -14,10 +14,11 @@ import type {
  * `ConversationMessage.metadata` / a future `EventPlanRecommendation` record.
  *
  * Contact details (name, email, phone, company) are deliberately NOT copied.
- * `pricing_source` is always recorded: `plugin_defaults` numbers come from the WordPress plugin
- * source defaults (testing baseline, NOT verified live WP admin overrides or Production catalog
- * prices); `tenant_live` numbers come from a verified tenant rule pack; `incomplete` means no
- * calculation was run because required pricing config was missing (see `missing_keys`).
+ * `pricing_source` is always recorded:
+ * - `plugin_defaults` — unlabeled plugin catalog fallback (testing)
+ * - `approved_plugin_baseline` — owner-approved plugin catalog for a tenant (not a live DB export)
+ * - `tenant_live` — verified live WordPress export pack
+ * - `incomplete` — calculation blocked; see `missing_keys`
  */
 export const WP_PARITY_SNAPSHOT_VERSION = 1 as const;
 
@@ -73,8 +74,10 @@ export type WpParitySnapshot =
       valid: true;
       rules_version: string;
       pricing_revision: string;
-      pricing_source: "plugin_defaults" | "tenant_live";
+      pricing_source: "plugin_defaults" | "tenant_live" | "approved_plugin_baseline";
       organization_id: string | null;
+      /** ISO-8601 UTC timestamp when this calculation was produced. */
+      calculated_at: string;
       status: string;
       inquiry: WpParityInquirySummary;
       dates: WpParityDaySnapshot[];
@@ -86,6 +89,7 @@ export type WpParitySnapshot =
       pricing_revision: string | null;
       pricing_source: WpPricingSource;
       organization_id: string | null;
+      calculated_at: string;
       errors: Record<string, string>;
       /** Present when `pricing_source` is `incomplete`: missing/invalid tenant pricing keys. */
       missing_keys?: string[];
@@ -94,9 +98,11 @@ export type WpParitySnapshot =
 /** Pricing provenance recorded on every snapshot. Defaults to plugin defaults (tests/legacy). */
 export type WpParitySnapshotContext = {
   organizationId?: string | null;
-  pricingSource?: "plugin_defaults" | "tenant_live";
+  pricingSource?: "plugin_defaults" | "tenant_live" | "approved_plugin_baseline";
   rulesVersion?: string;
   pricingRevision?: string;
+  /** Defaults to `new Date().toISOString()` when omitted. */
+  calculatedAt?: string;
 };
 
 /** Snapshot for a run that was blocked because tenant pricing config was incomplete. */
@@ -105,6 +111,7 @@ export function snapshotIncompleteWpParity(input: {
   missing: string[];
   rulesVersion?: string | null;
   pricingRevision?: string | null;
+  calculatedAt?: string;
 }): WpParitySnapshot {
   return {
     snapshot_version: WP_PARITY_SNAPSHOT_VERSION,
@@ -113,6 +120,7 @@ export function snapshotIncompleteWpParity(input: {
     pricing_revision: input.pricingRevision ?? null,
     pricing_source: "incomplete",
     organization_id: input.organizationId,
+    calculated_at: input.calculatedAt ?? new Date().toISOString(),
     errors: {},
     missing_keys: [...input.missing],
   };
@@ -152,6 +160,7 @@ export function snapshotWpParityResult(
 ): WpParitySnapshot {
   const pricingSource = context.pricingSource ?? "plugin_defaults";
   const organizationId = context.organizationId ?? null;
+  const calculatedAt = context.calculatedAt ?? new Date().toISOString();
   if (!result.valid) {
     return {
       snapshot_version: WP_PARITY_SNAPSHOT_VERSION,
@@ -160,6 +169,7 @@ export function snapshotWpParityResult(
       pricing_revision: context.pricingRevision ?? null,
       pricing_source: pricingSource,
       organization_id: organizationId,
+      calculated_at: calculatedAt,
       errors: { ...result.errors },
     };
   }
@@ -171,6 +181,7 @@ export function snapshotWpParityResult(
     pricing_revision: context.pricingRevision ?? result.pricing_revision,
     pricing_source: pricingSource,
     organization_id: organizationId,
+    calculated_at: calculatedAt,
     status: result.status,
     inquiry: {
       event_type: d.event_type,

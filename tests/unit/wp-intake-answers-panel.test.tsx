@@ -48,9 +48,31 @@ describe("WpIntakeAnswersPanel pricing source", () => {
     expect(html).toContain("Verify pricing against live venue rates");
   });
 
-  it("labels tenant_live verified pricing", () => {
-    const html = render({ status: "ready", pricingSource: "tenant_live" });
+  it("labels tenant_live verified pricing with configuration revision", () => {
+    const html = render({
+      status: "ready",
+      pricingSource: "tenant_live",
+      pricingRevision: "abc123:def456",
+    });
     expect(html).toContain("Calculated with tenant_live verified pricing");
+    expect(html).toContain("configuration revision abc123:def456");
+    expect(html).toContain("pricing source tenant_live");
+  });
+
+  it("labels approved_plugin_baseline without the unverified plugin-default estimate banner", () => {
+    const html = render({
+      status: "ready",
+      pricingSource: "approved_plugin_baseline",
+      rulesVersion: "2026-11-02",
+      pricingRevision: "889a29ae88d4:approved_plugin_baseline",
+    });
+    expect(html).toContain("Pricing source: Generations-approved WordPress plugin baseline");
+    expect(html).toContain(
+      "Using Generations-approved Event Planner pricing. Final price verification required before operational go-live.",
+    );
+    expect(html).not.toContain("ESTIMATE — Plugin-default pricing");
+    expect(html).toContain("configuration revision 889a29ae88d4:approved_plugin_baseline");
+    expect(html).toContain("Do not send a final customer quote until operational go-live");
   });
 
   it("shows incomplete state and lists missing keys", () => {

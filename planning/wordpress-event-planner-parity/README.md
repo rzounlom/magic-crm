@@ -39,7 +39,11 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [13-tenant-pricing-adapter.md](./13-tenant-pricing-adapter.md) | Tenant pricing precedence |
 | [14-phase-3-status.md](./14-phase-3-status.md) | Phase 3 milestones |
 | [15-phase-3-final-report.md](./15-phase-3-final-report.md) | Phase 3 final evidence |
+| [16-production-release-notes.md](./16-production-release-notes.md) | Production release notes |
+| [17-generations-pricing-baseline.md](./17-generations-pricing-baseline.md) | Adopt WP pricing as Generations baseline |
+| [17-pricing-reconciliation.md](./17-pricing-reconciliation.md) | WP export ↔ MagicCRM catalog reconcile report |
+| [18-approved-plugin-baseline-activation.md](./18-approved-plugin-baseline-activation.md) | Activate approved plugin catalog for Generations |
 
 ## Branch
 
-`wordpress-parity-public-intake` from customer `origin/main`. No Scenario Lab, no Production merge/deploy in the first slice.
+`wp-generations-pricing-baseline` from customer `origin/main`. No Scenario Lab; no Production catalog overwrite until a live WordPress export is imported and approved.
