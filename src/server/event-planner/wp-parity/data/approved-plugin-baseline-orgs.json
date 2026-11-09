@@ -1,0 +1,14 @@
+{
+  "format": "wp_approved_plugin_baseline_orgs_v1",
+  "catalogVersion": "2026-11-02",
+  "source": "approved_plugin_baseline",
+  "approvalBasis": "Generations owner confirmation — WordPress Event Planner 3.3.0 plugin files are the working baseline; final live-price revalidation pending before operational go-live.",
+  "finalLivePriceRevalidation": "pending",
+  "notes": [
+    "Organization IDs listed here receive the built-in plugin catalog (wpCatalogDefaults) as a tenant pack labeled approved_plugin_baseline.",
+    "This is not a live WordPress database export and must not be labeled live_wordpress or tenant_live.",
+    "No custom packages are invented — packages array is empty until a live export supplies them.",
+    "Other organizations are unaffected (no global fallback)."
+  ],
+  "organizationIds": ["mdutc2nkvpafezukeem8942v"]
+}

@@ -1,4 +1,6 @@
 import {
+  WP_APPROVED_PLUGIN_BASELINE_LABEL,
+  WP_APPROVED_PLUGIN_BASELINE_STATUS,
   WP_ATTRACTION_ANSWER_LABELS,
   WP_ATTRACTION_KEYS,
   WP_ATTRACTION_LABELS,
@@ -47,6 +49,9 @@ type WpParitySnapshot =
   | {
       snapshot_version: number;
       valid: true;
+      pricing_source?: string;
+      pricing_revision?: string;
+      calculated_at?: string;
       dates: Array<{
         date: string;
         recommendation: WpParityPlanSnapshot;
@@ -56,6 +61,9 @@ type WpParitySnapshot =
   | {
       snapshot_version: number;
       valid: false;
+      pricing_source?: string;
+      pricing_revision?: string | null;
+      calculated_at?: string;
       errors: Record<string, string>;
       missing_keys?: string[];
     };
@@ -117,11 +125,20 @@ function pricingBanner(
         "Private staff estimate only. Do not send these totals to the customer until live venue pricing is verified. No booking, hold, or public proposal is created from this calculation.",
     };
   }
+  if (meta.pricingSource === "approved_plugin_baseline") {
+    return {
+      tone: "warning",
+      title: WP_APPROVED_PLUGIN_BASELINE_LABEL,
+      detail: WP_APPROVED_PLUGIN_BASELINE_STATUS,
+    };
+  }
   if (meta.pricingSource === "tenant_live") {
     return {
       tone: "success",
       title: "Calculated with tenant_live verified pricing",
-      detail: "Prices come from this organization’s verified WP-parity pricing pack.",
+      detail: meta.pricingRevision
+        ? `Prices come from this organization’s verified WordPress pricing pack (revision ${meta.pricingRevision}). Staff must still confirm availability and customer-specific requirements before quoting.`
+        : "Prices come from this organization’s verified WordPress pricing pack. Staff must still confirm availability and customer-specific requirements before quoting.",
     };
   }
   return null;
@@ -156,15 +173,22 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
           "Confirm inventory/availability for the preferred date and attractions.",
           "Follow up by email or note — do not publish plugin-default totals as a quote.",
         ]
-      : privateCalculation.pricingSource === "incomplete" || privateCalculation.status === "incomplete"
+      : privateCalculation.pricingSource === "approved_plugin_baseline"
         ? [
-            "Pricing configuration is incomplete — calculate or price manually.",
-            "Review customer answers, then follow up with verified options.",
-          ]
-        : [
             "Review the customer answers and private recommendation below.",
-            "Confirm inventory/availability, then follow up with the customer.",
-          ];
+            "Confirm inventory/availability and customer-specific requirements.",
+            "Do not send a final customer quote until operational go-live price verification is complete.",
+            "Do not create bookings, holds, or payment requests from this private estimate alone.",
+          ]
+        : privateCalculation.pricingSource === "incomplete" || privateCalculation.status === "incomplete"
+          ? [
+              "Pricing configuration is incomplete — calculate or price manually.",
+              "Review customer answers, then follow up with verified options.",
+            ]
+          : [
+              "Review the customer answers and private recommendation below.",
+              "Confirm inventory/availability, then follow up with the customer.",
+            ];
 
   return (
     <div className="mt-8 rounded-md border border-border px-4 py-4" data-wp-intake-answers>
@@ -250,13 +274,18 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
             ) : null}
           </div>
         ) : null}
-        <p className="mt-1 text-muted-foreground">
+        <p className="mt-1 text-muted-foreground" data-wp-pricing-meta>
           Status: {privateCalculation.status}
-          {privateCalculation.rulesVersion ? ` · rules ${privateCalculation.rulesVersion}` : ""}
-          {privateCalculation.pricingRevision
-            ? ` · pricing ${privateCalculation.pricingRevision}`
+          {privateCalculation.pricingSource
+            ? ` · pricing source ${privateCalculation.pricingSource}`
             : ""}
-          {privateCalculation.pricingSource ? ` · ${privateCalculation.pricingSource}` : ""}
+          {privateCalculation.rulesVersion
+            ? ` · catalog version ${privateCalculation.rulesVersion}`
+            : ""}
+          {privateCalculation.pricingRevision
+            ? ` · configuration revision ${privateCalculation.pricingRevision}`
+            : ""}
+          {snapshot?.calculated_at ? ` · calculated ${snapshot.calculated_at}` : ""}
         </p>
         {privateCalculation.summary ? (
           <p className="mt-1 text-muted-foreground">{privateCalculation.summary}</p>

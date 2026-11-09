@@ -53,14 +53,19 @@ export type PrivateWpCalculationOutcome = {
   errorMessage: string | null;
 };
 
-const PRICING_SOURCE_SUMMARY_LABEL: Record<"plugin_defaults" | "tenant_live", string> = {
+const PRICING_SOURCE_SUMMARY_LABEL: Record<
+  "plugin_defaults" | "tenant_live" | "approved_plugin_baseline",
+  string
+> = {
   plugin_defaults: "plugin defaults (testing baseline, not verified live pricing)",
-  tenant_live: "tenant live (verified tenant pricing pack)",
+  tenant_live: "tenant live (verified live WordPress pricing pack)",
+  approved_plugin_baseline:
+    "Generations-approved WordPress plugin baseline (final live-price revalidation pending)",
 };
 
 type RunContext = {
   config: Partial<EngineConfig>;
-  pricingSource: "plugin_defaults" | "tenant_live";
+  pricingSource: "plugin_defaults" | "tenant_live" | "approved_plugin_baseline";
   organizationId: string | null;
   /** Provenance overrides for the snapshot; omitted for the legacy plugin-defaults path. */
   snapshotContext: WpParitySnapshotContext;

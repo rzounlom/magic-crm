@@ -30,6 +30,12 @@ describe("WP pricing verification guard", () => {
     ).toBe(false);
     expect(
       isWpPrivatePricingVerifiedForCustomerQuote({
+        status: "ready",
+        pricingSource: "approved_plugin_baseline",
+      }),
+    ).toBe(false);
+    expect(
+      isWpPrivatePricingVerifiedForCustomerQuote({
         status: "incomplete",
         pricingSource: "incomplete",
       }),
@@ -45,6 +51,14 @@ describe("WP pricing verification guard", () => {
         humanHandoffReason: READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST,
         planNotificationRequested: true,
         privateCalculation: { status: "ready", pricingSource: "plugin_defaults" },
+      }),
+    ).toEqual({ suppress: true, reason: "unverified_wp_plugin_default_pricing" });
+
+    expect(
+      shouldSuppressCustomerPlanNotificationForWpIntake({
+        humanHandoffReason: READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST,
+        planNotificationRequested: true,
+        privateCalculation: { status: "ready", pricingSource: "approved_plugin_baseline" },
       }),
     ).toEqual({ suppress: true, reason: "unverified_wp_plugin_default_pricing" });
 

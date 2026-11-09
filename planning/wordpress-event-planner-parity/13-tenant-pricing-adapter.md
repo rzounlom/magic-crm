@@ -16,16 +16,16 @@ Rules:
 
 ## Status of live WordPress configuration
 
-Live WP admin overrides (`gapnext_price_overrides`, saved packages) were **not available** during this pass. No `tenant_live` pack exists, so every public intake currently records `plugin_defaults`. The staff panel labels this as a testing baseline, not verified live pricing. No Production data was read or changed; no Prisma migration was added.
+Live WP admin overrides (`gapnext_price_overrides`, saved packages) are still **not available** in-repo. Import/export plumbing exists (see `17-generations-pricing-baseline.md`); without a `live_wordpress` export file, public intake continues to record `plugin_defaults`. No Production Neon catalog rows are overwritten by import.
 
 ## Milestones
 
 1. **Plugin-default parity (done).** The TS engine matches the PHP plugin's defaults (golden tests). Output is labeled `plugin_defaults`.
-2. **Live WP config parity (next).** Export the live Generations WP overrides and active packages, verify them against the live plugin (`Catalog::all()` revision), and load them as a `WpTenantParityConfig` (`tenant_live`) for the organization. Persistence and loading of the pack (storage, versioning, who may publish) is a separate design; nothing is stored in this pass.
+2. **Live WP config parity (in progress).** Admin-only WP JSON export + MagicCRM import → `WpTenantParityConfig` (`tenant_live`) + file loader. Blocked on obtaining the live Generations export.
 3. **MagicCRM tenant-catalog integration (later).** Derive the rule pack from each organization's MagicCRM catalog so new tenants don't need a WordPress plugin. The `attractionKeyMap` links WP attraction keys to tenant product/interest ids so `attractionInterestIds` can be populated. This needs explicit parity review per tenant and must keep the "incomplete, never invented" rule.
 
-## Not in this pass
+## Not automatic
 
-- Automatic derivation of prices from the MagicCRM catalog.
-- Storing or loading a tenant pack (no loader, no schema).
+- Derivation of prices from the MagicCRM catalog.
+- Overwriting Production catalog records from a WP export.
 - Using `attractionKeyMap` to fill `attractionInterestIds` (still `[]`).
