@@ -144,6 +144,7 @@ export {
   WP_ATTRACTION_INVENTORY_MAPPINGS,
   WP_PRICING_COMPONENT_CLASSES,
   buildWpDraftResourceRequirements,
+  summarizeWpInventoryCoverage,
   wpAttractionsRequiringInventoryForBooking,
 } from "@/server/event-planner/wp-parity/inventory-mapping";
 export type {
