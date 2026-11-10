@@ -10,6 +10,8 @@ export const COMMUNICATION_KINDS = {
   BOOKING_CONFIRMATION: "BOOKING_CONFIRMATION",
   /** Employee-approved WP/staff quote link. Delivery uses existing stub/skip until a provider exists. */
   EMPLOYEE_APPROVED_QUOTE: "EMPLOYEE_APPROVED_QUOTE",
+  /** Automatic post-submit inquiry receipt. Separate from quote delivery. */
+  INQUIRY_ACKNOWLEDGMENT: "INQUIRY_ACKNOWLEDGMENT",
 } as const;
 
 export type CommunicationKind = (typeof COMMUNICATION_KINDS)[keyof typeof COMMUNICATION_KINDS];
@@ -27,6 +29,7 @@ export type CommunicationStatus =
 export const COMMUNICATION_SKIP_REASONS = {
   NO_EMAIL_PROVIDER: "NO_EMAIL_PROVIDER",
   NO_BOOKING_RECORD: "NO_BOOKING_RECORD",
+  INVALID_EMAIL: "INVALID_EMAIL",
 } as const;
 
 export type CommunicationSkipReason =
