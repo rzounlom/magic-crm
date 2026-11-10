@@ -53,7 +53,9 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [27-phase-8b-room-mapping.md](./27-phase-8b-room-mapping.md) | Exclusive WP room → MagiCRM resource mapping |
 | [28-phase-9a-inquiry-acknowledgment.md](./28-phase-9a-inquiry-acknowledgment.md) | Inquiry acknowledgment + opt-in Resend |
 | [29-phase-9b-pricing-reconciliation.md](./29-phase-9b-pricing-reconciliation.md) | WP vs booking-catalog reconciliation + amount integrity |
+| [30-phase-9c-owner-pricing-decision.md](./30-phase-9c-owner-pricing-decision.md) | Owner Option A/B pricing decision (recommend A) |
+| [31-phase-10a-operational-readiness.md](./31-phase-10a-operational-readiness.md) | Generations operational readiness audit + activation checklist |
 
 ## Branch
 
-Customer `main` includes PRs #6–#12. Phase 9B: `phase-9b-wp-catalog-pricing-reconciliation`. No Scenario Lab; no Production catalog/price writes; no customer quote delivery; live email disabled.
+Customer `main` includes PRs #6–#13. Phase 10A: `phase-10a-generations-operational-readiness`. No Scenario Lab; no Production catalog/price/deposit/booking writes; no customer quote delivery; live email disabled.
