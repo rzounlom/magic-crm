@@ -28,7 +28,7 @@ async function main() {
     const defs = await database.permissionDefinition.findMany({
       select: { key: true, active: true },
     });
-    const catalogKeys = new Set(PERMISSION_CATALOG.map((entry) => entry.key));
+    const catalogKeys = new Set<string>(PERMISSION_CATALOG.map((entry) => entry.key));
     const staleOutsideCatalog = defs
       .filter((row) => !catalogKeys.has(row.key))
       .map((row) => ({ key: row.key, active: row.active }));
