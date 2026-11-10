@@ -8,6 +8,9 @@
  *
  * Real sending is never the default. Missing Resend credentials fall back to
  * SKIPPED (not a silent network attempt). Unknown modes resolve to `none`.
+ *
+ * Sender identity always comes from EMAIL_FROM for Resend — callers cannot
+ * override From with a tenant-spoofed address.
  */
 
 import {
@@ -17,13 +20,14 @@ import {
   type CommunicationStatus,
 } from "@/types/communications";
 
+/** Bound Resend HTTP so hung sockets cannot leave uncontrolled in-flight retries. */
+export const RESEND_REQUEST_TIMEOUT_MS = 10_000;
+
 export type OutboundEmailMessage = {
   to: string;
   subject: string;
   textBody: string;
   htmlBody?: string;
-  /** Optional From override; otherwise EMAIL_FROM / provider default. */
-  from?: string;
   idempotencyKey: string;
   metadata?: Record<string, string | number | boolean | null>;
 };
@@ -85,6 +89,7 @@ export class ConsoleEmailProvider implements EmailProvider {
 /**
  * Resend HTTP API. Activated only when EMAIL_PROVIDER=resend and credentials exist.
  * Uses fetch — no extra dependency. Does not send during unit tests unless injected.
+ * API keys are never written to result payloads or thrown error messages.
  */
 export class ResendEmailProvider implements EmailProvider {
   readonly name = "resend";
@@ -93,10 +98,11 @@ export class ResendEmailProvider implements EmailProvider {
     private readonly apiKey: string,
     private readonly defaultFrom: string,
     private readonly fetchImpl: typeof fetch = fetch,
+    private readonly timeoutMs: number = RESEND_REQUEST_TIMEOUT_MS,
   ) {}
 
   async send(message: OutboundEmailMessage): Promise<OutboundEmailResult> {
-    const from = (message.from ?? this.defaultFrom).trim();
+    const from = this.defaultFrom.trim();
     if (!from || !from.includes("@")) {
       return {
         status: COMMUNICATION_STATUSES.FAILED,
@@ -104,6 +110,8 @@ export class ResendEmailProvider implements EmailProvider {
         errorMessage: "EMAIL_FROM is missing or invalid.",
       };
     }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
       const response = await this.fetchImpl("https://api.resend.com/emails", {
         method: "POST",
@@ -119,6 +127,7 @@ export class ResendEmailProvider implements EmailProvider {
           text: message.textBody,
           ...(message.htmlBody ? { html: message.htmlBody } : {}),
         }),
+        signal: controller.signal,
       });
       const body = (await response.json().catch(() => null)) as
         | { id?: string; message?: string; name?: string }
@@ -127,9 +136,10 @@ export class ResendEmailProvider implements EmailProvider {
         return {
           status: COMMUNICATION_STATUSES.FAILED,
           provider: this.name,
-          errorMessage:
+          errorMessage: sanitizeProviderError(
             (body && typeof body.message === "string" && body.message) ||
-            `Resend HTTP ${response.status}`,
+              `Resend HTTP ${response.status}`,
+          ),
         };
       }
       return {
@@ -138,13 +148,32 @@ export class ResendEmailProvider implements EmailProvider {
         providerMessageId: typeof body?.id === "string" ? body.id : null,
       };
     } catch (error) {
+      const aborted =
+        (error instanceof Error && error.name === "AbortError") ||
+        (typeof DOMException !== "undefined" &&
+          error instanceof DOMException &&
+          error.name === "AbortError");
       return {
         status: COMMUNICATION_STATUSES.FAILED,
         provider: this.name,
-        errorMessage: error instanceof Error ? error.message : "Resend request failed",
+        errorMessage: aborted
+          ? `Resend request timed out after ${this.timeoutMs}ms`
+          : sanitizeProviderError(
+              error instanceof Error ? error.message : "Resend request failed",
+            ),
       };
+    } finally {
+      clearTimeout(timer);
     }
   }
+}
+
+/** Strip accidental credential material from provider/network error text before audit storage. */
+export function sanitizeProviderError(message: string): string {
+  return message
+    .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(/re_[A-Za-z0-9_]+/g, "[redacted_key]")
+    .slice(0, 300);
 }
 
 export type EmailProviderMode = "none" | "console" | "resend";

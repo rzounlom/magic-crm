@@ -22,6 +22,8 @@ After a successful public WordPress Event Planner inquiry create, MagicCRM recor
 - Must not include prices, private calculation results, availability promises, booking claims, or payment links
 - Must not invoke employee-approved quote delivery
 - Idempotent per inquiry (`inquiry_acknowledgment:{inquiryId}`)
+- Atomic claim: insert `CommunicationEvent` before provider send; partial unique index prevents concurrent double-sends
+- Existing `SKIPPED` rows are **not** backfilled when email is later activated
 - Email failure must not invalidate the inquiry submission
 
 ### State 1 — Inquiry submitted / staff quote path

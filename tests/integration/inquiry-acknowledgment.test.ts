@@ -3,6 +3,7 @@ import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRateLimiter } from "@/lib/ai/rate-limiter";
 import {
   ConsoleEmailProvider,
+  NullEmailProvider,
   ResendEmailProvider,
   type EmailProvider,
   type OutboundEmailMessage,
@@ -201,6 +202,105 @@ describe("inquiry acknowledgment", () => {
     );
     expect(again.idempotent).toBe(true);
     expect(again.communicationEventId).toBe(sent.communicationEventId);
+    expect(
+      await db.communicationEvent.count({
+        where: {
+          organizationId: organization.id,
+          inquiryId: inquiry.id,
+          kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
+        },
+      }),
+    ).toBe(1);
+  }, 90_000);
+
+  it("atomically claims one send under concurrent acknowledgment attempts", async () => {
+    const organization = await provisionTenant("Ack Concurrent Org");
+    const email = `ack.concurrent.${crypto.randomUUID()}@example.test`;
+    const inquiry = await insertBareInquiry(organization.id, email);
+
+    let releaseGate: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      releaseGate = resolve;
+    });
+
+    class SlowCountingProvider implements EmailProvider {
+      readonly name = "slow-count";
+      sendCount = 0;
+      async send(message: OutboundEmailMessage): Promise<OutboundEmailResult> {
+        this.sendCount += 1;
+        await gate;
+        return {
+          status: COMMUNICATION_STATUSES.SENT,
+          provider: this.name,
+          providerMessageId: `slow:${message.idempotencyKey}:${this.sendCount}`,
+        };
+      }
+    }
+
+    const providerA = new SlowCountingProvider();
+    const providerB = new SlowCountingProvider();
+    const input = {
+      organizationId: organization.id,
+      organizationName: organization.name,
+      inquiryId: inquiry.id,
+      customerEmail: email,
+      customerFirstName: "Ada" as string | null,
+    };
+
+    const pendingA = sendInquiryAcknowledgment(db, input, providerA);
+    // Give claim A a head start to insert QUEUED before B races.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const pendingB = sendInquiryAcknowledgment(db, input, providerB);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    releaseGate();
+
+    const [resultA, resultB] = await Promise.all([pendingA, pendingB]);
+    const winners = [resultA, resultB].filter((row) => !row.idempotent);
+    const losers = [resultA, resultB].filter((row) => row.idempotent);
+    expect(winners).toHaveLength(1);
+    expect(losers).toHaveLength(1);
+    expect(providerA.sendCount + providerB.sendCount).toBe(1);
+    expect(
+      await db.communicationEvent.count({
+        where: {
+          organizationId: organization.id,
+          inquiryId: inquiry.id,
+          kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
+        },
+      }),
+    ).toBe(1);
+    expect(winners[0]?.status).toBe(COMMUNICATION_STATUSES.SENT);
+  }, 90_000);
+
+  it("does not resend after a prior SKIPPED acknowledgment (no historical backfill)", async () => {
+    const organization = await provisionTenant("Ack No Backfill Org");
+    const email = `ack.skip.${crypto.randomUUID()}@example.test`;
+    const inquiry = await insertBareInquiry(organization.id, email);
+
+    const skipped = await sendInquiryAcknowledgment(
+      db,
+      {
+        organizationId: organization.id,
+        organizationName: organization.name,
+        inquiryId: inquiry.id,
+        customerEmail: email,
+      },
+      new NullEmailProvider(),
+    );
+    expect(skipped.status).toBe(COMMUNICATION_STATUSES.SKIPPED);
+
+    const afterActivation = await sendInquiryAcknowledgment(
+      db,
+      {
+        organizationId: organization.id,
+        organizationName: organization.name,
+        inquiryId: inquiry.id,
+        customerEmail: email,
+      },
+      new ConsoleEmailProvider(),
+    );
+    expect(afterActivation.idempotent).toBe(true);
+    expect(afterActivation.status).toBe(COMMUNICATION_STATUSES.SKIPPED);
     expect(
       await db.communicationEvent.count({
         where: {

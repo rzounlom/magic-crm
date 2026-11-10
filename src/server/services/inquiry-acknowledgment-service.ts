@@ -4,6 +4,14 @@
  * Separate from employee-approved quote delivery. Never includes prices,
  * private calculation results, availability promises, booking claims, or payment links.
  *
+ * Concurrency: insert CommunicationEvent first (QUEUED/SKIPPED). A partial unique
+ * index on (organizationId, inquiryId) WHERE kind = INQUIRY_ACKNOWLEDGMENT makes
+ * the insert the atomic claim — losers return the winner's row and never call the
+ * provider. Retries are explicit: an existing row (any status) is never auto-resent.
+ *
+ * SKIPPED (NO_EMAIL_PROVIDER) rows created before email activation are not
+ * backfilled. Enabling Resend only affects new successful inquiry creates.
+ *
  * Failures are recorded on CommunicationEvent / audit — callers should soft-fail
  * so a mailer outage cannot invalidate a successful inquiry submission.
  */
@@ -51,10 +59,53 @@ export function inquiryAcknowledgmentIdempotencyKey(inquiryId: string): string {
   return `inquiry_acknowledgment:${inquiryId}`;
 }
 
+function resultFromExisting(existing: {
+  id: string;
+  status: string;
+  skipReason: string | null;
+  providerMessageId: string | null;
+  payload: unknown;
+}): SendInquiryAcknowledgmentResult {
+  const payload =
+    existing.payload && typeof existing.payload === "object"
+      ? (existing.payload as { emailProvider?: string })
+      : null;
+  return {
+    status:
+      (existing.status as (typeof COMMUNICATION_STATUSES)[keyof typeof COMMUNICATION_STATUSES]) ??
+      COMMUNICATION_STATUSES.SKIPPED,
+    skipReason: existing.skipReason,
+    provider: payload?.emailProvider ? String(payload.emailProvider) : "none",
+    providerMessageId: existing.providerMessageId,
+    idempotent: true,
+    communicationEventId: existing.id,
+  };
+}
+
+async function findAcknowledgment(
+  database: AckDb,
+  organizationId: string,
+  inquiryId: string,
+) {
+  return database.communicationEvent.findFirst({
+    where: {
+      organizationId,
+      inquiryId,
+      kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+function isUniqueClaimConflict(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
 /**
  * Send (or record) one inquiry acknowledgment for a successfully created inquiry.
- * Idempotent per inquiry: a prior SENT/SKIPPED/FAILED row with the same key is reused
- * and no second provider send occurs.
+ *
+ * Atomic claim: create the CommunicationEvent before any provider call. Concurrent
+ * creators lose on the partial unique index and return the existing row without sending.
  */
 export async function sendInquiryAcknowledgment(
   database: AckDb,
@@ -62,33 +113,9 @@ export async function sendInquiryAcknowledgment(
   provider: EmailProvider = createEmailProvider(),
 ): Promise<SendInquiryAcknowledgmentResult> {
   const idempotencyKey = inquiryAcknowledgmentIdempotencyKey(input.inquiryId);
-  const existing = await database.communicationEvent.findFirst({
-    where: {
-      organizationId: input.organizationId,
-      inquiryId: input.inquiryId,
-      kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  const existingKey =
-    existing?.payload && typeof existing.payload === "object"
-      ? (existing.payload as { idempotencyKey?: string }).idempotencyKey
-      : null;
-
-  if (existing && existingKey === idempotencyKey) {
-    return {
-      status:
-        (existing.status as (typeof COMMUNICATION_STATUSES)[keyof typeof COMMUNICATION_STATUSES]) ??
-        COMMUNICATION_STATUSES.SKIPPED,
-      skipReason: existing.skipReason,
-      provider:
-        existing.payload && typeof existing.payload === "object"
-          ? String((existing.payload as { emailProvider?: string }).emailProvider ?? "none")
-          : "none",
-      providerMessageId: existing.providerMessageId,
-      idempotent: true,
-      communicationEventId: existing.id,
-    };
+  const existing = await findAcknowledgment(database, input.organizationId, input.inquiryId);
+  if (existing) {
+    return resultFromExisting(existing);
   }
 
   const content = buildInquiryAcknowledgmentEmail({
@@ -98,47 +125,95 @@ export async function sendInquiryAcknowledgment(
   });
 
   if (!isValidInvitationEmail(input.customerEmail)) {
-    const row = await database.communicationEvent.create({
+    try {
+      const row = await database.communicationEvent.create({
+        data: {
+          organizationId: input.organizationId,
+          channel: COMMUNICATION_CHANNELS.EMAIL,
+          kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
+          status: COMMUNICATION_STATUSES.SKIPPED,
+          skipReason: COMMUNICATION_SKIP_REASONS.INVALID_EMAIL,
+          toAddress: input.customerEmail?.trim() || null,
+          subject: content.subject,
+          inquiryId: input.inquiryId,
+          payload: {
+            idempotencyKey,
+            emailProvider: provider.name,
+            organizationName: input.organizationName,
+            reserved: false,
+            quoteDelivery: false,
+            includesPricing: false,
+          } as Prisma.InputJsonValue,
+        },
+      });
+      await recordAuditEvent(database, {
+        organizationId: input.organizationId,
+        action: "communication.inquiry_acknowledgment_skipped",
+        resourceType: "inquiry",
+        resourceId: input.inquiryId,
+        metadata: {
+          kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
+          skipReason: COMMUNICATION_SKIP_REASONS.INVALID_EMAIL,
+          emailProvider: provider.name,
+        },
+      });
+      return {
+        status: COMMUNICATION_STATUSES.SKIPPED,
+        skipReason: COMMUNICATION_SKIP_REASONS.INVALID_EMAIL,
+        provider: provider.name,
+        providerMessageId: null,
+        idempotent: false,
+        communicationEventId: row.id,
+      };
+    } catch (error) {
+      if (isUniqueClaimConflict(error)) {
+        const winner = await findAcknowledgment(database, input.organizationId, input.inquiryId);
+        if (winner) {
+          return resultFromExisting(winner);
+        }
+      }
+      throw error;
+    }
+  }
+
+  const to = normalizePublicEmail(input.customerEmail.trim());
+
+  let claimed;
+  try {
+    claimed = await database.communicationEvent.create({
       data: {
         organizationId: input.organizationId,
         channel: COMMUNICATION_CHANNELS.EMAIL,
         kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
-        status: COMMUNICATION_STATUSES.SKIPPED,
-        skipReason: COMMUNICATION_SKIP_REASONS.INVALID_EMAIL,
-        toAddress: input.customerEmail?.trim() || null,
+        status: COMMUNICATION_STATUSES.QUEUED,
+        skipReason: null,
+        toAddress: to,
         subject: content.subject,
         inquiryId: input.inquiryId,
         payload: {
+          subject: content.subject,
+          textBody: content.textBody,
+          htmlBody: content.htmlBody,
+          organizationName: input.organizationName,
           idempotencyKey,
           emailProvider: provider.name,
-          organizationName: input.organizationName,
           reserved: false,
           quoteDelivery: false,
+          includesPricing: false,
         } as Prisma.InputJsonValue,
       },
     });
-    await recordAuditEvent(database, {
-      organizationId: input.organizationId,
-      action: "communication.inquiry_acknowledgment_skipped",
-      resourceType: "inquiry",
-      resourceId: input.inquiryId,
-      metadata: {
-        kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
-        skipReason: COMMUNICATION_SKIP_REASONS.INVALID_EMAIL,
-        emailProvider: provider.name,
-      },
-    });
-    return {
-      status: COMMUNICATION_STATUSES.SKIPPED,
-      skipReason: COMMUNICATION_SKIP_REASONS.INVALID_EMAIL,
-      provider: provider.name,
-      providerMessageId: null,
-      idempotent: false,
-      communicationEventId: row.id,
-    };
+  } catch (error) {
+    if (isUniqueClaimConflict(error)) {
+      const winner = await findAcknowledgment(database, input.organizationId, input.inquiryId);
+      if (winner) {
+        return resultFromExisting(winner);
+      }
+    }
+    throw error;
   }
 
-  const to = normalizePublicEmail(input.customerEmail.trim());
+  // Only the claim winner reaches the provider. Resend also receives Idempotency-Key.
   const sendResult = await provider.send({
     to,
     subject: content.subject,
@@ -160,16 +235,11 @@ export async function sendInquiryAcknowledgment(
   const providerMessageId =
     sendResult.status === COMMUNICATION_STATUSES.SENT ? sendResult.providerMessageId : null;
 
-  const row = await database.communicationEvent.create({
+  const row = await database.communicationEvent.update({
+    where: { id: claimed.id },
     data: {
-      organizationId: input.organizationId,
-      channel: COMMUNICATION_CHANNELS.EMAIL,
-      kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
       status,
       skipReason,
-      toAddress: to,
-      subject: content.subject,
-      inquiryId: input.inquiryId,
       providerMessageId,
       sentAt: status === COMMUNICATION_STATUSES.SENT ? new Date() : null,
       payload: {
@@ -237,6 +307,7 @@ export async function sendInquiryAcknowledgment(
 
 /**
  * Soft wrapper for inquiry create — never throws; logs to console on unexpected errors.
+ * Does not log provider credentials.
  */
 export async function trySendInquiryAcknowledgment(
   database: AckDb,
@@ -260,7 +331,7 @@ export async function trySendInquiryAcknowledgment(
         metadata: {
           kind: COMMUNICATION_KINDS.INQUIRY_ACKNOWLEDGMENT,
           softFail: true,
-          errorMessage: error instanceof Error ? error.message : "unknown",
+          errorMessage: error instanceof Error ? error.message.slice(0, 300) : "unknown",
         },
       });
     } catch {
