@@ -4,6 +4,7 @@ import {
   buildInquiryAcknowledgmentEmail,
   inquiryAcknowledgmentContainsForbiddenContent,
 } from "@/lib/event-planner/inquiry-acknowledgment";
+import { customerFacingOrganizationName } from "@/lib/inquiries/organization-display-name";
 
 describe("inquiry acknowledgment copy", () => {
   it("thanks the customer and names the venue without pricing or booking claims", () => {
@@ -29,5 +30,17 @@ describe("inquiry acknowledgment copy", () => {
       customerFirstName: null,
     });
     expect(email.textBody.startsWith("Hello,")).toBe(true);
+  });
+
+  it("uses the same customer-facing org label as the public thanks page for slug-shaped names", () => {
+    const raw = "generations-crm-test-1788129640704833684";
+    const display = customerFacingOrganizationName(raw);
+    expect(display).toBe("Generations CRM Test");
+    const email = buildInquiryAcknowledgmentEmail({
+      organizationName: display,
+      customerFirstName: "Ada",
+    });
+    expect(email.textBody).toContain("Generations CRM Test");
+    expect(email.textBody).not.toContain(raw);
   });
 });

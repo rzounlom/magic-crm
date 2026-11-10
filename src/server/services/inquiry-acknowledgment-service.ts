@@ -21,6 +21,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import {
   buildInquiryAcknowledgmentEmail,
 } from "@/lib/event-planner/inquiry-acknowledgment";
+import { customerFacingOrganizationName } from "@/lib/inquiries/organization-display-name";
 import { normalizePublicEmail } from "@/server/inquiries/intake-validation";
 import {
   createEmailProvider,
@@ -118,8 +119,9 @@ export async function sendInquiryAcknowledgment(
     return resultFromExisting(existing);
   }
 
+  const organizationName = customerFacingOrganizationName(input.organizationName);
   const content = buildInquiryAcknowledgmentEmail({
-    organizationName: input.organizationName,
+    organizationName,
     customerFirstName: input.customerFirstName,
     customerLastName: input.customerLastName,
   });
@@ -139,7 +141,7 @@ export async function sendInquiryAcknowledgment(
           payload: {
             idempotencyKey,
             emailProvider: provider.name,
-            organizationName: input.organizationName,
+            organizationName,
             reserved: false,
             quoteDelivery: false,
             includesPricing: false,
@@ -194,7 +196,7 @@ export async function sendInquiryAcknowledgment(
           subject: content.subject,
           textBody: content.textBody,
           htmlBody: content.htmlBody,
-          organizationName: input.organizationName,
+          organizationName,
           idempotencyKey,
           emailProvider: provider.name,
           reserved: false,
@@ -246,7 +248,7 @@ export async function sendInquiryAcknowledgment(
         subject: content.subject,
         textBody: content.textBody,
         htmlBody: content.htmlBody,
-        organizationName: input.organizationName,
+        organizationName,
         idempotencyKey,
         emailProvider: sendResult.provider,
         reserved: false,
