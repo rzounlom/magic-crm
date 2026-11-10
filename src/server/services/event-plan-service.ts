@@ -8,6 +8,7 @@ import { personalEventPlanNotification } from "@/lib/event-planner/email-context
 import { engineDiningPreference } from "@/lib/event-planner/intake-contract";
 import { isEventPlanScheduleInfeasible, readEventPlanPayload } from "@/lib/event-planner/payload";
 import { SCHEDULE_INFEASIBLE_CUSTOMER_NOTE } from "@/types/event-planner";
+import { customerFacingOrganizationName } from "@/lib/inquiries/organization-display-name";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
 import { InquiryError } from "@/server/errors";
@@ -271,7 +272,7 @@ export async function assertSelectablePublicAttractions(
 export async function listPublicPlannerCatalog(database: PlannerDb, organizationSlug: string) {
   const organization = await database.organization.findFirst({
     where: { slug: organizationSlug.trim().toLowerCase(), onboardingStatus: "ACTIVE" },
-    select: { id: true, name: true, slug: true },
+    select: { id: true, name: true, customerFacingName: true, slug: true },
   });
   if (!organization) {
     throw new InquiryError("TENANT_NOT_AVAILABLE");
@@ -627,7 +628,16 @@ export async function getPublicEventPlanByToken(database: PlannerDb, token: stri
           location: { select: { timezone: true } },
         },
       },
-      organization: { select: { name: true, slug: true, currency: true, timezone: true, depositPercent: true } },
+      organization: {
+        select: {
+          name: true,
+          customerFacingName: true,
+          slug: true,
+          currency: true,
+          timezone: true,
+          depositPercent: true,
+        },
+      },
     },
   });
   if (!conversation) {
@@ -656,7 +666,7 @@ export async function getPublicEventPlanByToken(database: PlannerDb, token: stri
     : (bookings.find((row) => row.status === BOOKING_STATUSES.PENDING_PAYMENT) ?? null);
 
   return {
-    organizationName: conversation.organization.name,
+    organizationName: customerFacingOrganizationName(conversation.organization),
     organizationSlug: conversation.organization.slug,
     currency: conversation.organization.currency,
     timeZone: resolveTenantTimezone({
@@ -698,7 +708,7 @@ export async function selectPublicEventPlan(
     where: { publicTokenHash: hash, channel: CONVERSATION_CHANNELS.WEB },
     include: {
       inquiry: true,
-      organization: { select: { name: true } },
+      organization: { select: { name: true, customerFacingName: true } },
     },
   });
   if (!conversation) {
@@ -818,7 +828,7 @@ export async function selectPublicEventPlan(
         organizationId: conversation.organizationId,
         inquiryId: conversation.inquiryId,
         selectedPlanId: plan.id,
-        organizationName: conversation.organization.name,
+        organizationName: customerFacingOrganizationName(conversation.organization),
         customerEmail: conversation.inquiry.customerEmail,
         customerFirstName: conversation.inquiry.customerFirstName,
         customerLastName: conversation.inquiry.customerLastName,
@@ -864,7 +874,7 @@ export async function bookPublicEventPlan(
     where: { publicTokenHash: hash, channel: CONVERSATION_CHANNELS.WEB },
     include: {
       inquiry: true,
-      organization: { select: { name: true } },
+      organization: { select: { name: true, customerFacingName: true } },
     },
   });
   if (!conversation) {

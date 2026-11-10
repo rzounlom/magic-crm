@@ -55,7 +55,9 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [29-phase-9b-pricing-reconciliation.md](./29-phase-9b-pricing-reconciliation.md) | WP vs booking-catalog reconciliation + amount integrity |
 | [30-phase-9c-owner-pricing-decision.md](./30-phase-9c-owner-pricing-decision.md) | Owner Option A/B pricing decision (recommend A) |
 | [31-phase-10a-operational-readiness.md](./31-phase-10a-operational-readiness.md) | Generations operational readiness audit + activation checklist |
+| [32-phase-10b-staff-workflow-readiness.md](./32-phase-10b-staff-workflow-readiness.md) | Staff workflow readiness, perm dry-run, branding, hours/tax notes |
+| [33-phase-10b-owner-decisions.md](./33-phase-10b-owner-decisions.md) | Owner decisions for Option A, deposit, display name, perm sync |
 
 ## Branch
 
-Customer `main` includes PRs #6–#13. Phase 10A: `phase-10a-generations-operational-readiness`. No Scenario Lab; no Production catalog/price/deposit/booking writes; no customer quote delivery; live email disabled.
+Customer `main` includes PRs #6–#13 (+ #14 when merged). Phase 10B: `phase-10b-staff-workflow-readiness`. No Scenario Lab; no Production catalog/price/deposit/hours/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.

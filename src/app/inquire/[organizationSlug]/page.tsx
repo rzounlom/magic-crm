@@ -37,7 +37,7 @@ export default async function PublicInquirePage({
     notFound();
   }
 
-  const organizationName = customerFacingOrganizationName(catalog.organization.name);
+  const organizationName = customerFacingOrganizationName(catalog.organization);
   const useLegacyWizard = legacy === "1";
 
   if (useLegacyWizard) {

@@ -3,6 +3,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { createPublicConversationToken } from "@/lib/ai/public-conversation-token";
 import { personalEventPlanNotification } from "@/lib/event-planner/email-context";
 import { parseWpIntakeMessageMetadata } from "@/lib/event-planner/wp-intake-contract";
+import { customerFacingOrganizationName } from "@/lib/inquiries/organization-display-name";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { createEmailProvider } from "@/server/communications/email-provider";
 import { InquiryError } from "@/server/errors";
@@ -331,7 +332,7 @@ async function loadWpWorkingDraft(database: Db, organizationId: string, inquiryI
         include: { messages: { orderBy: { createdAt: "asc" } } },
         take: 1,
       },
-      organization: { select: { name: true, currency: true } },
+      organization: { select: { name: true, customerFacingName: true, currency: true } },
     },
   });
   if (!inquiry) {
@@ -656,11 +657,12 @@ export async function approveAndSendWpStaffQuote(
       "APP_URL is not configured, so a customer quote link cannot be created.",
     );
   }
+  const displayOrganizationName = customerFacingOrganizationName(inquiry.organization);
   const notification = personalEventPlanNotification({
     customerEmail: email,
     customerFirstName: inquiry.customerFirstName,
     customerLastName: inquiry.customerLastName,
-    organizationName: inquiry.organization.name,
+    organizationName: displayOrganizationName,
     planPath,
     appUrl,
     eventDate: customerPayload.eventDate,
@@ -697,7 +699,7 @@ export async function approveAndSendWpStaffQuote(
     emailProviderName = provider.name;
     const sendResult = await provider.send({
       to: email,
-      subject: `Your ${inquiry.organization.name} event quote`,
+      subject: `Your ${displayOrganizationName} event quote`,
       textBody: `Your quote is ready: ${notification.planUrl}`,
       idempotencyKey,
       metadata: {
@@ -719,7 +721,7 @@ export async function approveAndSendWpStaffQuote(
         status: emailStatus,
         skipReason,
         toAddress: email,
-        subject: `Your ${inquiry.organization.name} event quote`,
+        subject: `Your ${displayOrganizationName} event quote`,
         inquiryId: inquiry.id,
         providerMessageId,
         sentAt: emailStatus === COMMUNICATION_STATUSES.SENT ? new Date() : null,

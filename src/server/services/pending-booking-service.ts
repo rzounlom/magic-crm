@@ -8,6 +8,7 @@ import {
 } from "@/lib/bookings/confirmation-blockers";
 import { assertApprovedQuoteAmountsConsistent } from "@/lib/inquiries/approved-quote-amounts";
 import { planPayloadTotal } from "@/lib/inquiries/plan-diff";
+import { customerFacingOrganizationName } from "@/lib/inquiries/organization-display-name";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import {
@@ -465,7 +466,15 @@ export async function confirmPendingBooking(
     where: { id: input.inquiryId, organizationId: input.organizationId },
     include: {
       organization: {
-        select: { id: true, slug: true, name: true, currency: true, timezone: true, depositPercent: true },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          customerFacingName: true,
+          currency: true,
+          timezone: true,
+          depositPercent: true,
+        },
       },
       location: { select: { id: true, name: true, timezone: true } },
       eventPlanRecommendations: true,
@@ -977,7 +986,7 @@ export async function confirmPendingBooking(
           bookingId: booking.id,
           inquiryId: inquiry.id,
           bookingNumber: booking.bookingNumber,
-          organizationName: inquiry.organization.name,
+          organizationName: customerFacingOrganizationName(inquiry.organization),
           customerEmail: inquiry.customerEmail,
           customerFirstName: inquiry.customerFirstName,
           customerLastName: inquiry.customerLastName,

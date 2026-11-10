@@ -19,7 +19,7 @@ export default async function PublicInquireThanksPage({
   let organizationName: string;
   try {
     const organization = await resolvePublicInquiryOrganization(db, organizationSlug);
-    organizationName = customerFacingOrganizationName(organization.name);
+    organizationName = customerFacingOrganizationName(organization);
   } catch (error) {
     if (isInquiryError(error)) {
       notFound();
