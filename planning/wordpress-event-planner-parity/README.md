@@ -51,7 +51,9 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [24-phase-7c-final-report.md](./24-phase-7c-final-report.md) | Phase 7C roles, email adapter, inventory, amount guards |
 | [26-phase-8a-inventory-readiness.md](./26-phase-8a-inventory-readiness.md) | Generations inventory audit + WP mapping readiness |
 | [27-phase-8b-room-mapping.md](./27-phase-8b-room-mapping.md) | Exclusive WP room → MagiCRM resource mapping |
+| [28-phase-9a-inquiry-acknowledgment.md](./28-phase-9a-inquiry-acknowledgment.md) | Inquiry acknowledgment + opt-in Resend |
+| [29-phase-9b-pricing-reconciliation.md](./29-phase-9b-pricing-reconciliation.md) | WP vs booking-catalog reconciliation + amount integrity |
 
 ## Branch
 
-Phase 7 merged on `main` (`85d5e7d`). Phase 8A/8B: `phase-8a-generations-inventory-readiness` (PR #10). No Scenario Lab; no Production inventory writes; no customer quote delivery; arcade soft-only.
+Customer `main` includes PRs #6–#12. Phase 9B: `phase-9b-wp-catalog-pricing-reconciliation`. No Scenario Lab; no Production catalog/price writes; no customer quote delivery; live email disabled.
