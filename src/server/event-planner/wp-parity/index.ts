@@ -142,13 +142,20 @@ export type {
 } from "@/server/event-planner/wp-parity/pricing-verification";
 export {
   WP_ATTRACTION_INVENTORY_MAPPINGS,
+  WP_EXCLUSIVE_ROOM_MAPPINGS,
   WP_PRICING_COMPONENT_CLASSES,
   buildWpDraftResourceRequirements,
+  buildWpExclusiveRoomRequirements,
+  resolveWpExclusiveRooms,
+  summarizeWpInventoryCoverage,
   wpAttractionsRequiringInventoryForBooking,
+  wpExclusiveRoomsRequiringInventoryForBooking,
 } from "@/server/event-planner/wp-parity/inventory-mapping";
 export type {
   OrgResourceTypeRow,
   WpAttractionInventoryMapping,
+  WpExclusiveRoomKey,
+  WpExclusiveRoomMapping,
   WpInventoryClass,
   WpPricingComponentClass,
 } from "@/server/event-planner/wp-parity/inventory-mapping";

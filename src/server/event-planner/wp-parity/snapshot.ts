@@ -45,6 +45,12 @@ export type WpParityPlanSnapshot = {
   itinerary: ItineraryRow[];
   why: string | null;
   custom_package: { id: string; revision: string } | null;
+  /** True when the calculator already priced exclusive room / buyout into this plan. */
+  room_included: boolean;
+  /** Primary rental kind when the plan is a mezzanine/full (or attraction) buyout. */
+  rental_kind: string | null;
+  rental_kinds: string[];
+  rental_minutes: number | null;
 };
 
 export type WpParityDaySnapshot = {
@@ -151,6 +157,13 @@ function snapshotPlan(plan: RankedPlan): WpParityPlanSnapshot {
     custom_package: plan.custom_package
       ? { id: plan.custom_package.id, revision: plan.custom_package.revision }
       : null,
+    room_included: Boolean(plan.room_included),
+    rental_kind: plan.rental_kind ?? null,
+    rental_kinds: [...(plan.rental_kinds ?? (plan.rental_kind ? [plan.rental_kind] : []))],
+    rental_minutes:
+      typeof plan.rental_minutes === "number" && Number.isFinite(plan.rental_minutes)
+        ? plan.rental_minutes
+        : null,
   };
 }
 

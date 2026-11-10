@@ -4,10 +4,60 @@ import {
   WP_ATTRACTION_INVENTORY_MAPPINGS,
   WP_PRICING_COMPONENT_CLASSES,
   buildWpDraftResourceRequirements,
+  summarizeWpInventoryCoverage,
   wpAttractionsRequiringInventoryForBooking,
 } from "@/server/event-planner/wp-parity/inventory-mapping";
 import { wpApprovedQuoteInventoryBlockers } from "@/lib/bookings/confirmation-blockers";
 import type { EventPlanPayload } from "@/types/event-planner";
+
+/** Snapshot of Generations CRM Test resource type slugs from Phase 8A read-only audit. */
+const GENERATIONS_RESOURCE_TYPES = [
+  { id: "rt_bowl", slug: "bowling-lane", name: "Bowling Lane", inventoryConfigured: true, active: true },
+  {
+    id: "rt_axe",
+    slug: "axe-throwing-lane",
+    name: "Axe Throwing Lane",
+    inventoryConfigured: true,
+    active: true,
+  },
+  {
+    id: "rt_laser",
+    slug: "laser-tag-arena",
+    name: "Laser Tag Arena",
+    inventoryConfigured: true,
+    active: true,
+  },
+  {
+    id: "rt_golf",
+    slug: "mini-golf-course",
+    name: "Mini Golf Course",
+    inventoryConfigured: true,
+    active: true,
+  },
+  {
+    id: "rt_climb",
+    slug: "climbing-area",
+    name: "Climbing Area",
+    inventoryConfigured: true,
+    active: true,
+  },
+  {
+    id: "rt_lower",
+    slug: "lower-event-room",
+    name: "Lower Event Room",
+    inventoryConfigured: true,
+    active: true,
+  },
+  { id: "rt_sky", slug: "skybox", name: "Skybox", inventoryConfigured: true, active: true },
+  { id: "rt_mez", slug: "mezzanine", name: "Mezzanine", inventoryConfigured: true, active: true },
+  {
+    id: "rt_full",
+    slug: "full-facility",
+    name: "Full Facility",
+    inventoryConfigured: true,
+    active: true,
+  },
+] as const;
 
 describe("WP inventory mapping", () => {
   it("classifies attractions and pricing components", () => {
@@ -25,27 +75,55 @@ describe("WP inventory mapping", () => {
     );
   });
 
-  it("builds soft requirements without holds when resource types exist", () => {
+  it("maps Generations catalog slugs for reservable attractions (no arcade type)", () => {
+    const coverage = summarizeWpInventoryCoverage({ resourceTypes: [...GENERATIONS_RESOURCE_TYPES] });
+    expect(
+      coverage.attractions
+        .filter((row) => row.requiresHoldForBooking)
+        .every((row) => row.covered),
+    ).toBe(true);
+    expect(coverage.attractions.find((row) => row.attraction === "arcade")?.covered).toBe(false);
+    expect(coverage.attractions.find((row) => row.attraction === "axe")?.matchedSlug).toBe(
+      "axe-throwing-lane",
+    );
+    expect(coverage.attractions.find((row) => row.attraction === "laser")?.matchedSlug).toBe(
+      "laser-tag-arena",
+    );
+    expect(coverage.attractions.find((row) => row.attraction === "climbing")?.matchedSlug).toBe(
+      "climbing-area",
+    );
+  });
+
+  it("builds soft requirements for Generations attraction slugs without creating holds", () => {
     const result = buildWpDraftResourceRequirements({
-      selectedAttractions: ["bowling", "arcade"],
-      guestCount: 12,
+      selectedAttractions: ["bowling", "axe", "laser", "golf", "climbing", "arcade"],
+      guestCount: 16,
       durationMinutes: 120,
-      resourceTypes: [
-        {
-          id: "rt_bowl",
-          slug: "bowling-lane",
-          name: "Bowling Lane",
-          inventoryConfigured: true,
-          active: true,
-        },
-      ],
+      resourceTypes: [...GENERATIONS_RESOURCE_TYPES],
     });
-    expect(result.mappedAttractions).toContain("bowling");
-    expect(result.requirements).toHaveLength(1);
-    expect(result.requirements[0]?.quantity).toBe(2);
+    expect(result.mappedAttractions).toEqual(["bowling", "axe", "laser", "golf", "climbing"]);
     expect(result.unmappedReservableAttractions).toEqual([]);
-    // Arcade is soft capacity and unmapped here — not a hard booking hold requirement.
+    expect(result.requirements.find((row) => row.resourceTypeSlug === "bowling-lane")?.quantity).toBe(
+      3,
+    );
+    expect(
+      result.requirements.find((row) => row.resourceTypeSlug === "axe-throwing-lane")?.quantity,
+    ).toBe(2);
+    expect(result.requirements.find((row) => row.resourceTypeSlug === "laser-tag-arena")?.quantity).toBe(
+      1,
+    );
+    // Arcade remains soft — no Generations arcade resource type.
     expect(wpAttractionsRequiringInventoryForBooking(["bowling", "arcade"])).toEqual(["bowling"]);
+  });
+
+  it("uses WordPress bowling lane curve above 48 guests", () => {
+    const result = buildWpDraftResourceRequirements({
+      selectedAttractions: ["bowling"],
+      guestCount: 50,
+      durationMinutes: 60,
+      resourceTypes: [...GENERATIONS_RESOURCE_TYPES],
+    });
+    expect(result.requirements[0]?.quantity).toBe(8);
   });
 
   it("blocks booking confirmation when reservable WP attractions are unmapped", () => {

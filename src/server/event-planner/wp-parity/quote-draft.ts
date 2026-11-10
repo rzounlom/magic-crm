@@ -1,3 +1,4 @@
+import { resolveWpExclusiveRooms } from "@/server/event-planner/wp-parity/inventory-mapping";
 import type {
   AttractionKey,
   LineItem,
@@ -58,6 +59,13 @@ export type WpQuoteDraftProvenance = {
   warnings: string[];
   catalogPriceDiscrepancies: WpCatalogPriceDiscrepancy[];
   selectedAttractions: AttractionKey[];
+  /**
+   * Exclusive room / facility rentals priced into the WP plan (not preference-only).
+   * Used for MagiCRM inventory soft-requirements.
+   */
+  exclusiveRooms: Array<"lower" | "upper" | "cove" | "mezzanine" | "full">;
+  /** Room extra-hour / extension labels — pricing-only, not additional units. */
+  pricingOnlyRoomAdjustments: string[];
   unpriced: boolean;
   hardReview: boolean;
   staffEdit?: WpQuoteDraftStaffEdit;
@@ -288,6 +296,12 @@ export function buildWpStaffQuoteDraft(
   ];
 
   const discrepancies = collectDiscrepancies(input.magicCatalogCentsBySlug);
+  const roomResolution = resolveWpExclusiveRooms({
+    roomIncluded: plan.room_included,
+    rentalKind: plan.rental_kind,
+    rentalKinds: plan.rental_kinds,
+    itemLabels: plan.items.map((item) => item.label),
+  });
   const provenance: WpQuoteDraftProvenance = {
     source: WP_QUOTE_DRAFT_SOURCE,
     pricingSource: input.snapshot.pricing_source,
@@ -305,6 +319,8 @@ export function buildWpStaffQuoteDraft(
     warnings,
     catalogPriceDiscrepancies: discrepancies,
     selectedAttractions: [...plan.selected_attractions],
+    exclusiveRooms: roomResolution.exclusiveRooms,
+    pricingOnlyRoomAdjustments: roomResolution.pricingOnlyRoomAdjustments,
     unpriced: plan.unpriced,
     hardReview: plan.hard_review,
   };
@@ -412,6 +428,12 @@ export function readWpQuoteDraftProvenance(payload: unknown): WpQuoteDraftProven
     provenance.originalSubtotalCents = provenance.subtotalCents;
     provenance.originalTaxCents = provenance.taxCents;
     provenance.originalTotalCents = provenance.totalCents;
+  }
+  if (!Array.isArray(provenance.exclusiveRooms)) {
+    provenance.exclusiveRooms = [];
+  }
+  if (!Array.isArray(provenance.pricingOnlyRoomAdjustments)) {
+    provenance.pricingOnlyRoomAdjustments = [];
   }
   return provenance;
 }

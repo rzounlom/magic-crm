@@ -17,7 +17,10 @@ import {
   type WpParitySnapshot,
   type WpStaffQuoteLineEdit,
 } from "@/server/event-planner/wp-parity";
-import { buildWpDraftResourceRequirements } from "@/server/event-planner/wp-parity/inventory-mapping";
+import {
+  buildWpDraftResourceRequirements,
+  buildWpExclusiveRoomRequirements,
+} from "@/server/event-planner/wp-parity/inventory-mapping";
 import { resolveInquiryLocationId } from "@/server/locations/primary-location";
 import { requirePermission, requirePermissions } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
@@ -100,15 +103,32 @@ async function attachWpInventoryRequirements(
     durationMinutes: payload.durationMinutes,
     resourceTypes,
   });
+  const provenance = readWpQuoteDraftProvenance(payload);
+  const rooms = buildWpExclusiveRoomRequirements({
+    exclusiveRooms: provenance?.exclusiveRooms ?? [],
+    durationMinutes: payload.durationMinutes,
+    resourceTypes,
+    existingRequirements: mapped.requirements,
+  });
   const notes = [...(payload.adjustmentNote ? [payload.adjustmentNote] : [])];
   if (mapped.unmappedReservableAttractions.length > 0) {
     notes.push(
       `Unmapped reservable attractions (inventory not configured): ${mapped.unmappedReservableAttractions.join(", ")}.`,
     );
   }
+  if (rooms.unmappedExclusiveRooms.length > 0) {
+    notes.push(
+      `Unmapped exclusive rooms (inventory not configured): ${rooms.unmappedExclusiveRooms.join(", ")}.`,
+    );
+  }
+  if ((provenance?.pricingOnlyRoomAdjustments.length ?? 0) > 0) {
+    notes.push(
+      `Room pricing adjustments (no extra inventory units): ${provenance!.pricingOnlyRoomAdjustments.join("; ")}.`,
+    );
+  }
   return {
     ...payload,
-    resourceRequirements: mapped.requirements,
+    resourceRequirements: [...mapped.requirements, ...rooms.requirements],
     adjustmentNote: notes.length > 0 ? notes.join(" ") : payload.adjustmentNote,
   };
 }

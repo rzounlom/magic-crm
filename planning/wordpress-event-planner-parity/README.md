@@ -49,7 +49,9 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [22-phase-7b-quote-delivery-audit.md](./22-phase-7b-quote-delivery-audit.md) | Phase 7B delivery audit + pricing gate |
 | [23-phase-7b-final-report.md](./23-phase-7b-final-report.md) | Phase 7B approve/send report |
 | [24-phase-7c-final-report.md](./24-phase-7c-final-report.md) | Phase 7C roles, email adapter, inventory, amount guards |
+| [26-phase-8a-inventory-readiness.md](./26-phase-8a-inventory-readiness.md) | Generations inventory audit + WP mapping readiness |
+| [27-phase-8b-room-mapping.md](./27-phase-8b-room-mapping.md) | Exclusive WP room → MagiCRM resource mapping |
 
 ## Branch
 
-`phase-7-staff-quote-draft` from Production `ab0178d` / `origin/main`. Staff-controlled quote draft + approve/send + operational readiness. No Scenario Lab; no Production catalog overwrite; no live customer email until `tenant_live` + provider.
+Phase 7 merged on `main` (`85d5e7d`). Phase 8A/8B: `phase-8a-generations-inventory-readiness` (PR #10). No Scenario Lab; no Production inventory writes; no customer quote delivery; arcade soft-only.
