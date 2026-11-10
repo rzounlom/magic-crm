@@ -1,18 +1,36 @@
-# Communications (future outbound)
+# Communications (outbound)
 
-MagicCRM does not send customer email yet. There is no mail provider in this phase. Do not add a fake sender.
+Outbound customer email uses `CommunicationEvent` plus `createEmailProvider()`.
 
-`CommunicationEvent` is the tenant-scoped outbound log. Status may be `SKIPPED` when a provider is missing — that is an audit row, not a send.
+Provider modes (`EMAIL_PROVIDER`):
+- `none` (default) — `SKIPPED` / `NO_EMAIL_PROVIDER`; no network send
+- `console` — local/dev log only
+- `resend` — Resend HTTP API when `RESEND_API_KEY` and `EMAIL_FROM` are set
 
-## Three customer states
+`CommunicationEvent` is the tenant-scoped outbound log. Status may be `SKIPPED` when a provider is missing — that is an audit row, not a send. Real sending is never the default.
+
+## Customer states
 
 Do not blur these. Each has different copy and different inventory meaning.
 
-### State 1 — Inquiry submitted
+### State 0 — Inquiry acknowledgment (automatic)
 
-The customer submitted the Personal Event Planner form. Recommendations may exist (`AWAITING_CUSTOMER`). Nothing is reserved.
+After a successful public WordPress Event Planner inquiry create, MagicCRM records/sends `INQUIRY_ACKNOWLEDGMENT`.
 
-A future “here are your plan options” email is separate from selection confirmation.
+- Subject: `We received your event request`
+- Confirms receipt only; includes organization business name
+- Must not include prices, private calculation results, availability promises, booking claims, or payment links
+- Must not invoke employee-approved quote delivery
+- Idempotent per inquiry (`inquiry_acknowledgment:{inquiryId}`)
+- Atomic claim: insert `CommunicationEvent` before provider send; partial unique index prevents concurrent double-sends
+- Existing `SKIPPED` rows are **not** backfilled when email is later activated
+- Email failure must not invalidate the inquiry submission
+
+### State 1 — Inquiry submitted / staff quote path
+
+The customer submitted the Personal Event Planner form. Staff may prepare a quote draft. Nothing is reserved by acknowledgment alone.
+
+Customer quote delivery remains gated by pricing verification (`approved_plugin_baseline` / `plugin_defaults` blocked; `tenant_live` + verified readiness eligible). Quote email uses `EMPLOYEE_APPROVED_QUOTE` and is separate from acknowledgment.
 
 ### State 2 — Customer selected a plan
 

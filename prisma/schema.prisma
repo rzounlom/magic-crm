@@ -1145,6 +1145,8 @@ model ResourceReservation {
 }
 
 /// Outbound communication log. Rows may be SKIPPED when no provider is configured — that is not a send.
+/// INQUIRY_ACKNOWLEDGMENT is limited to one row per inquiry by a partial unique index
+/// (`communication_events_inquiry_acknowledgment_unique`) so concurrent claims cannot double-send.
 model CommunicationEvent {
   id                 String    @id @default(cuid(2))
   organizationId     String

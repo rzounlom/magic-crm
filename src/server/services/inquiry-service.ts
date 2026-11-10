@@ -43,6 +43,7 @@ import type { WpTenantParityConfig } from "@/server/event-planner/wp-parity/tena
 import { requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
+import { trySendInquiryAcknowledgment } from "@/server/services/inquiry-acknowledgment-service";
 import { attractionSelectionLabels } from "@/server/catalog/attraction-interests";
 import { attractionInterestIdsFromJson } from "@/server/event-planner/build-event-plans";
 import { attractionModeFromIntake, audienceFromGuestMix } from "@/server/catalog/audience";
@@ -500,6 +501,17 @@ export async function createPublicWpEventInquiry(
       privateCalculationRulesVersion: privateCalc.rulesVersion ?? "",
       privateCalculationPricingRevision: privateCalc.pricingRevision ?? "",
     },
+  });
+
+  // Soft-fail acknowledgment: never invalidates a successful inquiry create,
+  // never invokes employee quote delivery, never includes private calc/pricing.
+  await trySendInquiryAcknowledgment(database, {
+    organizationId: organization.id,
+    organizationName: organization.name,
+    inquiryId: createdInquiry.id,
+    customerEmail: answers.email,
+    customerFirstName: answers.firstName,
+    customerLastName: answers.lastName,
   });
 
   return {

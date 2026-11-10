@@ -65,13 +65,19 @@ function isValidWpSnapshot(value: unknown): value is Extract<WpParitySnapshot, {
   return record.valid === true && Array.isArray(record.dates);
 }
 
+/**
+ * Staff edits submit the full ordered line list. Compare by index so duplicate WP
+ * product slugs (common when guessProductSlug collapses labels) cannot false-positive
+ * a quantity-only edit as a unit-price override.
+ */
 function isUnitPriceOverride(
   previous: EventPlanLineItem[] | undefined,
   next: WpStaffQuoteLineEdit[],
 ): boolean {
   const prior = previous ?? [];
-  for (const row of next) {
-    const match = prior.find((item) => item.slug === row.slug);
+  for (let index = 0; index < next.length; index += 1) {
+    const row = next[index]!;
+    const match = prior[index];
     if (match && match.unitPriceCents !== row.unitPriceCents) {
       return true;
     }
