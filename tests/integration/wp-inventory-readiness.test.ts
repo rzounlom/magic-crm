@@ -147,6 +147,83 @@ describe("WP inventory readiness (Generations-like catalog)", () => {
     expect(holdsAfter).toBe(holdsBefore);
   }, 90_000);
 
+  it("maps exclusive lower room from WP lines without holds and preserves approved cents", async () => {
+    const tenant = await provisionTenant("room");
+    await importBookingCatalog(db, {
+      organizationSlug: tenant.organization.slug,
+      dataset: loadBookingCatalogDataset(),
+    });
+
+    const created = await createPublicWpEventInquiry(
+      db,
+      {
+        organizationSlug: tenant.organization.slug,
+        rateLimitKey: `${tenant.organization.slug}:room`,
+        firstName: "Room",
+        lastName: "Map",
+        company: "Room Co",
+        phone: "5745550188",
+        email: `room.${crypto.randomUUID()}@example.test`,
+        eventType: "Birthday",
+        dates: [EVENT_DATE],
+        time: "14:00",
+        adults: 8,
+        children: 0,
+        duration: "3 hours",
+        attractions: {
+          bowling: "no",
+          axe: "no",
+          laser: "no",
+          golf: "no",
+          climbing: "no",
+          arcade: "no",
+        },
+        food: "no",
+        privateRoom: "yes",
+        craft: "no",
+        hasBudget: "no",
+        description: "Need lower event room only",
+        comments: null,
+        referral: "QA",
+        submissionId: `sub_room_${crypto.randomUUID()}`,
+      },
+      unlimitedLimiter,
+    );
+
+    const draft = await createWpStaffQuoteDraftFromInquiry(tenant.ctx, db, created.inquiryId);
+    const working = await db.eventPlanRecommendation.findFirstOrThrow({
+      where: { id: draft.planId, kind: EVENT_PLAN_KINDS.AGENT_WORKING },
+    });
+    const payload = readEventPlanPayload(working.payload);
+    const provenance = (working.payload as { wpQuoteDraft?: { exclusiveRooms?: string[] } })
+      .wpQuoteDraft;
+    expect(provenance?.exclusiveRooms ?? []).toContain("lower");
+    expect(
+      (payload.resourceRequirements ?? []).some((row) => row.resourceTypeSlug === "lower-event-room"),
+    ).toBe(true);
+    const holdCount = await db.resourceReservation.count({
+      where: { organizationId: tenant.organizationId },
+    });
+    expect(holdCount).toBe(0);
+
+    // Amounts stay on WP cents (including known $75 lower extra discrepancy documentation).
+    expect(working.estimatedTotalCents).toBeGreaterThan(0);
+    const amountCheck = assertApprovedQuoteAmountsConsistent({
+      estimatedTotalCents: working.estimatedTotalCents,
+      payload: {
+        ...payload,
+        employeeApprovedQuote: {
+          marker: "employee_approved_wordpress_quote",
+          approvedAt: new Date().toISOString(),
+          availabilityConfirmed: true,
+          availabilityNote: "ok",
+        },
+      },
+      onlyForEmployeeApprovedQuote: true,
+    });
+    expect(amountCheck.ok).toBe(true);
+  }, 90_000);
+
   it("attaches mapped requirements on WP staff drafts and preserves approved cents into booking lines", async () => {
     const tenant = await provisionTenant("draft");
     await importBookingCatalog(db, {

@@ -75,9 +75,18 @@ Pricing-only: bowling shoes. Food: catering lines (not holds).
 - Integration: `tests/integration/wp-inventory-readiness.test.ts`
 - Typecheck / lint / build (see PR)
 
-## 8. Next steps to operational readiness
+## 8. Phase 8B follow-up (room mapping)
 
-1. Decide whether Generations needs an **arcade** resource type (ops config) or remains soft-only.
-2. Optionally attach WP private-room selections to soft `resourceRequirements` using documented room slugs (still no auto-create).
-3. Reconcile WP cents vs booking catalog for go-live.
-4. Connect real email provider + promote to `tenant_live` only after explicit verification.
+Completed on the same PR branch:
+
+- Snapshot now records `room_included` / `rental_kind(s)` / `rental_minutes`
+- Exclusive rooms resolved from structured plan + priced room lines (not preference alone)
+- Soft requirements for `lower-event-room`, `skybox`, `mezzanine`, `full-facility` (+ cove→climbing-area with dedupe)
+- Additional room hours remain pricing-only ($75 WP lower extra documented)
+- Arcade remains soft-only
+
+## 9. Next steps to operational readiness
+
+1. Arcade stays soft-only unless ops adds a resource type.
+2. Reconcile WP cents vs booking catalog for go-live.
+3. Connect real email provider + promote to `tenant_live` only after explicit verification.

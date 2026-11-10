@@ -3,7 +3,9 @@ import {
   readWpQuoteDraftProvenance,
 } from "@/server/event-planner/wp-parity";
 import {
+  WP_EXCLUSIVE_ROOM_MAPPINGS,
   wpAttractionsRequiringInventoryForBooking,
+  wpExclusiveRoomsRequiringInventoryForBooking,
 } from "@/server/event-planner/wp-parity/inventory-mapping";
 import type { AttractionKey } from "@/server/event-planner/wp-parity/types";
 import { INQUIRY_STATUSES } from "@/types/inquiry";
@@ -20,7 +22,7 @@ const ATTRACTION_KEYS = new Set<AttractionKey>([
 
 /**
  * Block booking confirmation for employee-approved WP quotes when reservable
- * attractions lack mapped MagiCRM resource requirements.
+ * attractions or exclusive rooms lack mapped MagiCRM resource requirements.
  */
 export function wpApprovedQuoteInventoryBlockers(payload: EventPlanPayload): string[] {
   const marker = readEmployeeApprovedQuoteMarker(payload);
@@ -33,22 +35,50 @@ export function wpApprovedQuoteInventoryBlockers(payload: EventPlanPayload): str
     payload.activities
       .map((row) => row.name.toLowerCase())
       .filter((name): name is AttractionKey => ATTRACTION_KEYS.has(name as AttractionKey));
-  const required = wpAttractionsRequiringInventoryForBooking(selected);
-  if (required.length === 0) {
+  const requiredAttractions = wpAttractionsRequiringInventoryForBooking(selected);
+  const requiredRooms = wpExclusiveRoomsRequiringInventoryForBooking(
+    provenance?.exclusiveRooms ?? [],
+  );
+  if (requiredAttractions.length === 0 && requiredRooms.length === 0) {
     return [];
   }
-  const mappedSlugs = new Set(
+  const mappedKeys = new Set(
     (payload.resourceRequirements ?? [])
       .filter((row) => row.resourceTypeId && (row.quantity ?? 0) > 0)
       .map((row) => row.knowledgeItemId.replace(/^wp:/, "")),
   );
-  const missing = required.filter((attraction) => !mappedSlugs.has(attraction));
-  if (missing.length === 0) {
-    return [];
+  const mappedTypeIds = new Set(
+    (payload.resourceRequirements ?? [])
+      .map((row) => row.resourceTypeId)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const mappedSlugs = new Set(
+    (payload.resourceRequirements ?? [])
+      .map((row) => row.resourceTypeSlug)
+      .filter((slug): slug is string => Boolean(slug)),
+  );
+  const missingAttractions = requiredAttractions.filter((attraction) => !mappedKeys.has(attraction));
+  const missingRooms = requiredRooms.filter((room) => {
+    if (mappedKeys.has(`room:${room}`)) {
+      return false;
+    }
+    // Cove may already be covered by climbing attraction → climbing-area.
+    const mapping = WP_EXCLUSIVE_ROOM_MAPPINGS.find((row) => row.key === room);
+    return !mapping?.resourceTypeSlugs.some((slug) => mappedSlugs.has(slug));
+  });
+  void mappedTypeIds;
+  const blockers: string[] = [];
+  if (missingAttractions.length > 0) {
+    blockers.push(
+      `Cannot confirm booking: reservable WordPress attractions are not mapped to MagiCRM inventory (${missingAttractions.join(", ")}). Configure resource types or remove those attractions before confirming.`,
+    );
   }
-  return [
-    `Cannot confirm booking: reservable WordPress attractions are not mapped to MagiCRM inventory (${missing.join(", ")}). Configure resource types or remove those attractions before confirming.`,
-  ];
+  if (missingRooms.length > 0) {
+    blockers.push(
+      `Cannot confirm booking: exclusive WordPress rooms are not mapped to MagiCRM inventory (${missingRooms.join(", ")}). Configure resource types before confirming.`,
+    );
+  }
+  return blockers;
 }
 
 export type BookingHoldSnapshot = {
