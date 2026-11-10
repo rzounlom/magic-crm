@@ -45,6 +45,16 @@ export {
 } from "@/server/event-planner/wp-parity/from-intake";
 export type { PrivateWpCalculationOutcome } from "@/server/event-planner/wp-parity/from-intake";
 export {
+  WP_COMPONENT_CLASSIFICATIONS,
+  WP_KNOWN_PRICE_DISCREPANCY_TREATMENTS,
+  WP_UNMAPPED_COMPONENT_TREATMENTS,
+  treatmentForWpKey,
+} from "@/server/event-planner/wp-parity/component-classification";
+export type {
+  WpComponentClassification,
+  WpComponentTreatment,
+} from "@/server/event-planner/wp-parity/component-classification";
+export {
   WP_MISSING_TENANT_CONFIG_KEY,
   WP_PLUGIN_DEFAULTS_WARNING,
   listWpTenantConfigMissingKeys,

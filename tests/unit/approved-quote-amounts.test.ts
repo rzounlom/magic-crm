@@ -98,7 +98,7 @@ describe("approved quote amount consistency", () => {
     expect(check.ok).toBe(false);
   });
 
-  it("does not enforce mismatch for non-approved plans when onlyForEmployeeApprovedQuote", () => {
+  it("does not enforce mismatch for non-WP plans when onlyForEmployeeApprovedQuote", () => {
     const row = payload({
       lineItems: [
         {
@@ -118,5 +118,59 @@ describe("approved quote amount consistency", () => {
       onlyForEmployeeApprovedQuote: true,
     });
     expect(check.ok).toBe(true);
+  });
+
+  it("enforces mismatch for WP staff drafts with wpQuoteDraft provenance", () => {
+    const row = payload({
+      lineItems: [
+        {
+          productId: "",
+          slug: "salad-pan",
+          name: "Salad pan",
+          quantity: 1,
+          unitPriceCents: 2499,
+          totalCents: 2499,
+          kind: "WP_LINE",
+        },
+      ],
+      wpQuoteDraft: {
+        source: "wordpress_parity_private_calculation",
+        pricingSource: "approved_plugin_baseline",
+        rulesVersion: "test",
+        pricingRevision: "test",
+        calculatedAt: null,
+        planName: "Test",
+        planDate: "2099-06-01",
+        originalSubtotalCents: 2499,
+        originalTaxCents: 0,
+        originalTotalCents: 2499,
+        subtotalCents: 2499,
+        taxCents: 0,
+        totalCents: 2499,
+        warnings: [],
+        catalogPriceDiscrepancies: [],
+        selectedAttractions: [],
+        exclusiveRooms: [],
+        pricingOnlyRoomAdjustments: [],
+        unpriced: false,
+        hardReview: false,
+      },
+    });
+    const mismatch = assertApprovedQuoteAmountsConsistent({
+      estimatedTotalCents: 1999,
+      payload: row,
+      onlyForEmployeeApprovedQuote: true,
+    });
+    expect(mismatch.ok).toBe(false);
+
+    const missingLines = assertApprovedQuoteAmountsConsistent({
+      estimatedTotalCents: 2499,
+      payload: payload({
+        lineItems: [],
+        wpQuoteDraft: (row as { wpQuoteDraft: unknown }).wpQuoteDraft,
+      }),
+      onlyForEmployeeApprovedQuote: true,
+    });
+    expect(missingLines.ok).toBe(false);
   });
 });
