@@ -16,6 +16,9 @@ model Organization {
   clerkOrganizationId String?  @unique
   name                String
   slug                String   @unique
+  /// Optional public/customer-facing venue name. Null falls back to name (or slug humanization).
+  /// Does not replace internal name/slug used for audit identity and routing.
+  customerFacingName  String?  @db.VarChar(160)
   /// IANA timezone identifier. Required; no tenant-specific schema default.
   timezone            String
   /// ISO 4217 currency code. Monetary amounts must never use floating-point types.

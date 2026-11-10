@@ -31,6 +31,7 @@ export default async function PublicEventPlanPage({
     notFound();
   }
 
+  // Services already resolve customerFacingName into organizationName for public plan views.
   const organizationName = customerFacingOrganizationName(view.organizationName);
 
   return (

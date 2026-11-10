@@ -14,6 +14,27 @@ describe("customer-facing organization name", () => {
     expect(customerFacingOrganizationName("Riverside Fun Center")).toBe("Riverside Fun Center");
   });
 
+  it("prefers explicit customerFacingName without changing slug identity", () => {
+    expect(
+      customerFacingOrganizationName({
+        name: "generations-crm-test-1788129640704833684",
+        customerFacingName: "Generations Adventureplex",
+      }),
+    ).toBe("Generations Adventureplex");
+    expect(
+      customerFacingOrganizationName({
+        name: "generations-crm-test-1788129640704833684",
+        customerFacingName: "  ",
+      }),
+    ).toBe("Generations CRM Test");
+    expect(
+      customerFacingOrganizationName({
+        name: "Other Tenant LLC",
+        customerFacingName: null,
+      }),
+    ).toBe("Other Tenant LLC");
+  });
+
   it("builds a relative public inquiry path from the trusted slug", () => {
     expect(publicInquiryFormPath("generations-crm-test-1788129640704833684")).toBe(
       "/inquire/generations-crm-test-1788129640704833684",

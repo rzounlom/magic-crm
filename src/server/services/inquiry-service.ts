@@ -13,7 +13,10 @@ import {
   formatIntakeBudget,
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
-import { publicInquiryPathForActiveOrganization } from "@/lib/inquiries/organization-display-name";
+import {
+  customerFacingOrganizationName,
+  publicInquiryPathForActiveOrganization,
+} from "@/lib/inquiries/organization-display-name";
 import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { formatEventLocalTime, resolveTenantTimezone } from "@/lib/inquiries/tenant-datetime";
 import { AuthorizationError, InquiryError } from "@/server/errors";
@@ -147,7 +150,7 @@ export async function resolvePublicInquiryOrganization(
 ) {
   const organization = await database.organization.findFirst({
     where: { slug: slug.trim().toLowerCase() },
-    select: { id: true, name: true, slug: true, onboardingStatus: true },
+    select: { id: true, name: true, customerFacingName: true, slug: true, onboardingStatus: true },
   });
   if (!organization || organization.onboardingStatus !== "ACTIVE") {
     throw new InquiryError("TENANT_NOT_AVAILABLE");
@@ -273,7 +276,7 @@ export async function createPublicInquiry(
               customerEmail: parsed.data.email.trim(),
               customerFirstName: parsed.data.firstName,
               customerLastName: parsed.data.lastName,
-              organizationName: organization.name,
+              organizationName: customerFacingOrganizationName(organization),
               planPath: `/plan/${token}`,
               appUrl,
               eventDate: parsed.data.preferredDate ?? null,
@@ -507,7 +510,7 @@ export async function createPublicWpEventInquiry(
   // never invokes employee quote delivery, never includes private calc/pricing.
   await trySendInquiryAcknowledgment(database, {
     organizationId: organization.id,
-    organizationName: organization.name,
+    organizationName: customerFacingOrganizationName(organization),
     inquiryId: createdInquiry.id,
     customerEmail: answers.email,
     customerFirstName: answers.firstName,
@@ -542,7 +545,7 @@ export async function getPublicConversationByToken(database: InquiryDb, token: s
           createdAt: true,
         },
       },
-      organization: { select: { name: true, slug: true } },
+      organization: { select: { name: true, customerFacingName: true, slug: true } },
     },
   });
   if (!conversation) {
@@ -550,7 +553,7 @@ export async function getPublicConversationByToken(database: InquiryDb, token: s
   }
 
   return {
-    organizationName: conversation.organization.name,
+    organizationName: customerFacingOrganizationName(conversation.organization),
     organizationSlug: conversation.organization.slug,
     inquiry: {
       status: conversation.inquiry.status,
@@ -596,7 +599,7 @@ export async function submitPublicConversationMessage(
     where: { publicTokenHash: hash },
     include: {
       inquiry: true,
-      organization: { select: { name: true } },
+      organization: { select: { name: true, customerFacingName: true } },
     },
   });
   if (!conversation) {
@@ -629,7 +632,7 @@ export async function submitPublicConversationMessage(
   if (conversation.inquiry.aiHandlingEnabled) {
     await runSalesAgentTurn(database, runtime, {
       organizationId: conversation.organizationId,
-      organizationName: conversation.organization.name,
+      organizationName: customerFacingOrganizationName(conversation.organization),
       inquiryId: conversation.inquiryId,
       conversationId: conversation.id,
       trigger: "message",
