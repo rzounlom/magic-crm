@@ -77,7 +77,12 @@ export type AuditAction =
   | "knowledge_requirement.updated"
   | "scheduling.hours_exception_authorized"
   | "scheduling.hours_exception_revoked"
-  | "scheduling.hours_exception_consumed";
+  | "scheduling.hours_exception_consumed"
+  | "scheduling.hours_policy_draft_saved"
+  | "scheduling.hours_policy_verified"
+  | "scheduling.hours_policy_demoted"
+  | "scheduling.hours_exception_date_saved"
+  | "scheduling.hours_exception_date_deleted";
 
 type AuditMetadata = Record<string, string | number | boolean | null>;
 

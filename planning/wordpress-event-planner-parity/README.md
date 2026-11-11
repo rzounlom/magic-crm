@@ -59,7 +59,8 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [33-phase-10b-owner-decisions.md](./33-phase-10b-owner-decisions.md) | Owner decisions for Option A, deposit, display name, perm sync |
 | [34-phase-10c-branding-permission-readiness.md](./34-phase-10c-branding-permission-readiness.md) | PR #15 merge, migration deploy, branding/perm preflights |
 | [35-phase-10d-approved-config-apply.md](./35-phase-10d-approved-config-apply.md) | Owner-approved branding + scoped permission apply |
+| [36-phase-10e-operating-hours-admin.md](./36-phase-10e-operating-hours-admin.md) | Hours admin UI + staff workflow validation |
 
 ## Branch
 
-Customer `main` includes PRs #6–#15. Phase 10D applied Generations `customerFacingName` and scoped quote permissions (owner-approved). No Scenario Lab; no Production catalog/price/deposit/hours/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.
+Customer `main` includes PRs #6–#16. Phase 10E adds operating-hours administration (no Production hours invented). No Scenario Lab; no Production catalog/price/deposit/hours/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.
