@@ -10,5 +10,8 @@
     "No custom packages are invented — packages array is empty until a live export supplies them.",
     "Other organizations are unaffected (no global fallback)."
   ],
-  "organizationIds": ["mdutc2nkvpafezukeem8942v"]
+  "organizationIds": [
+    "mdutc2nkvpafezukeem8942v",
+    "huqlb9wiygqegwo8fy53f8dw"
+  ]
 }
