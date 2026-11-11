@@ -60,7 +60,9 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [34-phase-10c-branding-permission-readiness.md](./34-phase-10c-branding-permission-readiness.md) | PR #15 merge, migration deploy, branding/perm preflights |
 | [35-phase-10d-approved-config-apply.md](./35-phase-10d-approved-config-apply.md) | Owner-approved branding + scoped permission apply |
 | [36-phase-10e-operating-hours-admin.md](./36-phase-10e-operating-hours-admin.md) | Hours admin UI + staff workflow validation |
+| [37-phase-10f-hours-deploy-and-owner-template.md](./37-phase-10f-hours-deploy-and-owner-template.md) | PR #17 deploy + owner hours input template |
+| [38-phase-10j-hours-verification.md](./38-phase-10j-hours-verification.md) | Owner-authorized Generations hours DRAFT → VERIFIED |
 
 ## Branch
 
-Customer `main` includes PRs #6–#16. Phase 10E adds operating-hours administration (no Production hours invented). No Scenario Lab; no Production catalog/price/deposit/hours/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.
+Customer `main` includes PRs #6–#18. Generations Main Location operating hours are **VERIFIED** in Production (policy `s07kml2m6xfiwg8ood8vzc6r`); FAQ website body still conflicts. No Scenario Lab; no Production catalog/price/deposit/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.
