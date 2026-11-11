@@ -57,7 +57,9 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [31-phase-10a-operational-readiness.md](./31-phase-10a-operational-readiness.md) | Generations operational readiness audit + activation checklist |
 | [32-phase-10b-staff-workflow-readiness.md](./32-phase-10b-staff-workflow-readiness.md) | Staff workflow readiness, perm dry-run, branding, hours/tax notes |
 | [33-phase-10b-owner-decisions.md](./33-phase-10b-owner-decisions.md) | Owner decisions for Option A, deposit, display name, perm sync |
+| [34-phase-10c-branding-permission-readiness.md](./34-phase-10c-branding-permission-readiness.md) | PR #15 merge, migration deploy, branding/perm preflights |
+| [35-phase-10d-approved-config-apply.md](./35-phase-10d-approved-config-apply.md) | Owner-approved branding + scoped permission apply |
 
 ## Branch
 
-Customer `main` includes PRs #6–#13 (+ #14 when merged). Phase 10B: `phase-10b-staff-workflow-readiness`. No Scenario Lab; no Production catalog/price/deposit/hours/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.
+Customer `main` includes PRs #6–#15. Phase 10D applied Generations `customerFacingName` and scoped quote permissions (owner-approved). No Scenario Lab; no Production catalog/price/deposit/hours/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.

@@ -2,11 +2,11 @@
 
 **Date:** 2026-11-10  
 **Org:** `mdutc2nkvpafezukeem8942v`  
-**Status:** Recommended — **not formally approved** until checkboxes are confirmed by owner.
+**Status:** **APPROVED** by owner (Phase 10D instruction, 2026-11-10). Applied in Phase 10D.
 
 ## Decisions
 
-### 1. Pricing authority — Option A (recommended)
+### 1. Pricing authority — Option A — APPROVED
 
 - WP Event Planner 3.3.0 approved pricing is authoritative for WP-derived event quotes.  
 - Employee-approved quote amounts are authoritative for bookings/payments.  
@@ -14,34 +14,39 @@
 - Known WP deltas stay visible to staff.  
 - Unit-price overrides require Administrator `crm.quotes.price_override`.
 
-- [ ] Owner accepts Option A  
+- [x] Owner accepts Option A  
 - [ ] Owner declines / chooses Option B catalog alignment later  
 
-**Do not** change pricing source to `tenant_live` in this phase.
+**Do not** change pricing source to `tenant_live` from this approval.
 
-### 2. Deposit policy — 25% (recommended keep)
+### 2. Deposit policy — 25% — APPROVED
 
-- Current Production `organizations.depositPercent` = **25**.  
+- Current Production `organizations.depositPercent` = **25** (retained; not modified in Phase 10D).  
 - Applies organization-wide; MagiCRM computes `depositRequiredCents` with banker's-style trunc percent helper.  
 - No staff deposit override API today.
 
-- [ ] Owner confirms 25% is correct for Generations events  
+- [x] Owner confirms 25% is correct for Generations events  
 - [ ] Owner requests a different percent (separate change window)  
 
-### 3. Customer-facing name — Generations Adventureplex (recommended)
+### 3. Customer-facing name — Generations Adventureplex — APPROVED
 
-- Keep internal `name` / `slug` as CRM Test identity.  
-- Set `customerFacingName = 'Generations Adventureplex'` after migration deploy.  
-- Public inquire / thanks / future quote emails use the same display helper.
+- Migration `20261110160000_organization_customer_facing_name` deployed in Phase 10C.  
+- Phase 10D set `customerFacingName = 'Generations Adventureplex'` (1 row).  
+- Internal `name` / `slug` unchanged.  
+- Public inquire / thanks use the display helper.
 
-- [ ] Owner approves setting `customerFacingName` to Generations Adventureplex  
+- [x] Owner approves setting `customerFacingName` to Generations Adventureplex  
 - [ ] Owner prefers a different public name: _______________  
 
-### 4. Production permission sync (required for internal quote approval)
+### 4. Production permission sync — APPROVED
 
-Exact changes: create two permission definitions; link approve (+ override for Admins) on Generations only.
+Exact changes applied in Phase 10D via `apply-quote-permission-sync.ts --confirm APPLY`:
 
-- [ ] Owner approves scoped apply via `apply-quote-permission-sync.ts --confirm APPLY`  
+- Created `crm.quotes.approve` and `crm.quotes.price_override`
+- Linked both to Generations Administrators
+- Linked approve only to Generations Event Sales
+
+- [x] Owner approves scoped apply via `apply-quote-permission-sync.ts --confirm APPLY`  
 - [ ] Owner prefers full `db:sync-auth` for all tenants instead  
 
 ### 5. Still deferred (explicit non-goals)
