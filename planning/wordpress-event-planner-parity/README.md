@@ -62,7 +62,8 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [36-phase-10e-operating-hours-admin.md](./36-phase-10e-operating-hours-admin.md) | Hours admin UI + staff workflow validation |
 | [37-phase-10f-hours-deploy-and-owner-template.md](./37-phase-10f-hours-deploy-and-owner-template.md) | PR #17 deploy + owner hours input template |
 | [38-phase-10j-hours-verification.md](./38-phase-10j-hours-verification.md) | Owner-authorized Generations hours DRAFT → VERIFIED |
+| [39-phase-10k-live-pricing-revalidation-readiness.md](./39-phase-10k-live-pricing-revalidation-readiness.md) | PR #19 merge + live pricing revalidation readiness (blocked on WP export) |
 
 ## Branch
 
-Customer `main` includes PRs #6–#18. Generations Main Location operating hours are **VERIFIED** in Production (policy `s07kml2m6xfiwg8ood8vzc6r`); FAQ website body still conflicts. No Scenario Lab; no Production catalog/price/deposit/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.
+Customer `main` includes PRs #6–#19. Generations Main Location operating hours are **VERIFIED** in Production (policy `s07kml2m6xfiwg8ood8vzc6r`); FAQ website body still conflicts. Pricing remains `approved_plugin_baseline` with `finalLivePriceRevalidation: pending` until a live WordPress export is reviewed. No Scenario Lab; no Production catalog/price/deposit/tax/booking writes without explicit approval; no customer quote delivery; live email disabled.
