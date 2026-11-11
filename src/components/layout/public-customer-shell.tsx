@@ -7,7 +7,7 @@ type PublicCustomerShellProps = {
   brand?: string;
   /**
    * Optional host organization display name from trusted server resolution.
-   * Shown as secondary identity; does not replace the platform brand.
+   * When present, the venue name is the primary header identity; platform brand stays understated.
    */
   organizationName?: string | null;
   children: ReactNode;
@@ -20,7 +20,8 @@ export function PublicCustomerShell({
   children,
   contained = false,
 }: PublicCustomerShellProps) {
-  const mark = brand.trim().slice(0, 1) || "M";
+  const hostName = organizationName?.trim() || null;
+  const mark = (hostName ?? brand).trim().slice(0, 1) || "M";
 
   return (
     <div
@@ -39,15 +40,17 @@ export function PublicCustomerShell({
             <span className="brand-mark-mark" aria-hidden>
               {mark}
             </span>
-            <span className="truncate">{brand}</span>
+            {hostName ? (
+              <span className="truncate text-[length:var(--text-body)] font-semibold" data-public-host title={hostName}>
+                {hostName}
+              </span>
+            ) : (
+              <span className="truncate">{brand}</span>
+            )}
           </div>
-          {organizationName ? (
-            <p
-              className="max-w-[50%] truncate text-right text-[length:var(--text-caption)] font-semibold text-muted-foreground sm:text-[length:var(--text-label)]"
-              data-public-host
-              title={organizationName}
-            >
-              {organizationName}
+          {hostName ? (
+            <p className="shrink-0 text-[length:var(--text-caption)] font-medium text-muted-foreground">
+              Powered by {brand}
             </p>
           ) : null}
         </div>

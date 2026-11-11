@@ -91,7 +91,7 @@ export function WpStaffQuoteDraftPanel({
 
   return (
     <div
-      className="mt-8 rounded-md border border-border px-4 py-4"
+      className="rounded-[var(--radius-card)] border border-border bg-surface px-4 py-4 shadow-sm"
       data-wp-staff-quote-draft
     >
       <h2 className="text-sm font-medium text-foreground">Staff quote draft</h2>
@@ -344,12 +344,14 @@ export function WpStaffQuoteDraftPanel({
                   }}
                 >
                   <input type="hidden" name="inquiryId" value={inquiryId} />
-                  <p className="text-sm font-medium">Approve and send quote</p>
+                  <p className="text-sm font-medium">
+                    {deliveryPolicy.canDeliver ? "Approve and send quote" : "Approve internal quote"}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Customer: {customerEmail || "missing email"}
                     {deliveryPolicy.canDeliver
                       ? ". Will publish a single customer quote (not Good/Recommended/Premium)."
-                      : ". Approval will be recorded; customer delivery remains blocked by pricing policy."}
+                      : ". Approval records the staff-ready quote only. Customer delivery remains blocked by pricing policy and is not sent by this action."}
                   </p>
                   <label className="block text-xs">
                     <span className="text-foreground/70">Approval note (optional)</span>
@@ -362,9 +364,7 @@ export function WpStaffQuoteDraftPanel({
                     pendingLabel="Approving…"
                     className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
                   >
-                    {deliveryPolicy.canDeliver
-                      ? "Approve and send quote"
-                      : "Approve quote (delivery gated)"}
+                    {deliveryPolicy.canDeliver ? "Approve and send quote" : "Approve internal quote"}
                   </PendingSubmitButton>
                 </SecurityActionForm>
               ) : null}
