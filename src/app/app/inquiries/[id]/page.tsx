@@ -6,6 +6,7 @@ import { HoldReadinessPanel } from "@/components/layout/hold-readiness-panel";
 import { LiveAgentWorkspace } from "@/components/layout/live-agent-workspace";
 import { AcknowledgeInquiryView } from "@/components/layout/acknowledge-inquiry-view";
 import { EmployeeInquiryConversation } from "@/components/layout/employee-inquiry-conversation";
+import { EmployeeInquiryTabs } from "@/components/layout/employee-inquiry-tabs";
 import { InquiryArchiveActions } from "@/components/layout/inquiry-archive-actions";
 import { InquiryFunnel } from "@/components/layout/inquiry-funnel";
 import { SecurityActionForm } from "@/components/layout/security-action-form";
@@ -30,11 +31,12 @@ import {
   formatIntakeBudget,
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
+import { formatMoneyFromCents } from "@/lib/event-planner/money";
 import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display";
 import {
-  CUSTOMER_SELECTED_PLAN_BANNER,
-  formatReadyForHumanReason,
-} from "@/lib/inquiries/ready-for-human-reason";
+  employeeInquiryStatusBanner,
+  employeeReadyForHumanCopy,
+} from "@/lib/inquiries/inquiry-workflow-labels";
 import { formatPhoneDisplay } from "@/lib/inquiries/public-phone";
 import { formatEventLocalDateTime } from "@/lib/inquiries/tenant-datetime";
 import {
@@ -307,267 +309,418 @@ export default async function InquiryDetailPage({
     );
   }
 
+  const statusBanner = employeeInquiryStatusBanner({
+    isWpIntake: Boolean(wpIntake),
+    selectedEventPlanId: inquiry.selectedEventPlanId,
+    bookingNumber: inquiry.bookings[0]?.bookingNumber,
+  });
+  const privateEstimateCents =
+    wpStaffDraftProvenance?.totalCents ??
+    (typeof wpIntake?.privateCalculation.snapshot === "object" &&
+    wpIntake.privateCalculation.snapshot &&
+    "valid" in wpIntake.privateCalculation.snapshot &&
+    (wpIntake.privateCalculation.snapshot as { valid?: boolean }).valid === true
+      ? (
+          wpIntake.privateCalculation.snapshot as {
+            dates?: Array<{ recommendation?: { total_cents?: number } }>;
+          }
+        ).dates?.[0]?.recommendation?.total_cents
+      : null);
+  const quoteApproved = Boolean(wpStaffDraftProvenance?.employeeApproval);
+  const quoteDelivered = Boolean(wpStaffDraftProvenance?.employeeApproval?.deliveryCompleted);
+  const availabilityLabel = workingPlan?.availabilityStatus ?? "Not checked";
+  const warningCount =
+    (wpStaffDraftProvenance?.warnings.length ?? 0) +
+    (wpStaffDraftProvenance?.catalogPriceDiscrepancies.length ?? 0);
+  const guestSummary = wpIntake
+    ? `${wpIntake.answers.adults} adults · ${wpIntake.answers.children} children (${inquiry.guestCount ?? wpIntake.answers.adults + wpIntake.answers.children} total)`
+    : inquiry.adultGuestCount != null || inquiry.childGuestCount != null
+      ? `${inquiry.adultGuestCount ?? 0} adults · ${inquiry.childGuestCount ?? 0} children (${inquiry.guestCount ?? "—"} total)`
+      : String(inquiry.guestCount ?? "—");
+  const durationSummary =
+    inquiry.desiredDurationMinutes != null
+      ? formatDesiredDuration(inquiry.desiredDurationMinutes)
+      : wpIntake
+        ? `${wpIntake.answers.duration}${wpIntake.answers.otherHours != null ? ` (${wpIntake.answers.otherHours}h)` : ""}`
+        : "—";
+
   return (
-    <section className="max-w-3xl">
+    <section className="mx-auto w-full max-w-5xl">
       <AcknowledgeInquiryView inquiryId={inquiry.id} />
-      <Link href="/app/inquiries" className="text-sm text-primary">
+      <Link href="/app/inquiries" className="text-sm font-semibold text-primary">
         Back to inquiries
       </Link>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{displayName}</h1>
-      <p className="mt-2 text-sm font-medium text-foreground">
-        {formatInquiryQueueLabel({
-          ...inquiry,
-          bookingNumber: inquiry.bookings[0]?.bookingNumber,
-          bookingStatus: inquiry.bookings[0]?.status,
-          salesStage: inquiry.salesStage,
-        })}
-      </p>
-      {inquiry.bookings[0] ? (
-        <p className="mt-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
-          Converted to Booking{" "}
-          <Link href={`/app/bookings/${inquiry.bookings[0].id}`} className="text-primary">
-            {inquiry.bookings[0].bookingNumber}
-          </Link>
-        </p>
-      ) : inquiry.selectedEventPlanId ? (
-        <p className="mt-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm font-semibold tracking-[0.12em] uppercase">
-          {CUSTOMER_SELECTED_PLAN_BANNER}
-        </p>
-      ) : null}
-      <InquiryArchiveActions
-        inquiryId={inquiry.id}
-        archived={Boolean(inquiry.archivedAt)}
-        canManage={canManage}
-        bookingId={inquiry.bookings[0]?.id}
-        bookingNumber={inquiry.bookings[0]?.bookingNumber}
-        bookingStatus={inquiry.bookings[0]?.status}
-      />
 
-      <div className="mt-8 border-t border-border pt-6">
-        <h2 className="text-sm font-medium text-foreground">Customer activity</h2>
-        <InquiryFunnel
-          timeZone={timeZone}
-          inquiry={{
-            ...inquiry,
-            selectedPlanTitle: undefined,
-            selectedPlanTier: undefined,
-          }}
-        />
-      </div>
-
-      {wpIntake ? (
-        <div className="mt-6 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
-          <p className="font-medium">Public event request — staff review required</p>
-          <p className="mt-1 text-foreground/80">
-            {formatReadyForHumanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)} No
-            public package, booking, or payment was created. Use the private recommendation below after
-            verifying pricing.
-          </p>
-        </div>
-      ) : inquiry.humanHandoffReason && !inquiry.selectedEventPlanId ? (
-        <div className="mt-4 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
-          <p className="font-medium">Needs staff follow-up</p>
-          <p className="mt-1 text-foreground/80">
-            {formatReadyForHumanReason(inquiry.humanHandoffReason, inquiry.selectedEventPlanId)}
-          </p>
-        </div>
-      ) : null}
-
-      <dl className="mt-8 grid gap-4 border-t border-border pt-6 text-sm sm:grid-cols-2">
-        <div>
-          <dt className="text-foreground/60">Customer / group</dt>
-          <dd className="mt-1">{inquiry.customerGroupName || displayName}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Contact</dt>
-          <dd className="mt-1">
-            {[inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") || "—"}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Email</dt>
-          <dd className="mt-1">{inquiry.customerEmail}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Phone</dt>
-          <dd className="mt-1">{phoneDisplay || "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Event type</dt>
-          <dd className="mt-1">{inquiry.eventType || "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Date / time</dt>
-          <dd className="mt-1">
-            {formatEventLocalDateTime({
-              date: inquiry.desiredDate,
-              time: inquiry.desiredStartTime,
-            })}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Guests</dt>
-          <dd className="mt-1">
-            {wpIntake
-              ? `${wpIntake.answers.adults} adults · ${wpIntake.answers.children} children (${inquiry.guestCount ?? wpIntake.answers.adults + wpIntake.answers.children} total)`
-              : inquiry.adultGuestCount != null || inquiry.childGuestCount != null
-                ? `${inquiry.adultGuestCount ?? 0} adults · ${inquiry.childGuestCount ?? 0} children (${inquiry.guestCount ?? "—"} total)`
-                : (inquiry.guestCount ?? "—")}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Guest mix</dt>
-          <dd className="mt-1">{formatGuestMix(inquiry.guestMix)}</dd>
-        </div>
-        {inquiry.desiredDurationMinutes != null ? (
-          <div>
-            <dt className="text-foreground/60">Requested length</dt>
-            <dd className="mt-1">{formatDesiredDuration(inquiry.desiredDurationMinutes)}</dd>
+      <header className="mt-4 rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[length:var(--text-caption)] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+              {formatInquiryQueueLabel({
+                ...inquiry,
+                bookingNumber: inquiry.bookings[0]?.bookingNumber,
+                bookingStatus: inquiry.bookings[0]?.status,
+                salesStage: inquiry.salesStage,
+              })}
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {displayName}
+            </h1>
+            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <dt className="text-muted-foreground">Event type</dt>
+                <dd className="mt-0.5 font-medium text-foreground">{inquiry.eventType || "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Requested date / time</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {formatEventLocalDateTime({
+                    date: inquiry.desiredDate,
+                    time: inquiry.desiredStartTime,
+                  })}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Guests</dt>
+                <dd className="mt-0.5 font-medium text-foreground">{guestSummary}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Duration</dt>
+                <dd className="mt-0.5 font-medium text-foreground">{durationSummary}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Primary contact</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {[inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
+                    "—"}
+                  {phoneDisplay ? ` · ${phoneDisplay}` : ""}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Email</dt>
+                <dd className="mt-0.5 font-medium text-foreground break-all">{inquiry.customerEmail}</dd>
+              </div>
+            </dl>
           </div>
-        ) : null}
-        <div>
-          <dt className="text-foreground/60">Budget</dt>
-          <dd className="mt-1">
-            {wpIntake
-              ? wpIntake.answers.hasBudget === "yes" && wpIntake.answers.budgetCents != null
-                ? `$${(wpIntake.answers.budgetCents / 100).toFixed(2)}`
-                : "Flexible"
-              : formatIntakeBudget({
-                  budgetPreference: inquiry.budgetPreference,
-                  budgetMin: inquiry.budgetMin,
-                  budgetMax: inquiry.budgetMax,
-                })}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Event goal</dt>
-          <dd className="mt-1">{inquiry.eventGoal || inquiry.occasion || "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-foreground/60">Food</dt>
-          <dd className="mt-1">
-            {wpIntake ? wpIntake.answers.food : formatDiningPreference(inquiry.diningPreference)}
-          </dd>
-        </div>
-        {wpIntake || inquiry.beveragePreference ? (
-          <div>
-            <dt className="text-foreground/60">Beverages</dt>
-            <dd className="mt-1">
-              {wpIntake
-                ? `Craft: ${wpIntake.answers.craft}`
-                : formatBeveragePreference(inquiry.beveragePreference)}
-            </dd>
-          </div>
-        ) : null}
-        <div>
-          <dt className="text-foreground/60">Private space</dt>
-          <dd className="mt-1">
-            {wpIntake
-              ? wpIntake.answers.privateRoom
-              : formatSpacePreference(inquiry.spacePreference)}
-          </dd>
-        </div>
-        <div className="sm:col-span-2">
-          <dt className="text-foreground/60">Attraction preferences</dt>
-          <dd className="mt-1">
-            {wpIntake ? (
-              <ul className="grid gap-1 sm:grid-cols-2">
-                {WP_ATTRACTION_KEYS.map((key) => (
-                  <li key={key}>
-                    {WP_ATTRACTION_LABELS[key]}:{" "}
-                    {WP_ATTRACTION_ANSWER_LABELS[wpIntake.answers.attractions[key]]}
-                  </li>
-                ))}
-              </ul>
-            ) : inquiry.attractionInterestNames.length > 0 ? (
-              inquiry.attractionInterestNames.join(", ")
-            ) : (
-              "—"
-            )}
-          </dd>
-        </div>
-      </dl>
-      {inquiry.customerNotes ? (
-        <div className="mt-6 text-sm">
-          <p className="text-foreground/60">Customer notes</p>
-          <p className="mt-1 whitespace-pre-wrap text-foreground/80">{inquiry.customerNotes}</p>
-        </div>
-      ) : null}
-
-      {wpIntake ? (
-        <WpStaffQuoteDraftPanel
-          inquiryId={inquiry.id}
-          canManage={canManage}
-          canApproveQuotes={canApproveQuotes}
-          canOverrideQuotePricing={canOverrideQuotePricing}
-          canCreate={wpSnapshotReady}
-          draft={workingPlan && wpStaffDraftProvenance ? workingPlan : null}
-          provenance={wpStaffDraftProvenance}
-          deliveryPolicy={wpDeliveryPolicy}
-          customerEmail={inquiry.customerEmail}
-        />
-      ) : null}
-
-      {wpIntake ? <WpIntakeAnswersPanel metadata={wpIntake} /> : null}
-
-      {inquiry.internalSummary ? (
-        <div className="mt-8 rounded-md border border-border px-4 py-4">
-          <h2 className="text-sm font-medium text-foreground">Planner summary</h2>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/80">{inquiry.internalSummary}</p>
-        </div>
-      ) : null}
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <a
-          href={mailto}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          Contact customer
-        </a>
-        {canManage && inquiry.aiHandlingEnabled ? (
-          <SecurityActionForm
-            action={takeOverInquiryAction}
-            notice={{ successTitle: "Conversation taken over", errorTitle: "Unable to take over" }}
-          >
-            <input type="hidden" name="inquiryId" value={inquiry.id} />
-            <PendingSubmitButton
-              pendingLabel="Taking over…"
-              className="rounded-md border border-border px-4 py-2 text-sm font-medium"
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <a
+              href={mailto}
+              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-control)] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
             >
-              Take over
-            </PendingSubmitButton>
-          </SecurityActionForm>
+              Contact customer
+            </a>
+            {canManage && inquiry.aiHandlingEnabled ? (
+              <SecurityActionForm
+                action={takeOverInquiryAction}
+                notice={{ successTitle: "Conversation taken over", errorTitle: "Unable to take over" }}
+              >
+                <input type="hidden" name="inquiryId" value={inquiry.id} />
+                <PendingSubmitButton
+                  pendingLabel="Taking over…"
+                  className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-control)] border border-border px-4 py-2 text-sm font-semibold"
+                >
+                  Take over
+                </PendingSubmitButton>
+              </SecurityActionForm>
+            ) : null}
+          </div>
+        </div>
+
+        {inquiry.bookings[0] ? (
+          <p className="mt-4 rounded-[var(--radius-control)] border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+            Converted to Booking{" "}
+            <Link href={`/app/bookings/${inquiry.bookings[0].id}`} className="font-semibold text-primary">
+              {inquiry.bookings[0].bookingNumber}
+            </Link>
+          </p>
+        ) : statusBanner ? (
+          <div
+            className={`mt-4 rounded-[var(--radius-control)] border px-3 py-2 text-sm ${
+              statusBanner.tone === "info"
+                ? "border-info/30 bg-info/5 text-foreground"
+                : statusBanner.tone === "success"
+                  ? "border-success/30 bg-success/5 text-foreground"
+                  : "border-border bg-muted/40 text-foreground"
+            }`}
+          >
+            <p className="font-semibold">{statusBanner.title}</p>
+            {statusBanner.detail ? (
+              <p className="mt-1 text-muted-foreground">{statusBanner.detail}</p>
+            ) : null}
+          </div>
         ) : null}
+
+        <div className="mt-4">
+          <InquiryArchiveActions
+            inquiryId={inquiry.id}
+            archived={Boolean(inquiry.archivedAt)}
+            canManage={canManage}
+            bookingId={inquiry.bookings[0]?.id}
+            bookingNumber={inquiry.bookings[0]?.bookingNumber}
+            bookingStatus={inquiry.bookings[0]?.status}
+          />
+        </div>
+      </header>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatusCard
+          label="Private estimate"
+          value={
+            typeof privateEstimateCents === "number"
+              ? formatMoneyFromCents(privateEstimateCents, "USD")
+              : "Not ready"
+          }
+          hint={wpIntake ? "Staff-only WordPress calculation" : "No private estimate"}
+        />
+        <StatusCard
+          label="Availability"
+          value={availabilityLabel}
+          hint={workingPlan?.availabilityNote || "Check from Staff quote"}
+        />
+        <StatusCard
+          label="Quote status"
+          value={
+            quoteApproved
+              ? "Internally approved"
+              : workingPlan && wpStaffDraftProvenance
+                ? "Draft in progress"
+                : "No staff draft"
+          }
+          hint={quoteDelivered ? "Customer delivery completed" : "Approval ≠ customer send"}
+        />
+        <StatusCard
+          label="Customer delivery"
+          value={
+            wpDeliveryPolicy?.canDeliver
+              ? quoteDelivered
+                ? "Delivered"
+                : "Allowed"
+              : "Blocked"
+          }
+          hint={
+            wpDeliveryPolicy?.canDeliver
+              ? "tenant_live delivery path available"
+              : wpDeliveryPolicy?.message || "Delivery remains gated"
+          }
+        />
       </div>
 
-      <h2 className="mt-10 text-lg font-semibold">Inquiry notes</h2>
-      <EmployeeInquiryConversation messages={conversation?.messages ?? []} />
-      {canManage && conversation ? (
-        <SecurityActionForm
-          action={sendEmployeeInquiryMessageAction}
-          className="mt-6 space-y-3"
-          notice={{ successTitle: "Reply sent", errorTitle: "Unable to send reply" }}
-        >
-          <input type="hidden" name="inquiryId" value={inquiry.id} />
-          <input type="hidden" name="conversationId" value={conversation.id} />
-          <label className="block text-sm">
-            <span className="text-foreground/70">Internal / customer follow-up note</span>
-            <textarea
-              name="content"
-              required
-              rows={3}
-              maxLength={2000}
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
-            />
-          </label>
-          <PendingSubmitButton
-            pendingLabel="Sending…"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            Add note
-          </PendingSubmitButton>
-        </SecurityActionForm>
+      {warningCount > 0 ? (
+        <div className="mt-4 rounded-[var(--radius-control)] border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
+          <p className="font-semibold text-warning">
+            {warningCount} staff attention item{warningCount === 1 ? "" : "s"}
+          </p>
+          <p className="mt-1 text-foreground">
+            Review warnings and known catalog discrepancies on the Staff quote and Recommendations tabs
+            before contacting the customer.
+          </p>
+        </div>
       ) : null}
+
+      {wpIntake || (inquiry.humanHandoffReason && !inquiry.selectedEventPlanId) ? (
+        <div className="mt-4 rounded-[var(--radius-control)] border border-border bg-muted/30 px-4 py-3 text-sm">
+          <p className="font-semibold text-foreground">
+            {wpIntake ? "Recommended next actions" : "Needs staff follow-up"}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            {employeeReadyForHumanCopy({
+              isWpIntake: Boolean(wpIntake),
+              reason: inquiry.humanHandoffReason,
+              selectedEventPlanId: inquiry.selectedEventPlanId,
+            })}
+          </p>
+        </div>
+      ) : null}
+
+      <EmployeeInquiryTabs
+        badges={warningCount > 0 ? { recommendations: String(warningCount) } : undefined}
+        panels={{
+          overview: (
+            <div className="space-y-5">
+              <div className="rounded-[var(--radius-card)] border border-border bg-surface p-4 sm:p-5">
+                <h2 className="text-sm font-semibold text-foreground">Event summary</h2>
+                <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-muted-foreground">Customer / group</dt>
+                    <dd className="mt-1 font-medium">{inquiry.customerGroupName || displayName}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Guest mix</dt>
+                    <dd className="mt-1 font-medium">{formatGuestMix(inquiry.guestMix)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Budget</dt>
+                    <dd className="mt-1 font-medium">
+                      {wpIntake
+                        ? wpIntake.answers.hasBudget === "yes" && wpIntake.answers.budgetCents != null
+                          ? `$${(wpIntake.answers.budgetCents / 100).toFixed(2)}`
+                          : "Flexible"
+                        : formatIntakeBudget({
+                            budgetPreference: inquiry.budgetPreference,
+                            budgetMin: inquiry.budgetMin,
+                            budgetMax: inquiry.budgetMax,
+                          })}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Event goal</dt>
+                    <dd className="mt-1 font-medium">{inquiry.eventGoal || inquiry.occasion || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Food</dt>
+                    <dd className="mt-1 font-medium">
+                      {wpIntake ? wpIntake.answers.food : formatDiningPreference(inquiry.diningPreference)}
+                    </dd>
+                  </div>
+                  {wpIntake || inquiry.beveragePreference ? (
+                    <div>
+                      <dt className="text-muted-foreground">Beverages</dt>
+                      <dd className="mt-1 font-medium">
+                        {wpIntake
+                          ? `Craft: ${wpIntake.answers.craft}`
+                          : formatBeveragePreference(inquiry.beveragePreference)}
+                      </dd>
+                    </div>
+                  ) : null}
+                  <div>
+                    <dt className="text-muted-foreground">Private space</dt>
+                    <dd className="mt-1 font-medium">
+                      {wpIntake
+                        ? wpIntake.answers.privateRoom
+                        : formatSpacePreference(inquiry.spacePreference)}
+                    </dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-muted-foreground">Attraction preferences</dt>
+                    <dd className="mt-1">
+                      {wpIntake ? (
+                        <ul className="grid gap-1 sm:grid-cols-2">
+                          {WP_ATTRACTION_KEYS.map((key) => (
+                            <li key={key}>
+                              {WP_ATTRACTION_LABELS[key]}:{" "}
+                              {WP_ATTRACTION_ANSWER_LABELS[wpIntake.answers.attractions[key]]}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : inquiry.attractionInterestNames.length > 0 ? (
+                        inquiry.attractionInterestNames.join(", ")
+                      ) : (
+                        "—"
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+                {inquiry.customerNotes ? (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <p className="text-muted-foreground">Customer notes</p>
+                    <p className="mt-1 whitespace-pre-wrap text-foreground/90">{inquiry.customerNotes}</p>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="rounded-[var(--radius-card)] border border-border bg-surface p-4 sm:p-5">
+                <h2 className="text-sm font-semibold text-foreground">Customer activity</h2>
+                <div className="mt-3">
+                  <InquiryFunnel
+                    timeZone={timeZone}
+                    inquiry={{
+                      ...inquiry,
+                      selectedPlanTitle: undefined,
+                      selectedPlanTier: undefined,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {inquiry.internalSummary ? (
+                <div className="rounded-[var(--radius-card)] border border-border bg-surface p-4 sm:p-5">
+                  <h2 className="text-sm font-semibold text-foreground">Planner summary</h2>
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/80">
+                    {inquiry.internalSummary}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ),
+          quote: wpIntake ? (
+            <WpStaffQuoteDraftPanel
+              inquiryId={inquiry.id}
+              canManage={canManage}
+              canApproveQuotes={canApproveQuotes}
+              canOverrideQuotePricing={canOverrideQuotePricing}
+              canCreate={wpSnapshotReady}
+              draft={workingPlan && wpStaffDraftProvenance ? workingPlan : null}
+              provenance={wpStaffDraftProvenance}
+              deliveryPolicy={wpDeliveryPolicy}
+              customerEmail={inquiry.customerEmail}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Staff quote drafting for WordPress intake is not available on this inquiry.
+            </p>
+          ),
+          recommendations: wpIntake ? (
+            <WpIntakeAnswersPanel metadata={wpIntake} />
+          ) : (
+            <p className="text-sm text-muted-foreground">No private WordPress recommendation on this inquiry.</p>
+          ),
+          activity: (
+            <div className="space-y-5">
+              <div className="rounded-[var(--radius-card)] border border-border bg-surface p-4 sm:p-5">
+                <h2 className="text-sm font-semibold text-foreground">Inquiry notes</h2>
+                <div className="mt-3">
+                  <EmployeeInquiryConversation messages={conversation?.messages ?? []} />
+                </div>
+                {canManage && conversation ? (
+                  <SecurityActionForm
+                    action={sendEmployeeInquiryMessageAction}
+                    className="mt-6 space-y-3"
+                    notice={{ successTitle: "Reply sent", errorTitle: "Unable to send reply" }}
+                  >
+                    <input type="hidden" name="inquiryId" value={inquiry.id} />
+                    <input type="hidden" name="conversationId" value={conversation.id} />
+                    <label className="block text-sm">
+                      <span className="text-muted-foreground">Internal / customer follow-up note</span>
+                      <textarea
+                        name="content"
+                        required
+                        rows={3}
+                        maxLength={2000}
+                        className="mt-1 w-full rounded-[var(--radius-control)] border border-border bg-background px-3 py-2"
+                      />
+                    </label>
+                    <PendingSubmitButton
+                      pendingLabel="Sending…"
+                      className="rounded-[var(--radius-control)] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                    >
+                      Add note
+                    </PendingSubmitButton>
+                  </SecurityActionForm>
+                ) : null}
+              </div>
+            </div>
+          ),
+        }}
+      />
     </section>
+  );
+}
+
+function StatusCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-[var(--radius-card)] border border-border bg-surface px-4 py-3 shadow-sm">
+      <p className="text-[length:var(--text-caption)] font-semibold tracking-wide text-muted-foreground uppercase">
+        {label}
+      </p>
+      <p className="mt-1 text-base font-semibold text-foreground">{value}</p>
+      <p className="mt-1 text-[length:var(--text-caption)] text-muted-foreground">{hint}</p>
+    </div>
   );
 }

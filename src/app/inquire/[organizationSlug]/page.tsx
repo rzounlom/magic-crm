@@ -60,21 +60,29 @@ export default async function PublicInquirePage({
 
   return (
     <PublicCustomerShell organizationName={organizationName}>
-      <section className={`${PUBLIC_CONTENT_CLASS} py-8 sm:py-10`}>
-        <header className="max-w-3xl">
-          <p className="page-eyebrow">{organizationName}</p>
-          <h1 className="page-title mt-2 text-[1.75rem] sm:text-[length:var(--text-display)]">
-            Plan your event
-          </h1>
-          <p className="page-description mt-3">
-            Tell us what you have in mind. Our Events Team will follow up with recommendations. Fields marked *
-            are required. Submitting does not reserve a date or confirm pricing.
-          </p>
-        </header>
-        <div className="relative mt-8 max-w-3xl">
-          <PublicEventInquiryForm organizationSlug={catalog.organization.slug} />
-        </div>
-      </section>
+      <div className="relative isolate flex-1 overflow-x-hidden">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_600px_at_50%_-10%,rgb(0_91_181/0.12),transparent_60%),linear-gradient(180deg,rgb(245_247_251)_0%,rgb(232_238_245)_100%)]"
+        />
+        <section className={`${PUBLIC_CONTENT_CLASS} py-8 sm:py-12`}>
+          <div className="mx-auto w-full max-w-[52.5rem]">
+            <header className="text-center sm:text-left">
+              <p className="text-[length:var(--text-label)] font-semibold tracking-[0.08em] text-primary uppercase">
+                {organizationName}
+              </p>
+              <h1 className="page-title mt-2 text-[1.875rem] sm:text-[2.125rem]">Plan your event</h1>
+              <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:mx-0 sm:text-[length:var(--text-body)]">
+                Tell us what you have in mind. Our Events Team will follow up with recommendations.
+                Fields marked * are required. Submitting does not reserve a date or confirm pricing.
+              </p>
+            </header>
+            <div className="mt-8 sm:mt-10">
+              <PublicEventInquiryForm organizationSlug={catalog.organization.slug} />
+            </div>
+          </div>
+        </section>
+      </div>
     </PublicCustomerShell>
   );
 }

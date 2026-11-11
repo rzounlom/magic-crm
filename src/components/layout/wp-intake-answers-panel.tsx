@@ -191,18 +191,12 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
             ];
 
   return (
-    <div className="mt-8 rounded-md border border-border px-4 py-4" data-wp-intake-answers>
-      <h2 className="text-sm font-medium text-foreground">Event request details</h2>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Complete WordPress-style answers for staff review ({metadata.intakeVersion}). Not published as
-        customer packages.
-      </p>
-
+    <div className="space-y-4" data-wp-intake-answers>
       <div
-        className="mt-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-3 text-sm"
+        className="rounded-[var(--radius-control)] border border-primary/30 bg-primary/5 px-4 py-3 text-sm"
         data-wp-next-steps
       >
-        <p className="font-medium text-foreground">Suggested next steps</p>
+        <p className="font-semibold text-foreground">Suggested next steps</p>
         <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-foreground/80">
           {nextSteps.map((step) => (
             <li key={step}>{step}</li>
@@ -210,53 +204,67 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
         </ol>
       </div>
 
-      <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <Item label="Company" value={answers.company} />
-        <Item label="Referral" value={answers.referral} />
-        <Item label="Preferred dates" value={answers.dates.join(", ")} />
-        <Item label="Start time" value={answers.time} />
-        <Item label="Adults" value={String(answers.adults)} />
-        <Item label="Children" value={String(answers.children)} />
-        <Item
-          label="Duration"
-          value={`${answers.duration}${answers.otherHours != null ? ` (${answers.otherHours}h)` : ""} · ${answers.minutes} min`}
-        />
-        <Item label="Food" value={answers.food} />
-        <Item label="Private room" value={answers.privateRoom} />
-        <Item label="Craft beverages" value={answers.craft} />
-        <Item
-          label="Budget"
-          value={
-            answers.hasBudget === "yes" && answers.budgetCents != null
-              ? money(answers.budgetCents)
-              : "Flexible"
-          }
-        />
-      </dl>
-      <div className="mt-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">
-          Attraction preferences
+      <details className="rounded-[var(--radius-card)] border border-border bg-surface px-4 py-3">
+        <summary className="cursor-pointer text-sm font-semibold text-foreground">
+          Structured customer answers
+          <span className="ml-2 font-normal text-muted-foreground">({metadata.intakeVersion})</span>
+        </summary>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Original public intake answers for staff review. Not published as customer packages.
         </p>
-        <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2" data-wp-attraction-answers>
-          {WP_ATTRACTION_KEYS.map((key) => (
-            <li key={key}>
-              {WP_ATTRACTION_LABELS[key]}: {WP_ATTRACTION_ANSWER_LABELS[answers.attractions[key]]}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="mt-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">Occasion</p>
-        <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/80">{answers.description}</p>
-      </div>
-      {answers.comments ? (
+        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+          <Item label="Company" value={answers.company} />
+          <Item label="Referral" value={answers.referral} />
+          <Item label="Preferred dates" value={answers.dates.join(", ")} />
+          <Item label="Start time" value={answers.time} />
+          <Item label="Adults" value={String(answers.adults)} />
+          <Item label="Children" value={String(answers.children)} />
+          <Item
+            label="Duration"
+            value={`${answers.duration}${answers.otherHours != null ? ` (${answers.otherHours}h)` : ""} · ${answers.minutes} min`}
+          />
+          <Item label="Food" value={answers.food} />
+          <Item label="Private room" value={answers.privateRoom} />
+          <Item label="Craft beverages" value={answers.craft} />
+          <Item
+            label="Budget"
+            value={
+              answers.hasBudget === "yes" && answers.budgetCents != null
+                ? money(answers.budgetCents)
+                : "Flexible"
+            }
+          />
+        </dl>
         <div className="mt-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-foreground/60">Comments</p>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/80">{answers.comments}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Attraction preferences
+          </p>
+          <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2" data-wp-attraction-answers>
+            {WP_ATTRACTION_KEYS.map((key) => (
+              <li key={key}>
+                {WP_ATTRACTION_LABELS[key]}: {WP_ATTRACTION_ANSWER_LABELS[answers.attractions[key]]}
+              </li>
+            ))}
+          </ul>
         </div>
-      ) : null}
+        <div className="mt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Occasion</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/80">{answers.description}</p>
+        </div>
+        {answers.comments ? (
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Special requests
+            </p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-foreground/80">{answers.comments}</p>
+          </div>
+        ) : null}
+      </details>
 
-      <div className="mt-6 rounded-md border border-dashed border-border px-3 py-3 text-sm" data-wp-private-calc>
+      <div
+        className="rounded-[var(--radius-card)] border border-border bg-surface px-4 py-4 text-sm"
+        data-wp-private-calc
+      >
         <p className="font-medium text-foreground">Private recommendation (staff only)</p>
         {banner ? (
           <div
@@ -338,12 +346,15 @@ function formatClock(row: WpParityPlanSnapshot["itinerary"][number]): string {
 function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }) {
   const itinerary = Array.isArray(plan.itinerary) ? plan.itinerary : [];
   return (
-    <div className="rounded-md bg-muted/40 px-3 py-3" data-wp-plan-card>
+    <div
+      className="rounded-[var(--radius-control)] border border-border bg-surface px-3 py-3 shadow-sm"
+      data-wp-plan-card
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-medium text-foreground">
+        <p className="font-semibold text-foreground">
           {title}: {plan.name}
         </p>
-        <p className="text-sm tabular-nums text-foreground">{money(plan.total_cents)}</p>
+        <p className="text-sm font-semibold tabular-nums text-foreground">{money(plan.total_cents)}</p>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         Subtotal {money(plan.subtotal_cents)} · tax {money(plan.tax_cents)} · per guest{" "}
@@ -353,7 +364,6 @@ function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }
         {!plan.fits_duration ? " · does not fit requested duration" : ""}
         {plan.hard_review ? " · hard review" : ""}
       </p>
-      {plan.why ? <p className="mt-1 text-xs text-muted-foreground">{plan.why}</p> : null}
       {plan.selected_attractions.length > 0 ? (
         <p className="mt-1 text-xs text-muted-foreground">
           Attractions: {plan.selected_attractions.join(", ")}
@@ -362,43 +372,52 @@ function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }
         <p className="mt-1 text-xs text-muted-foreground">No attractions selected in this configuration.</p>
       )}
       {plan.review.length > 0 ? (
-        <div className="mt-2" data-wp-plan-warnings>
-          <p className="text-xs font-medium text-amber-900 dark:text-amber-100">Scheduling / capacity warnings</p>
-          <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-amber-800 dark:text-amber-200">
+        <div
+          className="mt-3 rounded-[var(--radius-control)] border border-warning/40 bg-warning/10 px-3 py-2"
+          data-wp-plan-warnings
+        >
+          <p className="text-xs font-semibold text-warning">Scheduling / capacity warnings</p>
+          <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-foreground">
             {plan.review.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
         </div>
       ) : null}
-      {itinerary.length > 0 ? (
-        <div className="mt-3" data-wp-plan-itinerary>
-          <p className="text-xs font-medium text-foreground/70">Suggested itinerary</p>
-          <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
-            {itinerary.map((row, index) => (
-              <li key={`${row.label}-${row.start_minute}-${index}`}>
-                <span className="tabular-nums text-foreground/80">{formatClock(row)}</span>
-                {" · "}
-                {row.label}
-                {row.group && row.group !== "All guests" ? ` (${row.group})` : ""}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {plan.items.length > 0 ? (
-        <div className="mt-3" data-wp-plan-items>
-          <p className="text-xs font-medium text-foreground/70">Itemized estimate</p>
-          <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
-            {plan.items.map((item, index) => (
-              <li key={`${item.label}-${index}`}>
-                {item.label} × {item.quantity} — {money(item.subtotal_cents)}
-                {item.tax_cents ? ` (+${money(item.tax_cents)} tax)` : ""}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <details className="mt-3">
+        <summary className="cursor-pointer text-[length:var(--text-caption)] font-semibold text-primary">
+          View itinerary and itemized estimate
+        </summary>
+        {plan.why ? <p className="mt-2 text-xs text-muted-foreground">{plan.why}</p> : null}
+        {itinerary.length > 0 ? (
+          <div className="mt-3" data-wp-plan-itinerary>
+            <p className="text-xs font-semibold text-foreground/80">Suggested itinerary</p>
+            <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+              {itinerary.map((row, index) => (
+                <li key={`${row.label}-${row.start_minute}-${index}`}>
+                  <span className="tabular-nums text-foreground/80">{formatClock(row)}</span>
+                  {" · "}
+                  {row.label}
+                  {row.group && row.group !== "All guests" ? ` (${row.group})` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {plan.items.length > 0 ? (
+          <div className="mt-3" data-wp-plan-items>
+            <p className="text-xs font-semibold text-foreground/80">Itemized estimate</p>
+            <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+              {plan.items.map((item, index) => (
+                <li key={`${item.label}-${index}`}>
+                  {item.label} × {item.quantity} — {money(item.subtotal_cents)}
+                  {item.tax_cents ? ` (+${money(item.tax_cents)} tax)` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </details>
     </div>
   );
 }
