@@ -32,10 +32,10 @@ import {
   formatSpacePreference,
 } from "@/lib/event-planner/labels";
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
-import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display";
 import {
   employeeInquiryStatusBanner,
   employeeReadyForHumanCopy,
+  formatEmployeeInquiryQueueLabel,
 } from "@/lib/inquiries/inquiry-workflow-labels";
 import { formatPhoneDisplay } from "@/lib/inquiries/public-phone";
 import { formatEventLocalDateTime } from "@/lib/inquiries/tenant-datetime";
@@ -355,8 +355,12 @@ export default async function InquiryDetailPage({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-[length:var(--text-caption)] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              {formatInquiryQueueLabel({
-                ...inquiry,
+              {formatEmployeeInquiryQueueLabel({
+                isWpIntake: Boolean(wpIntake),
+                status: inquiry.status,
+                aiHandlingEnabled: inquiry.aiHandlingEnabled,
+                selectedEventPlanId: inquiry.selectedEventPlanId,
+                humanHandoffReason: inquiry.humanHandoffReason,
                 bookingNumber: inquiry.bookings[0]?.bookingNumber,
                 bookingStatus: inquiry.bookings[0]?.status,
                 salesStage: inquiry.salesStage,

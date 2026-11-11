@@ -1,3 +1,4 @@
+import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display";
 import {
   CUSTOMER_SELECTED_PLAN_BANNER,
   formatReadyForHumanReason,
@@ -31,6 +32,39 @@ export function employeeInquiryStatusBanner(input: {
     };
   }
   return null;
+}
+
+/**
+ * Queue/status eyebrow for inquiry detail. WP staff drafts may set selectedEventPlanId
+ * for working-plan linkage; that must not present as legacy "READY TO BOOK".
+ */
+export function formatEmployeeInquiryQueueLabel(input: {
+  isWpIntake: boolean;
+  status: string;
+  aiHandlingEnabled: boolean;
+  selectedEventPlanId?: string | null;
+  humanHandoffReason?: string | null;
+  bookingNumber?: string | null;
+  bookingStatus?: string | null;
+  salesStage?: string | null;
+}): string {
+  if (input.isWpIntake) {
+    if (input.bookingStatus === "CANCELLED") {
+      return input.bookingNumber
+        ? `Cancelled booking ${input.bookingNumber}`
+        : "Cancelled booking";
+    }
+    if (input.status === "BOOKED" || input.bookingNumber) {
+      return input.bookingNumber
+        ? `Converted to Booking ${input.bookingNumber}`
+        : "Converted to Booking";
+    }
+    if (input.bookingStatus === "PENDING_PAYMENT" || input.salesStage === "DEPOSIT_PENDING") {
+      return "Pending confirmation";
+    }
+    return "Event inquiry — staff review required";
+  }
+  return formatInquiryQueueLabel(input);
 }
 
 export function employeeReadyForHumanCopy(input: {
