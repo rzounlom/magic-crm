@@ -385,8 +385,8 @@ export function WpStaffQuoteDraftPanel({
                     {money(draft.estimatedTotalCents ?? 0, draft.currency)}
                   </p>
                   <ul className="mt-2 space-y-1 text-sm">
-                    {lineItems.map((item) => (
-                      <li key={`${item.slug}-preview`} className="flex justify-between gap-3">
+                    {lineItems.map((item, index) => (
+                      <li key={`${item.slug}-${index}-preview`} className="flex justify-between gap-3">
                         <span>
                           {item.name}
                           {item.quantity > 1 ? ` × ${item.quantity}` : ""}

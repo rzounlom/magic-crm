@@ -18,6 +18,7 @@ import {
 } from "@/server/event-planner/wp-parity";
 
 const GENERATIONS_ORG = "mdutc2nkvpafezukeem8942v";
+const SYNTHETIC_TEST_ORG = "huqlb9wiygqegwo8fy53f8dw";
 const OTHER_ORG = "org_other_tenant_xyz";
 
 afterEach(() => {
@@ -83,6 +84,14 @@ describe("approved_plugin_baseline", () => {
     expect(resolved.warnings).toContain(WP_APPROVED_PLUGIN_BASELINE_WARNING);
     expect(resolved.config.catalog.food.salad).toBe(2499);
     expect(resolved.config.catalog.rooms.lower_extra).toBe(7500);
+  });
+
+  it("resolves the disposable synthetic test org via the same registry (not Generations-only)", () => {
+    const loaded = loadWpTenantParityConfig(SYNTHETIC_TEST_ORG);
+    expect(loaded.ok).toBe(true);
+    if (!loaded.ok) return;
+    expect(loaded.origin).toBe("approved_plugin_baseline_registry");
+    expect(loaded.tenantConfig.pricingSource).toBe("approved_plugin_baseline");
   });
 
   it("does not activate approved baseline for other organizations", () => {
