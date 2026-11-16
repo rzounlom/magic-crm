@@ -1,0 +1,30 @@
+PASS daily report covers the previous local calendar day
+PASS fall DST daily period includes all 25 hours
+PASS Monday weekly report covers previous Monday through Sunday
+PASS spring DST daily period includes the correct 23 hours
+PASS next digest remains 7 AM across fall clock change
+PASS next digest remains 7 AM across spring clock change
+PASS daily report includes both exact lower bound and last instant of period
+PASS daily report excludes both outside boundaries
+PASS test inquiries excluded from reports
+PASS sort is event type, descending guest count, then earliest requested event date
+PASS alternative event dates do not duplicate guest totals
+PASS older inquiries are clearly marked unclassified
+PASS report and spreadsheet escape guest-supplied content
+PASS report has totals and distinguishes inquiries from confirmed events
+PASS zero-inquiry day still produces a useful report
+PASS test mode suppresses digest emails
+PASS live path sends one intercepted daily digest
+PASS digest goes only to the approved events inbox with expected rows
+PASS accepted report is not sent twice for the same period
+PASS concurrent report lock blocks duplicate send
+PASS failed digest is not marked accepted
+PASS failed digest schedules a retry in 15 minutes
+PASS retry preserves the original weekly period and recovers delivery
+PASS initialization schedules one next 7 AM run without duplicates
+PASS missing event type is rejected by server validation
+PASS unknown event category is rejected
+PASS all six approved event types are accepted
+PASS anonymous users cannot view private report dashboard
+
+28 report checks passed. All email intercepted locally.

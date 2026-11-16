@@ -1,0 +1,46 @@
+PASS native Update URI filter registered with four arguments
+PASS release details filter registered
+PASS network-aware settings and protected actions registered
+PASS unconfigured installation performs no HTTP request
+PASS valid HTTPS release accepted
+PASS reject unsafe URL http://updates.example/update.json
+PASS reject unsafe URL https://admin:password@updates.example/update.json
+PASS reject unsafe URL https://127.0.0.1/update.json
+PASS reject unsafe URL https://10.0.0.1/update.json
+PASS reject unsafe URL https://localhost/update.json
+PASS reject unsafe URL https://updates.example/update.json#fragment
+PASS reject unsafe URL https://updates.example/ header
+PASS reject invalid release field slug
+PASS reject invalid release field version
+PASS reject invalid release field download_url
+PASS reject invalid release field download_url
+PASS reject invalid release field requires_php
+PASS reject invalid release field download_url
+PASS valid feed fetched
+PASS release HTML sanitized
+PASS cached release avoids duplicate network requests
+PASS valid metadata cached for six hours
+PASS new version and package supplied to native update flow
+PASS does not force automatic installation
+PASS does not claim an unverified WordPress tested version
+PASS other plugins are untouched
+PASS native release-details response includes the download and version
+PASS unrelated API actions untouched
+PASS unrelated plugin information untouched
+PASS malformed JSON fails closed
+PASS failed check is cached
+PASS failed checks back off for fifteen minutes
+PASS HTTP transport failure handled
+PASS redirect not accepted
+PASS unavailable feed offers no update
+PASS same-version metadata lets WordPress record no-update status
+PASS older feed remains older so core does not offer a downgrade
+PASS TLS validation, redirect blocking and bounded responses enforced
+PASS feed request includes no inquiry payload, cookies, credentials or site URL
+PASS unauthorized users cannot view settings
+PASS unauthorized save blocked before mutation
+PASS unauthorized forced check blocked
+PASS authorized settings show version, feed and check control
+PASS own successful update hook invalidates release cache
+
+44 updater checks passed. HTTP calls intercepted; no live updates.

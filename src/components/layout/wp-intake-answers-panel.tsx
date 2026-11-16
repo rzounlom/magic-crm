@@ -8,6 +8,7 @@ import {
   parseWpIntakeMessageMetadata,
   type WpIntakeMessageMetadata,
 } from "@/lib/event-planner/wp-intake-contract";
+import { compactWpItinerary } from "@/server/event-planner/wp-parity/itinerary";
 
 type MessageLike = {
   metadata?: unknown;
@@ -328,19 +329,11 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
   );
 }
 
-function formatClock(row: WpParityPlanSnapshot["itinerary"][number]): string {
-  if (row.start && row.end) {
-    return `${row.start} – ${row.end}`;
-  }
-  const fmt = (minute: number) => {
-    const normalized = ((minute % (24 * 60)) + 24 * 60) % (24 * 60);
-    const hours = Math.floor(normalized / 60);
-    const mins = normalized % 60;
-    const suffix = hours >= 12 ? "PM" : "AM";
-    const display = hours % 12 === 0 ? 12 : hours % 12;
-    return `${display}:${mins.toString().padStart(2, "0")} ${suffix}`;
-  };
-  return `${fmt(row.start_minute)} – ${fmt(row.end_minute)}`;
+function slotLabel(
+  slot: { label: string; end: string; end_minute: number },
+  rowEndMinute: number,
+): string {
+  return `${slot.label}${slot.end_minute < rowEndMinute ? ` (ends ${slot.end})` : ""}`;
 }
 
 function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }) {
@@ -390,19 +383,7 @@ function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }
         </summary>
         {plan.why ? <p className="mt-2 text-xs text-muted-foreground">{plan.why}</p> : null}
         {itinerary.length > 0 ? (
-          <div className="mt-3" data-wp-plan-itinerary>
-            <p className="text-xs font-semibold text-foreground/80">Suggested itinerary</p>
-            <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
-              {itinerary.map((row, index) => (
-                <li key={`${row.label}-${row.start_minute}-${index}`}>
-                  <span className="tabular-nums text-foreground/80">{formatClock(row)}</span>
-                  {" · "}
-                  {row.label}
-                  {row.group && row.group !== "All guests" ? ` (${row.group})` : ""}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <CompactItineraryView itinerary={itinerary} />
         ) : null}
         {plan.items.length > 0 ? (
           <div className="mt-3" data-wp-plan-items>
@@ -418,6 +399,56 @@ function PlanCard({ title, plan }: { title: string; plan: WpParityPlanSnapshot }
           </div>
         ) : null}
       </details>
+    </div>
+  );
+}
+
+function CompactItineraryView({
+  itinerary,
+}: {
+  itinerary: WpParityPlanSnapshot["itinerary"];
+}) {
+  const compact = compactWpItinerary(itinerary);
+  return (
+    <div className="mt-3" data-wp-plan-itinerary>
+      <p className="text-xs font-semibold text-foreground/80">Suggested itinerary</p>
+      {compact.groups.length > 0 ? (
+        <p className="mt-1 text-[length:var(--text-caption)] text-muted-foreground">
+          Parallel groups: {compact.groups.join(" · ")}
+        </p>
+      ) : null}
+      <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+        {compact.rows.map((row, index) => {
+          const labels = row.all || compact.groups.length === 0
+            ? row.slots.map((slot) => slotLabel(slot, row.end_minute)).join("; ")
+            : compact.groups
+                .map((group) => {
+                  const groupLabels = row.slots
+                    .filter((slot) => slot.group === group)
+                    .map((slot) => slotLabel(slot, row.end_minute));
+                  return groupLabels.length > 0 ? `${group}: ${groupLabels.join("; ")}` : null;
+                })
+                .filter(Boolean)
+                .join(" · ");
+          return (
+            <li key={`${row.start}-${row.end_minute}-${index}`}>
+              <span className="tabular-nums text-foreground/80">
+                {row.start} – {row.end}
+              </span>
+              {" · "}
+              {labels}
+              {row.all && compact.groups.length > 0 ? " — all guests" : ""}
+            </li>
+          );
+        })}
+      </ul>
+      {compact.notes.length > 0 ? (
+        <ul className="mt-2 space-y-1 text-[length:var(--text-caption)] text-muted-foreground" data-wp-plan-itinerary-notes>
+          {compact.notes.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

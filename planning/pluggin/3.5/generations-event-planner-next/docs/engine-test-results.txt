@@ -1,0 +1,72 @@
+PASS six Friday bowlers $61
+PASS seven Friday bowlers $104.50
+PASS Tuesday bowling $51
+PASS Wednesday bowling shoes not discounted
+PASS ten bowling + 30-minute axe $290
+PASS bowling + axe protects 15-minute briefing
+PASS axe briefing starts after bowling
+PASS axe-only main is full hour $300
+PASS axe shorter alternative $175
+PASS eight laser-only pass $200
+PASS 90-minute pass reinstated
+PASS fifty laser-only private $550
+PASS Saturday private laser $599
+PASS Thursday eight laser $160
+PASS eight laser + arcade fuller package $319.92
+PASS Wednesday direct two games + $30 credit beats package
+PASS Wednesday one game + $15 arcade $152
+PASS eight child Blast wristbands $239.92
+PASS Blast never promises seating
+PASS adults never sold Blast
+PASS golf four adults/four children $72
+PASS fifteen Fajita and pitchers $435.49 tax included
+PASS fourteen cannot qualify catering bar
+PASS catering does not waive requested Lower room fee
+PASS 25 pizza wings drinks can eat at lanes
+PASS 25 sliders require separate dining
+PASS 26 pizza requires separate dining
+PASS 100-person split has two briefings
+PASS 100-person 50/50 rotation fits 120 fixed minutes
+PASS lane-one exception used only for approved large cohorts
+PASS adult open guidance suggests bowling
+PASS budget may choose shorter complete laser alternative
+PASS overbudget preserves explicit attraction
+PASS all No never adds attractions
+PASS missing attraction answer blocked
+PASS Other duration conditional validation
+PASS budget amount conditional validation
+PASS email header injection blocked
+PASS fractional guest count blocked
+PASS invalid calendar date blocked
+PASS alternative dates priced independently
+PASS explicit 60-minute axe is not silently shortened to fit
+PASS bowling-only rotations allow shoes before each slot, not inside purchased play
+PASS private axe rental excluded when full cohort time cannot fit
+PASS extra traditional wings retain lane-dining exception
+PASS salad forces separate setup
+PASS removed breakfast request held for staff
+PASS no invented Monday regular bowling rate
+PASS mixed-group Blast charges children only
+PASS malformed attraction value rejected: NULL
+PASS malformed attraction value rejected: array
+PASS malformed attraction value rejected: boolean
+PASS malformed attraction value rejected: string
+PASS malformed attraction value rejected: integer
+PASS line totals reconcile for 1 guests
+PASS line totals reconcile for 6 guests
+PASS line totals reconcile for 7 guests
+PASS line totals reconcile for 8 guests
+PASS line totals reconcile for 10 guests
+PASS line totals reconcile for 25 guests
+PASS line totals reconcile for 26 guests
+PASS line totals reconcile for 48 guests
+PASS line totals reconcile for 49 guests
+PASS line totals reconcile for 50 guests
+PASS line totals reconcile for 51 guests
+PASS line totals reconcile for 56 guests
+PASS line totals reconcile for 57 guests
+PASS line totals reconcile for 100 guests
+PASS line totals reconcile for 125 guests
+PASS line totals reconcile for 126 guests
+
+70 checks passed.

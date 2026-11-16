@@ -1,0 +1,25 @@
+PASS Gmail typo prompts correction before DNS lookup
+PASS second common Gmail typo recognized
+PASS Outlook typo recognized without restricting business domains
+PASS invalid email format rejected
+PASS non-hostname input rejected before DNS
+PASS company domain with mail routing accepted
+PASS DNS results cached for repeat checks
+PASS domain case normalized
+PASS Null MX rejected even when the domain also has an address record
+PASS implicit IPv4 mail route accepted when explicit MX absent
+PASS implicit IPv6 mail route accepted
+PASS domain with no mail or address records rejected
+PASS unresolved alias is flagged uncertain rather than falsely rejected
+PASS temporary DNS error is not mislabeled invalid
+PASS address-record lookup error preserves uncertainty
+PASS guest may explicitly retain a suggested-typo domain if it has real mail routing
+PASS confirmation applies only to the exact entered domain
+PASS unconfirmed typo cannot save an inquiry or send email
+PASS server-side no-mail-domain rejection occurs before save or email
+PASS valid business domain saves normally
+PASS confirmation never silently rewrites the entered customer address
+PASS DNS outage preserves the inquiry with an internal review flag
+PASS test mode sends no emails during domain validation tests
+
+23 email-domain checks passed. DNS and email use local test fixtures.

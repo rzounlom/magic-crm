@@ -1,0 +1,1302 @@
+{
+  "rules_version": "2026-11-02",
+  "source": "Generations_Event_Planner_Master_Rulebook_V3_Consolidated.xlsx",
+  "sheets": {
+    "Latest Corrections": [
+      [
+        "Decision",
+        "Consolidated approved handling — October 31, 2026"
+      ],
+      [
+        "Workflow",
+        "One AdventurePlex inquiry questionnaire. Build a new plugin; do not install or change the live form during document consolidation. No customer checkout or automatic quote."
+      ],
+      [
+        "Internal delivery",
+        "For a complete valid inquiry: save it and email the full inquiry, itemized recommendation and proposed itinerary to events@generations-adventureplex.com."
+      ],
+      [
+        "Customer acknowledgment",
+        "Send a separate acknowledgment, with current attraction pricing and catering menu. Do not send the calculated recommendation or an unapproved quote."
+      ],
+      [
+        "Required validation",
+        "Block incomplete submissions in browser and server. No save, recommendation or email until every required and conditional field is complete."
+      ],
+      [
+        "Attraction question",
+        "Which attractions would you like us to include in your event? Ask separately for Bowling, Axe Throwing, Laser Tag, Mini Golf, Climbing and Arcade."
+      ],
+      [
+        "Attraction answers",
+        "Yes; No; Open to recommendations. One required answer per attraction; no preselection; stored yes/no/open values unchanged."
+      ],
+      [
+        "Preference meaning",
+        "Yes is required; No excludes; Open is optional for consideration using group, ages, date, duration and budget. Never treat blank as No or automatically add an explicitly excluded attraction."
+      ],
+      [
+        "Recommendation objective",
+        "Choose the best complete experience for the selected attractions. Compare complete eligible costs for comparable coverage; do not simply select the cheapest admission or automatically add attractions. Offer a shorter or lower-cost alternative."
+      ],
+      [
+        "Budget",
+        "Budget is TOTAL EVENT dollars including applicable tax. Preserve explicit requests; disclose overage internally instead of silently dropping them."
+      ],
+      [
+        "Bowling rates",
+        "Regular bowling: Tue–Thu $30/lane/hour or $17.50/half-hour; Fri–Sun $40/lane/hour or $25/half-hour. Per game: Tue–Thu $6, Fri–Sun $8. Shoes $3.50 per bowler. No Monday walk-in rate is specified."
+      ],
+      [
+        "Bowling quantity",
+        "Regular calculations use ROUNDUP(bowlers/6). Eight physical lanes. Lane 1 may hold up to 10 for large-group rotations; a 50-person bowling cohort is explicitly approved. Do not generalize 10 guests to every lane."
+      ],
+      [
+        "Bowling timing",
+        "Default one hour; two only if requested. Guests arrive five minutes before scheduled bowling for shoes and lanes; the purchased timer starts at the scheduled time. Starts may be at any time. Do not add the initial five minutes after bowling starts."
+      ],
+      [
+        "Bowling comparisons",
+        "Bowling only: regular lanes plus shoes, Pizza & Pins when relevant, and bowling buyouts. Bowling plus axe: compare full combinations including separately purchased axe, All-Access and eligible buyouts."
+      ],
+      [
+        "Axe prices",
+        "30 minutes $17.50/person; 60 minutes $30/person; AxeTreme $45/person for 60 minutes plus $20 play card. Private Axe Den: two hours $1,500 Sun–Fri or $1,995 Saturday."
+      ],
+      [
+        "Axe timing",
+        "Default 30 minutes with bowling; 60 minutes when axe is the main/sole attraction. Offer 30 minutes as the shorter alternative. Honor explicit durations."
+      ],
+      [
+        "Axe Check-In & Safety Briefing",
+        "Use this exact itinerary label. Allow 15 minutes before throwing, additional to purchased throwing time. Each rotation receives its own briefing."
+      ],
+      [
+        "Axe capacity and eligibility",
+        "7 bays / 14 throwing lanes, 8 participants per bay, 56 per axe-only cohort. Regular weekdays ages 10+; weekends ages 16+; private axe ages 10+. Verify participants."
+      ],
+      [
+        "Rotations",
+        "Groups may split between bowling and axe, then swap. A 100-person group may split 50/50 using the lane 1 exception. Protect each cohort’s full purchased time and separate axe briefing."
+      ],
+      [
+        "Flexible attractions",
+        "Laser tag, mini golf and climbing are unscheduled. Show leisure windows, e.g. 2:30–3:00 PM — Play mini golf at leisure. Do not compute laser game cycles, briefing/changeovers or fixed individual turns."
+      ],
+      [
+        "Laser-only small group",
+        "For 8 guests, recommend the $25/person 90-Minute Laser Tag Pass ($200), except Thursday $20/person unlimited special ($160). Single games are the shorter alternative. Compare Wednesday discounted games for the desired amount of play."
+      ],
+      [
+        "Laser-only large group",
+        "For 50 guests, favor private laser buyout: Sun–Fri $550/90 minutes ($11/person); Saturday $599/60 minutes ($11.98/person). Compare specials and requested play time. One game each remains the shorter alternative; do not assign round start times."
+      ],
+      [
+        "Laser prices and pass",
+        "Single game $8/person; 90-Minute Laser Tag Pass $25/person, active again, every day except Thursday. Do not describe the $25 pass as unlimited. Thursday special $20/person unlimited all day; event window still applies."
+      ],
+      [
+        "Laser plus arcade",
+        "Compare LaserPlex $20/person (one game + $15 arcade) and Laser Tag & Games $39.99/person (two games + $30 play card). Favor the fuller option as the main experience; offer lower-cost option. Compare direct purchases and specials first."
+      ],
+      [
+        "Pizza & Pins",
+        "$49.99/package for up to six: one hour bowling, shoes, one large one-topping pizza, one pitcher Pepsi and $25 play credit. One card per package; credit can be distributed. Offset included food, pitchers, shoes and credit once."
+      ],
+      [
+        "All-Access",
+        "$55/person: one hour bowling, shoes, one hour axe throwing and $20 play card. Briefing is additional; compare only in the appropriate selected-attraction context."
+      ],
+      [
+        "Adventure Blast Pass",
+        "$29.99 per participating child: wristband for 90 minutes of access to laser tag and climbing, plus $15 arcade credit. Not for adults. No seating promised. Access is not 90 minutes of continuous play."
+      ],
+      [
+        "Mini golf and climbing prices",
+        "Mini golf $10/adult, $8/child. Climbing $5/climb; retain minimum 40 lbs. Compare direct admission or sufficient funded card credit without double charging."
+      ],
+      [
+        "Removed offerings",
+        "Breakfast Bar removed from catering. Private Mini Golf Outing remains removed. Grizzly Golf & Games remains excluded pending owner retention; standalone $25 laser pass is active, not removed."
+      ],
+      [
+        "Weekly specials",
+        "Wednesday: 50% off regular bowling lane price, axe, laser games, climbing and mini golf; arcade game play half-price. Shoes remain $3.50 and card face values are not discounted. Thursday: 2-for-1 regular axe and $20/person unlimited laser."
+      ],
+      [
+        "Catering bars",
+        "15-person minimum. Fajita $25/person, Slider $30/person, Smokehouse BBQ $35/person. Per-person prices cover all listed menu food; do not specify slider quantities. All pretax."
+      ],
+      [
+        "Catering rooms",
+        "Do not promise a complimentary room with catering. Price requested private spaces separately; bundled space in a qualifying attraction rental is counted once."
+      ],
+      [
+        "Catering beverages",
+        "Sold separately at $8 per pitcher, except pitchers already included in purchased pizza combos or packages. Do not charge twice."
+      ],
+      [
+        "Dining at lanes",
+        "Only groups of 25 or fewer with bowling and pizza, wings and drinks only may eat at the lanes. Other food requires separate setup and a 30-minute dining block regardless of group size."
+      ],
+      [
+        "Separate dining",
+        "Allow 30 minutes for food when over 25, without bowling, or when food includes items beyond pizza, wings and drinks. No food means no dining charge or dining block."
+      ],
+      [
+        "Food defaults and portions",
+        "Retain kids/mixed default pizza and pitchers; adults-only add wings. One pizza/pitcher combo serves 4 adults or 5 children; ROUNDUP(adults/4+children/5). Unknown age mix: use 4 per combo. No automatic salad or dessert."
+      ],
+      [
+        "Current catering additions",
+        "Salad pan $24.99 (menu serves 8–12); brownie tray $45.54 (serves 40–45); cookies $20.70 (serves 20). Wings, pretzels, strips and boards retain current menu prices."
+      ],
+      [
+        "Tax",
+        "All catering menu prices are before 7% food/beverage tax. Retain Pizza & Pins 20% F&B allocation; tax known food/drink components once. Do not add tax to card face value as a food purchase."
+      ],
+      [
+        "Rooms and rentals",
+        "Retain existing day/time rental rates. Climbers Cove $650/3 hours, seating/tables for 150; only name it when requested. Full Facility 3 hours, max 999. Mezzanine max 125. Exactly 4 PM uses after-4 rate."
+      ],
+      [
+        "Cove extensions",
+        "Additional time only when requested; prorated and rare. Derive from $650/3 hours, subject to staff availability; do not automatically add an extension. No automatic $650 surcharge for internal group-space allocation."
+      ],
+      [
+        "Verification and staff review",
+        "Check real availability, eligibility, weather and requested participation. Use only supplied prices/capacities. Flag missing or conflicting data instead of fabricating a quote or schedule."
+      ],
+      [
+        "Implementation status",
+        "Plugin 3.3.0 includes administrator packages and corrected arcade-first credit allocation. See current verification and staging requirements."
+      ],
+      [
+        "Arcade card allocation",
+        "Reserve requested arcade allowance first. Blast children receive their included $15 arcade allowance before other eligible play is funded. Display per-guest card quantities and top-ups. Never describe pooled funding as one arcade card."
+      ]
+    ],
+    "Customer Questionnaire": [
+      [
+        "Section",
+        "Question",
+        "Options / input",
+        "Required",
+        "Use / validation"
+      ],
+      [
+        "Contact",
+        "Name",
+        "First; Last",
+        "Yes",
+        "Both required"
+      ],
+      [
+        "Contact",
+        "Name of business",
+        "Text",
+        "Yes",
+        "Preserve existing required field"
+      ],
+      [
+        "Contact",
+        "Phone",
+        "Phone",
+        "Yes",
+        "Validate format"
+      ],
+      [
+        "Contact",
+        "Email",
+        "Email",
+        "Yes",
+        "Validate format"
+      ],
+      [
+        "Event",
+        "Dates you are looking for",
+        "Date(s)",
+        "Yes",
+        "Evaluate one date at a time internally"
+      ],
+      [
+        "Event",
+        "Time",
+        "Preferred start time",
+        "Yes",
+        "Bowling may start at any time"
+      ],
+      [
+        "Event",
+        "Anticipated adults / children",
+        "Two nonnegative whole-number counts",
+        "Yes",
+        "Combined count >0; verify participants"
+      ],
+      [
+        "Event",
+        "Event duration",
+        "2 hours; 3 hours; Other",
+        "Yes",
+        "Other requires positive specified duration"
+      ],
+      [
+        "Attractions",
+        "Would you like bowling included?",
+        "Yes; No; Open to recommendations",
+        "Yes",
+        "No preselection; Yes required / No exclude / Open optional."
+      ],
+      [
+        "Attractions",
+        "Would you like axe throwing included?",
+        "Yes; No; Open to recommendations",
+        "Yes",
+        "No preselection. Show age rules; separate 15-minute briefing."
+      ],
+      [
+        "Attractions",
+        "Would you like laser tag included?",
+        "Yes; No; Open to recommendations",
+        "Yes",
+        "No preselection; Yes required / No exclude / Open optional."
+      ],
+      [
+        "Attractions",
+        "Would you like mini golf included?",
+        "Yes; No; Open to recommendations",
+        "Yes",
+        "No preselection; Yes required / No exclude / Open optional."
+      ],
+      [
+        "Attractions",
+        "Would you like climbing included?",
+        "Yes; No; Open to recommendations",
+        "Yes",
+        "No preselection; Yes required / No exclude / Open optional."
+      ],
+      [
+        "Attractions",
+        "Would you like arcade included?",
+        "Yes; No; Open to recommendations",
+        "Yes",
+        "No preselection; Yes required / No exclude / Open optional."
+      ],
+      [
+        "Dining",
+        "Food and beverages provided?",
+        "Yes; No",
+        "Yes",
+        "Use menu-specific dining rules; pitchers $8 unless included"
+      ],
+      [
+        "Space",
+        "Private event room desired?",
+        "Yes; No",
+        "Yes",
+        "Room separate from catering; no free-room promise"
+      ],
+      [
+        "Beverages",
+        "Interested in craft beverages?",
+        "Yes; No",
+        "Yes",
+        "Eligible adult drink cards; default one $8 card"
+      ],
+      [
+        "Event",
+        "Describe your event",
+        "Text",
+        "Yes",
+        "Staff classification; preserve approved event types"
+      ],
+      [
+        "Budget",
+        "Total event budget in mind?",
+        "Yes; No",
+        "Yes",
+        "Total including applicable tax"
+      ],
+      [
+        "Budget",
+        "If Yes, total event budget",
+        "Currency",
+        "Conditional",
+        "Positive amount required when Yes"
+      ],
+      [
+        "Other",
+        "Comments / special requests",
+        "Text",
+        "No",
+        "Honor explicit requests; flag conflicts"
+      ],
+      [
+        "Referral",
+        "How did you hear about us?",
+        "Text / existing approved choices",
+        "Yes",
+        "Required"
+      ],
+      [
+        "Internal",
+        "Event classification",
+        "Existing Birthday; Corporate or Team Event; Sports Team; School or Youth Group; Family or Social Gathering; Other",
+        "Staff",
+        "No new experience choices"
+      ],
+      [
+        "Workflow",
+        "Submit Event Request",
+        "Acknowledgment only",
+        "—",
+        "No save/recommendation/emails for incomplete submissions"
+      ]
+    ],
+    "Products & Inclusions": [
+      [
+        "Category",
+        "Product",
+        "Price",
+        "Unit",
+        "Duration",
+        "Capacity / Quantity",
+        "Includes",
+        "Eligibility / Availability",
+        "Planner Rule",
+        "Source / Status",
+        "Engine status"
+      ],
+      [
+        "Bowling",
+        "Regular Bowling — Tue–Thu",
+        30,
+        "per lane",
+        "1 hr",
+        "6 guests/lane",
+        "Bowling lane",
+        "Tuesday–Thursday; Wednesday discount",
+        "Calculate lanes = ROUNDUP(guests/6). Add shoes. Compare against packages/exclusives.",
+        "Attraction poster + owner confirmation; supersedes V2 $40 weekday base",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Regular Bowling — Fri–Sun",
+        40,
+        "per lane",
+        "1 hr",
+        "6 guests/lane",
+        "Bowling lane",
+        "Friday–Sunday",
+        "Calculate lanes = ROUNDUP(guests/6). Add shoes.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Bowling Shoes",
+        3.5,
+        "per bowler",
+        "—",
+        "Each bowler",
+        "Shoes",
+        "Regular bowling",
+        "Add to regular bowling; included in Pizza & Pins and All Access.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Bowling Exclusive — 1 hr",
+        525,
+        "rental",
+        "1 hr",
+        "8 lanes; regular 6/lane; 50-person rotation approved using lane 1 up to 10",
+        "8 bowling lanes; private bowling area; shoes included",
+        "All applicable days",
+        "Regular price calculations remain 6/lane. Large-group rotation exception approved; check complete play time.",
+        "Internal pricing + user correction",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Bowling Exclusive — 2 hr",
+        750,
+        "rental",
+        "2 hr",
+        "8 lanes; regular 6/lane; 50-person rotation approved using lane 1 up to 10",
+        "8 bowling lanes; private bowling area; shoes included",
+        "Mon–Sun",
+        "Regular price calculations remain 6/lane. Large-group rotation exception approved; check complete play time.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Bowling Exclusive — Fri/Sat after 4",
+        850,
+        "rental",
+        "2 hr",
+        "8 lanes; regular 6/lane; 50-person rotation approved using lane 1 up to 10",
+        "8 bowling lanes; private bowling area; shoes included",
+        "Fri–Sat after 4 PM",
+        "Regular price calculations remain 6/lane. Large-group rotation exception approved; check complete play time.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Package",
+        "Pizza & Pins",
+        49.99,
+        "package",
+        "1 hr",
+        "Up to 6",
+        "Bowling + shoes + 1 large 1-topping pizza + pitcher Pepsi + $25 play card; one card issued; credit may be distributed among guests",
+        "Bowling selected",
+        "Events allowed.1 package/up to6. Included pizza/pitcher and pooled$25credit offset additions.<=25may eat at lanes.",
+        "Internal pricing + user rule",
+        "Active"
+      ],
+      [
+        "Package",
+        "All-Access",
+        55,
+        "per person",
+        "2 hr",
+        "Per participant",
+        "1 hr axe + 1 hr bowling + shoes + $20 play card",
+        "Axe + bowling; age eligible",
+        "Compare when bowling + axe selected.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Axe",
+        "Regular Axe — 30 min",
+        17.5,
+        "per person",
+        "30 min",
+        "7 bays /14lanes;8participants perbay;56 percohort",
+        "Axe throwing",
+        "Age eligible",
+        "Use when axe is one of several activities or to fit timeline.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Axe",
+        "Regular Axe — 60 min",
+        30,
+        "per person",
+        "60 min",
+        "7 bays /14lanes;8participants perbay;56 percohort",
+        "Axe throwing",
+        "Age eligible",
+        "Use when axe is primary/focus.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Axe",
+        "AxeTreme",
+        45,
+        "per person",
+        "1 hr",
+        "Per participant",
+        "1 hr axe + $20 play card",
+        "Age eligible",
+        "Compare against regular axe + cards.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Axe",
+        "Axe Den Exclusive — Sun–Fri",
+        1500,
+        "rental",
+        "2 hr",
+        "7 bays /14lanes;8participants perbay;56 percohort",
+        "Exclusive Axe Den",
+        "Sun–Fri",
+        "Favor based on group size, privacy and cost.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Axe",
+        "Axe Den Exclusive — Saturday",
+        1995,
+        "rental",
+        "2 hr",
+        "7 bays /14lanes;8participants perbay;56 percohort",
+        "Exclusive Axe Den",
+        "Saturday",
+        "Favor based on group size, privacy and cost.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Laser Tag",
+        "Single Laser Tag Game",
+        8,
+        "per person/game",
+        "Unscheduled",
+        "22 players/game",
+        "1 laser tag game",
+        "Age 4+",
+        "Purchased game entitlement; do not calculate game cycles or assign turns.",
+        "Internal pricing + user correction",
+        "Active"
+      ],
+      [
+        "Laser Tag",
+        "90-Minute Laser Tag Pass",
+        25,
+        "per person",
+        "90 min",
+        "22/game rotations",
+        "90 minutes of laser tag access; not described as unlimited",
+        "Every day except Thursday",
+        "Active again; main option for small laser-only groups. Laser remains unscheduled.",
+        "Owner reinstated in current conversation",
+        "Active"
+      ],
+      [
+        "Laser Tag",
+        "Laser Exclusive — Sun–Fri",
+        550,
+        "rental",
+        "90 min",
+        "22/game rotations",
+        "Unlimited private laser tag during rental",
+        "Sun–Fri",
+        "Compare against individual purchases; often wins for larger groups.",
+        "User clarification",
+        "Active"
+      ],
+      [
+        "Laser Tag",
+        "Laser Exclusive — Saturday",
+        599,
+        "rental",
+        "1 hr",
+        "22/game rotations",
+        "Unlimited private laser tag during rental",
+        "Saturday",
+        "Compare against individual purchases.",
+        "User clarification",
+        "Active"
+      ],
+      [
+        "Package",
+        "Laser Tag and Games",
+        39.99,
+        "per person",
+        "—",
+        "Per participant",
+        "2 laser games + $30 play card",
+        "Laser selected",
+        "Compare automatically.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Package",
+        "LaserPlex",
+        20,
+        "per person",
+        "—",
+        "Per participant",
+        "1 laser game + $15 arcade credit",
+        "Laser selected",
+        "Compare automatically.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Package",
+        "Adventure Blast Pass",
+        29.99,
+        "per participating child",
+        "90 min",
+        "Per participant",
+        "Child wristband: 90 minutes of access to laser tag and climbing + $15 arcade credit. No seating promised.",
+        "Children only; not for adults",
+        "Do not charge adults for this pass. Respect attraction answers; do not promise seating.",
+        "Owner correction, October 31, 2026",
+        "Active"
+      ],
+      [
+        "Mini Golf",
+        "Mini Golf — Adult",
+        10,
+        "per person",
+        "Unscheduled leisure",
+        "50 simultaneous; groups up to 200 rotate",
+        "18-hole mini golf",
+        "Any age",
+        "Price direct play or sufficiently funded credit; flexible leisure window, no calculated individual turns.",
+        "Internal pricing + user correction",
+        "Active"
+      ],
+      [
+        "Mini Golf",
+        "Mini Golf — Child",
+        8,
+        "per person",
+        "Unscheduled leisure",
+        "50 simultaneous; groups up to 200 rotate",
+        "18-hole mini golf",
+        "Any age",
+        "Price direct play or sufficiently funded credit; flexible leisure window, no calculated individual turns.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Package",
+        "Grizzly Golf and Games",
+        29.99,
+        "per person",
+        "—",
+        "Per participant",
+        "1 round mini golf + $25 play card",
+        "Mini golf selected",
+        "Compare against a la carte.",
+        "Internal pricing file",
+        "Not retained in current owner list — excluded pending confirmation"
+      ],
+      [
+        "Mini Golf",
+        "Mini Golf Outing — Sun–Thu",
+        499,
+        "group",
+        "2 hr",
+        "Base 20; larger groups rotate",
+        "2-hr private patio + 2-hr exclusive mini golf + food for 20 + hydration",
+        "May 1–Nov 1; Sun–Thu",
+        "Additional guests $6 food scaling fee.",
+        "Internal pricing + user date rule",
+        "REMOVED — Private Mini Golf Outing"
+      ],
+      [
+        "Mini Golf",
+        "Mini Golf Outing — Friday",
+        599,
+        "group",
+        "2 hr",
+        "Base 20; larger groups rotate",
+        "Same as above",
+        "May 1–Nov 1; Friday",
+        "Additional guests $6 food scaling fee.",
+        "Internal pricing + user date rule",
+        "REMOVED — Private Mini Golf Outing"
+      ],
+      [
+        "Climbing",
+        "Wall Climb",
+        5,
+        "per climb",
+        "Unscheduled leisure",
+        "6 active; 50 rotation area; event/group capacity 200",
+        "1 climb",
+        "Minimum 40 lbs",
+        "Price direct play or sufficiently funded credit; flexible leisure window, no calculated individual turns.",
+        "Internal pricing + user correction",
+        "Active"
+      ],
+      [
+        "Arcade",
+        "Play Card",
+        0,
+        "variable value",
+        "Flexible",
+        "1/player when arcade selected",
+        "Reloadable credit, starting$10/person; toward mini golf,arcade,laser orclimbing",
+        "Any age",
+        "Offset included credit;multiple requested activities need sufficient value. Noautomatic$10card if nootherinterest.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Mezzanine — Sun–Thu",
+        2750,
+        "rental",
+        "3 hr",
+        "Max event size 125",
+        "Entire second level; 8 bowling lanes; 14-target Axe Den/coaches; Skybox; exclusive Beer Wall access",
+        "Year-round; applicable time/day",
+        "Compare50–125withbowling+axe;or61–125privacy,unlessAxeNo. Existingday/time rates.",
+        "Internal pricing + user corrections",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Mezzanine — Friday",
+        4750,
+        "rental",
+        "3 hr",
+        "Max event size 125",
+        "Same",
+        "Year-round; Friday",
+        "Compare50–125withbowling+axe;or61–125privacy,unlessAxeNo. Existingday/time rates.",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Mezzanine — Saturday before 4",
+        5495,
+        "rental",
+        "3 hr",
+        "Max event size 125",
+        "Same",
+        "Year-round; Saturday before 4",
+        "Compare50–125withbowling+axe;or61–125privacy,unlessAxeNo. Existingday/time rates.",
+        "Internal pricing + user correction",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Mezzanine — Saturday after 4",
+        5995,
+        "rental",
+        "3 hr",
+        "Max event size 125",
+        "Same",
+        "Year-round; Saturday after 4",
+        "Compare50–125withbowling+axe;or61–125privacy,unlessAxeNo. Existingday/time rates.",
+        "Internal pricing + user correction",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Mezzanine — 2 hr Fri/Sat",
+        3095,
+        "rental",
+        "2 hr",
+        "Max event size 125",
+        "Mezzanine access",
+        "All day Friday and Saturday",
+        "Compare50–125withbowling+axe;or61–125privacy,unlessAxeNo. Existingday/time rates.",
+        "Latest Corrections resolves time eligibility",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Full Facility — Sun–Fri before 4",
+        5495,
+        "rental",
+        "3hours",
+        "999maximum",
+        "Unlimited axe, bowling, arcade, laser, climbing, corn hole, event rooms + 18-hole outdoor mini golf",
+        "Sun–Fri before 4",
+        "Evaluate>125;confirmed3hours;max999guests",
+        "Internal pricing + user inclusion",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Full Facility — Saturday before 4",
+        8795,
+        "rental",
+        "3hours",
+        "999maximum",
+        "Same",
+        "Saturday before 4",
+        "Evaluate>125;confirmed3hours;max999guests",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Full Facility — Sun–Thu after 4",
+        5995,
+        "rental",
+        "3hours",
+        "999maximum",
+        "Same",
+        "Sun–Thu after 4",
+        "Evaluate>125;confirmed3hours;max999guests",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Full Facility — Friday after 4",
+        9795,
+        "rental",
+        "3hours",
+        "999maximum",
+        "Same",
+        "Friday after 4",
+        "Evaluate>125;confirmed3hours;max999guests",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Rental",
+        "Full Facility — Saturday after 4",
+        10795,
+        "rental",
+        "3hours",
+        "999maximum",
+        "Same",
+        "Saturday after 4",
+        "Evaluate>125;confirmed3hours;max999guests",
+        "Internal pricing file",
+        "Active"
+      ],
+      [
+        "Room",
+        "Lower Event Room",
+        150,
+        "3 hr",
+        "3 hr",
+        "34 seated; may be home base for larger groups",
+        "Private room",
+        "Availability",
+        "Prefer Mostly Kids / laser / arcade events. Extra hour $75.",
+        "Internal pricing + user capacity",
+        "Active"
+      ],
+      [
+        "Room",
+        "Skybox / Upper Event Room",
+        250,
+        "3 hr",
+        "3 hr",
+        "44 seated; may be home base for larger groups",
+        "Private room",
+        "Availability",
+        "Prefer bowling/axe-focused events. Extra hour $99.",
+        "Internal pricing + user capacity",
+        "Active"
+      ],
+      [
+        "Beverage",
+        "Pop Pitcher",
+        8,
+        "pitcher",
+        "—",
+        "One pitcher serves4adults or5children;round up",
+        "Non-alcoholic fountain beverage",
+        "Food paths",
+        "$8 per pitcher, pretax. Separate with catering unless already included; no duplicate pitchers.",
+        "User rule",
+        "Active"
+      ],
+      [
+        "Beverage",
+        "Beer Wall — 1 Drink",
+        8,
+        "per guest",
+        "—",
+        "1 drink",
+        "Beer Wall drink card",
+        "Beer Wall selected",
+        "Default Beer Wall quote. +7% beverage tax.",
+        "User rule",
+        "Active"
+      ],
+      [
+        "Beverage",
+        "Beer Wall — 2 Drinks",
+        13,
+        "per guest",
+        "—",
+        "2 drinks",
+        "Beer Wall drink card",
+        "Optional enhancement",
+        "+7% beverage tax.",
+        "User rule",
+        "Active"
+      ],
+      [
+        "Room",
+        "Climbers Cove",
+        650,
+        "3hr",
+        "3hr",
+        "150withtables/seating",
+        "Space only;noattractions",
+        "Subject to availability",
+        "Space only; name only if requested. Extra time only when requested, prorated from $650/3 hr; subject to availability.",
+        "Owner-confirmed2026-10-30",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Regular Bowling — 30 min Tue–Thu",
+        17.5,
+        "per lane",
+        "30 min",
+        "6 guests/lane",
+        "Bowling lane",
+        "Tue–Thu",
+        "Add $3.50 shoes/bowler; Wednesday discount on lane only",
+        "Attraction poster + owner confirmation",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Regular Bowling — 30 min Fri–Sun",
+        25,
+        "per lane",
+        "30 min",
+        "6 guests/lane",
+        "Bowling lane",
+        "Fri–Sun",
+        "Add $3.50 shoes/bowler",
+        "Attraction poster + owner confirmation",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Regular Bowling — per game Tue–Thu",
+        6,
+        "per person/game",
+        "per game",
+        "6 guests/lane",
+        "One game",
+        "Tue–Thu",
+        "No Monday walk-in rate supplied; shoes $3.50",
+        "Attraction poster",
+        "Active"
+      ],
+      [
+        "Bowling",
+        "Regular Bowling — per game Fri–Sun",
+        8,
+        "per person/game",
+        "per game",
+        "6 guests/lane",
+        "One game",
+        "Fri–Sun",
+        "Shoes $3.50",
+        "Attraction poster",
+        "Active"
+      ]
+    ],
+    "Food & Quantities": [
+      [
+        "Food Path / Item",
+        "Price",
+        "Quantity Rule",
+        "Tax",
+        "Eligibility / Trigger",
+        "Planner Rule",
+        "Source / Status"
+      ],
+      [
+        "Pizza & Pitcher Combo",
+        20,
+        "ROUNDUP(adults/4+children/5); unknown mix uses 4 per combo",
+        0.07,
+        "Food requested; pizza path",
+        "One large one-topping pizza + one fountain pitcher. Offset included combos once.",
+        "Owner confirmation; current catering menu"
+      ],
+      [
+        "Boneless Wing Platter — 36 pc",
+        36.99,
+        "4 wings/person; round up to 36-piece platters",
+        0.07,
+        "Default wings when applicable",
+        "Menu serves 9–10 as appetizer portions.",
+        "Current catering menu; retained quantity rule"
+      ],
+      [
+        "Traditional Wing Platter — 36 pc",
+        38.49,
+        "4 wings/person; round up to 36-piece platters",
+        0.07,
+        "When requested",
+        "Do not default to traditional.",
+        "Current catering menu"
+      ],
+      [
+        "Charcuterie — 3-board set",
+        181.13,
+        "One set serves approximately 30; whole 3-board sets",
+        0.07,
+        "Appetizers when requested",
+        "Veggie, fruit and cheese. Existing default capped at 4 sets; larger needs staff review.",
+        "Current catering menu; retained cap"
+      ],
+      [
+        "Cookie Tray",
+        20.7,
+        "One tray per 20; round up",
+        0.07,
+        "Appetizer path or requested dessert",
+        "Retain existing appetizer menu behavior; not default pizza dessert.",
+        "Current catering menu"
+      ],
+      [
+        "Brownie Tray",
+        45.54,
+        "Menu serves 40–45; round up whole trays as needed",
+        0.07,
+        "Requested dessert",
+        "Corrected serving-range typo; no automatic dessert.",
+        "Corrected one-page catering menu"
+      ],
+      [
+        "Salad Pan",
+        24.99,
+        "Menu serves 8–12; staff confirms side portions",
+        0.07,
+        "Requested side",
+        "Separate dining required; not automatic pizza addition.",
+        "Owner price update; current menu"
+      ],
+      [
+        "Removed catering slot",
+        0,
+        "Not offered",
+        0.07,
+        "Inactive",
+        "No Breakfast Bar. Row retained only to preserve legacy formula references.",
+        "Owner removed offering"
+      ],
+      [
+        "Fajita Bar",
+        25,
+        "Per guest; minimum 15",
+        0.07,
+        "Explicit catering selection",
+        "Chicken, peppers/onions, rice, queso refried beans, corn/black beans, toppings, chips, corn tortillas. Pitchers extra; no room promise.",
+        "Current menu + owner confirmation"
+      ],
+      [
+        "Slider Bar",
+        30,
+        "Per guest; minimum 15",
+        0.07,
+        "Explicit catering selection",
+        "Buns, hamburgers/cheeseburgers, pulled chicken, pulled pork, fries, slaw, baked beans, condiments. No slider counts. Pitchers extra; no room promise.",
+        "Current menu + owner confirmation"
+      ],
+      [
+        "Smokehouse BBQ Bar",
+        35,
+        "Per guest; minimum 15",
+        0.07,
+        "Explicit catering selection",
+        "Brisket, pulled pork/chicken, cornbread, baked beans, fries, mac and cheese, potato salad. Pitchers extra; no room promise.",
+        "Current menu + owner confirmation"
+      ],
+      [
+        "Pop Pitcher",
+        8,
+        "ROUNDUP(adults/4+children/5); subtract included pitchers",
+        0.07,
+        "Beverages requested",
+        "Separate beverage sale; never duplicate combo/package pitchers.",
+        "Owner confirmation"
+      ],
+      [
+        "Pizza & Pins F&B Allocation",
+        0.2,
+        "20% of $49.99 package price",
+        0.07,
+        "Pizza & Pins",
+        "Retain F&B allocation; approximate tax $0.70/package.",
+        "Retained approved tax allocation"
+      ],
+      [
+        "Mini Golf Outing F&B Allocation",
+        0.1,
+        "Inactive",
+        0.07,
+        "Removed offering",
+        "Not used.",
+        "Retained inactive reference"
+      ],
+      [
+        "Pretzel Bite Platter — 45 pc",
+        26.99,
+        "Serves 10–11",
+        0.07,
+        "Requested platter",
+        "Requires separate dining setup.",
+        "Current menu"
+      ],
+      [
+        "Chicken Strip Platter",
+        49.99,
+        "Serves 10–12",
+        0.07,
+        "Requested platter",
+        "Requires separate dining setup.",
+        "Current menu"
+      ]
+    ],
+    "Scheduling Rules": [
+      [
+        "Situation",
+        "Confirmed handling",
+        "Example / restriction"
+      ],
+      [
+        "Bowling arrival",
+        "Five-minute arrival/shoe window before bowling",
+        "12:55–1:00 arrival; 1:00–2:00 purchased bowling"
+      ],
+      [
+        "Axe after bowling",
+        "15-minute Axe Check-In & Safety Briefing, then purchased throwing time",
+        "2:00–2:15 briefing; 2:15–2:45 for 30-minute axe"
+      ],
+      [
+        "Axe main activity",
+        "Default 60 minutes throwing, plus 15-minute briefing",
+        "Show shorter 30-minute alternative; do not absorb briefing into play"
+      ],
+      [
+        "Start times",
+        "Bowling may begin at any time",
+        "Do not round rotations to the next hour"
+      ],
+      [
+        "Laser / golf / climbing",
+        "Flexible access inside a leisure window",
+        "2:30–3:00 PM — Play mini golf at leisure; no game or individual-turn schedule"
+      ],
+      [
+        "Dining",
+        "30 minutes separate unless approved lane-dining exception",
+        "At most 25 guests AND bowling AND pizza/wings/drinks only"
+      ],
+      [
+        "100 guests, split A/B",
+        "50 guests in each cohort; swap bowling and axe",
+        "Lane 1 up to 10 permits 50 in bowling; all other regular lane pricing remains 6"
+      ],
+      [
+        "100 guests, 30-minute axe, Group A",
+        "12:55 shoes; 1:00–2:00 bowling; 2:00–2:15 briefing; 2:15–2:45 axe",
+        "One hour bowling and 30 minutes throwing protected"
+      ],
+      [
+        "100 guests, 30-minute axe, Group B",
+        "1:00–1:15 briefing; 1:15–1:45 axe; 1:55–2:00 shoes; 2:00–3:00 bowling",
+        "Unallocated time is free time; no extra activity promised"
+      ],
+      [
+        "Rotation planning",
+        "Every axe cohort receives its own 15-minute briefing",
+        "Do not assume all cohorts can use one shared briefing"
+      ],
+      [
+        "Booking review",
+        "Check actual lanes, coaches, access and participant eligibility",
+        "A proposed itinerary does not reserve a booking"
+      ]
+    ]
+  },
+  "approved_duration_update": "Compare fully priced longer bowling to use the requested event duration when bowling time is not explicitly fixed. Protect budget, exclusions and explicit activity duration. Label up to 15 minutes wrap-up; disclose larger unresolved gaps.",
+  "inquiry_reports": {
+    "recipient": "events@generations-adventureplex.com",
+    "timezone": "America/Indiana/Indianapolis",
+    "daily": "07:00 every day; previous local calendar day received inquiries",
+    "weekly": "Monday 07:00; previous Monday through Sunday received inquiries",
+    "sort": [
+      "event type ascending",
+      "guest count descending",
+      "earliest requested event date ascending"
+    ],
+    "event_types": [
+      "Birthday",
+      "Corporate or Team Event",
+      "Sports Team",
+      "School or Youth Group",
+      "Family or Social Gathering",
+      "Other"
+    ],
+    "exclude_test_inquiries": true,
+    "alternative_dates_count_once": true,
+    "host_cron_required_for_punctual_execution": true
+  },
+  "email_validation": {
+    "format": "Required on client and server",
+    "typos": "Suggest common provider corrections; never silently rewrite; permit exact-domain confirmation",
+    "domain_check": "Native DNS mail routing before save; MX or implicit A/AAAA; reject confirmed no-mail domains",
+    "temporary_errors": "Preserve inquiry with internal review flag",
+    "external_services": false,
+    "mailbox_ownership_check": false
+  },
+  "staff_workflow": {
+    "unlisted_link": true,
+    "wordpress_login_required_for_staff": false,
+    "staff_name_optional": true,
+    "missing_name": "Staff member not identified",
+    "autosave": "staff intake only; no public customer drafts",
+    "time_limit_minutes": 15,
+    "timer_start": "first customer/event detail",
+    "warning_at_minutes": 13,
+    "after_timeout": "manager-only unfinished record; clear staff screen; no staff resume; no customer email or recommendation",
+    "retention_days_after_timeout": 14,
+    "source_attribution": "saved inquiry, internal email and reports",
+    "reset": "customer details and staff name after submission or timeout",
+    "excel_tabs": [
+      "Submitted Inquiries",
+      "Unfinished Staff Inquiries"
+    ]
+  },
+  "attraction_reassurance": "You don’t need every detail figured out. Share your thoughts, and we’ll take it from there.",
+  "axe_age_note": "Age requirements: Weekdays ages 10+; Weekends ages 16+.",
+  "removed_form_helper_copy": [
+    "Private rooms are priced separately from catering. Craft beverages are for eligible adults.",
+    "Let us know what would make your gathering complete.",
+    "Tell us what you have in mind so we can make it yours."
+  ],
+  "administration": {
+    "plugin_version": "3.3.0",
+    "path": "Event Planner > Prices & Attachments",
+    "capability": "manage_options",
+    "prices": "Known rates saved as integer-cent WordPress overrides; new inquiries/manual recalculations only; historical snapshots preserved",
+    "attachments": "Two Media Library IDs; local PDF/PNG/JPEG up to 10 MB each; bundled fallback if unavailable",
+    "persistence": "Configuration survives plugin updates",
+    "synchronization": "Editing rates does not edit PDF/image text or workbook references",
+    "recommendation_policy_changes": false
+  },
+  "attraction_answer_labels": {
+    "yes": "Yes",
+    "no": "No",
+    "open": "Open to recommendations"
+  },
+  "custom_packages": {
+    "page": "Event Planner > Packages",
+    "states": [
+      "draft",
+      "active",
+      "archived"
+    ],
+    "scope": "whole participating group",
+    "max_active": 20,
+    "max_stored": 100,
+    "pricing": "per-person or rounded-up group units",
+    "inclusions": "existing attractions, fixed food items, selected catering bar and optional named private room",
+    "availability": "guest limits, audience, event type, days, date range, event-start window",
+    "history": "selected definition/revision preserved with inquiry",
+    "examples_installed": false
+  },
+  "arcade_allocation": {
+    "updated": "2026-11-02",
+    "priority": "Fund requested per-guest arcade allowance before other eligible play",
+    "children": "Blast credit restricted to participating children",
+    "display": "guest card counts, full face value, included funding and additional top-up; exact cents preserved",
+    "example": {
+      "adults": 5,
+      "children": 10,
+      "credit_each": 15,
+      "children_included": 150,
+      "adult_additional": 75,
+      "mini_golf_separate": 130,
+      "event_total": 783.3
+    }
+  }
+}

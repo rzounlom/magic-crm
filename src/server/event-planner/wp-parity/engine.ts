@@ -4,7 +4,7 @@ import {
   wpCatalogRevision,
   type WpCatalog,
 } from "@/server/event-planner/wp-parity/catalog";
-import { wpBowlingLanes } from "@/server/event-planner/wp-parity/lanes";
+import { wpBowlingLanes, wpGroupSizes } from "@/server/event-planner/wp-parity/lanes";
 import {
   WP_EVENT_TYPES,
   foodLabels,
@@ -48,7 +48,8 @@ import type {
 } from "@/server/event-planner/wp-parity/types";
 
 /**
- * Faithful TypeScript port of Generations Event Planner 3.3.0 `includes/engine.php`
+ * Faithful TypeScript port of Generations Event Planner 3.5.0 `includes/engine.php`
+ * (calculation changes introduced in 3.4.0; 3.5.0 keeps them and adds WP updater only).
  * (`Generations\PlannerNext\Engine`). Method order and control flow intentionally follow the
  * PHP source. Money is integer cents.
  *
@@ -824,7 +825,7 @@ export class WpParityEngine {
         }
       }
     }
-    if (sel.includes("bowling") && n > 48) {
+    if (sel.includes("bowling") && Math.max(0, ...wpGroupSizes(n, 50)) > 48) {
       p.notes.push(
         "Large-group rotation uses lane 1’s approved up-to-10 capacity to allow 50-person bowling cohorts. Verify lane 1 availability.",
       );
@@ -905,13 +906,14 @@ export class WpParityEngine {
     const a = p.axe_minutes;
     let last = offset;
     if (b && a) {
-      const groups = Math.ceil(n / 50);
+      const sizes = wpGroupSizes(n, 50);
+      const groups = sizes.length;
       const resource: Record<"b" | "a", number> = { b: offset, a: offset };
       const jobs: ScheduleJob[] = [];
       for (let i = 0; i < groups; i += 1) {
         jobs.push({
           id: i,
-          n: Math.min(50, n - i * 50),
+          n: sizes[i] as number,
           order: i % 2 === 0 ? ["b", "a"] : ["a", "b"],
           step: 0,
           ready: offset,
@@ -956,8 +958,8 @@ export class WpParityEngine {
         last = Math.max(last, end);
       }
     } else if (b) {
-      for (let i = 0; i < Math.ceil(n / 50); i += 1) {
-        const label = `Group ${i + 1} — ${Math.min(50, n - i * 50)} guests`;
+      for (const [i, size] of wpGroupSizes(n, 50).entries()) {
+        const label = `Group ${i + 1} — ${size} guests`;
         const start = offset + i * b;
         const prepEnd = offset > 0 ? 0 : start;
         add(prepEnd - 5, prepEnd, "Bowling check-in & shoes", label);
@@ -965,8 +967,8 @@ export class WpParityEngine {
         last = start + b;
       }
     } else if (a) {
-      for (let i = 0; i < Math.ceil(n / 56); i += 1) {
-        const label = `Group ${i + 1} — ${Math.min(56, n - i * 56)} guests`;
+      for (const [i, size] of wpGroupSizes(n, 56).entries()) {
+        const label = `Group ${i + 1} — ${size} guests`;
         add(last, last + 15, "Axe Check-In & Safety Briefing", label);
         add(last + 15, last + 15 + a, "Axe Throwing", label);
         last += 15 + a;
@@ -1093,7 +1095,14 @@ export class WpParityEngine {
       for (const playHours of unique([bh, 0.5])) {
         const short = playHours < bh ? 1 : 0;
         const half = playHours === 0.5;
-        let x = this.product(half ? "30-minute bowling" : "Regular bowling", short);
+        let x = this.product(
+          half
+            ? "30-minute bowling"
+            : playHours === 1
+              ? "1 hour bowling"
+              : `${playHours} hours bowling`,
+          short,
+        );
         x.alternative_only = Boolean(short);
         x.bowl_mode = "regular";
         x.bowling_minutes = phpRound(playHours * 60);

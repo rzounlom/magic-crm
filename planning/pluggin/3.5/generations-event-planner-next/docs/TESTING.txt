@@ -1,0 +1,73 @@
+VERSION 3.5.0 — NOVEMBER 5, 2026
+
+Current local verification:
+- 44 updater checks, with intercepted HTTP (no live update server).
+- 70 engine checks.
+- 40 audit checks, including 200 combination cases.
+- 24 refinement checks, with intercepted mail.
+- PHP syntax passed for all source and test files.
+- Release ZIP and generated feed validated separately by the release builder.
+
+No hosting, live plugin update, WordPress inbox delivery or database was changed.
+Actual installation from a hosted release feed must be verified on staging after
+connecting hosting. Updater checks use WordPress test doubles, not a live WP site.
+
+Earlier verification below concerns the previous version.
+
+VERSION 3.4.0 — NOVEMBER 4, 2026
+
+Current verification in this workspace:
+- 70 engine checks passed.
+- 40 audit checks passed, including 200 combination cases.
+- 24 new standalone refinement checks passed. These cover guest counts 1–999
+  against both capacities; actual 35/35 scheduling; compact itinerary times;
+  alternative price reconciliation; monthly reset and cutoff boundaries;
+  weekly period; Excel totals; daily delivery, deduplication, exact-cutoff
+  retries and test-mode suppression. Email uses local test doubles only.
+- PHP syntax checked for all source and test files.
+- Compact itinerary visually reviewed at email width using an HTML renderer.
+- Generated Excel loaded successfully with openpyxl: Summary, Submitted
+  Inquiries, Unfinished Staff Inquiries.
+
+The included WordPress integration tests were adjusted for month-to-date
+reporting but were NOT rerun against a WordPress installation here.
+Live WordPress installation, inbox delivery and email-client rendering
+remain staging checks. No live site was changed.
+
+Earlier results below are historical evidence for 3.3.0, not new 3.4.0 runs.
+
+GENERATIONS EVENT PLANNER 3.3.0 — NOVEMBER 2, 2026
+
+332 PHP checks rerun after the arcade correction:
+- 70 engine checks.
+- 40 audit checks, including 200 cross-combination cases.
+- 20 WordPress persistence/permission/intercepted-email checks.
+- 28 reports/date/DST/sorting checks.
+- 23 email-domain checks.
+- 41 staff workflow/deadline/retention checks.
+- 32 price/attachment administration checks.
+- 66 custom-package checks.
+- 12 exact arcade-allocation and cent-distribution checks.
+
+Additionally, 21 WordPress package HTTP checks passed during the preceding
+package-editor implementation phase. These verify the unchanged save UI and
+handlers; see packages-http-test-results.txt. Combined evidence: 353 checks.
+All email attempts intercepted in an isolated local WordPress/SQLite fixture.
+All PHP and JavaScript syntax checks pass. Runtime, fixture, local database and
+test credentials are not included in the archive.
+
+Exact inquiry case: Sports Team, Saturday Nov 14, 5 adults / 10 children,
+laser/golf/climbing/arcade included, bowling Open, food/craft Yes, private room
+No, recorded duration 0.01 hours. Its duration hold remains. Blast supplies
+10 children with $15 cards and no arcade top-up; 5 adults need $15 each ($75).
+Mini golf totals $130 separately; the event remains $783.30. The email and
+staff preparation instructions show per-guest cards, never a single $155 card.
+
+Package checks cover per-person/group-unit pricing, snapshots, archival/draft
+exclusion, six attraction exclusions, exact durations, date/day/time/type and
+audience restrictions, food/tax offsets, included rooms, capacity, eligibility,
+separate dining, malformed configurations, play funding and administrator access.
+
+Staging remains necessary for actual theme/mobile appearance, native media
+interaction, real email/attachment delivery, host DNS and reliable host cron.
+No user's WordPress installation or live booking calendar was changed.

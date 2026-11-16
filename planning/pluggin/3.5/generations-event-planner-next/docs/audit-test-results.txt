@@ -1,0 +1,42 @@
+PASS included $25 Pins credit offsets laser games; six guests total $95.09
+PASS two issued Pins cards offset $50 of requested laser play once
+PASS Wednesday discounted laser games can be fully funded by included Pins credit
+PASS AxeTreme credit compares requested non-arcade attractions correctly
+PASS using a play card never adds an excluded arcade activity
+PASS All-Access credit offsets eligible requested laser, golf and climbing
+PASS explicit one-hour bowling is preserved
+PASS Friday 30-minute bowling is a clearly shorter $46 alternative
+PASS explicit Tuesday half-hour uses $17.50 lane price, not prorated $15
+PASS Wednesday half-hour discounts only the $17.50 lane rate
+PASS a short event never silently cuts either explicitly requested fixed activity
+PASS four-hour event does not automatically buy a Cove extension
+PASS explicit half-hour Cove extension is prorated to $108.33
+PASS extension line items use whole cents and reconcile with displayed unit prices
+PASS an explicitly requested Full Facility rental is evaluated below 126 guests
+PASS included Full Facility attractions are not charged a second time
+PASS Full Facility itinerary retains requested Laser Tag
+PASS Full Facility itinerary retains requested Mini Golf
+PASS Full Facility itinerary retains requested Climbing
+PASS Full Facility itinerary retains requested Arcade
+PASS Full Facility access never schedules explicitly excluded attractions
+PASS explicit private laser request takes precedence over cheaper individual passes
+PASS conflicting rental request is held rather than overriding explicit attraction No
+PASS traditional-wing request replaces default boneless wings
+PASS explicit no-wings request is honored
+PASS wings-only request does not automatically add pizza
+PASS negated catering menu list does not become an unwanted bar quote
+PASS separate dining receives the full 30 minutes without a conflicting shoe-preparation block
+PASS child Blast + arcade leisure can fit its 90-minute access window
+PASS no-time-left flexible attraction is flagged, not silently omitted
+PASS empty event scope is unpriced, not a zero-dollar recommendation
+PASS 200 cross-combination cases preserve requested attractions, exclusions, totals, resource limits and event windows
+PASS three-hour event buys two bowling hours plus shoes and 30-minute axe: $370
+PASS three-hour plan has 165 purchased/briefing minutes plus 15-minute wrap-up
+PASS three-hour sample itinerary ends at the requested 4 PM
+PASS filling event duration never adds excluded attractions
+PASS explicit one-hour bowling remains intact and leaves a disclosed 75-minute gap
+PASS budget-limited shorter plan discloses its unresolved duration instead of pretending to fill three hours
+PASS two-hour bowling and axe event retains one-hour bowling and full briefing
+PASS two-hour bowling-only event buys two hours with shoes charged once
+
+40 pre-upload audit checks passed, including 200 combination cases.

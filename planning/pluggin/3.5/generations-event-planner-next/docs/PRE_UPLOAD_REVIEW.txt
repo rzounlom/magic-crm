@@ -1,0 +1,42 @@
+VERSION 3.5.0 — ONE-TIME UPDATER SETUP
+Install once over the existing plugin without deleting it. Check saved options
+and inquiry records on staging. Connect a trusted hosted HTTPS update.json in
+Event Planner > Plugin Updates, then Check for updates. No server URL is guessed
+or preconfigured. Publish and test a later version on staging to verify the
+actual native WordPress Update now flow before using it on the live site.
+See docs/UPDATES.md.
+
+Earlier review:
+
+VERSION 3.4.0 UPDATE
+Upload as a replacement of the existing plugin; preserve its stable directory.
+Confirm test/live mode after uploading. Preview an inquiry with 70 guests
+and bowling/axe: expect two groups of 35 and side-by-side activity columns.
+Check alternative line items and total tax against the calculated estimate.
+Preview Inquiry Reports: range should start on the first of the current month.
+Unfinished drafts still expire after 14 days; only retained drafts are counted.
+WordPress integration and actual inbox delivery require staging verification.
+
+Historical 3.3.0 review:
+
+GENERATIONS EVENT PLANNER 3.3.0 — REVIEW
+
+Adds administrator custom-package editor (Draft / Active / Archived), guest
+and availability constraints, structured inclusions and candidate comparison.
+No sample package is activated. Standard defaults and the public six-attraction
+form remain intact. Customer receives acknowledgment, never the calculated quote.
+
+Corrects included-credit priority: fund requested arcade allowance first, then
+other eligible play. Child Blast credits stay with children. Shows individual
+card counts, full values, included credit and additional funding. Exact supplied
+15-guest inquiry retains $783.30 total; child cards $150 included, adult cards
+$75 extra, mini golf $130 separately. The recorded 0.01-hour duration still
+requires correction before quoting.
+
+332 PHP checks rerun after correction; 21 earlier package HTTP checks validate
+unchanged save UI/handlers. All test email intercepted; PHP/JS syntax passes.
+See TESTING.txt for coverage and remaining real-host staging checks.
+
+Stable folder generations-event-planner-next replaces Next in place. Saved
+inquiries, price overrides, attachment IDs and staff link stay in WordPress.
+No production deployment or external email sent by this task.

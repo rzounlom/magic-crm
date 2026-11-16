@@ -1,0 +1,21 @@
+PASS WordPress serves shortcode page
+PASS shortcode renders form
+PASS no radio answers preselected
+PASS browser-side validation blocks incomplete submission before HTTP
+PASS Other duration conditionally required
+PASS budget amount conditionally required
+PASS valid JavaScript form completes actual HTTP submission
+PASS public form returns acknowledgment only in test mode
+PASS exactly one submit request sent
+PASS no JavaScript runtime errors in DOM test
+PASS HTTP rejects missing nonce
+PASS HTTP server independently rejects incomplete form
+PASS AJAX exposes no quote, contact data or inquiry ID
+PASS idempotent replay does not create another request
+PASS tampered attraction choice rejected
+PASS private inquiry type not exposed in REST
+PASS local administrator can sign in
+PASS admin dashboard shows test mode
+PASS admin preview runs actual engine without saving
+PASS saved submissions visible in private admin inbox
+PASS staff planning controls recalculate without email
