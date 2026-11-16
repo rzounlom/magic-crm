@@ -1,0 +1,26 @@
+PASS all guest counts 1–999 split evenly within both existing capacity limits
+PASS approved 70- and 71-guest examples
+PASS regular bowling lane charges match balanced 40/40 cohorts
+PASS schedule uses 35/35 groups
+PASS presentation leaves exact activity schedule unchanged
+PASS 70-person dining, two rotations and arcade compact to four rows
+PASS shared rows span group columns and counts are in headings
+PASS preparation details remain visible below the table
+PASS exact shoe, briefing and axe play times remain visible
+PASS each HTML alternative has quantities, rates and guest counts
+PASS every alternative reconciles to its displayed line items and tax
+PASS single group hides unnecessary group labels
+PASS itinerary escapes supplied text
+PASS daily report covers month start through current report time
+PASS monthly running report resets on the first
+PASS weekly range remains previous Monday–Sunday
+PASS collect includes month-to-date rows and excludes prior month, cutoff and tests
+PASS Excel summary counts submitted inquiries and guests once
+PASS daily report sends through intercepted mail
+PASS same-day retry does not duplicate delivery
+PASS next day sends again within the same month
+PASS failure retries with original date and exact cutoff
+PASS retry recovers and marks original daily send accepted
+PASS test mode still suppresses report emails
+
+24 refinement checks passed. All email intercepted; no external side effects.

@@ -45,8 +45,10 @@ describe("calculatePrivateWpRecommendation", () => {
     const result = calculatePrivateWpRecommendation(answers());
     expect(result.status).toBe("ready");
     expect(result.pricingSource).toBe("plugin_defaults");
+    expect(result.engineVersion).toBe("3.5.0");
     expect(result.snapshot && result.snapshot.valid).toBe(true);
     if (result.snapshot && result.snapshot.valid) {
+      expect(result.snapshot.engine_version).toBe("3.5.0");
       expect(result.snapshot.dates[0]?.recommendation.total_cents).toBe(10_100);
     }
     const pinned = calculatePrivateWpRecommendation(answers(), { bowling_hours: 1 });

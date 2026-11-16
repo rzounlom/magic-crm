@@ -1,0 +1,68 @@
+PASS baseline inquiry saves without custom packages
+PASS active validated package loads
+PASS group units round up and eligible custom package can be recommended
+PASS purchased times and separate axe briefing are preserved
+PASS included bowling shoes and attractions are not added twice
+PASS adding package leaves historical inquiry unchanged
+PASS saved recommendation retains full package definition snapshot
+PASS later package price changes do not rewrite saved inquiry
+PASS draft package is excluded from recommendations
+PASS archived package is excluded
+PASS excluded attraction blocks incompatible package
+PASS explicit bowling duration cannot be replaced by different package time
+PASS explicit axe duration cannot be shortened by package
+PASS minimum guest count enforced
+PASS maximum guest count enforced
+PASS children-only package cannot price adults
+PASS adults-only package cannot price mixed group
+PASS available weekdays enforced
+PASS event-type availability enforced
+PASS date range enforced
+PASS availability boundaries are inclusive
+PASS start time outside window rejected
+PASS included food offsets once and allocated package food tax is applied
+PASS boneless package follows the existing negated traditional-wing preference
+PASS only uncovered meal combo purchased
+PASS included wing platters are not purchased again
+PASS food package not offered when food declined
+PASS large-group dining still needs time and can trigger hold
+PASS included dessert requires separate dining even for small bowlers
+PASS full included catering bar and pitchers are offset without double charge
+PASS included room avoids duplicate rental
+PASS room package does not override declined private room
+PASS included room window cannot silently extend to longer event
+PASS included group play credit reduces arcade funding once
+PASS bonus credit does not schedule excluded arcade
+PASS per-person pricing charges every participating guest
+PASS normal shoe rental is added when not included
+PASS included laser games and arcade credit are not purchased twice
+PASS included golf/climbs and funded arcade keep purchased laser access window
+PASS custom flexible activities use leisure windows
+PASS package cannot smuggle excluded laser through other included activities
+PASS children-only custom package works for an all-child participating group
+PASS package age requirement is flagged for actual-participant verification
+PASS reject invalid package price "-1"
+PASS reject invalid package price "1.001"
+PASS reject invalid package food_amount "101.00"
+PASS reject invalid package name ""
+PASS reject invalid package bowling "45"
+PASS reject invalid package axe "15"
+PASS reject invalid package size "0"
+PASS reject invalid package maximum "0"
+PASS reject invalid package status "published"
+PASS reject invalid package days [["5"]]
+PASS reject invalid package event_types ["Invented category"]
+PASS reject invalid package from_date "2026-02-30"
+PASS reject invalid package to_time "25:00"
+PASS reject invalid package food_brownies "-1"
+PASS reject invalid package room "invented"
+PASS missing required package field rejected
+PASS food inclusion requires explicit tax allocation
+PASS room capacity cannot be increased through package definition
+PASS catering-bar minimum remains fifteen
+PASS named draft may be saved before defining its experience
+PASS empty draft cannot be activated as a priced experience
+PASS anonymous visitor cannot render package editor
+PASS administrator sees structured package fields and lifecycle states
+
+66 package checks passed; external mail suppressed.

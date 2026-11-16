@@ -1,0 +1,14 @@
+PASS exact mixed sports-team example retains the recorded duration hold and separate adult access
+PASS reallocation preserves the original $783.30 event total
+PASS five adults receive $15 cards, $75 additional
+PASS ten children receive their included $15 cards without extra funding
+PASS arcade card quantity matches all fifteen guests
+PASS additional arcade funding is $75, not $155
+PASS mini golf is funded separately for all five adults and ten children
+PASS staff instructions show actual child card count and face value
+PASS internal email no longer presents a single pooled $155 card
+PASS excluded arcade does not generate guest cards
+PASS uneven credit is distributed across three cards without losing cents
+PASS funding rows still represent three $10 face-value cards
+
+12 arcade allocation checks passed. No external mail sent.

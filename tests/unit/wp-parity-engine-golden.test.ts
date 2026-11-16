@@ -12,7 +12,7 @@ import {
 } from "@/server/event-planner/wp-parity";
 
 /**
- * Golden parity tests ported 1:1 from Generations Event Planner 3.3.0 `tests/engine-test.php`
+ * Golden parity tests ported from Generations Event Planner engine tests (aligned to 3.5.0 / 3.4 calc).
  * (lines 5-48). Totals are PLUGIN DEFAULT prices (catalog 2026-11-02), never weakened.
  *
  * `runCase` mirrors `run_case()` and `mainPlan` mirrors `main_plan()` from `test-helpers.php`.
@@ -74,7 +74,7 @@ function isInvalid(raw: InquiryRaw): boolean {
   return !engine.recommend(raw).valid;
 }
 
-describe("WP Event Planner 3.3.0 engine golden parity (engine-test.php 5-48)", () => {
+describe("WP Event Planner 3.5.0 engine golden parity (engine-test.php 5-48)", () => {
   it("six Friday bowlers $61", () => {
     expect(mainPlan(runCase(6, ["bowling"])).total_cents).toBe(6100);
   });

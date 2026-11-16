@@ -1,0 +1,26 @@
+PASS unlisted staff link opens without a WordPress login
+PASS staff route is unindexed and does not leak the link through referrers
+PASS incorrect staff link is rejected
+PASS anonymous draft API calls without staff credentials are rejected
+PASS public customer typing never creates a staff draft
+PASS employee name alone does not start timer or autosave
+PASS first customer detail starts private autosave through real HTTP
+PASS continued typing updates saved progress
+PASS 13-minute warning appears before timeout
+PASS timeout saves available contact details for managers
+PASS timeout clears customer details and employee name from the screen
+PASS staff cannot reopen the expired form
+PASS timeout never submits an inquiry or triggers customer acknowledgment
+PASS public typo suggestion does not silently rewrite the address
+PASS public guest can explicitly accept the suggested correction
+PASS public customer submission still completes with no draft calls
+PASS public request cannot be mislabeled as a staff submission
+PASS public success screen still hides the intake introduction
+PASS complete staff inquiry submits through the existing engine
+PASS double click does not create duplicate staff submit requests
+PASS successful submission clears personal information for the next customer
+PASS successful submission offers Start another inquiry
+PASS lost submission response is recovered without falsely creating an unfinished inquiry
+PASS no JavaScript runtime errors in public or staff workflows
+
+24 staff HTTP/DOM checks passed. Graphical theme rendering not tested.

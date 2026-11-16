@@ -12,7 +12,7 @@
  *   PHP_BIN=/path/to/php node tools/wp-parity/php-compare.mjs
  *
  * Env:
- *   WP_PLANNER_ROOT — plugin root (default: ~/Downloads/WP Plugging- Event Planner Intake/generations-event-planner-next)
+ *   WP_PLANNER_ROOT — plugin root (default: planning/pluggin/3.5/generations-event-planner-next)
  *   PHP_BIN — explicit php binary
  */
 import { spawnSync } from "node:child_process";
@@ -23,10 +23,13 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../..");
-const defaultPlugin = join(
-  homedir(),
-  "Downloads/WP Plugging- Event Planner Intake/generations-event-planner-next",
-);
+const defaultPluginCandidates = [
+  join(repoRoot, "planning/pluggin/3.5/generations-event-planner-next"),
+  join(homedir(), "Downloads/WP Plugging- Event Planner Intake/generations-event-planner-next"),
+];
+const defaultPlugin =
+  defaultPluginCandidates.find((path) => existsSync(join(path, "includes/engine.php"))) ||
+  defaultPluginCandidates[0];
 const pluginRoot = process.env.WP_PLANNER_ROOT || defaultPlugin;
 const wantJson = process.argv.includes("--json");
 

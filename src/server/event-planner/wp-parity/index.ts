@@ -7,9 +7,19 @@ import type {
   RecommendResult,
 } from "@/server/event-planner/wp-parity/types";
 
-export { wpBowlingLanes } from "@/server/event-planner/wp-parity/lanes";
+export { wpBowlingLanes, wpGroupSizes } from "@/server/event-planner/wp-parity/lanes";
+export {
+  compactWpItinerary,
+  formatWpItineraryText,
+} from "@/server/event-planner/wp-parity/itinerary";
+export type {
+  CompactItinerary,
+  CompactItineraryRow,
+  CompactItinerarySlot,
+} from "@/server/event-planner/wp-parity/itinerary";
 export {
   Catalog,
+  WP_CALC_ENGINE_VERSION,
   WP_CATALOG_VERSION,
   applyWpCatalogOverrides,
   wpCatalogDefaults,

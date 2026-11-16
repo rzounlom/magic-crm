@@ -1,0 +1,20 @@
+PASS anonymous maintenance view requires WordPress login
+PASS anonymous price save is rejected
+PASS subscriber cannot access price editor
+PASS subscriber cannot save prices
+PASS administrator signs into local fixture
+PASS admin page renders complete monetary catalog
+PASS admin page provides two media selectors and script
+PASS price save requires a valid nonce
+PASS administrator price save redirects successfully
+PASS saved price survives a fresh WordPress request
+PASS actual admin recommendation uses the edited shoe rate
+PASS stale form cannot overwrite newer prices
+PASS invalid amount prevents every rate in the submission from changing
+PASS custom file IDs save and persist
+PASS invalid file selection preserves both existing settings
+PASS media picker selection updates file ID and visible name
+PASS bundled default selector resets file choice
+PASS bundled defaults can be restored through the real save handler
+
+18 admin HTTP and UI checks passed. No external mail sent.

@@ -254,4 +254,50 @@ describe("live agent inquiry queue", () => {
     expect(html).toContain("Pending Party");
     expect(html).not.toContain("Ready for Live Agent");
   });
+
+  it("does not show READY TO BOOK for WordPress public event requests with a staff draft plan", () => {
+    const html = renderToStaticMarkup(
+      <LiveAgentInquiryQueue
+        timeZone="UTC"
+        inquiries={[
+          {
+            id: "inq_wp",
+            status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+            selectedEventPlanId: "plan_wp_working",
+            humanHandoffReason: "PUBLIC_EVENT_REQUEST",
+            assignedUserProfileId: null,
+            customerSelectedAt: null,
+            createdAt: new Date("2026-09-09T11:00:00.000Z"),
+            humanHandoffRequestedAt: new Date("2026-09-09T11:00:00.000Z"),
+            workflowStage: null,
+            aiHandlingEnabled: false,
+            customerGroupName: "WP Birthday",
+            customerFirstName: "Pat",
+            customerLastName: "Lee",
+            customerEmail: "pat@example.com",
+            eventType: "Birthday",
+            desiredDate: new Date("2026-10-15T00:00:00.000Z"),
+            guestCount: 20,
+            assignedUser: null,
+            eventPlanRecommendations: [
+              {
+                id: "plan_wp_working",
+                kind: EVENT_PLAN_KINDS.AGENT_WORKING,
+                title: "Staff working draft",
+                estimatedTotalCents: 150000,
+                currency: "USD",
+                availabilityStatus: PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED,
+              },
+            ],
+            resourceReservations: [],
+          },
+        ]}
+      />,
+    );
+
+    expect(html).toContain("WP Birthday");
+    expect(html).toContain("Event inquiry — staff review required");
+    expect(html).not.toContain(CUSTOMER_SELECTED_PLAN_BANNER);
+    expect(html).not.toMatch(/READY TO BOOK/i);
+  });
 });

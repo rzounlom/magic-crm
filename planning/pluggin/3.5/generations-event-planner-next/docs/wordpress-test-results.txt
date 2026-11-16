@@ -1,0 +1,22 @@
+PASS incomplete inquiry does not save
+PASS complete inquiry saved privately
+PASS inquiry not public
+PASS WordPress saved calculated recommendation
+PASS test mode suppresses both emails
+PASS live path makes exactly two intercepted send attempts
+PASS internal recommendation goes to approved recipient
+PASS internal email includes itemized total and itinerary
+PASS customer acknowledgment contains no calculated quote
+PASS current catering menu and attraction poster attached
+PASS acknowledgment introduces reference attachments without obsolete shoe-price correction
+PASS an existing mail lock prevents a concurrent duplicate send
+PASS retry sends failed internal mail without duplicating accepted customer acknowledgment
+PASS accepted emails are not resent on another retry
+PASS test mode blocks retry delivery as well as initial delivery
+PASS transport failure preserves the inquiry and records both failed email paths
+PASS a failed transport can be retried successfully
+PASS anonymous visitor cannot access admin recommendations
+PASS subscriber cannot edit inquiry
+PASS subscriber has no private-post listing capability
+
+20 WordPress integration checks passed. No external mail sent.

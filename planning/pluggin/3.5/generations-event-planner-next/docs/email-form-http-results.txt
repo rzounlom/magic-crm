@@ -1,0 +1,28 @@
+PASS local WordPress responds
+PASS current shortcode renders
+PASS event type is required and has no default
+PASS six approved event categories and one empty prompt
+PASS no preference answers are preselected
+PASS incomplete inquiry blocked before HTTP
+PASS Gmail typo displays a suggested correction
+PASS typo suggestion never silently rewrites email
+PASS correction requires a click and the corrected domain is checked
+PASS confirmed no-mail domain shows an inline blocking error
+PASS temporary DNS failure warns without blocking a valid-format email
+PASS guest can retain entered domain only after explicit confirmation and a domain check
+PASS editing email clears prior domain confirmation
+PASS missing event type blocks otherwise complete inquiry
+PASS complete inquiry submits once via actual WordPress HTTP
+PASS form introduction hides after successful submit
+PASS approved confirmation heading appears
+PASS test mode does not promise an email
+PASS no JavaScript runtime errors
+PASS HTTP rejects missing nonce
+PASS domain-check endpoint rejects missing nonce
+PASS server independently rejects missing event type
+PASS server rejects unsupported event type
+PASS public response exposes no quote, contact data or inquiry ID
+PASS replay cannot create duplicate inquiry
+PASS private inquiries are not exposed through REST
+
+26 form/HTTP checks passed. Graphical browser appearance not tested.

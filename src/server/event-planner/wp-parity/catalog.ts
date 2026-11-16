@@ -12,6 +12,14 @@ import { createHash } from "node:crypto";
  */
 export const WP_CATALOG_VERSION = "2026-11-02";
 
+/**
+ * Calculation-engine label for WP-parity ports of Generations Event Planner.
+ * Distinct from `WP_CATALOG_VERSION` (pricing catalog) and `WP_INTAKE_VERSION` (form contract).
+ * New snapshots record this so staff can distinguish 3.5.0+ calcs from earlier frozen ones
+ * without bumping `WP_PARITY_SNAPSHOT_VERSION` or rewriting historical metadata.
+ */
+export const WP_CALC_ENGINE_VERSION = "3.5.0";
+
 export type WpCatalog = {
   bowling: {
     hour_weekday: number;

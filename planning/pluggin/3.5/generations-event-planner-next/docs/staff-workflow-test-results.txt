@@ -1,0 +1,43 @@
+PASS public form has no staff link key, name field or autosave workflow
+PASS staff form reuses intake with optional name and separate staff context
+PASS approved reassurance appears before attraction choices
+PASS unlisted link validates its own key without a WordPress login
+PASS staff APIs reject missing session ticket and nonce
+PASS a public-form ticket cannot save staff records
+PASS valid staff link, nonce and staff ticket authorize write-only intake
+PASS staff name alone never starts an empty unfinished inquiry
+PASS first customer data is saved privately even while incomplete
+PASS server issues a fixed 15-minute completion deadline
+PASS autosave response contains no private record data or record ID
+PASS unfinished data does not calculate recommendations, save submitted inquiries or send email
+PASS retrying start or autosaving cannot create another draft or extend the deadline
+PASS autosave captures newly entered customer details
+PASS concurrent draft mutation is locked
+PASS server expires unfinished inquiry when 15 minutes have elapsed
+PASS regular save cannot edit or reopen an expired inquiry
+PASS only one terminal in-flight snapshot is accepted within the timeout grace period
+PASS expired inquiry cannot become a submission
+PASS complete active staff inquiry follows normal validated submission
+PASS staff source and employee name are saved internally
+PASS staff attribution appears internally, not in customer acknowledgment
+PASS submitted session clears duplicate customer draft data
+PASS repeated staff submission returns same saved inquiry without duplication
+PASS missing employee name never blocks a complete customer inquiry
+PASS missing required customer details prevent submission while preserving staff progress
+PASS deadline is checked again after email-domain validation
+PASS morning report includes timed-out staff records from its reporting period
+PASS unfinished records never inflate submitted inquiry or guest totals
+PASS daily email presents a separate tabular unfinished section with contact details
+PASS self-contained generator produces an XLSX archive with exactly the requested sheet names
+PASS customer text beginning with equals remains text, never an executable spreadsheet formula
+PASS spreadsheet has frozen header rows and filter controls
+PASS spreadsheet contact email and phone values have clickable links
+PASS scheduled report actually attaches a readable Excel file with a proper filename
+PASS temporary report attachment is private and removed immediately after sending
+PASS 14-day expiration permanently deletes unfinished data and its session lookup
+PASS unfinished inquiry remains available before retention expires
+PASS session cleanup never deletes a submitted customer inquiry
+PASS staff draft review page is not visible to anonymous visitors
+PASS unfinished retention is exactly 14 days after timeout
+
+41 staff workflow checks passed. All mail intercepted locally.

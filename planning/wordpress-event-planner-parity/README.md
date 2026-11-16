@@ -66,6 +66,7 @@ Executable plugin + `docs/approved-rules.json` (`rules_version: 2026-11-02`) are
 | [40-phase-10l-inquiry-ux-redesign.md](./40-phase-10l-inquiry-ux-redesign.md) | Public + employee inquiry UX redesign (presentation only) |
 | [41-phase-10p-live-wordpress-pricing-evidence.md](./41-phase-10p-live-wordpress-pricing-evidence.md) | Phase 10P live WP pricing evidence recovery (blocked on admin export) |
 | [42-phase-10q-wordpress-pricing-exporter-safety.md](./42-phase-10q-wordpress-pricing-exporter-safety.md) | Phase 10Q exporter safety review + Admin install instructions (not installed live) |
+| [43-phase-11a-wp-350-logic-parity.md](./43-phase-11a-wp-350-logic-parity.md) | Phase 11A Event Planner 3.5.0 calculation/itinerary parity (PR; no Production deploy) |
 
 ## Branch
 

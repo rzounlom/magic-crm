@@ -1,0 +1,34 @@
+PASS all default rates parse to integer cents
+PASS reject malformed price "-1"
+PASS reject malformed price "1.001"
+PASS reject malformed price "1e2"
+PASS reject malformed price "NaN"
+PASS reject malformed price " 1"
+PASS reject malformed price "1,000.00"
+PASS reject malformed price []
+PASS reject malformed price true
+PASS reject malformed price ""
+PASS reject malformed price "10000000.01"
+PASS missing rate prevents a partial save
+PASS zero price remains a valid explicit value
+PASS unknown keys cannot enter the catalog
+PASS baseline valid inquiry saves before price change
+PASS updated shoes affect new fully priced recommendation
+PASS price edit preserves all saved historical inquiry data
+PASS price revision follows effective catalog
+PASS room extra-hour control feeds calculation
+PASS invalid stored values fall back to typed defaults
+PASS bundled files remain available without custom selections
+PASS custom menu and pricing resolve to local Media Library files
+PASS customer email delivery uses selected attachments
+PASS inquiry post cannot masquerade as attachment
+PASS server path outside uploads is rejected
+PASS fake PDF content is rejected
+PASS oversized attachment rejected
+PASS deleted custom menu safely falls back to bundled menu
+PASS anonymous visitor cannot render maintenance page
+PASS administrator sees separate save controls
+PASS short attraction labels render with original yes/no/open values
+PASS stored attraction values stay compatible
+
+32 administration checks passed; all mail intercepted.

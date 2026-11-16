@@ -102,6 +102,11 @@ export type WpIntakeAnswers = {
 export type WpPrivateCalculationMeta = {
   status: "deferred" | "ready" | "failed" | "incomplete";
   rulesVersion: string | null;
+  /**
+   * Calculation-engine label (e.g. `3.5.0`). Optional on historical metadata;
+   * new calculations set this without changing intakeVersion or snapshot_version.
+   */
+  engineVersion?: string | null;
   pricingRevision: string | null;
   /**
    * `plugin_defaults` = unlabeled testing fallback;
@@ -209,6 +214,7 @@ export function buildWpIntakeMessageMetadata(
     privateCalculation: {
       status: privateCalculation?.status ?? "deferred",
       rulesVersion: privateCalculation?.rulesVersion ?? WP_APPROVED_RULES_VERSION,
+      engineVersion: privateCalculation?.engineVersion ?? null,
       pricingRevision: privateCalculation?.pricingRevision ?? null,
       pricingSource: privateCalculation?.pricingSource ?? null,
       organizationId: privateCalculation?.organizationId ?? null,
