@@ -19,6 +19,7 @@ export type {
 } from "@/server/event-planner/wp-parity/itinerary";
 export {
   Catalog,
+  WP_CALC_ENGINE_VERSION,
   WP_CATALOG_VERSION,
   applyWpCatalogOverrides,
   wpCatalogDefaults,

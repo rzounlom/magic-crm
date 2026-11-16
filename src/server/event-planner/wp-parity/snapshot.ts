@@ -1,4 +1,7 @@
-import { WP_CATALOG_VERSION } from "@/server/event-planner/wp-parity/catalog";
+import {
+  WP_CALC_ENGINE_VERSION,
+  WP_CATALOG_VERSION,
+} from "@/server/event-planner/wp-parity/catalog";
 import type { WpPricingSource } from "@/server/event-planner/wp-parity/tenant-config";
 import type {
   AttractionAnswer,
@@ -79,6 +82,8 @@ export type WpParitySnapshot =
       snapshot_version: typeof WP_PARITY_SNAPSHOT_VERSION;
       valid: true;
       rules_version: string;
+      /** Optional: calculation-engine label (e.g. 3.5.0). Absent on pre-11B frozen snapshots. */
+      engine_version?: string;
       pricing_revision: string;
       pricing_source: "plugin_defaults" | "tenant_live" | "approved_plugin_baseline";
       organization_id: string | null;
@@ -92,6 +97,7 @@ export type WpParitySnapshot =
       snapshot_version: typeof WP_PARITY_SNAPSHOT_VERSION;
       valid: false;
       rules_version: string;
+      engine_version?: string;
       pricing_revision: string | null;
       pricing_source: WpPricingSource;
       organization_id: string | null;
@@ -107,6 +113,8 @@ export type WpParitySnapshotContext = {
   pricingSource?: "plugin_defaults" | "tenant_live" | "approved_plugin_baseline";
   rulesVersion?: string;
   pricingRevision?: string;
+  /** Calculation-engine label; defaults to `WP_CALC_ENGINE_VERSION`. */
+  engineVersion?: string;
   /** Defaults to `new Date().toISOString()` when omitted. */
   calculatedAt?: string;
 };
@@ -123,6 +131,7 @@ export function snapshotIncompleteWpParity(input: {
     snapshot_version: WP_PARITY_SNAPSHOT_VERSION,
     valid: false,
     rules_version: input.rulesVersion ?? WP_CATALOG_VERSION,
+    engine_version: WP_CALC_ENGINE_VERSION,
     pricing_revision: input.pricingRevision ?? null,
     pricing_source: "incomplete",
     organization_id: input.organizationId,
@@ -174,11 +183,13 @@ export function snapshotWpParityResult(
   const pricingSource = context.pricingSource ?? "plugin_defaults";
   const organizationId = context.organizationId ?? null;
   const calculatedAt = context.calculatedAt ?? new Date().toISOString();
+  const engineVersion = context.engineVersion ?? WP_CALC_ENGINE_VERSION;
   if (!result.valid) {
     return {
       snapshot_version: WP_PARITY_SNAPSHOT_VERSION,
       valid: false,
       rules_version: context.rulesVersion ?? WP_CATALOG_VERSION,
+      engine_version: engineVersion,
       pricing_revision: context.pricingRevision ?? null,
       pricing_source: pricingSource,
       organization_id: organizationId,
@@ -191,6 +202,7 @@ export function snapshotWpParityResult(
     snapshot_version: WP_PARITY_SNAPSHOT_VERSION,
     valid: true,
     rules_version: context.rulesVersion ?? result.rules_version,
+    engine_version: engineVersion,
     pricing_revision: context.pricingRevision ?? result.pricing_revision,
     pricing_source: pricingSource,
     organization_id: organizationId,

@@ -44,5 +44,10 @@ export function isCustomerSelectedPlanReason(
   reason: string | null | undefined,
   selectedEventPlanId?: string | null,
 ): boolean {
+  // WP public event requests may carry a staff working-plan selectedEventPlanId;
+  // that must not be treated as a legacy customer-selected bookable plan.
+  if (reason === READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST) {
+    return false;
+  }
   return Boolean(selectedEventPlanId) || reason === READY_FOR_HUMAN_REASONS.CUSTOMER_SELECTED_PLAN;
 }

@@ -414,6 +414,7 @@ export async function createPublicWpEventInquiry(
   const metadata = buildWpIntakeMessageMetadata(answers, {
     status: privateCalc.status,
     rulesVersion: privateCalc.rulesVersion,
+    engineVersion: privateCalc.engineVersion,
     pricingRevision: privateCalc.pricingRevision,
     pricingSource: privateCalc.pricingSource,
     organizationId: privateCalc.organizationId,

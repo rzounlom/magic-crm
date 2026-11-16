@@ -17,22 +17,27 @@ import {
   wpCatalogRevision,
 } from "@/server/event-planner/wp-parity";
 
+const defaultPluginCandidates = [
+  join(process.cwd(), "planning/pluggin/3.5/generations-event-planner-next"),
+  join(homedir(), "Downloads/WP Plugging- Event Planner Intake/generations-event-planner-next"),
+];
 const pluginRoot =
   process.env.WP_PLANNER_ROOT ||
-  join(homedir(), "Downloads/WP Plugging- Event Planner Intake/generations-event-planner-next");
+  defaultPluginCandidates.find((path) => existsSync(join(path, "includes/engine.php"))) ||
+  defaultPluginCandidates[0];
 
 function findPhp(): string | null {
   if (process.env.PHP_BIN && existsSync(process.env.PHP_BIN)) return process.env.PHP_BIN;
-  for (const name of ["php", "/usr/local/opt/php@8.3/bin/php"]) {
+  for (const name of [
+    "php",
+    "/usr/local/opt/php@8.3/bin/php",
+    "/opt/homebrew/opt/php/bin/php",
+    join(process.cwd(), "tmp/mamba-root/envs/php85/bin/php"),
+  ]) {
     if (name.includes("/") && existsSync(name)) return name;
     const found = spawnSync("which", [name], { encoding: "utf8" });
     if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
   }
-  const conda = join(
-    process.cwd(),
-    "tmp/mamba-root/envs/php85/bin/php",
-  );
-  if (existsSync(conda)) return conda;
   return null;
 }
 

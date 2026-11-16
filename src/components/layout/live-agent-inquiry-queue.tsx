@@ -3,8 +3,11 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
-import { CUSTOMER_SELECTED_PLAN_BANNER } from "@/lib/inquiries/ready-for-human-reason";
-import { formatInquiryQueueLabel } from "@/lib/inquiries/inquiry-status-display";
+import {
+  CUSTOMER_SELECTED_PLAN_BANNER,
+  READY_FOR_HUMAN_REASONS,
+} from "@/lib/inquiries/ready-for-human-reason";
+import { formatEmployeeInquiryQueueLabel } from "@/lib/inquiries/inquiry-workflow-labels";
 import { isLiveAgentQueueCandidate, sortLiveAgentQueue } from "@/lib/inquiries/live-agent-queue";
 import { INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGE_LABELS, EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { PLAN_AVAILABILITY_STATUS_LABELS, PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
@@ -206,6 +209,7 @@ function InquiryRow({
   const assignedLabel = inquiry.assignedUser
     ? `Assigned to ${employeeDisplayName(inquiry.assignedUser)}`
     : "Unassigned";
+  const isWpIntake = inquiry.humanHandoffReason === READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST;
   const nextHint = priority
     ? "Open to continue booking"
     : holdCount > 0
@@ -235,8 +239,12 @@ function InquiryRow({
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <Badge tone={priority ? "info" : "neutral"}>
-              {formatInquiryQueueLabel({
-                ...inquiry,
+              {formatEmployeeInquiryQueueLabel({
+                isWpIntake,
+                status: inquiry.status,
+                aiHandlingEnabled: inquiry.aiHandlingEnabled,
+                selectedEventPlanId: inquiry.selectedEventPlanId,
+                humanHandoffReason: inquiry.humanHandoffReason,
                 bookingNumber: inquiry.bookings?.[0]?.bookingNumber,
                 bookingStatus: inquiry.bookings?.[0]?.status,
                 salesStage: "salesStage" in inquiry ? String(inquiry.salesStage ?? "") : null,
@@ -245,7 +253,7 @@ function InquiryRow({
             <Badge tone={inquiry.assignedUser ? "neutral" : "warning"}>{assignedLabel}</Badge>
           </div>
         </div>
-        {priority ? (
+        {priority && !isWpIntake ? (
           <p className="mt-3 text-xs font-semibold tracking-[0.14em] text-primary uppercase">
             {CUSTOMER_SELECTED_PLAN_BANNER}
           </p>

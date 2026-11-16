@@ -52,6 +52,7 @@ type WpParitySnapshot =
       valid: true;
       pricing_source?: string;
       pricing_revision?: string;
+      engine_version?: string;
       calculated_at?: string;
       dates: Array<{
         date: string;
@@ -64,6 +65,7 @@ type WpParitySnapshot =
       valid: false;
       pricing_source?: string;
       pricing_revision?: string | null;
+      engine_version?: string;
       calculated_at?: string;
       errors: Record<string, string>;
       missing_keys?: string[];
@@ -290,6 +292,9 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
             : ""}
           {privateCalculation.rulesVersion
             ? ` · catalog version ${privateCalculation.rulesVersion}`
+            : ""}
+          {privateCalculation.engineVersion || snapshot?.engine_version
+            ? ` · calc engine ${privateCalculation.engineVersion ?? snapshot?.engine_version}`
             : ""}
           {privateCalculation.pricingRevision
             ? ` · configuration revision ${privateCalculation.pricingRevision}`

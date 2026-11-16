@@ -2,8 +2,15 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { liveAgentQueuePriority, sortLiveAgentQueue } from "@/lib/inquiries/live-agent-queue";
-import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
+import {
+  isLiveAgentQueueCandidate,
+  liveAgentQueuePriority,
+  sortLiveAgentQueue,
+} from "@/lib/inquiries/live-agent-queue";
+import {
+  isCustomerSelectedPlanReason,
+  READY_FOR_HUMAN_REASONS,
+} from "@/lib/inquiries/ready-for-human-reason";
 import { INQUIRY_STATUSES } from "@/types/inquiry";
 import { PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 
@@ -71,5 +78,27 @@ describe("inquiry list query order", () => {
   it("orders listInquiries by createdAt desc then id desc", () => {
     const source = readFileSync(path.join(process.cwd(), "src/server/services/inquiry-service.ts"), "utf8");
     expect(source).toContain('orderBy: [{ createdAt: "desc" }, { id: "desc" }]');
+  });
+});
+
+describe("WordPress public event request queue classification", () => {
+  it("does not treat PUBLIC_EVENT_REQUEST + staff draft selectedEventPlanId as customer-selected", () => {
+    expect(
+      isCustomerSelectedPlanReason(READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST, "plan_working"),
+    ).toBe(false);
+    expect(
+      isLiveAgentQueueCandidate({
+        status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+        selectedEventPlanId: "plan_working",
+        humanHandoffReason: READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST,
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps legacy selected-plan classification unchanged", () => {
+    expect(
+      isCustomerSelectedPlanReason(READY_FOR_HUMAN_REASONS.CUSTOMER_SELECTED_PLAN, "plan_1"),
+    ).toBe(true);
+    expect(isCustomerSelectedPlanReason(null, "plan_1")).toBe(true);
   });
 });

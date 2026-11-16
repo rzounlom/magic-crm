@@ -4,6 +4,7 @@ import {
   snapshotIncompleteWpParity,
   snapshotWpParityResult,
   resolveWpParityEngineConfig,
+  WP_CALC_ENGINE_VERSION,
   type EngineConfig,
   type InquiryRaw,
   type RecommendOptions,
@@ -43,6 +44,8 @@ export function inquiryRawFromWpAnswers(answers: WpIntakeAnswers): InquiryRaw {
 export type PrivateWpCalculationOutcome = {
   status: "ready" | "failed" | "incomplete";
   rulesVersion: string | null;
+  /** Calculation-engine label (e.g. 3.5.0); null only on unexpected failures before snapshot. */
+  engineVersion: string | null;
   pricingRevision: string | null;
   pricingSource: WpPricingSource;
   organizationId: string | null;
@@ -80,6 +83,7 @@ function runCalculation(
     pricingSource: run.pricingSource,
     organizationId: run.organizationId,
     missingKeys: [] as string[],
+    engineVersion: WP_CALC_ENGINE_VERSION as string | null,
   };
   const sourceLabel = PRICING_SOURCE_SUMMARY_LABEL[run.pricingSource];
   try {
@@ -95,6 +99,7 @@ function runCalculation(
         ...base,
         status: "failed",
         rulesVersion: snapshot.rules_version,
+        engineVersion: snapshot.engine_version ?? WP_CALC_ENGINE_VERSION,
         pricingRevision: null,
         summary: `Private calculation could not validate the inquiry (${errorKeys.join(", ") || "unknown"}).`,
         snapshot,
@@ -114,6 +119,7 @@ function runCalculation(
       ...base,
       status: "ready",
       rulesVersion: snapshot.rules_version,
+      engineVersion: snapshot.engine_version ?? WP_CALC_ENGINE_VERSION,
       pricingRevision: snapshot.pricing_revision,
       summary: main
         ? `${snapshot.dates.length} date(s): main “${main.name}” at $${(main.total_cents / 100).toFixed(2)}` +
@@ -130,6 +136,7 @@ function runCalculation(
       ...base,
       status: "failed",
       rulesVersion: null,
+      engineVersion: null,
       pricingRevision: null,
       summary: `Private calculation failed after intake was accepted: ${message}`,
       snapshot: null,
@@ -184,6 +191,7 @@ export function calculatePrivateWpRecommendationForOrganization(
     return {
       status: "incomplete",
       rulesVersion: resolution.rulesVersion,
+      engineVersion: WP_CALC_ENGINE_VERSION,
       pricingRevision: resolution.pricingRevision,
       pricingSource: "incomplete",
       organizationId: resolution.organizationId,
