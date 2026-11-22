@@ -23,11 +23,16 @@ describe("parseDollarInputToCents", () => {
     expect(parseDollarInputToCents("10.5")).toEqual({ ok: true, cents: 1050 });
   });
 
-  it("rejects malformed or over-precise input", () => {
+  it("rejects malformed, negative, blank, or over-precise input", () => {
     expect(parseDollarInputToCents("").ok).toBe(false);
+    expect(parseDollarInputToCents("   ").ok).toBe(false);
     expect(parseDollarInputToCents("abc").ok).toBe(false);
+    expect(parseDollarInputToCents("-1.00").ok).toBe(false);
     expect(parseDollarInputToCents("12.345").ok).toBe(false);
     expect(parseDollarInputToCents("12.3.4").ok).toBe(false);
+    expect(parseDollarInputToCents("0.01")).toEqual({ ok: true, cents: 1 });
+    expect(parseDollarInputToCents("0.10")).toEqual({ ok: true, cents: 10 });
+    expect(parseDollarInputToCents("1.00")).toEqual({ ok: true, cents: 100 });
   });
 
   it("round-trips display values", () => {

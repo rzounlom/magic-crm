@@ -29,15 +29,16 @@ export function parseDollarInputToCents(raw: string): DollarInputParseResult {
   if (!trimmed) {
     return { ok: false, error: "Enter a unit price." };
   }
-  if (!/^-?\d+(\.\d{1,2})?$/.test(trimmed)) {
+  if (trimmed.startsWith("-")) {
+    return { ok: false, error: "Unit price cannot be negative." };
+  }
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) {
     return {
       ok: false,
       error: "Use a dollar amount with up to two decimal places (for example 49.99).",
     };
   }
-  const negative = trimmed.startsWith("-");
-  const unsigned = negative ? trimmed.slice(1) : trimmed;
-  const [wholePart, fractionPart = ""] = unsigned.split(".");
+  const [wholePart, fractionPart = ""] = trimmed.split(".");
   const whole = Number(wholePart);
   if (!Number.isSafeInteger(whole) || whole < 0) {
     return { ok: false, error: "Unit price is out of range." };
@@ -51,7 +52,7 @@ export function parseDollarInputToCents(raw: string): DollarInputParseResult {
   if (!Number.isSafeInteger(cents)) {
     return { ok: false, error: "Unit price is out of range." };
   }
-  return { ok: true, cents: negative ? -cents : cents };
+  return { ok: true, cents };
 }
 
 export function formatMoneyFromCents(cents: number, currency = "USD"): string {
