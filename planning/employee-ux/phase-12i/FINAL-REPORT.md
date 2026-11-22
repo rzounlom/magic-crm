@@ -1,90 +1,172 @@
-# Phase 12I — Event Sales acceptance & PR #27 release
+# Phase 12I — Permanent Playwright test auth + PR #27 acceptance
 
 **Date:** 2026-11-22  
 **PR:** https://github.com/rzounlom/magic-crm/pull/27  
-**Head:** `3bc88e1` (+ pending Phase 12I tooling commits if pushed)  
-**Release decision:** **NOT MERGED**
+**Branch:** `phase-12f-employee-language-quote-clarity`  
+**Release decision:** Merge candidate after quality gates (authenticated browser acceptance **PASS**)
 
 ---
 
-## 1. Local environment
+## 1. Test identity provisioning method
 
-| Check | Result |
+Idempotent script: `pnpm test:e2e:provision` → `scripts/e2e-provision-test-users.ts`
+
+- Clerk **DEVELOPMENT** API only (`sk_test_` / `pk_test_`); refuses live keys and non-DEV Neon hosts
+- Creates/updates users with `+clerk_test` emails (no outbound email) and `privateMetadata.e2eTestUser=true`
+- Adds `org:member` membership on Test Center B Clerk org
+- Ensures MagicCRM `UserProfile` + exact system security group (no extras)
+- Writes gitignored `playwright/.fixtures/e2e-test-identities.json`
+
+### Role-to-account mapping (no secrets)
+
+| Role | Default email (override via env) | System group | Price override | Quotes approve | Inquiries manage |
+|---|---|---|---|---|---|
+| Administrator | `e2e.admin+clerk_test@example.com` (`E2E_CLERK_ADMIN_EMAIL`) | `administrators` | yes | yes | yes |
+| Event Sales | `e2e.event-sales+clerk_test@example.com` (`E2E_CLERK_EVENT_SALES_EMAIL`) | `event_sales` | **no** | yes | yes |
+| Front Desk | `e2e.front-desk+clerk_test@example.com` (`E2E_CLERK_FRONT_DESK_EMAIL`) | `front_desk` | **no** | **no** | **no** |
+
+Org: `magiccrm-test-center-b` (synthetic). No personal employee accounts. Production Clerk untouched.
+
+---
+
+## 2. Clerk development-instance setup
+
+- Local `.env` / `.env.local` TEST keys (`pk_test_` / `sk_test_`)
+- Optional `.env.e2e` from `.env.e2e.example` (placeholders only; gitignored)
+- `@clerk/testing` `clerkSetup()` fetches a testing token
+- `clerk.signIn({ page, emailAddress })` uses Backend sign-in **tickets** (no password UI, no MFA)
+
+---
+
+## 3. Playwright authentication architecture
+
+| Piece | Path / project |
 |---|---|
-| Startup | `pnpm exec next start -p 3000` |
-| URL | `http://localhost:3000` (not `127.0.0.1`) |
-| `/sign-in` | **HTTP 200** |
+| Clerk token setup | `tests/e2e/clerk.setup.ts` → project `setup-clerk` |
+| Role sign-in + storage | `tests/e2e/auth.setup.ts` → project `setup-auth` |
+| Storage states | `playwright/.clerk/{administrator,event-sales,front-desk}.json` (gitignored) |
+| Aliases | Also copies Admin → `.auth/staff.json`, Event Sales → `.auth/event-sales.json` |
+| Helpers | `tests/e2e/helpers/e2e-auth.ts`, `quote-acceptance.ts`, `quote-db.ts` |
+| Quote projects | `quote-admin`, `quote-event-sales`, `quote-front-desk` (depend on `setup-auth`) |
 
-Production Clerk settings unchanged.
+- Base URL: `http://localhost:3000` only (rejects `127.0.0.1`)
+- Preflight: `/sign-in` must return HTTP 200 before auth
+- Org activation: `Clerk.setActive({ organization })` + UI fallback for Test Center B
+- Session renewal: quote projects re-run `setup-auth` each suite (fresh ticket sessions)
+- Clear failures if provision fixture / membership / keys missing
+- DB asserts via `tsx` helpers (Playwright runner cannot import Prisma `import.meta`)
+
+**Not used:** manual cookie export, personal Admin session, hardcoded session tokens, auth bypasses, Production credentials.
 
 ---
 
-## 2. Event Sales authentication outcome
+## 4. Local and CI commands
 
-| Attempt | Result |
+```bash
+# One-time
+cp .env.e2e.example .env.e2e   # optional overrides
+# Ensure app: http://localhost:3000/sign-in → 200
+pnpm test:e2e:provision
+pnpm test:e2e:auth
+
+# Repeatable
+pnpm test:e2e:quote
+pnpm test:e2e:quote:admin
+pnpm test:e2e:quote:event-sales
+pnpm test:e2e:quote:front-desk   # restricted
+pnpm test:e2e:authenticated      # auth + all quote projects
+pnpm test:e2e                    # chromium desktop/mobile (non-quote)
+```
+
+CI: inject TEST Clerk secrets + DEV DB URL; never commit `.env.e2e`, `.clerk/`, or `.fixtures/` identity/auth files.
+
+---
+
+## 5. Acceptance results
+
+App: `http://localhost:3000` · Fixture inquiry: synthetic WP on Test Center B · Suite: **7 passed** (3 auth + 3 quote + clerk setup)
+
+### Administrator — PASS
+
+- Dollar input editable; `$49.99` → 4999¢; `$55.00` → 5500¢; save/reload exact
+- Blank / invalid / negative rejected; stored cents unchanged
+- Authorized override succeeds; edit reason `required` enforced (empty reason does not persist)
+
+### Event Sales — PASS
+
+- Authenticated as dedicated Event Sales Clerk user (ticket session)
+- Quote editor loads; qty save/reload; unit dollars locked in UI
+- Server unauthorized override → `FORBIDDEN`; cents unchanged
+- Internal approve path is delivery-gated (`Approve internal quote`); customer delivery remains blocked
+- Draft survives Overview ↔ Staff quote tab switch
+- WP staff-review wording; no false READY TO BOOK on WP path
+
+### Front Desk / restricted — PASS
+
+- Direct inquiry URL shows permission denial; no staff quote editor / approve / unit price controls
+- Permissions unchanged (no inquiries view/manage, no override, no approve)
+
+---
+
+## 6. Workflow separation (confirmed in Event Sales browser path)
+
+- WordPress inquiries remain staff-review requests
+- No false READY TO BOOK on WP inquiry surface
+- Customer delivery unavailable (`canDeliver: false` path)
+- HOLD / booking confirmation not exercised or altered
+- Staff quote draft survives tab switches
+
+---
+
+## 7. Security review
+
+| Control | Status |
 |---|---|
-| Headed clean-profile bootstrap | Repeatedly authenticated as **Administrator** (`rz***`). Identity gate correctly refused to save storage. |
-| Bootstrap hardening | Added Clerk `signOut` + re-prompt loop when Admin is detected. After sign-out, window closed / no Event Sales completion before timeout. |
-| IDE browser path | Administrator **signed out** successfully. Navigated to `/sign-in`, pre-filled Event Sales email (`fi***`), advanced to **password factor** (`/sign-in/factor-one`). |
-| Password completion | **Not completed** in this session — waiting on human password entry for the Event Sales TEST account. |
-
-**Genuine Event Sales browser session was not established.** No `playwright/.auth/event-sales.json` was written.
-
-### Exact remaining manual step
-
-1. Keep local app at `http://localhost:3000` (already healthy).
-2. On the open MagicCRM Development sign-in password step for the Event Sales account (`fi***`), enter that account’s password and Continue.
-3. Confirm org **MagicCRM Test Center B**.
-4. Re-run:  
-   `PLAYWRIGHT_BASE_URL=http://localhost:3000 node scripts/phase-10h-bootstrap-event-sales-auth.mjs`  
-   **or** export storage from the signed-in session, then:  
-   `pnpm exec tsx --tsconfig tsconfig.json scripts/phase-12i-event-sales-acceptance.ts`
-5. Merge only after that script reports `ok: true`.
-
-Do **not** use “Continue as” Administrator.
+| Real credentials in Git | **No** — `.env.e2e`, `.clerk/`, `.fixtures/` gitignored |
+| `.env.e2e.example` | Placeholders only |
+| Logs | Emails redacted; no passwords/tokens printed |
+| Production Clerk | Unchanged |
+| App authz / middleware | Unchanged; no bypass |
+| Role permissions | Unchanged; Front Desk not granted inquiry rights for tests |
+| Screenshots/traces | Local `test-results/` only; review before sharing |
 
 ---
 
-## 3. Event Sales browser acceptance
+## 8. Quality gates
 
-**Not run** — blocked on missing Event Sales session.
-
-Prepared harness: `scripts/phase-12i-event-sales-acceptance.ts` (identity gate, locked unit dollars, authorized qty save/reload, server override `FORBIDDEN`, delivery-gated approve, tab survival).
-
----
-
-## 4. Preserved Phase 12H Administrator results
-
-Still accepted from Phase 12H (unchanged):
-
-- `$49.99` ↔ 4999¢, `$55.00` ↔ 5500¢ save/reload
-- Boundary amounts and invalid/blank rejection
-- Server-side Event Sales override `FORBIDDEN` with cents unchanged
+| Gate | Result |
+|---|---|
+| Typecheck | PASS |
+| Lint | PASS (0 errors; unrelated pre-existing warnings elsewhere) |
+| Unit tests | **1010 passed** / 1 skipped |
+| Production build | PASS |
+| Authenticated Playwright quote suite | **7 passed** |
 
 ---
 
-## 5. Quality gates this session
-
-Not re-run end-to-end after the incomplete Event Sales browser path (no merge candidate). Prior Phase 12H gates on this PR head remain the last full green run (1010 unit tests, build pass).
-
----
-
-## 6. PR #27 / Production
+## 9. PR #27 / Production
 
 | Step | Status |
 |---|---|
-| Merge | **Skipped** |
-| Production deploy | **Not triggered** |
-| Production smoke | N/A |
+| Critical quote browser acceptance | **PASS** |
+| Commit test infra + report to PR #27 | Pending push/merge steps |
+| Merge to `main` | Only after gates green + no secrets in commit |
+| Vercel Production Ready | After merge |
+| Production smoke | Read-only only; no customer-data writes |
 
 ---
 
-## Safeguards
+## 10. Safeguards preserved
 
-No changes to baseline pricing, `canDeliver`, cents storage, permissions templates, HOLD/booking, customer email, payments, WordPress plugin, or Scenario Lab. No Production customer-data writes.
+- `approved_plugin_baseline` / catalog baseline unchanged
+- `finalLivePriceRevalidation: pending`
+- `canDeliver: false`
+- Integer-cent storage; 25% deposit messaging
+- VERIFIED operating hours; existing permissions
+- Customer email / delivery / payments / Scenario Lab / live WP pricing **not** enabled or modified
 
 ---
 
-## Explicit confirmation
+## 11. Remaining blockers
 
-Phase 12F is **not** released. Administrator workflow remains verified; Event Sales **browser** workflow remains the sole critical gap, blocked on completing the Event Sales password sign-in.
+None for authenticated local quote acceptance. Merge still requires clean commit (no auth artifacts), green lint/build confirmation, then Production Ready + read-only smoke.

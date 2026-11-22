@@ -3,6 +3,17 @@ import path from "node:path";
 
 export const DEFAULT_STAFF_STORAGE_STATE = path.join("playwright", ".auth", "staff.json");
 export const DEFAULT_STAFF_AUTH_META = path.join("playwright", ".auth", "staff.meta.json");
+/** Prefer automated Clerk ticket session when present (Phase 12I). */
+export const AUTOMATED_ADMIN_STORAGE_STATE = path.join(
+  "playwright",
+  ".clerk",
+  "administrator.json",
+);
+export const AUTOMATED_ADMIN_AUTH_META = path.join(
+  "playwright",
+  ".clerk",
+  "administrator.meta.json",
+);
 
 export type StaffAuthMeta = {
   createdAt: string;
@@ -43,8 +54,19 @@ export function resolveStaffAuth(options?: {
   metaPath?: string;
   requireMeta?: boolean;
 }): StaffAuthResolution {
-  const storageStatePath = options?.storageStatePath ?? process.env.PLAYWRIGHT_STORAGE_STATE ?? DEFAULT_STAFF_STORAGE_STATE;
-  const metaPath = options?.metaPath ?? DEFAULT_STAFF_AUTH_META;
+  const envPath = process.env.PLAYWRIGHT_STORAGE_STATE;
+  const storageStatePath =
+    options?.storageStatePath ??
+    envPath ??
+    (fs.existsSync(AUTOMATED_ADMIN_STORAGE_STATE)
+      ? AUTOMATED_ADMIN_STORAGE_STATE
+      : DEFAULT_STAFF_STORAGE_STATE);
+  const metaPath =
+    options?.metaPath ??
+    (storageStatePath === AUTOMATED_ADMIN_STORAGE_STATE ||
+    (!envPath && fs.existsSync(AUTOMATED_ADMIN_AUTH_META))
+      ? AUTOMATED_ADMIN_AUTH_META
+      : DEFAULT_STAFF_AUTH_META);
 
   if (!storageStatePath) {
     return {
@@ -107,5 +129,5 @@ export function staffAuthSkipReason(): string {
   const resolved = resolveStaffAuth();
   return resolved.ok
     ? ""
-    : `${resolved.reason} Authenticated staff browser coverage remains BLOCKED until a human completes Clerk TEST sign-in.`;
+    : `${resolved.reason} Run: pnpm test:e2e:provision && pnpm test:e2e:auth (Clerk TEST ticket sessions; no manual password).`;
 }
