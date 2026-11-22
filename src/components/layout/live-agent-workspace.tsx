@@ -312,17 +312,20 @@ export function LiveAgentWorkspace({
     holdReadiness?.activeException?.status === "ACTIVE" ? holdReadiness.activeException.id : null;
 
   return (
-    <section className="w-full">
-      <Link href="/app/inquiries" className="text-sm text-primary">
+    <section className="mx-auto w-full min-w-0 max-w-5xl">
+      <Link
+        href="/app/inquiries"
+        className="text-sm font-semibold text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
+      >
         Back to inquiries
       </Link>
-      <div className="mt-4">
+      <div className="mt-4 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">{displayName}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{displayName}</h1>
           {booked ? <span className="status-badge status-badge-success">Booked</span> : null}
           {cancelled ? <span className="status-badge status-badge-neutral">Cancelled</span> : null}
           {!booked && !cancelled && classified.legacyHolds.length > 0 ? (
-            <span className="status-badge status-badge-warning">Active HOLD</span>
+            <span className="status-badge status-badge-warning">Active hold</span>
           ) : null}
           {!booked && !cancelled && !inquiry.assignedUserProfileId ? (
             <span className="status-badge status-badge-neutral">Unassigned</span>
@@ -331,7 +334,19 @@ export function LiveAgentWorkspace({
             <span className="status-badge status-badge-neutral">In progress</span>
           ) : null}
         </div>
-        <p className={`mt-2 text-sm ${assignedToOther ? "rounded-md border border-warning/40 bg-warning/10 px-3 py-2" : "text-foreground/70"}`}>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {[
+            inquiry.eventType || "Event",
+            formatEventLocalDateTime({
+              date: inquiry.desiredDate,
+              time: inquiry.desiredStartTime,
+            }),
+            inquiry.guestCount ? `${inquiry.guestCount} guests` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+        <p className={`mt-2 text-sm ${assignedToOther ? "rounded-md border border-warning/40 bg-warning/10 px-3 py-2" : "text-muted-foreground"}`}>
           {booked && booking
             ? `${booking.bookingNumber} · Confirmed booking record`
             : cancelled && booking
@@ -344,7 +359,7 @@ export function LiveAgentWorkspace({
         </p>
         {inquiry.workflowStage === INQUIRY_WORKFLOW_STAGES.HOLD_PLACED ||
         inquiry.workflowStage === INQUIRY_WORKFLOW_STAGES.READY_TO_FINALIZE ? (
-          <p className="mt-2 rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
+          <p className="mt-2 rounded-[var(--radius-control)] bg-muted px-3 py-2 text-sm text-muted-foreground">
             This inquiry uses a legacy workflow stage. You can still cancel a booking or archive the inquiry.
           </p>
         ) : null}

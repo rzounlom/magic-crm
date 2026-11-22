@@ -61,6 +61,10 @@ import { BOOKING_STATUSES } from "@/types/booking";
 import type { ConfirmationReadinessResult } from "@/types/confirmation-readiness";
 import type { HoldReadinessResult } from "@/types/hold-readiness";
 import { PERMISSIONS } from "@/types/permissions";
+import {
+  PLAN_AVAILABILITY_STATUS_LABELS,
+  PLAN_AVAILABILITY_STATUSES,
+} from "@/types/resource-schedule";
 
 type InquiryDetailView =
   | { kind: "status"; title: string; body: string }
@@ -328,7 +332,13 @@ export default async function InquiryDetailPage({
       : null);
   const quoteApproved = Boolean(wpStaffDraftProvenance?.employeeApproval);
   const quoteDelivered = Boolean(wpStaffDraftProvenance?.employeeApproval?.deliveryCompleted);
-  const availabilityLabel = workingPlan?.availabilityStatus ?? "Not checked";
+  const availabilityStatus = workingPlan?.availabilityStatus;
+  const availabilityLabel =
+    availabilityStatus && availabilityStatus in PLAN_AVAILABILITY_STATUS_LABELS
+      ? PLAN_AVAILABILITY_STATUS_LABELS[availabilityStatus as keyof typeof PLAN_AVAILABILITY_STATUS_LABELS]
+      : availabilityStatus
+        ? String(availabilityStatus)
+        : PLAN_AVAILABILITY_STATUS_LABELS[PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED];
   const warningCount =
     (wpStaffDraftProvenance?.warnings.length ?? 0) +
     (wpStaffDraftProvenance?.catalogPriceDiscrepancies.length ?? 0);
@@ -344,71 +354,80 @@ export default async function InquiryDetailPage({
         ? `${wpIntake.answers.duration}${wpIntake.answers.otherHours != null ? ` (${wpIntake.answers.otherHours}h)` : ""}`
         : "—";
 
+  const queueStatusLabel = formatEmployeeInquiryQueueLabel({
+    isWpIntake: Boolean(wpIntake),
+    status: inquiry.status,
+    aiHandlingEnabled: inquiry.aiHandlingEnabled,
+    selectedEventPlanId: inquiry.selectedEventPlanId,
+    humanHandoffReason: inquiry.humanHandoffReason,
+    bookingNumber: inquiry.bookings[0]?.bookingNumber,
+    bookingStatus: inquiry.bookings[0]?.status,
+    salesStage: inquiry.salesStage,
+  });
+  const contactName =
+    [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") || "—";
+  const deliveryValue = wpDeliveryPolicy?.canDeliver
+    ? quoteDelivered
+      ? "Delivered"
+      : "Allowed"
+    : "Blocked";
+  const deliveryHint = wpDeliveryPolicy?.canDeliver
+    ? "Customer email delivery is available for this quote path"
+    : wpDeliveryPolicy?.message || "Customer email delivery is blocked until pricing is verified";
+  const quoteValue = quoteApproved
+    ? "Internally approved"
+    : workingPlan && wpStaffDraftProvenance
+      ? "Draft in progress"
+      : "No staff draft";
+  const nextActionTitle = wpIntake ? "Next step" : "Needs staff follow-up";
+  const nextActionBody = employeeReadyForHumanCopy({
+    isWpIntake: Boolean(wpIntake),
+    reason: inquiry.humanHandoffReason,
+    selectedEventPlanId: inquiry.selectedEventPlanId,
+  });
+
   return (
-    <section className="mx-auto w-full max-w-5xl">
+    <section className="mx-auto w-full min-w-0 max-w-5xl">
       <AcknowledgeInquiryView inquiryId={inquiry.id} />
-      <Link href="/app/inquiries" className="text-sm font-semibold text-primary">
+      <Link
+        href="/app/inquiries"
+        className="text-sm font-semibold text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
+      >
         Back to inquiries
       </Link>
 
-      <header className="mt-4 rounded-[var(--radius-card)] border border-border bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6">
+      <header className="mt-4 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-[length:var(--text-caption)] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              {formatEmployeeInquiryQueueLabel({
-                isWpIntake: Boolean(wpIntake),
-                status: inquiry.status,
-                aiHandlingEnabled: inquiry.aiHandlingEnabled,
-                selectedEventPlanId: inquiry.selectedEventPlanId,
-                humanHandoffReason: inquiry.humanHandoffReason,
-                bookingNumber: inquiry.bookings[0]?.bookingNumber,
-                bookingStatus: inquiry.bookings[0]?.status,
-                salesStage: inquiry.salesStage,
-              })}
+            <p className="text-[length:var(--text-caption)] font-semibold text-muted-foreground">
+              {queueStatusLabel}
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               {displayName}
             </h1>
-            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
-              <div>
-                <dt className="text-muted-foreground">Event type</dt>
-                <dd className="mt-0.5 font-medium text-foreground">{inquiry.eventType || "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Requested date / time</dt>
-                <dd className="mt-0.5 font-medium text-foreground">
-                  {formatEventLocalDateTime({
-                    date: inquiry.desiredDate,
-                    time: inquiry.desiredStartTime,
-                  })}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Guests</dt>
-                <dd className="mt-0.5 font-medium text-foreground">{guestSummary}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Duration</dt>
-                <dd className="mt-0.5 font-medium text-foreground">{durationSummary}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Primary contact</dt>
-                <dd className="mt-0.5 font-medium text-foreground">
-                  {[inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
-                    "—"}
-                  {phoneDisplay ? ` · ${phoneDisplay}` : ""}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Email</dt>
-                <dd className="mt-0.5 font-medium text-foreground break-all">{inquiry.customerEmail}</dd>
-              </div>
-            </dl>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {[
+                inquiry.eventType || "Event",
+                formatEventLocalDateTime({
+                  date: inquiry.desiredDate,
+                  time: inquiry.desiredStartTime,
+                }),
+                guestSummary !== "—" ? guestSummary : null,
+                durationSummary !== "—" ? durationSummary : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {contactName}
+              {phoneDisplay ? ` · ${phoneDisplay}` : ""}
+              {` · ${inquiry.customerEmail}`}
+            </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <a
               href={mailto}
-              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-control)] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-control)] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
             >
               Contact customer
             </a>
@@ -465,88 +484,58 @@ export default async function InquiryDetailPage({
         </div>
       </header>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatusCard
-          label="Private estimate"
+      {(wpIntake || (inquiry.humanHandoffReason && !inquiry.selectedEventPlanId) || warningCount > 0) &&
+      !inquiry.bookings[0] ? (
+        <div
+          className={`mt-4 rounded-[var(--radius-card)] border px-4 py-3 text-sm ${
+            warningCount > 0
+              ? "border-warning/40 bg-warning/10"
+              : "border-border-subtle bg-muted/30"
+          }`}
+        >
+          <p className="font-semibold text-foreground">
+            {warningCount > 0
+              ? `${warningCount} attention item${warningCount === 1 ? "" : "s"} before customer send`
+              : nextActionTitle}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            {warningCount > 0
+              ? "Review warnings on Staff quote and Recommendations before contacting the customer."
+              : nextActionBody}
+          </p>
+          {!wpDeliveryPolicy?.canDeliver ? (
+            <p className="mt-2 font-medium text-foreground">
+              Customer quote email delivery is blocked until pricing verification is complete.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <dl className="mt-4 grid gap-2 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatusStripItem
+          label="Estimate"
           value={
             typeof privateEstimateCents === "number"
               ? formatMoneyFromCents(privateEstimateCents, "USD")
               : "Not ready"
           }
-          hint={wpIntake ? "Staff-only WordPress calculation" : "No private estimate"}
         />
-        <StatusCard
-          label="Availability"
-          value={availabilityLabel}
-          hint={workingPlan?.availabilityNote || "Check from Staff quote"}
-        />
-        <StatusCard
-          label="Quote status"
-          value={
-            quoteApproved
-              ? "Internally approved"
-              : workingPlan && wpStaffDraftProvenance
-                ? "Draft in progress"
-                : "No staff draft"
-          }
-          hint={quoteDelivered ? "Customer delivery completed" : "Approval ≠ customer send"}
-        />
-        <StatusCard
-          label="Customer delivery"
-          value={
-            wpDeliveryPolicy?.canDeliver
-              ? quoteDelivered
-                ? "Delivered"
-                : "Allowed"
-              : "Blocked"
-          }
-          hint={
-            wpDeliveryPolicy?.canDeliver
-              ? "tenant_live delivery path available"
-              : wpDeliveryPolicy?.message || "Delivery remains gated"
-          }
-        />
-      </div>
-
-      {warningCount > 0 ? (
-        <div className="mt-4 rounded-[var(--radius-control)] border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
-          <p className="font-semibold text-warning">
-            {warningCount} staff attention item{warningCount === 1 ? "" : "s"}
-          </p>
-          <p className="mt-1 text-foreground">
-            Review warnings and known catalog discrepancies on the Staff quote and Recommendations tabs
-            before contacting the customer.
-          </p>
-        </div>
-      ) : null}
-
-      {wpIntake || (inquiry.humanHandoffReason && !inquiry.selectedEventPlanId) ? (
-        <div className="mt-4 rounded-[var(--radius-control)] border border-border bg-muted/30 px-4 py-3 text-sm">
-          <p className="font-semibold text-foreground">
-            {wpIntake ? "Recommended next actions" : "Needs staff follow-up"}
-          </p>
-          <p className="mt-1 text-muted-foreground">
-            {employeeReadyForHumanCopy({
-              isWpIntake: Boolean(wpIntake),
-              reason: inquiry.humanHandoffReason,
-              selectedEventPlanId: inquiry.selectedEventPlanId,
-            })}
-          </p>
-        </div>
-      ) : null}
+        <StatusStripItem label="Availability" value={String(availabilityLabel)} />
+        <StatusStripItem label="Quote" value={quoteValue} />
+        <StatusStripItem label="Delivery" value={deliveryValue} hint={deliveryHint} />
+      </dl>
 
       <EmployeeInquiryTabs
         badges={warningCount > 0 ? { recommendations: String(warningCount) } : undefined}
         panels={{
           overview: (
             <div className="space-y-5">
-              <div className="rounded-[var(--radius-card)] border border-border bg-surface p-4 sm:p-5">
-                <h2 className="text-sm font-semibold text-foreground">Event summary</h2>
+              <div className="rounded-[var(--radius-card)] border border-border-subtle bg-surface p-4 sm:p-5">
+                <h2 className="text-sm font-semibold text-foreground">Preferences & notes</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Details beyond the event header. Use Staff quote to prepare pricing.
+                </p>
                 <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="text-muted-foreground">Customer / group</dt>
-                    <dd className="mt-1 font-medium">{inquiry.customerGroupName || displayName}</dd>
-                  </div>
                   <div>
                     <dt className="text-muted-foreground">Guest mix</dt>
                     <dd className="mt-1 font-medium">{formatGuestMix(inquiry.guestMix)}</dd>
@@ -614,7 +603,7 @@ export default async function InquiryDetailPage({
                   </div>
                 </dl>
                 {inquiry.customerNotes ? (
-                  <div className="mt-4 border-t border-border pt-4">
+                  <div className="mt-4 border-t border-border-subtle pt-4">
                     <p className="text-muted-foreground">Customer notes</p>
                     <p className="mt-1 whitespace-pre-wrap text-foreground/90">{inquiry.customerNotes}</p>
                   </div>
@@ -709,22 +698,22 @@ export default async function InquiryDetailPage({
   );
 }
 
-function StatusCard({
+function StatusStripItem({
   label,
   value,
   hint,
 }: {
   label: string;
   value: string;
-  hint: string;
+  hint?: string;
 }) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-border bg-surface px-4 py-3 shadow-sm">
-      <p className="text-[length:var(--text-caption)] font-semibold tracking-wide text-muted-foreground uppercase">
-        {label}
-      </p>
-      <p className="mt-1 text-base font-semibold text-foreground">{value}</p>
-      <p className="mt-1 text-[length:var(--text-caption)] text-muted-foreground">{hint}</p>
+    <div className="min-w-0 px-2 py-1.5">
+      <dt className="text-[length:var(--text-caption)] font-semibold text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 truncate text-sm font-semibold text-foreground" title={hint ? `${value} — ${hint}` : value}>
+        {value}
+      </dd>
+      {hint ? <p className="sr-only">{hint}</p> : null}
     </div>
   );
 }
