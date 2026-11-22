@@ -74,11 +74,24 @@ async function main() {
     const lines = payload.lineItems ?? [];
     if (!lines.length) throw new Error("Draft has no line items.");
 
-    const ctx = {
+    const profile = await db.userProfile.findFirst({
+      where: { id: EVENT_SALES_USER, organizationId: SYNTHETIC_ORG },
+      select: { clerkUserId: true },
+    });
+    const org = await db.organization.findFirst({
+      where: { id: SYNTHETIC_ORG },
+      select: { clerkOrganizationId: true },
+    });
+    if (!profile?.clerkUserId || !org?.clerkOrganizationId) {
+      throw new Error("Missing Clerk identity fields for Event Sales probe.");
+    }
+
+    const ctx: RequestContext = {
       organizationId: SYNTHETIC_ORG,
       userId: EVENT_SALES_USER,
-      locationId: null,
-    } as RequestContext;
+      clerkUserId: profile.clerkUserId,
+      clerkOrganizationId: org.clerkOrganizationId,
+    };
 
     const mutated = lines.map((line, index) =>
       index === 0
