@@ -1,139 +1,193 @@
+import Link from "next/link";
+
+import { AttentionTile } from "@/components/ui/attention-tile";
 import { ButtonLink } from "@/components/ui/button";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { loadEmployeeShellChrome } from "@/components/layout/employee-shell-chrome";
 import { readTrustedClerkAuth } from "@/lib/auth/trusted-clerk-auth";
-import { db } from "@/lib/db";
-import { formatUserDisplayLabel } from "@/lib/identity/user-display";
-import {
-  EMPLOYEE_NAV_GROUP_LABELS,
-  filterEmployeeNavItems,
-  type EmployeeNavItemId,
-} from "@/lib/ui/employee-navigation";
 import { markAuthTiming } from "@/lib/auth/auth-timing";
+import { db } from "@/lib/db";
 import { isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
-
-type EmployeeHomeView =
-  | { kind: "status"; title: string; body: string }
-  | {
-      kind: "ready";
-      organizationName: string;
-      locationName: string;
-      userLabel: string;
-      visibleNavIds: EmployeeNavItemId[];
-      publicInquiryHref: string | null;
-    };
+import {
+  loadEmployeeDashboard,
+  type EmployeeDashboardReady,
+} from "@/server/services/employee-dashboard-service";
 
 export default async function EmployeeHomePage() {
   const view = await loadEmployeeHomeView();
 
   if (view.kind === "status") {
-    return <StatusPanel title={view.title} body={view.body} />;
+    return (
+      <section className="max-w-xl">
+        <PageHeader eyebrow="MagicCRM" title={view.title} description={view.body} />
+      </section>
+    );
   }
 
-  const visible = new Set(view.visibleNavIds);
-  const quickLinks = filterEmployeeNavItems(visible).filter((item) => item.id !== "overview");
-  const ops = quickLinks.filter((item) => item.group === "bookingsEvents");
-  const catalog = quickLinks.filter((item) => item.group === "catalog");
-  const settings = quickLinks.filter((item) => item.group === "settings");
+  return <EmployeeDashboard dashboard={view} />;
+}
+
+function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady }) {
+  const attention = dashboard.attention;
+  const attentionTotal = attention
+    ? attention.awaitingStaffReview + attention.pendingConfirmation + attention.unreadCount
+    : 0;
+  const showAttention = dashboard.canViewInquiries && attention != null;
+  const todayBookings = dashboard.todayBookings;
+  const showToday = dashboard.canViewBookings && todayBookings != null;
 
   return (
-    <section className="max-w-3xl">
-      <PageHeader
-        eyebrow="Overview"
-        title={`Welcome, ${view.userLabel}`}
-        description="Organization and location context for this session. Use quick links for permitted front-desk and admin tools."
-      />
+    <section className="mx-auto w-full min-w-0 max-w-5xl" data-employee-dashboard>
+      <header className="min-w-0 max-w-2xl">
+        <h1 className="text-[length:var(--text-display)] font-semibold tracking-[-0.02em] text-foreground">
+          {dashboard.greetingHeadline}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {dashboard.dateLabel}
+          <span className="mx-1.5 text-border" aria-hidden>
+            ·
+          </span>
+          {dashboard.organizationName}
+          <span className="mx-1.5 text-border" aria-hidden>
+            ·
+          </span>
+          {dashboard.locationName}
+        </p>
+      </header>
 
-      <Card className="mt-8" variant="default" padding="md">
-        <CardTitle>Session context</CardTitle>
-        <CardDescription>Resolved from trusted Clerk organization and your default location.</CardDescription>
-        <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-muted-foreground">Organization</dt>
-            <dd className="mt-1 font-medium text-foreground">{view.organizationName}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Location</dt>
-            <dd className="mt-1 font-medium text-foreground">{view.locationName}</dd>
-          </div>
-        </dl>
-      </Card>
-
-      {ops.length > 0 || catalog.length > 0 || settings.length > 0 || view.publicInquiryHref ? (
-        <div className="mt-8 space-y-6">
-          {ops.length > 0 ? (
-            <QuickLinkGroup title={EMPLOYEE_NAV_GROUP_LABELS.bookingsEvents} items={ops} />
-          ) : null}
-          {catalog.length > 0 ? (
-            <QuickLinkGroup title={EMPLOYEE_NAV_GROUP_LABELS.catalog} items={catalog} />
-          ) : null}
-          {settings.length > 0 ? (
-            <QuickLinkGroup title={EMPLOYEE_NAV_GROUP_LABELS.settings} items={settings} />
-          ) : null}
-          {view.publicInquiryHref ? (
-            <div>
-              <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">
-                Public intake
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Open this organization&apos;s customer inquiry form in a new tab.
-              </p>
-              <div className="mt-3">
-                <ButtonLink
-                  href={view.publicInquiryHref}
-                  variant="secondary"
-                  size="sm"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Public inquiry
+      <div className="mt-8 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
+        {showAttention ? (
+          <section className="employee-dashboard-panel min-w-0 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
+            <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">
+              Needs attention
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Actionable work from inquiries you can access.
+            </p>
+            {attentionTotal === 0 ? (
+              <div className="mt-4">
+                <EmptyState
+                  title="You’re caught up"
+                  detail="New inquiries will appear here when they need follow-up."
+                />
+              </div>
+            ) : (
+              <div className="mt-2">
+                {attention.awaitingStaffReview > 0 ? (
+                  <AttentionTile
+                    count={attention.awaitingStaffReview}
+                    title="Awaiting staff review"
+                    detail="Ready for human follow-up"
+                    href="/app/inquiries"
+                  />
+                ) : null}
+                {attention.pendingConfirmation > 0 ? (
+                  <AttentionTile
+                    count={attention.pendingConfirmation}
+                    title="Pending confirmation"
+                    detail="Book Now — awaiting staff confirmation"
+                    href="/app/inquiries"
+                  />
+                ) : null}
+                {attention.unreadCount > 0 ? (
+                  <AttentionTile
+                    count={attention.unreadCount}
+                    title="Unread"
+                    detail="New since you last checked"
+                    href="/app/inquiries"
+                  />
+                ) : null}
+              </div>
+            )}
+            {dashboard.canViewInquiries ? (
+              <div className="mt-5">
+                <ButtonLink href="/app/inquiries" size="sm">
+                  Review inquiries
                 </ButtonLink>
               </div>
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <p className="mt-8 max-w-md text-sm text-muted-foreground">
-          No operational modules are available for your permissions yet. Ask an administrator to
-          assign a security group.
-        </p>
-      )}
+            ) : null}
+          </section>
+        ) : (
+          <section className="employee-dashboard-panel min-w-0 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
+            <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">Home</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Use the sidebar to open the tools available for your role.
+            </p>
+          </section>
+        )}
 
-      {settings.some((item) => item.id === "team" || item.id === "security") ? (
-        <p className="mt-8 max-w-md text-sm text-muted-foreground">
-          Administrators can open Team to invite employees, then Security to manage groups.
-        </p>
+        {showToday && todayBookings ? (
+          <section className="employee-dashboard-panel min-w-0 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">Today</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Confirmed bookings for today.</p>
+              </div>
+              <Link
+                href={dashboard.todayBookingsHref}
+                className="shrink-0 text-sm font-semibold text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
+              >
+                View all
+              </Link>
+            </div>
+            {todayBookings.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">Nothing on the schedule for today.</p>
+            ) : (
+              <ul className="mt-3 divide-y divide-border-subtle">
+                {todayBookings.map((booking) => (
+                  <li key={booking.id}>
+                    <Link
+                      href={booking.href}
+                      className="block py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
+                    >
+                      <p className="text-[length:var(--text-caption)] text-muted-foreground">
+                        {booking.startTimeLabel}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
+                        {booking.title}
+                      </p>
+                      <p className="mt-0.5 truncate text-[length:var(--text-caption)] text-muted-foreground">
+                        {booking.bookingNumber} · {booking.statusLabel}
+                      </p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ) : null}
+      </div>
+
+      {dashboard.nextActions.length > 0 ? (
+        <section className="mt-6">
+          <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">Next</h2>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {dashboard.nextActions.map((action) => (
+              <li key={action.id}>
+                <ButtonLink
+                  href={action.href}
+                  variant="secondary"
+                  size="sm"
+                  {...(action.external
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                >
+                  {action.label}
+                </ButtonLink>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
     </section>
   );
 }
 
-function QuickLinkGroup({
-  title,
-  items,
-}: {
-  title: string;
-  items: Array<{ id: string; href: string; label: string }>;
-}) {
-  return (
-    <div>
-      <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">{title}</h2>
-      <ul className="mt-3 flex flex-wrap gap-2">
-        {items.map((item) => (
-          <li key={item.id}>
-            <ButtonLink href={item.href} variant="secondary" size="sm">
-              {item.label}
-            </ButtonLink>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-async function loadEmployeeHomeView(): Promise<EmployeeHomeView> {
+async function loadEmployeeHomeView(): Promise<
+  | { kind: "status"; title: string; body: string }
+  | EmployeeDashboardReady
+> {
   const clerkAuth = await readTrustedClerkAuth();
 
   if (!clerkAuth.clerkUserId) {
@@ -149,43 +203,14 @@ async function loadEmployeeHomeView(): Promise<EmployeeHomeView> {
   }
 
   try {
-    // Layout already provisioned the tenant for this request (React cache).
     const ctx = await getRequestContext({ auth: clerkAuth });
-    const chrome = await loadEmployeeShellChrome();
-    const profile = await db.userProfile.findFirst({
-      where: { id: ctx.userId, organizationId: ctx.organizationId },
-      select: {
-        clerkUserId: true,
-        firstName: true,
-        lastName: true,
-        displayName: true,
-        email: true,
-      },
-    });
-    const userLabel = profile ? formatUserDisplayLabel(profile) : "Signed in";
+    const dashboard = await loadEmployeeDashboard(ctx, db);
     markAuthTiming("app_ready", { route: "/app" });
-
-    return {
-      kind: "ready",
-      organizationName: chrome.organizationName ?? "Unavailable",
-      locationName: chrome.locationName ?? "No default location",
-      userLabel,
-      visibleNavIds: chrome.visibleNavIds,
-      publicInquiryHref: chrome.publicInquiryHref,
-    };
+    return dashboard;
   } catch (error) {
     if (isTenantContextError(error)) {
       return { kind: "status", title: "Organization not ready", body: error.userMessage };
     }
-
     throw error;
   }
-}
-
-function StatusPanel({ title, body }: { title: string; body: string }) {
-  return (
-    <section className="max-w-xl">
-      <PageHeader eyebrow="MagicCRM" title={title} description={body} />
-    </section>
-  );
 }

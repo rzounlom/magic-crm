@@ -8,7 +8,7 @@ import { formatNotificationAge, formatUnreadBadge, type InquiryNotificationItem 
 export function InquiryNotificationBell({
   unreadCount,
   items,
-  now = new Date(),
+  now: nowProp,
   onNavigate,
   onMarkAllRead,
   markingAll = false,
@@ -21,6 +21,9 @@ export function InquiryNotificationBell({
   markingAll?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  // Stable per-mount clock — avoid `now = new Date()` default-arg reevaluation on hydrate.
+  const [mountedNow] = useState(() => new Date());
+  const now = nowProp ?? mountedNow;
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const badge = formatUnreadBadge(unreadCount);

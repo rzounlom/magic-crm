@@ -44,19 +44,22 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
       closeRef.current?.focus();
       return;
     }
+    // Close via imperative API when React state drops; onClose restores focus.
+    // Never focus the More button on initial mount (avoids hydration focus churn).
     if (dialog.open) {
       dialog.close();
     }
-    moreButtonRef.current?.focus();
   }, [moreOpen]);
 
   if (primary.length === 0 && moreItems.length === 0 && !publicInquiryHref) {
     return null;
   }
 
-  const catalog = filterEmployeeNavItems(visible).filter((item) => item.group === "catalog");
-  const settings = filterEmployeeNavItems(visible).filter((item) => item.group === "settings");
-  const overview = filterEmployeeNavItems(visible).filter((item) => item.group === "overview");
+  const morePrimary = filterEmployeeNavItems(visible)
+    .filter((item) => item.group === "primary")
+    .filter((item) => moreItems.some((entry) => entry.id === item.id));
+  const tools = moreItems.filter((item) => item.group === "tools");
+  const settings = moreItems.filter((item) => item.group === "settings");
   const closeMore = () => setMoreOpen(false);
 
   return (
@@ -90,9 +93,9 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
         id={dialogId}
         aria-labelledby={titleId}
         className="employee-more-dialog fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none translate-y-0 rounded-t-[var(--radius-dialog)] border border-border bg-surface p-0 text-foreground shadow-[var(--shadow-overlay)] backdrop:bg-foreground/40 open:flex open:flex-col"
-        onCancel={(event) => {
-          event.preventDefault();
-          closeMore();
+        onClose={() => {
+          setMoreOpen(false);
+          moreButtonRef.current?.focus();
         }}
         onClick={(event) => {
           if (event.target === event.currentTarget) {
@@ -117,18 +120,18 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
           </div>
         </div>
         <div className="max-h-[min(70vh,28rem)] overflow-y-auto px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {overview.length > 0 ? (
-            <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.overview}>
-              {overview.map((item) => (
+          {morePrimary.length > 0 ? (
+            <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.primary}>
+              {morePrimary.map((item) => (
                 <ModuleNavLink key={item.id} href={item.href} variant="menu" onNavigate={closeMore}>
                   {item.label}
                 </ModuleNavLink>
               ))}
             </MoreSection>
           ) : null}
-          {catalog.length > 0 ? (
-            <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.catalog}>
-              {catalog.map((item) => (
+          {tools.length > 0 ? (
+            <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.tools}>
+              {tools.map((item) => (
                 <ModuleNavLink key={item.id} href={item.href} variant="menu" onNavigate={closeMore}>
                   {item.label}
                 </ModuleNavLink>

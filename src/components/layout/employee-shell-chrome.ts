@@ -3,13 +3,13 @@ import "server-only";
 import { cache } from "react";
 
 import { db } from "@/lib/db";
+import { customerFacingOrganizationName } from "@/lib/inquiries/organization-display-name";
 import type { EmployeeNavItemId } from "@/lib/ui/employee-navigation";
 import { EMPLOYEE_NAV_ITEMS } from "@/lib/ui/employee-navigation";
 import { isAuthorizationError, isInquiryError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
 import { createLocationRepository } from "@/server/repositories/location-repository";
-import { createOrganizationRepository } from "@/server/repositories/organization-repository";
 import { getCurrentTenantPublicInquiryPath } from "@/server/services/inquiry-service";
 
 export type EmployeeShellChrome = {
@@ -32,8 +32,16 @@ export const loadEmployeeShellChrome = cache(async (): Promise<EmployeeShellChro
 
   try {
     const ctx = await getRequestContext();
-    const organization = await createOrganizationRepository(db).findById(ctx);
-    organizationName = organization?.name ?? null;
+    const organization = await db.organization.findFirst({
+      where: { id: ctx.organizationId },
+      select: { name: true, customerFacingName: true },
+    });
+    organizationName = organization
+      ? customerFacingOrganizationName({
+          name: organization.name,
+          customerFacingName: organization.customerFacingName,
+        })
+      : null;
 
     if (ctx.locationId) {
       const location = await createLocationRepository(db).findById(ctx, ctx.locationId);

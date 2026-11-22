@@ -31,7 +31,7 @@ test.describe("staff shell smoke (authenticated)", { tag: "@staff-smoke" }, () =
 
     const { more, dialog } = await openStaffMoreMenu(page);
     await expect(
-      dialog.getByRole("link", { name: /public inquiry|sales knowledge|overview|team|resources/i }).first(),
+      dialog.getByRole("link", { name: /public inquiry|sales knowledge|bookings|team|resources|home/i }).first(),
     ).toBeVisible();
 
     await page.keyboard.press("Escape");

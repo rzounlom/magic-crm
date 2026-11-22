@@ -61,6 +61,7 @@
    */
   --header-height: 3.5rem;
   --header-offset: var(--header-height);
+  --sidebar-width: 15rem;
   --mobile-nav-height: 3.75rem;
   --mobile-nav-offset: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
   /* Mobile booking coach action bar sits above the UX3 bottom nav */

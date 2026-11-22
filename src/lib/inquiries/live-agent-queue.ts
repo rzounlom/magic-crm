@@ -64,3 +64,62 @@ export function sortLiveAgentQueue<T extends LiveAgentQueueInquiry>(inquiries: T
 }
 
 export const sortInquiriesNewestFirst = sortLiveAgentQueue;
+
+/** Fields needed to mirror LiveAgentInquiryQueue section buckets. */
+export type InquiryAttentionFields = {
+  status: string;
+  salesStage?: string | null;
+  selectedEventPlanId?: string | null;
+  humanHandoffReason?: string | null;
+  bookings?: Array<{ status: string }> | null;
+};
+
+export function isPendingConfirmation(inquiry: InquiryAttentionFields): boolean {
+  return (
+    inquiry.salesStage === "DEPOSIT_PENDING" ||
+    inquiry.bookings?.[0]?.status === "PENDING_PAYMENT"
+  );
+}
+
+/**
+ * Queue “Ready for Live Agent” candidates that are not pending payment.
+ * Matches `selected` in LiveAgentInquiryQueue.
+ */
+export function isLiveAgentSelectedAttention(inquiry: InquiryAttentionFields): boolean {
+  return isLiveAgentQueueCandidate(inquiry) && !isPendingConfirmation(inquiry);
+}
+
+/**
+ * READY_FOR_HUMAN staff-review rows that are not live-agent candidates and not pending.
+ * Matches `otherReady` in LiveAgentInquiryQueue.
+ */
+export function isOtherReadyForHumanAttention(inquiry: InquiryAttentionFields): boolean {
+  return (
+    inquiry.status === INQUIRY_STATUSES.READY_FOR_HUMAN &&
+    !isLiveAgentQueueCandidate(inquiry) &&
+    !isPendingConfirmation(inquiry)
+  );
+}
+
+/** Actionable staff work excluding pending confirmation (selected + otherReady). */
+export function isAwaitingStaffReview(inquiry: InquiryAttentionFields): boolean {
+  return isLiveAgentSelectedAttention(inquiry) || isOtherReadyForHumanAttention(inquiry);
+}
+
+export function countInquiryAttention(inquiries: readonly InquiryAttentionFields[]): {
+  pendingConfirmation: number;
+  awaitingStaffReview: number;
+} {
+  let pendingConfirmation = 0;
+  let awaitingStaffReview = 0;
+  for (const inquiry of inquiries) {
+    if (isPendingConfirmation(inquiry)) {
+      pendingConfirmation += 1;
+      continue;
+    }
+    if (isAwaitingStaffReview(inquiry)) {
+      awaitingStaffReview += 1;
+    }
+  }
+  return { pendingConfirmation, awaitingStaffReview };
+}
