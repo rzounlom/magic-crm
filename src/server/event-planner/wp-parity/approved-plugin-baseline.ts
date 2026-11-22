@@ -21,7 +21,7 @@ import type { WpTenantParityConfig } from "@/server/event-planner/wp-parity/tena
 export const WP_APPROVED_PLUGIN_BASELINE_SOURCE = "approved_plugin_baseline" as const;
 
 export const WP_APPROVED_PLUGIN_BASELINE_WARNING =
-  "Using Generations-approved Event Planner pricing. Final price verification required before operational go-live.";
+  "Using the approved Event Planner catalog. Final live venue price verification is still required before customer email delivery.";
 
 export type ApprovedPluginBaselineRegistry = {
   format: "wp_approved_plugin_baseline_orgs_v1";

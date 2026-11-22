@@ -9,7 +9,7 @@ import { EVENT_PLAN_KINDS, INQUIRY_STATUSES } from "@/types/inquiry";
 import { PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 
 describe("live agent inquiry queue", () => {
-  it("surfaces customer-selected plans in Ready for Live Agent with booking copy", () => {
+  it("surfaces customer-selected plans in Ready for booking follow-up with booking copy", () => {
     const html = renderToStaticMarkup(
       <LiveAgentInquiryQueue
         timeZone="UTC"
@@ -77,9 +77,11 @@ describe("live agent inquiry queue", () => {
       />,
     );
 
-    expect(html).toContain("Ready for Live Agent");
+    expect(html).toContain("Ready for booking follow-up");
+    expect(html).toContain("Needs staff review");
+    expect(html).toContain('id="ready-for-live-agent"');
     expect(html).toContain(CUSTOMER_SELECTED_PLAN_BANNER);
-    expect(html.indexOf("Apex Robotics")).toBeLessThan(html.indexOf("Grace Hopper"));
+    expect(html.indexOf("Grace Hopper")).toBeLessThan(html.indexOf("Apex Robotics"));
     expect(html).toContain("Best Fit");
     expect(html).toContain("75 guests");
     expect(html).toContain("Oct 15, 2026 at 5:30 PM");
@@ -88,7 +90,7 @@ describe("live agent inquiry queue", () => {
     expect(html).not.toContain("BOOKED");
   });
 
-  it("lists the newest selected inquiry first within Ready for Live Agent", () => {
+  it("lists the newest selected inquiry first within Ready for booking follow-up", () => {
     const html = renderToStaticMarkup(
       <LiveAgentInquiryQueue
         timeZone="UTC"
@@ -162,7 +164,7 @@ describe("live agent inquiry queue", () => {
     expect(html.indexOf("Newer Party")).toBeLessThan(html.indexOf("Older Party"));
   });
 
-  it("keeps converted inquiries out of Ready for Live Agent", () => {
+  it("keeps converted inquiries out of Ready for booking follow-up", () => {
     const html = renderToStaticMarkup(
       <LiveAgentInquiryQueue
         timeZone="UTC"
@@ -203,12 +205,13 @@ describe("live agent inquiry queue", () => {
       />,
     );
 
-    expect(html).not.toContain("Ready for Live Agent");
+    expect(html).not.toContain("Ready for booking follow-up");
+    expect(html).not.toContain("Needs staff review");
     expect(html).toContain("Converted to Booking FUN-2026-00421");
     expect(html).toContain("Apex Robotics");
   });
 
-  it("keeps Book Now requests in Pending confirmation instead of Ready for Live Agent", () => {
+  it("keeps Book Now requests in Pending confirmation instead of Ready for booking follow-up", () => {
     const html = renderToStaticMarkup(
       <LiveAgentInquiryQueue
         timeZone="UTC"
@@ -252,7 +255,8 @@ describe("live agent inquiry queue", () => {
 
     expect(html).toContain("Pending confirmation");
     expect(html).toContain("Pending Party");
-    expect(html).not.toContain("Ready for Live Agent");
+    expect(html).not.toContain("Ready for booking follow-up");
+    expect(html).not.toContain("Needs staff review");
   });
 
   it("does not show READY TO BOOK for WordPress public event requests with a staff draft plan", () => {
@@ -297,6 +301,8 @@ describe("live agent inquiry queue", () => {
 
     expect(html).toContain("WP Birthday");
     expect(html).toContain("Event inquiry — staff review required");
+    expect(html).toContain("Needs staff review");
+    expect(html).not.toContain("Ready for booking follow-up");
     expect(html).not.toContain(CUSTOMER_SELECTED_PLAN_BANNER);
     expect(html).not.toMatch(/READY TO BOOK/i);
   });

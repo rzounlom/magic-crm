@@ -1,6 +1,7 @@
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
-import { formatMoneyFromCents } from "@/lib/event-planner/money";
+import { employeePricingSourceLabel } from "@/lib/event-planner/employee-pricing-copy";
+import { centsToDollarInputValue, formatMoneyFromCents } from "@/lib/event-planner/money";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import {
   approveAndSendWpStaffQuoteAction,
@@ -8,6 +9,10 @@ import {
   createWpStaffQuoteDraftAction,
   updateWpStaffQuoteDraftAction,
 } from "@/server/actions/wp-staff-quote-draft";
+import {
+  PLAN_AVAILABILITY_STATUS_LABELS,
+  PLAN_AVAILABILITY_STATUSES,
+} from "@/types/resource-schedule";
 
 type DraftProvenance = {
   pricingSource: string;
@@ -96,8 +101,8 @@ export function WpStaffQuoteDraftPanel({
     >
       <h2 className="text-sm font-medium text-foreground">Staff quote draft</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Convert the private WordPress calculation into an editable MagiCRM working draft. Customer
-        delivery requires explicit employee approval and pricing verification policy clearance.
+        Turn the private estimate into an editable staff working draft. Internal approval records a
+        staff-ready quote — it does not email the customer by itself.
       </p>
 
       {deliveryPolicy ? (
@@ -111,8 +116,8 @@ export function WpStaffQuoteDraftPanel({
         >
           <p className="font-medium">
             {deliveryPolicy.canDeliver
-              ? "Customer delivery allowed (tenant_live verified)"
-              : "Customer delivery gated"}
+              ? "Customer email delivery available"
+              : "Customer email delivery unavailable"}
           </p>
           <p className="mt-0.5">{deliveryPolicy.message}</p>
         </div>
@@ -125,7 +130,7 @@ export function WpStaffQuoteDraftPanel({
           <dl className="grid gap-2 sm:grid-cols-2">
             <div>
               <dt className="text-foreground/60">Pricing source</dt>
-              <dd className="mt-0.5">{provenance.pricingSource}</dd>
+              <dd className="mt-0.5">{employeePricingSourceLabel(provenance.pricingSource)}</dd>
             </div>
             <div>
               <dt className="text-foreground/60">Plan date</dt>
@@ -140,7 +145,14 @@ export function WpStaffQuoteDraftPanel({
             <div>
               <dt className="text-foreground/60">Availability</dt>
               <dd className="mt-0.5">
-                {draft.availabilityStatus ?? "NOT_VALIDATED"}
+                {draft.availabilityStatus &&
+                draft.availabilityStatus in PLAN_AVAILABILITY_STATUS_LABELS
+                  ? PLAN_AVAILABILITY_STATUS_LABELS[
+                      draft.availabilityStatus as keyof typeof PLAN_AVAILABILITY_STATUS_LABELS
+                    ]
+                  : draft.availabilityStatus
+                    ? String(draft.availabilityStatus)
+                    : PLAN_AVAILABILITY_STATUS_LABELS[PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED]}
                 {draft.availabilityNote ? ` · ${draft.availabilityNote}` : ""}
               </dd>
             </div>
@@ -272,19 +284,26 @@ export function WpStaffQuoteDraftPanel({
                         />
                       </label>
                       <label className="block text-xs">
-                        <span className="text-foreground/70">Unit cents</span>
+                        <span className="text-foreground/70">Unit price ($)</span>
                         <input
-                          type="number"
-                          name={`lineUnitCents_${index}`}
-                          defaultValue={item.unitPriceCents}
+                          type="text"
+                          inputMode="decimal"
+                          name={`lineUnitPriceDollars_${index}`}
+                          defaultValue={centsToDollarInputValue(item.unitPriceCents)}
                           readOnly={!canOverrideQuotePricing}
+                          aria-readonly={!canOverrideQuotePricing}
                           title={
                             canOverrideQuotePricing
-                              ? undefined
-                              : "Pricing overrides require crm.quotes.price_override"
+                              ? "Enter dollars, for example 49.99"
+                              : "Unit prices are locked for your role. Ask an administrator if a price change is needed."
                           }
                           className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm read-only:bg-muted/40"
                         />
+                        {!canOverrideQuotePricing ? (
+                          <span className="mt-1 block text-[length:var(--text-caption)] text-muted-foreground">
+                            Price locked — your role cannot override unit prices.
+                          </span>
+                        ) : null}
                       </label>
                     </div>
                   ))}

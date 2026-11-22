@@ -737,7 +737,7 @@ export function LiveAgentWorkspace({
             <input type="hidden" name="inquiryId" value={inquiry.id} />
             <input type="hidden" name="conversationId" value={conversation.id} />
             <label className="block text-sm">
-              <span className="text-foreground/70">Follow-up note</span>
+              <span className="text-foreground/70">Internal staff note (not emailed)</span>
               <textarea
                 name="content"
                 required

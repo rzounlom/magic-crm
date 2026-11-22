@@ -354,6 +354,7 @@ export default async function InquiryDetailPage({
         ? `${wpIntake.answers.duration}${wpIntake.answers.otherHours != null ? ` (${wpIntake.answers.otherHours}h)` : ""}`
         : "—";
 
+  const hasStaffQuoteDraft = Boolean(workingPlan && wpStaffDraftProvenance);
   const queueStatusLabel = formatEmployeeInquiryQueueLabel({
     isWpIntake: Boolean(wpIntake),
     status: inquiry.status,
@@ -363,6 +364,8 @@ export default async function InquiryDetailPage({
     bookingNumber: inquiry.bookings[0]?.bookingNumber,
     bookingStatus: inquiry.bookings[0]?.status,
     salesStage: inquiry.salesStage,
+    hasStaffQuoteDraft,
+    staffQuoteApproved: quoteApproved,
   });
   const contactName =
     [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") || "—";
@@ -370,13 +373,14 @@ export default async function InquiryDetailPage({
     ? quoteDelivered
       ? "Delivered"
       : "Allowed"
-    : "Blocked";
+    : "Unavailable";
   const deliveryHint = wpDeliveryPolicy?.canDeliver
     ? "Customer email delivery is available for this quote path"
-    : wpDeliveryPolicy?.message || "Customer email delivery is blocked until pricing is verified";
+    : wpDeliveryPolicy?.message ||
+      "Customer email delivery is currently unavailable. Internal approval does not send a quote.";
   const quoteValue = quoteApproved
     ? "Internally approved"
-    : workingPlan && wpStaffDraftProvenance
+    : hasStaffQuoteDraft
       ? "Draft in progress"
       : "No staff draft";
   const nextActionTitle = wpIntake ? "Next step" : "Needs staff follow-up";
@@ -495,17 +499,18 @@ export default async function InquiryDetailPage({
         >
           <p className="font-semibold text-foreground">
             {warningCount > 0
-              ? `${warningCount} attention item${warningCount === 1 ? "" : "s"} before customer send`
+              ? `${warningCount} warning${warningCount === 1 ? "" : "s"} to review before you contact the customer`
               : nextActionTitle}
           </p>
           <p className="mt-1 text-muted-foreground">
             {warningCount > 0
-              ? "Review warnings on Staff quote and Recommendations before contacting the customer."
+              ? "Review Staff quote and Recommendations. You may prepare a draft and approve internally when permitted."
               : nextActionBody}
           </p>
           {!wpDeliveryPolicy?.canDeliver ? (
             <p className="mt-2 font-medium text-foreground">
-              Customer quote email delivery is blocked until pricing verification is complete.
+              Customer email delivery is currently unavailable. Approving a staff quote does not send
+              anything to the customer.
             </p>
           ) : null}
         </div>
@@ -526,7 +531,12 @@ export default async function InquiryDetailPage({
       </dl>
 
       <EmployeeInquiryTabs
-        badges={warningCount > 0 ? { recommendations: String(warningCount) } : undefined}
+        defaultTab={hasStaffQuoteDraft ? "quote" : "overview"}
+        badges={
+          warningCount > 0
+            ? { recommendations: `${warningCount} warning${warningCount === 1 ? "" : "s"}` }
+            : undefined
+        }
         panels={{
           overview: (
             <div className="space-y-5">
@@ -619,6 +629,9 @@ export default async function InquiryDetailPage({
                       ...inquiry,
                       selectedPlanTitle: undefined,
                       selectedPlanTier: undefined,
+                      isWpIntake: Boolean(wpIntake),
+                      hasStaffQuoteDraft,
+                      staffQuoteApproved: quoteApproved,
                     }}
                   />
                 </div>
@@ -672,7 +685,9 @@ export default async function InquiryDetailPage({
                     <input type="hidden" name="inquiryId" value={inquiry.id} />
                     <input type="hidden" name="conversationId" value={conversation.id} />
                     <label className="block text-sm">
-                      <span className="text-muted-foreground">Internal / customer follow-up note</span>
+                      <span className="text-muted-foreground">
+                        Internal staff note (not emailed)
+                      </span>
                       <textarea
                         name="content"
                         required

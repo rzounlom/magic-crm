@@ -47,6 +47,9 @@ export function formatEmployeeInquiryQueueLabel(input: {
   bookingNumber?: string | null;
   bookingStatus?: string | null;
   salesStage?: string | null;
+  /** Presentation-only: WP staff quote draft / approval markers. */
+  hasStaffQuoteDraft?: boolean;
+  staffQuoteApproved?: boolean;
 }): string {
   if (input.isWpIntake) {
     if (input.bookingStatus === "CANCELLED") {
@@ -61,6 +64,12 @@ export function formatEmployeeInquiryQueueLabel(input: {
     }
     if (input.bookingStatus === "PENDING_PAYMENT" || input.salesStage === "DEPOSIT_PENDING") {
       return "Pending confirmation";
+    }
+    if (input.staffQuoteApproved) {
+      return "Staff quote approved — delivery unavailable";
+    }
+    if (input.hasStaffQuoteDraft) {
+      return "Staff quote in progress";
     }
     return "Event inquiry — staff review required";
   }

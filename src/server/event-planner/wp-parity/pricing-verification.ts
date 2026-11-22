@@ -63,7 +63,8 @@ export function resolveWpCustomerQuoteDeliveryPolicy(
       canApprove: true,
       canDeliver: true,
       code: WP_CUSTOMER_QUOTE_DELIVERY_CODES.TENANT_LIVE_VERIFIED,
-      message: "Verified tenant_live pricing. Employee may approve and send a customer quote.",
+      message:
+        "Verified venue pricing is in place. Authorized employees may approve and send a customer quote.",
     };
   }
   if (calc.pricingSource === "approved_plugin_baseline" && calc.status === "ready") {
@@ -73,7 +74,7 @@ export function resolveWpCustomerQuoteDeliveryPolicy(
       canDeliver: false,
       code: WP_CUSTOMER_QUOTE_DELIVERY_CODES.APPROVED_BASELINE_PENDING_OPERATIONAL_VERIFICATION,
       message:
-        "Owner-approved plugin baseline allows staff preview and approval, but customer delivery stays disabled until operational price verification (tenant_live).",
+        "You can prepare and internally approve a staff quote. Customer email delivery stays unavailable until live venue prices are verified.",
     };
   }
   return {
@@ -82,7 +83,7 @@ export function resolveWpCustomerQuoteDeliveryPolicy(
     canDeliver: false,
     code: WP_CUSTOMER_QUOTE_DELIVERY_CODES.PLUGIN_DEFAULTS_BLOCKED,
     message:
-      "Plugin-default pricing is staff-estimate only. Do not approve or send these totals to the customer.",
+      "Plugin-default pricing is a staff estimate only. Do not approve or send these totals to the customer.",
   };
 }
 

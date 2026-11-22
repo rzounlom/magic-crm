@@ -88,6 +88,30 @@ describe("inquiry funnel", () => {
     expect(stages.find((stage) => stage.id === "selected")?.at).toEqual(selectedAt);
     expect(stages.some((stage) => stage.label === "Booked")).toBe(false);
   });
+
+  it("uses WordPress staff-review labels without customer-selected or Live Agent stages", () => {
+    const createdAt = new Date("2026-09-01T12:00:00Z");
+    const generatedAt = new Date("2026-09-01T12:01:00Z");
+    const stages = inquiryFunnelStages({
+      createdAt,
+      recommendationsGeneratedAt: generatedAt,
+      recommendationsViewedAt: null,
+      customerSelectedAt: null,
+      humanHandoffRequestedAt: generatedAt,
+      status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+      isWpIntake: true,
+      hasStaffQuoteDraft: true,
+    });
+    expect(stages.map((stage) => stage.label)).toEqual([
+      "Inquiry submitted",
+      "Private estimate ready",
+      "Staff quote in progress",
+    ]);
+    expect(stages.every((stage) => stage.complete)).toBe(true);
+    expect(stages.some((stage) => /Customer selected|Ready for Live Agent|ready to book/i.test(stage.label))).toBe(
+      false,
+    );
+  });
 });
 
 describe("generateRecommendations", () => {

@@ -175,7 +175,7 @@ describe("calculatePrivateWpRecommendationForOrganization", () => {
     expect(outcome.missingKeys).toEqual([]);
     expect(outcome.snapshot?.pricing_source).toBe("plugin_defaults");
     expect(outcome.snapshot?.organization_id).toBe(ORG);
-    expect(outcome.summary).toMatch(/plugin defaults/);
+    expect(outcome.summary).toMatch(/plugin-default estimate/);
     if (outcome.snapshot?.valid) {
       expect(outcome.snapshot.dates[0]?.recommendation.total_cents).toBe(10_100);
     }

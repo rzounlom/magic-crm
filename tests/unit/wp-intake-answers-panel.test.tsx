@@ -42,21 +42,25 @@ function render(calc: Partial<WpPrivateCalculationMeta>): string {
 describe("WpIntakeAnswersPanel pricing source", () => {
   it("labels plugin defaults as an unverified estimate", () => {
     const html = render({ status: "ready", pricingSource: "plugin_defaults" });
-    expect(html).toContain("ESTIMATE — Plugin-default pricing. Verify before sending to customer.");
+    expect(html).toContain(
+      "Estimate only — plugin-default pricing. Verify before contacting the customer.",
+    );
     expect(html).toContain("Do not send these totals to the customer");
     expect(html).toContain("Suggested next steps");
     expect(html).toContain("Verify pricing against live venue rates");
   });
 
-  it("labels tenant_live verified pricing with configuration revision", () => {
+  it("labels tenant_live verified pricing with plain language and technical details", () => {
     const html = render({
       status: "ready",
       pricingSource: "tenant_live",
       pricingRevision: "abc123:def456",
     });
-    expect(html).toContain("Calculated with tenant_live verified pricing");
+    expect(html).toContain("Calculated with verified venue pricing");
+    expect(html).toContain("verified venue pricing");
+    expect(html).toContain("Technical pricing details");
     expect(html).toContain("configuration revision abc123:def456");
-    expect(html).toContain("pricing source tenant_live");
+    expect(html).toContain("Source code: tenant_live");
   });
 
   it("labels approved_plugin_baseline without the unverified plugin-default estimate banner", () => {
@@ -66,14 +70,14 @@ describe("WpIntakeAnswersPanel pricing source", () => {
       rulesVersion: "2026-11-02",
       pricingRevision: "889a29ae88d4:approved_plugin_baseline",
     });
-    expect(html).toContain("Pricing source: Generations-approved WordPress plugin baseline");
+    expect(html).toContain("Pricing based on the approved Event Planner catalog");
     expect(html).toContain(
-      "Using Generations-approved Event Planner pricing. Final price verification required before operational go-live.",
+      "Final live venue price verification is still required before customer email delivery.",
     );
     expect(html).not.toContain("ESTIMATE — Plugin-default pricing");
     expect(html).toContain("configuration revision 889a29ae88d4:approved_plugin_baseline");
     expect(html).toContain("Create a staff quote draft from the private calculation");
-    expect(html).toContain("Do not send a customer quote, create holds, or request payment until explicitly approved");
+    expect(html).toContain("Customer email delivery is currently unavailable");
   });
 
   it("shows incomplete state and lists missing keys", () => {

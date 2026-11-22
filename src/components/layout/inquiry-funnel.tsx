@@ -14,6 +14,9 @@ export function InquiryFunnel({
     status: string;
     selectedPlanTitle?: string | null;
     selectedPlanTier?: string | null;
+    isWpIntake?: boolean;
+    hasStaffQuoteDraft?: boolean;
+    staffQuoteApproved?: boolean;
   };
   timeZone: string;
 }) {

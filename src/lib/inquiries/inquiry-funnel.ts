@@ -17,7 +17,15 @@ export function inquiryFunnelStages(inquiry: {
   status: string;
   selectedPlanTitle?: string | null;
   selectedPlanTier?: string | null;
+  /** When true, use WordPress public-event funnel labels (no customer-selected / Live Agent stages). */
+  isWpIntake?: boolean;
+  /** Staff quote draft exists for this WP inquiry (presentation only). */
+  hasStaffQuoteDraft?: boolean;
+  staffQuoteApproved?: boolean;
 }): InquiryFunnelStage[] {
+  if (inquiry.isWpIntake) {
+    return wpInquiryFunnelStages(inquiry);
+  }
   const selected = Boolean(inquiry.customerSelectedAt);
   const selectedLabel = selectedPlanFunnelLabel(inquiry.selectedPlanTier, inquiry.selectedPlanTitle);
   return [
@@ -40,6 +48,41 @@ export function inquiryFunnelStages(inquiry: {
       label: "Ready for Live Agent",
       complete: selected && inquiry.status === INQUIRY_STATUSES.READY_FOR_HUMAN,
       at: selected ? inquiry.humanHandoffRequestedAt ?? inquiry.customerSelectedAt : null,
+    },
+  ];
+}
+
+function wpInquiryFunnelStages(inquiry: {
+  createdAt: Date;
+  recommendationsGeneratedAt: Date | null;
+  humanHandoffRequestedAt?: Date | null;
+  status: string;
+  hasStaffQuoteDraft?: boolean;
+  staffQuoteApproved?: boolean;
+}): InquiryFunnelStage[] {
+  const estimateReady = Boolean(inquiry.recommendationsGeneratedAt);
+  const reviewComplete =
+    inquiry.status === INQUIRY_STATUSES.READY_FOR_HUMAN ||
+    Boolean(inquiry.hasStaffQuoteDraft) ||
+    Boolean(inquiry.staffQuoteApproved);
+  const reviewLabel = inquiry.staffQuoteApproved
+    ? "Staff quote approved (not emailed)"
+    : inquiry.hasStaffQuoteDraft
+      ? "Staff quote in progress"
+      : "Awaiting staff review";
+  return [
+    { id: "submitted", label: "Inquiry submitted", complete: true, at: inquiry.createdAt },
+    {
+      id: "estimate",
+      label: "Private estimate ready",
+      complete: estimateReady,
+      at: inquiry.recommendationsGeneratedAt,
+    },
+    {
+      id: "review",
+      label: reviewLabel,
+      complete: reviewComplete,
+      at: inquiry.humanHandoffRequestedAt ?? inquiry.recommendationsGeneratedAt,
     },
   ];
 }

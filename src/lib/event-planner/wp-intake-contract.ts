@@ -141,15 +141,15 @@ export const WP_APPROVED_RULES_VERSION = "2026-11-02";
 
 /** Staff-facing banner for unverified plugin-default WP private estimates. */
 export const WP_PLUGIN_DEFAULT_ESTIMATE_LABEL =
-  "ESTIMATE — Plugin-default pricing. Verify before sending to customer.";
+  "Estimate only — plugin-default pricing. Verify before contacting the customer.";
 
 /** Staff-facing title for owner-approved plugin catalog baseline (not live DB export). */
 export const WP_APPROVED_PLUGIN_BASELINE_LABEL =
-  "Pricing source: Generations-approved WordPress plugin baseline";
+  "Pricing based on the approved Event Planner catalog";
 
 /** Staff-facing status for approved baseline — go-live verification still required. */
 export const WP_APPROVED_PLUGIN_BASELINE_STATUS =
-  "Using Generations-approved Event Planner pricing. Final price verification required before operational go-live.";
+  "Final live venue price verification is still required before customer email delivery.";
 
 export function guestMixFromAdultsChildren(adults: number, children: number): "mostly_adults" | "mostly_children" | "mixed_ages" {
   if (adults > 0 && children === 0) {
