@@ -13,7 +13,7 @@ import {
 describe("WP pricing verification guard", () => {
   it("exposes the staff estimate label", () => {
     expect(WP_PLUGIN_DEFAULT_ESTIMATE_LABEL).toBe(
-      "ESTIMATE — Plugin-default pricing. Verify before sending to customer.",
+      "Estimate only — plugin-default pricing. Verify before contacting the customer.",
     );
   });
 

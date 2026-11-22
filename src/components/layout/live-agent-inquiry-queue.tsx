@@ -113,19 +113,33 @@ export function LiveAgentInquiryQueue({
         </QueueSection>
       ) : null}
       {selected.length > 0 || otherReady.length > 0 ? (
-        <QueueSection
-          id="ready-for-live-agent"
-          title="Ready for Live Agent"
-          description="Customer-selected plans appear first. WordPress event requests need staff follow-up without a customer package selection."
-          count={selected.length + otherReady.length}
-        >
-          {selected.map((inquiry) => (
-            <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} priority />
-          ))}
-          {otherReady.map((inquiry) => (
-            <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} />
-          ))}
-        </QueueSection>
+        // Keep ready-for-live-agent id for Home ?focus=review deep-links (presentation wrapper).
+        <div id="ready-for-live-agent" className="space-y-8 scroll-mt-24">
+          {otherReady.length > 0 ? (
+            <QueueSection
+              id="needs-staff-review"
+              title="Needs staff review"
+              description="Public event requests and other handoffs that need a staff quote or follow-up. No customer booking was completed."
+              count={otherReady.length}
+            >
+              {otherReady.map((inquiry) => (
+                <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} />
+              ))}
+            </QueueSection>
+          ) : null}
+          {selected.length > 0 ? (
+            <QueueSection
+              id="ready-for-booking-follow-up"
+              title="Ready for booking follow-up"
+              description="Customers who selected a plan in the Live Agent flow. Confirm availability, optional HOLD, then booking."
+              count={selected.length}
+            >
+              {selected.map((inquiry) => (
+                <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} priority />
+              ))}
+            </QueueSection>
+          ) : null}
+        </div>
       ) : null}
       {rest.length > 0 ? (
         <QueueSection

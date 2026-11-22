@@ -138,10 +138,9 @@ function pricingBanner(
   if (meta.pricingSource === "tenant_live") {
     return {
       tone: "success",
-      title: "Calculated with tenant_live verified pricing",
-      detail: meta.pricingRevision
-        ? `Prices come from this organization’s verified WordPress pricing pack (revision ${meta.pricingRevision}). Staff must still confirm availability and customer-specific requirements before quoting.`
-        : "Prices come from this organization’s verified WordPress pricing pack. Staff must still confirm availability and customer-specific requirements before quoting.",
+      title: "Calculated with verified venue pricing",
+      detail:
+        "Prices come from this organization’s verified WordPress pricing pack. Staff must still confirm availability and customer-specific requirements before quoting.",
     };
   }
   return null;
@@ -179,9 +178,9 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
       : privateCalculation.pricingSource === "approved_plugin_baseline"
         ? [
             "Review the customer answers and private recommendation below.",
-            "Create a staff quote draft from the private calculation (editable MagiCRM working draft).",
+            "Create a staff quote draft from the private calculation (editable working draft).",
             "Confirm inventory/availability before any hold or booking.",
-            "Do not send a customer quote, create holds, or request payment until explicitly approved.",
+            "You may approve a quote internally when permitted. Customer email delivery is currently unavailable.",
           ]
         : privateCalculation.pricingSource === "incomplete" || privateCalculation.status === "incomplete"
           ? [
@@ -286,21 +285,41 @@ export function WpIntakeAnswersPanel({ metadata }: { metadata: WpIntakeMessageMe
           </div>
         ) : null}
         <p className="mt-1 text-muted-foreground" data-wp-pricing-meta>
-          Status: {privateCalculation.status}
+          {privateCalculation.status === "ready"
+            ? "Estimate status: ready for staff review"
+            : `Estimate status: ${privateCalculation.status}`}
           {privateCalculation.pricingSource
-            ? ` · pricing source ${privateCalculation.pricingSource}`
+            ? ` · ${
+                privateCalculation.pricingSource === "tenant_live"
+                  ? "verified venue pricing"
+                  : privateCalculation.pricingSource === "approved_plugin_baseline"
+                    ? "approved Event Planner catalog"
+                    : privateCalculation.pricingSource === "plugin_defaults"
+                      ? "plugin-default estimate"
+                      : privateCalculation.pricingSource
+              }`
             : ""}
           {privateCalculation.rulesVersion
-            ? ` · catalog version ${privateCalculation.rulesVersion}`
+            ? ` · catalog ${privateCalculation.rulesVersion}`
             : ""}
-          {privateCalculation.engineVersion || snapshot?.engine_version
-            ? ` · calc engine ${privateCalculation.engineVersion ?? snapshot?.engine_version}`
-            : ""}
-          {privateCalculation.pricingRevision
-            ? ` · configuration revision ${privateCalculation.pricingRevision}`
-            : ""}
-          {snapshot?.calculated_at ? ` · calculated ${snapshot.calculated_at}` : ""}
         </p>
+        <details className="mt-2 text-xs text-muted-foreground" data-wp-pricing-tech-details>
+          <summary className="cursor-pointer font-medium text-foreground/80">
+            Technical pricing details
+          </summary>
+          <p className="mt-1">
+            {privateCalculation.pricingSource
+              ? `Source code: ${privateCalculation.pricingSource}`
+              : "Source code: unknown"}
+            {privateCalculation.engineVersion || snapshot?.engine_version
+              ? ` · calc engine ${privateCalculation.engineVersion ?? snapshot?.engine_version}`
+              : ""}
+            {privateCalculation.pricingRevision
+              ? ` · configuration revision ${privateCalculation.pricingRevision}`
+              : ""}
+            {snapshot?.calculated_at ? ` · calculated ${snapshot.calculated_at}` : ""}
+          </p>
+        </details>
         {privateCalculation.summary ? (
           <p className="mt-1 text-muted-foreground">{privateCalculation.summary}</p>
         ) : null}

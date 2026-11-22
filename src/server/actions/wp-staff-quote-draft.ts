@@ -4,6 +4,7 @@ import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/lib/db";
+import { parseDollarInputToCents } from "@/lib/event-planner/money";
 import { revalidateBookingWorkspace } from "@/server/actions/revalidate-booking-workspace";
 import {
   isAuthorizationError,
@@ -29,6 +30,28 @@ function toResult(error: unknown, title: string): SecurityActionResult {
     return { ok: false, title, message: "Check the form and try again." };
   }
   throw error;
+}
+
+function unitPriceCentsFromForm(formData: FormData, index: number): number | { error: string } {
+  const dollarRaw = formData.get(`lineUnitPriceDollars_${index}`);
+  if (dollarRaw != null) {
+    // Dollar field is present (including blank) — never fall through to 0 cents.
+    const parsed = parseDollarInputToCents(String(dollarRaw));
+    if (!parsed.ok) {
+      return { error: parsed.error };
+    }
+    return parsed.cents;
+  }
+  // Legacy field name (integer cents) — keep for older clients during rollout.
+  const centsRaw = formData.get(`lineUnitCents_${index}`);
+  if (centsRaw != null && String(centsRaw).trim() !== "") {
+    const cents = Math.round(Number(centsRaw));
+    if (!Number.isFinite(cents) || !Number.isSafeInteger(cents) || cents < 0) {
+      return { error: "Unit price is invalid." };
+    }
+    return cents;
+  }
+  return { error: "Enter a unit price." };
 }
 
 export async function createWpStaffQuoteDraftAction(
@@ -67,11 +90,15 @@ export async function updateWpStaffQuoteDraftAction(
       if (!name && !slug) {
         continue;
       }
+      const unitPrice = unitPriceCentsFromForm(formData, index);
+      if (typeof unitPrice === "object") {
+        return { ok: false, title: "Unable to update staff quote draft", message: unitPrice.error };
+      }
       lineItems.push({
         slug: slug || `wp-line-${index + 1}`,
         name: name || `Line ${index + 1}`,
         quantity: Number(formData.get(`lineQty_${index}`) ?? 1) || 1,
-        unitPriceCents: Math.round(Number(formData.get(`lineUnitCents_${index}`) ?? 0) || 0),
+        unitPriceCents: unitPrice,
         kind: String(formData.get(`lineKind_${index}`) ?? "WP_LINE").trim() || "WP_LINE",
       });
     }

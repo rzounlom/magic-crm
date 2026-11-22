@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Phase 12F — queue & unit price</title>
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: #f8fafc; color: #0f172a; }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    .eyebrow { font-size: 12px; font-weight: 600; color: #2563eb; letter-spacing: .04em; text-transform: uppercase; }
+    .section { margin-top: 28px; }
+    .section h2 { font-size: 17px; margin: 0; }
+    .section .meta { font-size: 13px; color: #64748b; margin: 4px 0 12px; }
+    ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    a.card { display: block; text-decoration: none; color: inherit; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; }
+    a.card.priority { border-left: 4px solid #2563eb; }
+    .name { font-weight: 600; }
+    .line { font-size: 14px; color: #64748b; margin-top: 4px; }
+    .chip { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600; background: #f1f5f9; padding: 2px 8px; border-radius: 999px; }
+    .panel { margin-top: 32px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
+    label { display: block; font-size: 12px; color: #475569; margin-top: 12px; }
+    input { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
+    .hint { font-size: 12px; color: #64748b; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Sales</p>
+    <h1>Inquiries</h1>
+    <p class="meta">Phase 12F presentation: Needs staff review vs Ready for booking follow-up (synthetic).</p>
+
+    <section class="section" id="needs-staff-review">
+      <h2>Needs staff review</h2>
+      <p class="meta">1 inquiry · Public event requests needing a staff quote. No customer booking was completed.</p>
+      <ul>
+        <li>
+          <a class="card" href="#">
+            <div class="name">Synthetic Corp</div>
+            <div class="line">Corporate or Team Event · Dec 13, 2026 at 3:30 PM · 100 guests</div>
+            <span class="chip">Event inquiry — staff review required</span>
+            <div class="line">Open inquiry</div>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section" id="ready-for-booking-follow-up">
+      <h2>Ready for booking follow-up</h2>
+      <p class="meta">1 inquiry · Customer-selected Live Agent plans.</p>
+      <ul>
+        <li>
+          <a class="card priority" href="#">
+            <div class="name">Ada Lovelace</div>
+            <div class="line">Birthday Party · Oct 17, 2026 at 2:00 PM · 20 guests</div>
+            <div class="line">Ready for live agent · Selected: Recommended · $1,500 · Available</div>
+            <span class="chip">CUSTOMER SELECTED PLAN — READY TO BOOK</span>
+            <div class="line">Continue booking</div>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <section class="panel" id="unit-price">
+      <div class="name">Staff quote line editor</div>
+      <p class="hint">Stored integer cents; employee edits dollars.</p>
+      <label>Unit price ($)</label>
+      <input value="49.99" readonly />
+      <p class="hint">Stored 4999¢ → display 49.99</p>
+      <label>Unit price ($)</label>
+      <input value="550.00" readonly />
+      <p class="hint">Stored 55000¢ → display 550.00</p>
+      <p class="hint">Price locked — your role cannot override unit prices.</p>
+    </section>
+  </main>
+</body>
+</html>

@@ -121,7 +121,7 @@ describe("approved_plugin_baseline", () => {
     });
     expect(outcome.status).toBe("ready");
     expect(outcome.pricingSource).toBe("approved_plugin_baseline");
-    expect(outcome.summary).toMatch(/Generations-approved WordPress plugin baseline/i);
+    expect(outcome.summary).toMatch(/approved Event Planner catalog/i);
     expect(outcome.snapshot?.valid).toBe(true);
     if (outcome.snapshot?.valid) {
       expect(outcome.snapshot.pricing_source).toBe("approved_plugin_baseline");

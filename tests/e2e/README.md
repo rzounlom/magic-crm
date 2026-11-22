@@ -49,35 +49,57 @@ corepack pnpm exec playwright show-trace test-results/playwright/**/trace.zip
 
 Scenario tags: `@staff-nav` · `@staff-inquiry` · `@staff-hold` · `@staff-confirm` · `@staff-guard` · `@staff-responsive` · `@staff-a11y` · `@staff-smoke` · `@staff-routes`
 
-## Authenticated staff journeys (human setup)
+## Authenticated E2E (automated — preferred)
 
-Staff routes (`/app/*`) require a real Clerk session. The suite **never** bypasses server authz and **never** commits cookies.
+Staff routes use **real Clerk DEVELOPMENT sessions** via `@clerk/testing` ticket sign-in.
+No manual password entry, no cookie exports, no auth bypass, no Production keys.
 
-### Required human setup
+### One-time setup
 
-1. Create a **dedicated Clerk test user** (not a production operator).
-2. Attach that user to a **dedicated non-production tenant** (e.g. `magiccrm-test-center-b` on DEV).
-3. Grant least privilege for the scenario (Front Desk for Booking Coach; Administrators only when testing admin chrome). Ensure `events.create` / `events.confirm` as needed for HOLD/confirm mutation runs.
-4. Sign in locally against the **TEST** Clerk application (same `pk_test_` keys as local `next dev` / `next start`).
-5. Bootstrap storage state (gitignored under `playwright/.auth/`):
+1. Clerk **TEST** keys in `.env` / `.env.local` (`pk_test_` / `sk_test_`).
+2. Optional: copy `.env.e2e.example` → `.env.e2e` (placeholders only; defaults use `+clerk_test` emails).
+3. App reachable at `http://localhost:3000` (`/sign-in` must return HTTP 200). Never use `127.0.0.1`.
+4. Provision synthetic identities on `magiccrm-test-center-b` (idempotent):
 
 ```bash
-# App must already be running at PLAYWRIGHT_BASE_URL
+export PLAYWRIGHT_BASE_URL=http://localhost:3000
+corepack pnpm test:e2e:provision
+# Creates/updates Clerk users + org membership + MagicCRM security groups
+# (administrators / event_sales / front_desk). Writes gitignored
+# playwright/.fixtures/e2e-test-identities.json
+```
+
+5. Create role storage states (re-run anytime sessions expire):
+
+```bash
+corepack pnpm test:e2e:auth
+# playwright/.clerk/{administrator,event-sales,front-desk}.json (+ aliases under .auth/)
+```
+
+### Repeatable quote acceptance
+
+```bash
+corepack pnpm test:e2e:quote              # Admin + Event Sales + Front Desk
+corepack pnpm test:e2e:quote:admin
+corepack pnpm test:e2e:quote:event-sales
+corepack pnpm test:e2e:quote:front-desk   # restricted role
+corepack pnpm test:e2e:authenticated      # auth setup + all quote projects
+```
+
+Session renewal: `setup-auth` recreates storage on every quote run (dependency of quote projects).
+
+### Legacy headed bootstrap (optional)
+
+Manual headed sign-in remains available if ticket auth is unavailable:
+
+```bash
 export PLAYWRIGHT_BASE_URL=http://localhost:3000
 export PLAYWRIGHT_STAFF_ORG_SLUG=magiccrm-test-center-b
 corepack pnpm test:e2e:staff:auth
-# A headed Chromium window opens (no codegen/Inspector).
-# Sign in; when /app loads, storage is saved automatically.
-
-export PLAYWRIGHT_STORAGE_STATE="$PWD/playwright/.auth/staff.json"
 corepack pnpm test:e2e:staff:auth:verify
-git check-ignore -v playwright/.auth/staff.json   # must report ignored
 ```
 
-Do **not** use `playwright codegen` for staff auth. Codegen’s recorder injects
-`data-pw-cursor` on `<body>`, which races React hydration on Next.js `/sign-in`
-and produces a hydration mismatch warning. The bootstrap uses a normal headed
-browser session instead.
+Do **not** use `playwright codegen` for staff auth (hydration mismatch on `/sign-in`).
 
 ### Staff inquiry fixture (DEV database only)
 

@@ -60,10 +60,10 @@ const PRICING_SOURCE_SUMMARY_LABEL: Record<
   "plugin_defaults" | "tenant_live" | "approved_plugin_baseline",
   string
 > = {
-  plugin_defaults: "plugin defaults (testing baseline, not verified live pricing)",
-  tenant_live: "tenant live (verified live WordPress pricing pack)",
+  plugin_defaults: "plugin-default estimate (not verified live pricing)",
+  tenant_live: "verified venue pricing pack",
   approved_plugin_baseline:
-    "Generations-approved WordPress plugin baseline (final live-price revalidation pending)",
+    "approved Event Planner catalog (final live-price revalidation pending)",
 };
 
 type RunContext = {

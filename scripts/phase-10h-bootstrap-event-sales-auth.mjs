@@ -46,6 +46,14 @@ function redactEmail(email) {
   return `${local.slice(0, 2)}***@${domain}`;
 }
 
+/** Chip shows display name ("Magiccrm Test Center B"), not the slug. */
+function isSyntheticOrgChip(chip) {
+  const compact = String(chip || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+  return compact.includes("magiccrmtestcenterb") || compact.includes("testcenterb");
+}
+
 async function main() {
   assertTestClerk();
   if (!fs.existsSync(GATE)) {
@@ -94,94 +102,156 @@ Timeout: ${Math.round(TIMEOUT_MS / 1000)}s
     // Force sign-in page; clear any auto-session in this fresh profile (should be none).
     await page.goto(`${BASE}/sign-in`, { waitUntil: "domcontentloaded" });
 
-    console.info("Waiting for owner to sign in as Event Sales…");
-    await page.waitForURL(
-      (url) => {
-        const href = typeof url === "string" ? url : url.href;
-        return href.includes("/app") && !href.includes("sign-in");
-      },
-      { timeout: TIMEOUT_MS },
-    );
-    await page.waitForLoadState("networkidle").catch(() => undefined);
-    await page.waitForTimeout(1000);
-
-    // Switch org if needed
-    let chip = "";
-    try {
-      chip = (await page.locator("[data-employee-context]").first().innerText())
-        .replace(/\s+/g, " ")
-        .trim();
-    } catch {
-      chip = "";
+    async function readClerkIdentity() {
+      return page.evaluate(async () => {
+        const clerk = window.Clerk;
+        if (!clerk) return { error: "window.Clerk missing" };
+        if (!clerk.user) {
+          await clerk.load?.();
+        }
+        const user = clerk.user;
+        if (!user) return { error: "Clerk.user missing after load" };
+        const primary =
+          user.primaryEmailAddress?.emailAddress ??
+          user.emailAddresses?.[0]?.emailAddress ??
+          null;
+        return {
+          clerkUserId: user.id,
+          email: primary,
+          orgId: clerk.organization?.id ?? null,
+          orgSlug: clerk.organization?.slug ?? null,
+        };
+      });
     }
-    if (!/magiccrm-test-center-b/i.test(chip)) {
+
+    async function forceClerkSignOut(reason) {
       console.info(
         JSON.stringify({
-          info: "Active org is not synthetic yet — open org switcher and select MagicCRM Test Center B",
-          chip,
+          info: "Wrong account detected — signing out via Clerk and waiting for Event Sales login",
+          reason,
+          expected: redactEmail(expectedEmail),
         }),
       );
-      const switcher = page.getByRole("button", { name: /Open organization switcher/i }).first();
-      if (await switcher.count()) {
-        await switcher.click();
-        await page.waitForTimeout(500);
-        const target = page.getByText(/MagicCRM Test Center B/i).first();
-        await target.click({ timeout: 30000 });
-        await page.waitForTimeout(2000);
-        await page.goto(`${BASE}/app`, { waitUntil: "networkidle" });
+      try {
+        await page.evaluate(async () => {
+          const clerk = window.Clerk;
+          if (clerk?.signOut) {
+            await clerk.signOut();
+          }
+        });
+      } catch {
+        // Page may navigate during sign-out; continue to /sign-in.
+      }
+      try {
+        await page.goto(`${BASE}/sign-in`, { waitUntil: "domcontentloaded" });
+        await page.waitForTimeout(750);
+      } catch (error) {
+        fail(
+          `Browser closed during Administrator sign-out. Re-run bootstrap and sign in as ${redactEmail(expectedEmail)} (not Administrator). (${error instanceof Error ? error.message : String(error)})`,
+        );
+      }
+    }
+
+    async function ensureSyntheticOrgChip() {
+      let chip = "";
+      try {
         chip = (await page.locator("[data-employee-context]").first().innerText())
           .replace(/\s+/g, " ")
           .trim();
+      } catch {
+        chip = "";
       }
-    }
-    if (!/magiccrm-test-center-b/i.test(chip) || /generations-crm-test/i.test(chip)) {
-      fail(`Active organization is not synthetic after login. Detected chip: ${chip || "(missing)"}`);
-    }
-
-    // Resolve Clerk user from client
-    const clerkIdentity = await page.evaluate(async () => {
-      const clerk = window.Clerk;
-      if (!clerk) return { error: "window.Clerk missing" };
-      if (!clerk.user) {
-        await clerk.load?.();
+      if (!isSyntheticOrgChip(chip)) {
+        console.info(
+          JSON.stringify({
+            info: "Active org is not synthetic yet — open org switcher and select MagicCRM Test Center B",
+            chip,
+          }),
+        );
+        const switcher = page.getByRole("button", { name: /Open organization switcher/i }).first();
+        if (await switcher.count()) {
+          await switcher.click();
+          await page.waitForTimeout(500);
+          const target = page.getByText(/MagicCRM Test Center B/i).first();
+          await target.click({ timeout: 30000 });
+          await page.waitForTimeout(2000);
+          await page.goto(`${BASE}/app`, { waitUntil: "networkidle" });
+          chip = (await page.locator("[data-employee-context]").first().innerText())
+            .replace(/\s+/g, " ")
+            .trim();
+        }
       }
-      const user = clerk.user;
-      if (!user) return { error: "Clerk.user missing after load" };
-      const primary =
-        user.primaryEmailAddress?.emailAddress ??
-        user.emailAddresses?.[0]?.emailAddress ??
-        null;
-      return {
-        clerkUserId: user.id,
-        email: primary,
-        orgId: clerk.organization?.id ?? null,
-        orgSlug: clerk.organization?.slug ?? null,
-      };
-    });
-
-    if (clerkIdentity.error) fail(clerkIdentity.error);
-
-    const detectedEmail = clerkIdentity.email ?? "";
-    const detectedClerkId = clerkIdentity.clerkUserId ?? "";
-
-    if (rejectClerkId && detectedClerkId === rejectClerkId) {
-      fail(
-        `Rejected: authenticated as Administrator (${redactEmail(rejectEmail)}). Event Sales storage was NOT saved. Sign in as ${redactEmail(expectedEmail)} instead.`,
-      );
+      if (!isSyntheticOrgChip(chip) || /generations-crm-test/i.test(chip)) {
+        fail(`Active organization is not synthetic after login. Detected chip: ${chip || "(missing)"}`);
+      }
+      return chip;
     }
-    if (rejectEmail && detectedEmail.toLowerCase() === String(rejectEmail).toLowerCase()) {
-      fail(
-        `Rejected: authenticated as Administrator (${redactEmail(detectedEmail)}). Event Sales storage was NOT saved.`,
+
+    const deadline = Date.now() + TIMEOUT_MS;
+    let detectedEmail = "";
+    let detectedClerkId = "";
+    let chip = "";
+    let attempts = 0;
+
+    console.info("Waiting for owner to sign in as Event Sales…");
+    while (Date.now() < deadline) {
+      attempts += 1;
+      await page.waitForURL(
+        (url) => {
+          const href = typeof url === "string" ? url : url.href;
+          return href.includes("/app") && !href.includes("sign-in");
+        },
+        { timeout: Math.max(5_000, deadline - Date.now()) },
       );
-    }
-    if (detectedClerkId !== expectedClerkId) {
-      fail(
-        `Rejected: Clerk userId mismatch. Expected Event Sales ${expectedClerkId.slice(0, 10)}…, got ${detectedClerkId.slice(0, 10)}… (${redactEmail(detectedEmail)}). Storage NOT saved.`,
-      );
-    }
-    if (detectedEmail.toLowerCase() !== expectedEmail.toLowerCase()) {
+      await page.waitForLoadState("networkidle").catch(() => undefined);
+      await page.waitForTimeout(1000);
+
+      chip = await ensureSyntheticOrgChip();
+      const clerkIdentity = await readClerkIdentity();
+      if (clerkIdentity.error) fail(clerkIdentity.error);
+
+      detectedEmail = clerkIdentity.email ?? "";
+      detectedClerkId = clerkIdentity.clerkUserId ?? "";
+
+      const isAdmin =
+        (rejectClerkId && detectedClerkId === rejectClerkId) ||
+        (rejectEmail && detectedEmail.toLowerCase() === String(rejectEmail).toLowerCase());
+      const isExpected =
+        detectedClerkId === expectedClerkId &&
+        detectedEmail.toLowerCase() === expectedEmail.toLowerCase();
+
+      if (isExpected) {
+        break;
+      }
+
+      if (isAdmin || detectedClerkId !== expectedClerkId) {
+        if (Date.now() >= deadline) {
+          fail(
+            `Rejected: authenticated as ${redactEmail(detectedEmail || "(unknown)")}. Event Sales storage was NOT saved. Sign in as ${redactEmail(expectedEmail)} instead.`,
+          );
+        }
+        await forceClerkSignOut(
+          isAdmin
+            ? `Administrator (${redactEmail(detectedEmail)})`
+            : `Unexpected user ${redactEmail(detectedEmail)} / ${detectedClerkId.slice(0, 10)}…`,
+        );
+        console.info(
+          JSON.stringify({
+            info: "Sign in again as Event Sales only. If Clerk shows Continue as Administrator, choose Use another account.",
+            attempt: attempts,
+          }),
+        );
+        continue;
+      }
+
       fail(
         `Rejected: email mismatch. Expected ${redactEmail(expectedEmail)}, got ${redactEmail(detectedEmail)}. Storage NOT saved.`,
+      );
+    }
+
+    if (detectedClerkId !== expectedClerkId || detectedEmail.toLowerCase() !== expectedEmail.toLowerCase()) {
+      fail(
+        `Timed out without Event Sales identity. Last seen ${redactEmail(detectedEmail || "(none)")}. Storage NOT saved.`,
       );
     }
 
