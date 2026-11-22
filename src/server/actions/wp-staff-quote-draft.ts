@@ -34,7 +34,8 @@ function toResult(error: unknown, title: string): SecurityActionResult {
 
 function unitPriceCentsFromForm(formData: FormData, index: number): number | { error: string } {
   const dollarRaw = formData.get(`lineUnitPriceDollars_${index}`);
-  if (dollarRaw != null && String(dollarRaw).trim() !== "") {
+  if (dollarRaw != null) {
+    // Dollar field is present (including blank) — never fall through to 0 cents.
     const parsed = parseDollarInputToCents(String(dollarRaw));
     if (!parsed.ok) {
       return { error: parsed.error };
@@ -50,7 +51,7 @@ function unitPriceCentsFromForm(formData: FormData, index: number): number | { e
     }
     return cents;
   }
-  return 0;
+  return { error: "Enter a unit price." };
 }
 
 export async function createWpStaffQuoteDraftAction(

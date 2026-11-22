@@ -33,6 +33,15 @@ describe("staff quote dollar form boundary", () => {
     }
   });
 
+  it("never maps a present blank dollar field to 0 cents", () => {
+    // Mirrors unitPriceCentsFromForm: when lineUnitPriceDollars_* is present (even blank),
+    // parseDollarInputToCents must reject — do not coerce to 0.
+    expect(unitPriceCentsFromDollarField("")).toEqual({
+      error: "Enter a unit price.",
+    });
+    expect(unitPriceCentsFromDollarField("0.00")).toEqual(0);
+  });
+
   it("round-trips 4999¢ → $49.99 → 4999¢ and 5500¢ after $55.00 edit", () => {
     expect(parseDollarInputToCents(centsToDollarInputValue(4999))).toEqual({ ok: true, cents: 4999 });
     expect(parseDollarInputToCents("55.00")).toEqual({ ok: true, cents: 5500 });

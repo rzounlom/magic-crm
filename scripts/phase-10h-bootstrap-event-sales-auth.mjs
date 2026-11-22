@@ -46,6 +46,14 @@ function redactEmail(email) {
   return `${local.slice(0, 2)}***@${domain}`;
 }
 
+/** Chip shows display name ("Magiccrm Test Center B"), not the slug. */
+function isSyntheticOrgChip(chip) {
+  const compact = String(chip || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+  return compact.includes("magiccrmtestcenterb") || compact.includes("testcenterb");
+}
+
 async function main() {
   assertTestClerk();
   if (!fs.existsSync(GATE)) {
@@ -114,7 +122,7 @@ Timeout: ${Math.round(TIMEOUT_MS / 1000)}s
     } catch {
       chip = "";
     }
-    if (!/magiccrm-test-center-b/i.test(chip)) {
+    if (!isSyntheticOrgChip(chip)) {
       console.info(
         JSON.stringify({
           info: "Active org is not synthetic yet — open org switcher and select MagicCRM Test Center B",
@@ -134,7 +142,7 @@ Timeout: ${Math.round(TIMEOUT_MS / 1000)}s
           .trim();
       }
     }
-    if (!/magiccrm-test-center-b/i.test(chip) || /generations-crm-test/i.test(chip)) {
+    if (!isSyntheticOrgChip(chip) || /generations-crm-test/i.test(chip)) {
       fail(`Active organization is not synthetic after login. Detected chip: ${chip || "(missing)"}`);
     }
 
