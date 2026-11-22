@@ -13,6 +13,7 @@ Visual redesign of the authenticated inquiry queue and inquiry detail workspaces
 |---|---|
 | `01-current-state-audit.md` | UX findings before implementation |
 | `02-information-hierarchy.md` | Chosen queue + detail hierarchy |
+| `03-final-acceptance.md` | Visual acceptance + card spacing pass |
 
 ## Screenshots
 

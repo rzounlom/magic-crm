@@ -167,7 +167,7 @@ function QueueSection({
         </p>
       </div>
       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
-      <ul className="mt-4 divide-y divide-border-subtle overflow-hidden rounded-[var(--radius-card)] border border-border-subtle bg-surface">
+      <ul className="inquiry-queue-list mt-4 flex flex-col gap-2.5">
         {children}
       </ul>
     </section>
@@ -254,7 +254,7 @@ function InquiryRow({
   ].filter(Boolean);
 
   return (
-    <li>
+    <li className="inquiry-queue-card overflow-hidden rounded-[var(--radius-card)] border border-border-subtle bg-surface">
       <Link
         href={`/app/inquiries/${inquiry.id}`}
         className={cn(

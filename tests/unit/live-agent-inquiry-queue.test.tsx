@@ -300,4 +300,63 @@ describe("live agent inquiry queue", () => {
     expect(html).not.toContain(CUSTOMER_SELECTED_PLAN_BANNER);
     expect(html).not.toMatch(/READY TO BOOK/i);
   });
+
+  it("renders inquiry rows as spaced cards instead of a continuous table", () => {
+    const html = renderToStaticMarkup(
+      <LiveAgentInquiryQueue
+        timeZone="UTC"
+        inquiries={[
+          {
+            id: "inq_a",
+            status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+            selectedEventPlanId: null,
+            humanHandoffReason: "PUBLIC_EVENT_REQUEST",
+            assignedUserProfileId: null,
+            customerSelectedAt: null,
+            createdAt: new Date("2026-09-09T11:00:00.000Z"),
+            humanHandoffRequestedAt: new Date("2026-09-09T11:00:00.000Z"),
+            workflowStage: null,
+            aiHandlingEnabled: false,
+            customerGroupName: "Card A",
+            customerFirstName: "A",
+            customerLastName: "One",
+            customerEmail: "a@example.com",
+            eventType: "Birthday",
+            desiredDate: new Date("2026-10-15T00:00:00.000Z"),
+            guestCount: 10,
+            assignedUser: null,
+            eventPlanRecommendations: [],
+            resourceReservations: [],
+          },
+          {
+            id: "inq_b",
+            status: INQUIRY_STATUSES.READY_FOR_HUMAN,
+            selectedEventPlanId: null,
+            humanHandoffReason: "PUBLIC_EVENT_REQUEST",
+            assignedUserProfileId: null,
+            customerSelectedAt: null,
+            createdAt: new Date("2026-09-08T11:00:00.000Z"),
+            humanHandoffRequestedAt: new Date("2026-09-08T11:00:00.000Z"),
+            workflowStage: null,
+            aiHandlingEnabled: false,
+            customerGroupName: "Card B",
+            customerFirstName: "B",
+            customerLastName: "Two",
+            customerEmail: "b@example.com",
+            eventType: "Birthday",
+            desiredDate: new Date("2026-10-16T00:00:00.000Z"),
+            guestCount: 12,
+            assignedUser: null,
+            eventPlanRecommendations: [],
+            resourceReservations: [],
+          },
+        ]}
+      />,
+    );
+
+    expect(html).toContain("inquiry-queue-list");
+    expect(html).toContain("gap-2.5");
+    expect(html).toContain("inquiry-queue-card");
+    expect(html).not.toContain("divide-y");
+  });
 });

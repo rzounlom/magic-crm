@@ -61,6 +61,10 @@ import { BOOKING_STATUSES } from "@/types/booking";
 import type { ConfirmationReadinessResult } from "@/types/confirmation-readiness";
 import type { HoldReadinessResult } from "@/types/hold-readiness";
 import { PERMISSIONS } from "@/types/permissions";
+import {
+  PLAN_AVAILABILITY_STATUS_LABELS,
+  PLAN_AVAILABILITY_STATUSES,
+} from "@/types/resource-schedule";
 
 type InquiryDetailView =
   | { kind: "status"; title: string; body: string }
@@ -328,7 +332,13 @@ export default async function InquiryDetailPage({
       : null);
   const quoteApproved = Boolean(wpStaffDraftProvenance?.employeeApproval);
   const quoteDelivered = Boolean(wpStaffDraftProvenance?.employeeApproval?.deliveryCompleted);
-  const availabilityLabel = workingPlan?.availabilityStatus ?? "Not checked";
+  const availabilityStatus = workingPlan?.availabilityStatus;
+  const availabilityLabel =
+    availabilityStatus && availabilityStatus in PLAN_AVAILABILITY_STATUS_LABELS
+      ? PLAN_AVAILABILITY_STATUS_LABELS[availabilityStatus as keyof typeof PLAN_AVAILABILITY_STATUS_LABELS]
+      : availabilityStatus
+        ? String(availabilityStatus)
+        : PLAN_AVAILABILITY_STATUS_LABELS[PLAN_AVAILABILITY_STATUSES.NOT_VALIDATED];
   const warningCount =
     (wpStaffDraftProvenance?.warnings.length ?? 0) +
     (wpStaffDraftProvenance?.catalogPriceDiscrepancies.length ?? 0);
