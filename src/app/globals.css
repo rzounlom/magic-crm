@@ -208,6 +208,16 @@ label:has(:disabled) {
   height: var(--header-height);
 }
 
+/*
+ * Unlayered `.brand-mark { display: inline-flex }` beats Tailwind `lg:hidden`.
+ * Hide the duplicate top-bar brand when the desktop sidebar is present.
+ */
+@media (min-width: 1024px) {
+  .employee-top-bar-brand {
+    display: none;
+  }
+}
+
 .employee-shell {
   min-height: 100%;
 }

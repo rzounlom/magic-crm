@@ -1,29 +1,40 @@
 # Phase 12C — Visual acceptance screenshots
 
+Authenticated local captures (2026-11-22) against `http://localhost:3000` after staff sign-in.
+
+## Implemented UI (live)
+
+| File | Viewport | Surface |
+|---|---|---|
+| `phase-12c-home-375.png` | 375 | Mobile Home + bottom nav |
+| `phase-12c-home-more-375.png` | 375 | Mobile More sheet |
+| `phase-12c-home-768.png` | 768 | Tablet Home |
+| `phase-12c-home-1440.png` | 1440 | Home dashboard + sidebar |
+| `phase-12c-home-1920.png` | 1920 | Home wide desktop |
+| `phase-12c-home-overflow-1440.png` | 1440 | Top-bar overflow (Public inquiry) |
+| `phase-12c-inquiries-1440.png` | 1440 | Inquiry queue under new shell |
+| `phase-12c-inquiry-detail-1440.png` | 1440 | Inquiry detail; Inquiries stays active |
+| `phase-12c-schedule-1440.png` | 1440 | Master Schedule under new shell |
+| `phase-12c-team-1440.png` | 1440 | Settings → Team |
+
+## Reference / earlier
+
+| File | Notes |
+|---|---|
+| `phase-12b-*-concept.png` | Phase 12B IA concepts (synthetic) |
+| `auth-blocked-sign-in.png` | Capture attempt before staff re-auth |
+
 ## Capture script
 
 ```bash
-# Requires local `pnpm dev` and a valid Playwright staff storage state:
-#   pnpm test:e2e:staff:auth
+pnpm test:e2e:staff:auth   # if storage state expired
 node scripts/phase-12c-capture-screenshots.mjs
 ```
 
-Viewports: 375, 430, 768, 1440, 1920  
-Routes: Home, Inquiries, Schedule, Team, overflow/More, inquiry detail when available.
+## Visual review notes
 
-## Status (2026-11-22)
-
-- Automated capture attempted against `http://localhost:3000` with `playwright/.auth/staff.json`.
-- Storage state redirected to Clerk sign-in (expired). See `auth-blocked-sign-in.png` if present.
-- Phase 12B synthetic concepts remain the IA reference under `planning/employee-ux/phase-12b/screenshots/`.
-- After regenerating staff auth, re-run the capture script and commit the PNG set before treating visual acceptance as complete.
-
-## Review checklist (manual after auth)
-
-- [ ] Home dashboard at 1440 / 375
-- [ ] Sidebar + top bar (no Public Inquiry primary button; ambient org/location text)
-- [ ] Overflow Public inquiry link works
-- [ ] Mobile More sheet
-- [ ] Inquiry queue / detail under new shell
-- [ ] Schedule board width usable
-- [ ] One Settings page (Team)
+- Org chrome shows **Generations Adventureplex** (customer-facing name), not the slug.
+- Location is read-only **Main Location**.
+- Public Inquiry is not a primary navbar button; available via overflow / More / Home Next.
+- Dashboard attention counts align with inquiry queue sections (pending confirmation + staff review + unread).
+- Greeting falls back to “there” when the user profile has no first/display name (email-only profiles).

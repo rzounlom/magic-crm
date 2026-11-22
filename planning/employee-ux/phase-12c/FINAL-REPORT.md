@@ -79,7 +79,8 @@ Tiles link to `/app/inquiries` or booking detail / `?filter=today`. Read-only. N
 
 ## 11. PR / merge
 
-- PR opened from this branch (see PR URL in commit/PR step)
+- PR: https://github.com/rzounlom/magic-crm/pull/25
+- Commit: `4d53092`
 - **Merge deferred** until authenticated visual acceptance screenshots are captured (per Phase 12C gate)
 
 ## 12. Production

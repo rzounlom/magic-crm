@@ -27,7 +27,7 @@ export function EmployeeTopBar({
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/app"
-            className="brand-mark shrink-0 lg:hidden"
+            className="brand-mark employee-top-bar-brand shrink-0"
             aria-label="MagicCRM home"
           >
             <span className="brand-mark-mark" aria-hidden>
