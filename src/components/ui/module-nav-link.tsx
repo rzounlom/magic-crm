@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import { isEmployeeNavActive } from "@/lib/ui/employee-navigation";
 import { cn } from "@/lib/ui/cn";
 
-export type ModuleNavLinkVariant = "pill" | "bottom" | "menu";
+export type ModuleNavLinkVariant = "pill" | "bottom" | "menu" | "sidebar";
 
 export function ModuleNavLink({
   href,
@@ -15,12 +15,14 @@ export function ModuleNavLink({
   variant = "pill",
   className,
   onNavigate,
+  badge,
 }: {
   href: string;
   children: ReactNode;
   variant?: ModuleNavLinkVariant;
   className?: string;
   onNavigate?: () => void;
+  badge?: ReactNode;
 }) {
   const pathname = usePathname();
   const active = isEmployeeNavActive(pathname, href);
@@ -49,6 +51,21 @@ export function ModuleNavLink({
       >
         <NavIcon href={href} />
         <span>{children}</span>
+      </Link>
+    );
+  }
+
+  if (variant === "sidebar") {
+    return (
+      <Link
+        href={href}
+        aria-current={active ? "page" : undefined}
+        className={cn("employee-sidebar-link", active && "is-active", className)}
+        onClick={onNavigate}
+      >
+        <NavIcon href={href} />
+        <span className="min-w-0 flex-1 truncate">{children}</span>
+        {badge}
       </Link>
     );
   }
@@ -105,6 +122,9 @@ function iconPath(href: string) {
   }
   if (href.startsWith("/app/admin/ai")) {
     return "M8 2.5v2M8 11.5v2M2.5 8h2M11.5 8h2M4.2 4.2l1.4 1.4M10.4 10.4l1.4 1.4M11.8 4.2l-1.4 1.4M5.6 10.4 4.2 11.8";
+  }
+  if (href.startsWith("/app/admin/operating-hours")) {
+    return "M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM8 5v3.2l2.2 1.3";
   }
   return "";
 }

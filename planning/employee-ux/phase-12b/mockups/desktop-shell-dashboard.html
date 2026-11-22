@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phase 12B mockup — Desktop shell + dashboard (concept only)</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --surface: #ffffff;
+      --border: #e4e7ec;
+      --text: #16181d;
+      --muted: #667085;
+      --primary: #1f4b99;
+      --primary-soft: #e8eef8;
+      --accent-bar: #1f4b99;
+      --warn: #b54708;
+      --ok: #027a48;
+      --sidebar: 248px;
+      --font: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: #d0d5dd;
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .frame {
+      width: min(1180px, 100%);
+      height: 720px;
+      background: var(--bg);
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(16, 24, 40, 0.18);
+      display: grid;
+      grid-template-columns: var(--sidebar) 1fr;
+      overflow: hidden;
+      border: 1px solid #98a2b3;
+    }
+    .badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: #101828;
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+    }
+    .wrap { position: relative; width: min(1180px, 100%); }
+    aside {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px 16px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--primary); color: #fff;
+      display: grid; place-items: center; font-size: 13px;
+    }
+    .nav-label {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--muted); padding: 12px 10px 4px;
+    }
+    .nav a {
+      display: flex; align-items: center; justify-content: space-between;
+      text-decoration: none; color: var(--text);
+      padding: 9px 10px; border-radius: 8px; font-size: 14px;
+    }
+    .nav a.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 600;
+      box-shadow: inset 3px 0 0 var(--accent-bar);
+    }
+    .nav a span.count {
+      background: var(--primary); color: #fff; font-size: 11px;
+      padding: 1px 7px; border-radius: 999px;
+    }
+    .settings {
+      margin-top: auto; border-top: 1px solid var(--border); padding-top: 8px;
+    }
+    main { display: flex; flex-direction: column; min-width: 0; }
+    .top {
+      height: 56px; background: color-mix(in srgb, var(--surface) 92%, transparent);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; gap: 12px;
+    }
+    .ambient { font-size: 13px; color: var(--muted); }
+    .ambient strong { color: var(--text); font-weight: 600; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn {
+      width: 34px; height: 34px; border-radius: 999px; border: 1px solid var(--border);
+      background: var(--surface); display: grid; place-items: center; font-size: 14px;
+      position: relative;
+    }
+    .dot {
+      position: absolute; top: 4px; right: 4px; width: 8px; height: 8px;
+      background: #d92d20; border-radius: 999px;
+    }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 999px; background: #344054; color: #fff;
+      display: grid; place-items: center; font-size: 12px; font-weight: 600;
+    }
+    .content { padding: 28px 32px; overflow: auto; }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+    .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+    .grid {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .panel h2 { margin: 0 0 4px; font-size: 15px; }
+    .panel p.hint { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+    .tile {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-top: 1px solid var(--border); gap: 12px;
+    }
+    .tile:first-of-type { border-top: 0; }
+    .tile .n { font-size: 22px; font-weight: 700; color: var(--primary); width: 42px; }
+    .tile .meta { flex: 1; }
+    .tile .meta strong { display: block; font-size: 14px; }
+    .tile .meta span { font-size: 12px; color: var(--muted); }
+    .tile .go { color: var(--muted); font-size: 18px; }
+    .event {
+      display: grid; gap: 2px; padding: 10px 0; border-top: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .event:first-of-type { border-top: 0; }
+    .event .t { color: var(--muted); font-size: 12px; }
+    .cta {
+      display: inline-flex; margin-top: 16px; background: var(--primary); color: #fff;
+      text-decoration: none; font-size: 13px; font-weight: 600;
+      padding: 10px 14px; border-radius: 8px;
+    }
+    .note {
+      margin-top: 10px; font-size: 11px; color: #98a2b3; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="badge">CONCEPT ONLY — not implemented</div>
+    <div class="frame" aria-label="Desktop employee shell mockup">
+      <aside>
+        <div class="brand"><span class="mark">M</span> MagicCRM</div>
+        <div class="nav">
+          <div class="nav-label">Primary</div>
+          <a class="active" href="#">Home</a>
+          <a href="#">Inquiries <span class="count">4</span></a>
+          <a href="#">Bookings</a>
+          <a href="#">Schedule</a>
+          <div class="nav-label">Tools</div>
+          <a href="#">Sales knowledge</a>
+          <a href="#">Resources</a>
+          <div class="settings">
+            <div class="nav-label">Settings</div>
+            <a href="#">Hours</a>
+            <a href="#">Team</a>
+            <a href="#">Security</a>
+            <a href="#">Catalog sync</a>
+          </div>
+        </div>
+      </aside>
+      <main>
+        <div class="top">
+          <div class="ambient"><strong>Adventureplex Events</strong> · Main Location</div>
+          <div class="top-actions">
+            <div class="icon-btn" title="Notifications">🔔<span class="dot"></span></div>
+            <div class="icon-btn" title="More">⋮</div>
+            <div class="avatar">AJ</div>
+          </div>
+        </div>
+        <div class="content">
+          <h1>Good morning, Alex</h1>
+          <p class="sub">Sunday, Nov 22 · Here’s what needs attention.</p>
+          <div class="grid">
+            <section class="panel">
+              <h2>Needs attention</h2>
+              <p class="hint">Actionable work from inquiries you can access.</p>
+              <div class="tile">
+                <div class="n">3</div>
+                <div class="meta"><strong>Awaiting staff review</strong><span>Ready for human follow-up</span></div>
+                <div class="go">→</div>
+              </div>
+              <div class="tile">
+                <div class="n">1</div>
+                <div class="meta"><strong>Pending confirmation</strong><span>Book Now — deposit pending</span></div>
+                <div class="go">→</div>
+              </div>
+              <div class="tile">
+                <div class="n">2</div>
+                <div class="meta"><strong>Unread</strong><span>New since you last checked</span></div>
+                <div class="go">→</div>
+              </div>
+              <a class="cta" href="#">Review inquiries</a>
+            </section>
+            <section class="panel">
+              <h2>Today</h2>
+              <p class="hint">Upcoming on the schedule (synthetic).</p>
+              <div class="event">
+                <span class="t">10:00 AM</span>
+                <strong>Birthday — Lane package</strong>
+                <span>Booking #1042 · Confirmed</span>
+              </div>
+              <div class="event">
+                <span class="t">2:30 PM</span>
+                <strong>School group visit</strong>
+                <span>Booking #1048 · Confirmed</span>
+              </div>
+              <div class="event">
+                <span class="t">—</span>
+                <strong style="color:var(--muted);font-weight:500">No more events after 3 PM</strong>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+    <p class="note">Synthetic org/customer labels · Phase 12B design artifact · Public Inquiry lives under ⋮</p>
+  </div>
+</body>
+</html>

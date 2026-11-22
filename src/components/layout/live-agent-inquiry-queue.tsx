@@ -8,8 +8,13 @@ import {
   READY_FOR_HUMAN_REASONS,
 } from "@/lib/inquiries/ready-for-human-reason";
 import { formatEmployeeInquiryQueueLabel } from "@/lib/inquiries/inquiry-workflow-labels";
-import { isLiveAgentQueueCandidate, sortLiveAgentQueue } from "@/lib/inquiries/live-agent-queue";
-import { INQUIRY_STATUSES, INQUIRY_WORKFLOW_STAGE_LABELS, EVENT_PLAN_KINDS } from "@/types/inquiry";
+import {
+  isLiveAgentSelectedAttention,
+  isOtherReadyForHumanAttention,
+  isPendingConfirmation,
+  sortLiveAgentQueue,
+} from "@/lib/inquiries/live-agent-queue";
+import { INQUIRY_WORKFLOW_STAGE_LABELS, EVENT_PLAN_KINDS } from "@/types/inquiry";
 import { PLAN_AVAILABILITY_STATUS_LABELS, PLAN_AVAILABILITY_STATUSES } from "@/types/resource-schedule";
 import { formatEventLocalDateTime, formatOrganizationTimestamp } from "@/lib/inquiries/tenant-datetime";
 import {
@@ -65,32 +70,13 @@ export function LiveAgentInquiryQueue({
   timeZone: string;
 }) {
   const pendingPayment = sortLiveAgentQueue(
-    inquiries
-      .filter(
-        (inquiry) =>
-          inquiry.salesStage === "DEPOSIT_PENDING" ||
-          inquiry.bookings?.[0]?.status === "PENDING_PAYMENT",
-      )
-      .map((inquiry) => toQueueItem(inquiry)),
+    inquiries.filter(isPendingConfirmation).map((inquiry) => toQueueItem(inquiry)),
   );
   const selected = sortLiveAgentQueue(
-    inquiries
-      .filter(
-        (inquiry) =>
-          isLiveAgentQueueCandidate(inquiry) &&
-          inquiry.salesStage !== "DEPOSIT_PENDING" &&
-          inquiry.bookings?.[0]?.status !== "PENDING_PAYMENT",
-      )
-      .map((inquiry) => toQueueItem(inquiry)),
+    inquiries.filter(isLiveAgentSelectedAttention).map((inquiry) => toQueueItem(inquiry)),
   );
   const otherReady = inquiries
-    .filter(
-      (inquiry) =>
-        inquiry.status === INQUIRY_STATUSES.READY_FOR_HUMAN &&
-        !isLiveAgentQueueCandidate(inquiry) &&
-        inquiry.salesStage !== "DEPOSIT_PENDING" &&
-        inquiry.bookings?.[0]?.status !== "PENDING_PAYMENT",
-    )
+    .filter(isOtherReadyForHumanAttention)
     .sort((left, right) => {
       const createdDelta = right.createdAt.getTime() - left.createdAt.getTime();
       if (createdDelta !== 0) {
@@ -101,10 +87,9 @@ export function LiveAgentInquiryQueue({
   const rest = inquiries
     .filter(
       (inquiry) =>
-        !isLiveAgentQueueCandidate(inquiry) &&
-        inquiry.status !== INQUIRY_STATUSES.READY_FOR_HUMAN &&
-        inquiry.salesStage !== "DEPOSIT_PENDING" &&
-        inquiry.bookings?.[0]?.status !== "PENDING_PAYMENT",
+        !isPendingConfirmation(inquiry) &&
+        !isLiveAgentSelectedAttention(inquiry) &&
+        !isOtherReadyForHumanAttention(inquiry),
     )
     .sort((left, right) => {
       const createdDelta = right.createdAt.getTime() - left.createdAt.getTime();

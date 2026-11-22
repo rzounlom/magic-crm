@@ -117,7 +117,7 @@ test.describe("AUTH1 authenticated session transition", { tag: "@auth1" }, () =>
     await page.goto("/app");
     await expect(page).not.toHaveURL(/sign-in/, { timeout: 30_000 });
     await page.reload();
-    await expect(page.getByRole("navigation").or(page.getByText(/MagicCRM|Overview|Welcome/i)).first()).toBeVisible({
+    await expect(page.getByRole("navigation").or(page.getByText(/MagicCRM|Home|Good (morning|afternoon|evening)/i)).first()).toBeVisible({
       timeout: 30_000,
     });
   });

@@ -54,9 +54,11 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
     return null;
   }
 
-  const catalog = filterEmployeeNavItems(visible).filter((item) => item.group === "catalog");
-  const settings = filterEmployeeNavItems(visible).filter((item) => item.group === "settings");
-  const overview = filterEmployeeNavItems(visible).filter((item) => item.group === "overview");
+  const morePrimary = filterEmployeeNavItems(visible)
+    .filter((item) => item.group === "primary")
+    .filter((item) => moreItems.some((entry) => entry.id === item.id));
+  const tools = moreItems.filter((item) => item.group === "tools");
+  const settings = moreItems.filter((item) => item.group === "settings");
   const closeMore = () => setMoreOpen(false);
 
   return (
@@ -117,18 +119,18 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
           </div>
         </div>
         <div className="max-h-[min(70vh,28rem)] overflow-y-auto px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {overview.length > 0 ? (
-            <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.overview}>
-              {overview.map((item) => (
+          {morePrimary.length > 0 ? (
+            <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.primary}>
+              {morePrimary.map((item) => (
                 <ModuleNavLink key={item.id} href={item.href} variant="menu" onNavigate={closeMore}>
                   {item.label}
                 </ModuleNavLink>
               ))}
             </MoreSection>
           ) : null}
-          {catalog.length > 0 ? (
-            <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.catalog}>
-              {catalog.map((item) => (
+          {tools.length > 0 ? (
+            <MoreSection title={EMPLOYEE_NAV_GROUP_LABELS.tools}>
+              {tools.map((item) => (
                 <ModuleNavLink key={item.id} href={item.href} variant="menu" onNavigate={closeMore}>
                   {item.label}
                 </ModuleNavLink>
