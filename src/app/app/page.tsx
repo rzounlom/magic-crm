@@ -38,8 +38,8 @@ function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady })
   const showToday = dashboard.canViewBookings && todayBookings != null;
 
   return (
-    <section className="mx-auto w-full max-w-5xl" data-employee-dashboard>
-      <header className="max-w-2xl">
+    <section className="mx-auto w-full min-w-0 max-w-5xl" data-employee-dashboard>
+      <header className="min-w-0 max-w-2xl">
         <h1 className="text-[length:var(--text-display)] font-semibold tracking-[-0.02em] text-foreground">
           {dashboard.greetingHeadline}
         </h1>
@@ -56,9 +56,9 @@ function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady })
         </p>
       </header>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <div className="mt-8 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
         {showAttention ? (
-          <section className="employee-dashboard-panel rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
+          <section className="employee-dashboard-panel min-w-0 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
             <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">
               Needs attention
             </h2>
@@ -109,7 +109,7 @@ function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady })
             ) : null}
           </section>
         ) : (
-          <section className="employee-dashboard-panel rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
+          <section className="employee-dashboard-panel min-w-0 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
             <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">Home</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Use the sidebar to open the tools available for your role.
@@ -118,9 +118,9 @@ function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady })
         )}
 
         {showToday && todayBookings ? (
-          <section className="employee-dashboard-panel rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
+          <section className="employee-dashboard-panel min-w-0 rounded-[var(--radius-card)] border border-border-subtle bg-surface p-5">
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
                 <h2 className="text-[length:var(--text-title-sm)] font-semibold text-foreground">Today</h2>
                 <p className="mt-1 text-sm text-muted-foreground">Confirmed bookings for today.</p>
               </div>

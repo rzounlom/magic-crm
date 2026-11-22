@@ -26,6 +26,15 @@ describe("employee dashboard helpers", () => {
         email: "sam@example.com",
       }),
     ).toBe("Sam");
+    expect(
+      resolveUserGreetingName({
+        clerkUserId: "user_3",
+        firstName: null,
+        lastName: null,
+        displayName: null,
+        email: "only@example.com",
+      }),
+    ).toBeNull();
   });
 
   it("formats greeting and date in the provided timezone", () => {
@@ -35,5 +44,12 @@ describe("employee dashboard helpers", () => {
     );
     expect(formatDashboardDateLabel("America/New_York", noonUtc)).toContain("Nov");
     expect(formatDashboardDateLabel("America/New_York", noonUtc)).toContain("22");
+  });
+
+  it("uses Welcome back when no reliable name is available", () => {
+    const noonUtc = new Date("2026-11-22T17:00:00.000Z");
+    expect(formatDashboardGreeting(null, "America/New_York", noonUtc)).toBe("Welcome back");
+    expect(formatDashboardGreeting("there", "America/New_York", noonUtc)).toBe("Welcome back");
+    expect(formatDashboardGreeting("  ", "America/New_York", noonUtc)).toBe("Welcome back");
   });
 });

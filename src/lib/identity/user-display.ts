@@ -47,8 +47,12 @@ export function formatUserDisplayLabel(profile: UserDisplayFields): string {
   return "Unknown employee";
 }
 
-/** Short greeting name for employee Home — never leads with email. */
-export function resolveUserGreetingName(profile: UserDisplayFields): string {
+/**
+ * Short greeting name for employee Home.
+ * Returns null when no reliable name exists — callers should use “Welcome back”.
+ * Never derives a name from email.
+ */
+export function resolveUserGreetingName(profile: UserDisplayFields): string | null {
   const firstName = trimToNull(profile.firstName);
   if (firstName) {
     return firstName;
@@ -57,7 +61,7 @@ export function resolveUserGreetingName(profile: UserDisplayFields): string {
   if (displayName) {
     return displayName.split(/\s+/)[0] ?? displayName;
   }
-  return "there";
+  return null;
 }
 
 export function userIdentitySearchText(profile: UserDisplayFields): string {

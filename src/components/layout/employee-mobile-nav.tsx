@@ -44,10 +44,11 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
       closeRef.current?.focus();
       return;
     }
+    // Close via imperative API when React state drops; onClose restores focus.
+    // Never focus the More button on initial mount (avoids hydration focus churn).
     if (dialog.open) {
       dialog.close();
     }
-    moreButtonRef.current?.focus();
   }, [moreOpen]);
 
   if (primary.length === 0 && moreItems.length === 0 && !publicInquiryHref) {
@@ -92,9 +93,9 @@ export function EmployeeMobileNav({ visibleNavIds, publicInquiryHref }: Employee
         id={dialogId}
         aria-labelledby={titleId}
         className="employee-more-dialog fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none translate-y-0 rounded-t-[var(--radius-dialog)] border border-border bg-surface p-0 text-foreground shadow-[var(--shadow-overlay)] backdrop:bg-foreground/40 open:flex open:flex-col"
-        onCancel={(event) => {
-          event.preventDefault();
-          closeMore();
+        onClose={() => {
+          setMoreOpen(false);
+          moreButtonRef.current?.focus();
         }}
         onClick={(event) => {
           if (event.target === event.currentTarget) {

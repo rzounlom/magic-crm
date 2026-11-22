@@ -14,11 +14,23 @@ function greetingPeriod(timeZone: string, now = new Date()): "morning" | "aftern
   return "evening";
 }
 
-export function formatDashboardGreeting(greetingName: string, timeZone: string, now = new Date()): string {
+/**
+ * Time-of-day greeting when a real first/display name is available.
+ * When the name is missing, returns "Welcome back" — never "…, there" and never an email.
+ */
+export function formatDashboardGreeting(
+  greetingName: string | null | undefined,
+  timeZone: string,
+  now = new Date(),
+): string {
+  const name = greetingName?.trim() ?? "";
+  if (!name || name.toLowerCase() === "there") {
+    return "Welcome back";
+  }
   const period = greetingPeriod(timeZone, now);
   const prefix =
     period === "morning" ? "Good morning" : period === "afternoon" ? "Good afternoon" : "Good evening";
-  return `${prefix}, ${greetingName}`;
+  return `${prefix}, ${name}`;
 }
 
 export function formatDashboardDateLabel(timeZone: string, now = new Date()): string {

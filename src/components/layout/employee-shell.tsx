@@ -33,7 +33,7 @@ export async function EmployeeShell({ children }: EmployeeShellProps) {
             organizationSwitcher={<EmployeeOrganizationSwitcher />}
             userButton={<EmployeeUserButton />}
           />
-          <main className="employee-shell-main mx-auto flex w-full max-w-[90rem] flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <main className="employee-shell-main mx-auto flex w-full min-w-0 max-w-[90rem] flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             {children}
           </main>
           <EmployeeMobileNav

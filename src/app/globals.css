@@ -222,6 +222,16 @@ label:has(:disabled) {
   min-height: 100%;
 }
 
+.employee-shell-column {
+  min-width: 0;
+}
+
+.employee-more-dialog {
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
 .employee-sidebar {
   position: sticky;
   top: 0;

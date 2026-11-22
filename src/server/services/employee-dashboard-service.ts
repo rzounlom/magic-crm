@@ -50,7 +50,7 @@ export type EmployeeDashboardNextAction = {
 
 export type EmployeeDashboardReady = {
   kind: "ready";
-  greetingName: string;
+  greetingName: string | null;
   greetingHeadline: string;
   dateLabel: string;
   organizationName: string;
@@ -111,7 +111,7 @@ export async function loadEmployeeDashboard(
       email: true,
     },
   });
-  const greetingName = profile ? resolveUserGreetingName(profile) : "there";
+  const greetingName = profile ? resolveUserGreetingName(profile) : null;
 
   const [attention, todayBookings] = await Promise.all([
     canViewInquiries ? loadAttention(ctx, database) : Promise.resolve(null),

@@ -1,0 +1,44 @@
+{
+  "capturedAt": "2026-11-22",
+  "baseUrl": "http://localhost:3000",
+  "overflow": {
+    "375": { "scrollWidth": 375, "clientWidth": 375, "overflow": false },
+    "430": { "scrollWidth": 430, "clientWidth": 430, "overflow": false },
+    "768": { "scrollWidth": 768, "clientWidth": 768, "overflow": false },
+    "1024": { "scrollWidth": 1024, "clientWidth": 1024, "overflow": false },
+    "1440": {
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "overflow": false,
+      "todayPanelRight": 1352,
+      "todayPanelClipped": false
+    },
+    "1920": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "overflow": false,
+      "todayPanelRight": 1592,
+      "todayPanelClipped": false
+    }
+  },
+  "moreSheet": {
+    "375": { "width": 375, "fitsViewport": true, "bodyScrollHeight": 524, "bodyClientHeight": 448 },
+    "430": { "captured": true },
+    "escape": "Native dialog close path (onClose); Close button restores focus to More. browser_press_key Escape appears intercepted by IDE chrome."
+  },
+  "greeting": "Welcome back",
+  "dashboardCountsSession": {
+    "awaitingStaffReview": 4,
+    "pendingConfirmation": 1,
+    "unread": "12–13 (live notification service)"
+  },
+  "queueAlignment": {
+    "pendingConfirmationSection": 1,
+    "readyForLiveAgentPlusStaffReview": 4
+  },
+  "clippingVerdict": "screenshot_artifact_not_layout_overflow",
+  "hydration": {
+    "reproAfterFocusFix": false,
+    "note": "nextjs-portal present as Next.js dev tools badge only; no hydration mismatch console errors after More mount-focus fix"
+  }
+}
