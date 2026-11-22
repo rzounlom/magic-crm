@@ -73,7 +73,8 @@ Focused units for money, funnel, queue, WP labels, pricing verification, deliver
 
 ## 10. PR / commit
 
-Filled after `gh pr create`.
+- **PR:** https://github.com/rzounlom/magic-crm/pull/27  
+- **Commit:** `c61aebb`
 
 ## 11. Safeguards unchanged
 
