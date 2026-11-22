@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { ChoiceSegment } from "@/components/ui/choice-segment";
@@ -18,6 +18,21 @@ import {
   type WpDurationOption,
   type WpYesNo,
 } from "@/lib/event-planner/wp-intake-contract";
+import {
+  findSectionByKey,
+  findSectionElement,
+  isDiscreteCompletionControl,
+  isFormControl,
+  isSectionComplete,
+  isTextLikeControl,
+  navigateToFirstInvalidField,
+  nextSectionKey,
+  PUBLIC_INQUIRE_SECTION_ATTR,
+  scrollElementIntoView,
+  sectionKeyOf,
+  shouldAdvanceFromSection,
+  type PublicInquireSectionKey,
+} from "@/lib/inquiries/public-inquiry-section-navigation";
 import { formatUsPhoneInput } from "@/lib/inquiries/public-phone";
 import { cn } from "@/lib/ui/cn";
 import { submitPublicWpEventInquiryAction } from "@/server/actions/public-inquiry";
@@ -25,8 +40,9 @@ import type { SecurityActionResult } from "@/types/security-action";
 
 const LABEL = "text-[length:var(--text-label)] font-semibold text-foreground";
 const ERROR = "mt-1.5 text-[length:var(--text-caption)] text-destructive";
+/** scroll-mt keeps headings clear of the shell header without changing idle layout. */
 const SECTION =
-  "rounded-[var(--radius-card)] border border-border/80 bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6";
+  "scroll-mt-[4.5rem] rounded-[var(--radius-card)] border border-border/80 bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6";
 
 type AttractionState = Record<WpAttractionKey, WpAttractionAnswer | "">;
 
@@ -63,6 +79,10 @@ export function PublicEventInquiryForm({ organizationSlug }: PublicEventInquiryF
   const [hasBudget, setHasBudget] = useState<WpYesNo | "">("");
   const [attractions, setAttractions] = useState<AttractionState>(emptyAttractions);
   const [phone, setPhone] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const touchedSectionsRef = useRef(new Set<PublicInquireSectionKey>());
+  const advancedSectionsRef = useRef(new Set<PublicInquireSectionKey>());
+  const invalidNavActiveRef = useRef(false);
 
   const canAddDate = dates.length < WP_INTAKE_LIMITS.dates;
 
@@ -79,9 +99,139 @@ export function PublicEventInquiryForm({ organizationSlug }: PublicEventInquiryF
     setFieldErrors({});
   }
 
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) {
+      return;
+    }
+    const formElement: HTMLFormElement = form;
+
+    function markTouched(sectionKey: PublicInquireSectionKey) {
+      touchedSectionsRef.current.add(sectionKey);
+    }
+
+    function tryAdvance(section: HTMLElement) {
+      const sectionKey = sectionKeyOf(section);
+      if (!sectionKey) {
+        return;
+      }
+      const complete = isSectionComplete(section);
+      if (
+        !shouldAdvanceFromSection({
+          sectionKey,
+          touched: touchedSectionsRef.current,
+          advanced: advancedSectionsRef.current,
+          complete,
+        })
+      ) {
+        return;
+      }
+      const nextKey = nextSectionKey(sectionKey);
+      if (!nextKey) {
+        return;
+      }
+      const next = findSectionByKey(formElement, nextKey);
+      if (!next) {
+        return;
+      }
+      advancedSectionsRef.current.add(sectionKey);
+      scrollElementIntoView(next);
+    }
+
+    function onFocusIn(event: FocusEvent) {
+      const control = event.target;
+      if (!isFormControl(control)) {
+        return;
+      }
+      const section = findSectionElement(control, formElement);
+      const sectionKey = section ? sectionKeyOf(section) : null;
+      if (sectionKey) {
+        markTouched(sectionKey);
+      }
+    }
+
+    function onChange(event: Event) {
+      const control = event.target;
+      if (!isFormControl(control) || !isDiscreteCompletionControl(control)) {
+        return;
+      }
+      const section = findSectionElement(control, formElement);
+      if (!section) {
+        return;
+      }
+      const sectionKey = sectionKeyOf(section);
+      if (sectionKey) {
+        markTouched(sectionKey);
+      }
+      // Defer so React controlled updates (radios/dates) commit before validity checks.
+      queueMicrotask(() => tryAdvance(section));
+    }
+
+    function onFocusOut(event: FocusEvent) {
+      const control = event.target;
+      if (!isFormControl(control) || !isTextLikeControl(control)) {
+        return;
+      }
+      const section = findSectionElement(control, formElement);
+      if (!section) {
+        return;
+      }
+      const sectionKey = sectionKeyOf(section);
+      if (sectionKey) {
+        markTouched(sectionKey);
+      }
+      const nextTarget = event.relatedTarget;
+      if (nextTarget instanceof Node && section.contains(nextTarget)) {
+        // Still editing within the same section — do not advance while tabbing fields.
+        return;
+      }
+      queueMicrotask(() => tryAdvance(section));
+    }
+
+    function onInvalid(event: Event) {
+      if (invalidNavActiveRef.current) {
+        return;
+      }
+      invalidNavActiveRef.current = true;
+      const target = event.target;
+      if (!isFormControl(target)) {
+        return;
+      }
+      // One navigation per submit attempt; native tooltip remains.
+      navigateToFirstInvalidField(formElement);
+    }
+
+    function resetInvalidNav() {
+      invalidNavActiveRef.current = false;
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Enter" || event.key === " ") {
+        resetInvalidNav();
+      }
+    }
+
+    formElement.addEventListener("focusin", onFocusIn);
+    formElement.addEventListener("change", onChange);
+    formElement.addEventListener("focusout", onFocusOut);
+    formElement.addEventListener("invalid", onInvalid, true);
+    formElement.addEventListener("pointerdown", resetInvalidNav, true);
+    formElement.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      formElement.removeEventListener("focusin", onFocusIn);
+      formElement.removeEventListener("change", onChange);
+      formElement.removeEventListener("focusout", onFocusOut);
+      formElement.removeEventListener("invalid", onInvalid, true);
+      formElement.removeEventListener("pointerdown", resetInvalidNav, true);
+      formElement.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
   return (
     <SecurityActionForm
       action={submitPublicWpEventInquiryAction}
+      formRef={formRef}
       className="space-y-5 sm:space-y-6"
       notice={{
         successTitle: "Event request received",
@@ -95,7 +245,12 @@ export function PublicEventInquiryForm({ organizationSlug }: PublicEventInquiryF
       <input type="hidden" name="organizationSlug" value={organizationSlug} />
       <input type="hidden" name="submissionId" value={submissionId} />
 
-      <section className={SECTION} aria-labelledby="inquire-section-contact">
+      <section
+        id="inquire-panel-contact"
+        className={SECTION}
+        aria-labelledby="inquire-section-contact"
+        {...{ [PUBLIC_INQUIRE_SECTION_ATTR]: "contact" }}
+      >
         <SectionHeading
           id="inquire-section-contact"
           step="01"
@@ -153,7 +308,12 @@ export function PublicEventInquiryForm({ organizationSlug }: PublicEventInquiryF
         </div>
       </section>
 
-      <section className={SECTION} aria-labelledby="inquire-section-event">
+      <section
+        id="inquire-panel-event"
+        className={SECTION}
+        aria-labelledby="inquire-section-event"
+        {...{ [PUBLIC_INQUIRE_SECTION_ATTR]: "event" }}
+      >
         <SectionHeading
           id="inquire-section-event"
           step="02"
@@ -274,7 +434,12 @@ export function PublicEventInquiryForm({ organizationSlug }: PublicEventInquiryF
         </div>
       </section>
 
-      <section className={SECTION} aria-labelledby="inquire-section-attractions">
+      <section
+        id="inquire-panel-attractions"
+        className={SECTION}
+        aria-labelledby="inquire-section-attractions"
+        {...{ [PUBLIC_INQUIRE_SECTION_ATTR]: "attractions" }}
+      >
         <SectionHeading
           id="inquire-section-attractions"
           step="03"
@@ -309,7 +474,12 @@ export function PublicEventInquiryForm({ organizationSlug }: PublicEventInquiryF
         </div>
       </section>
 
-      <section className={SECTION} aria-labelledby="inquire-section-preferences">
+      <section
+        id="inquire-panel-preferences"
+        className={SECTION}
+        aria-labelledby="inquire-section-preferences"
+        {...{ [PUBLIC_INQUIRE_SECTION_ATTR]: "preferences" }}
+      >
         <SectionHeading
           id="inquire-section-preferences"
           step="04"
@@ -362,7 +532,12 @@ export function PublicEventInquiryForm({ organizationSlug }: PublicEventInquiryF
         </div>
       </section>
 
-      <section className={SECTION} aria-labelledby="inquire-section-occasion">
+      <section
+        id="inquire-panel-occasion"
+        className={SECTION}
+        aria-labelledby="inquire-section-occasion"
+        {...{ [PUBLIC_INQUIRE_SECTION_ATTR]: "occasion" }}
+      >
         <SectionHeading
           id="inquire-section-occasion"
           step="05"

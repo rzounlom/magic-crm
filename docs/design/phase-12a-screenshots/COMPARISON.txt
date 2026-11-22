@@ -1,0 +1,13 @@
+Phase 12A visual acceptance (idle top-of-form, scrollY=0)
+
+Viewports: 375, 430, 768, 1440
+before-* = Production baseline (bc12ff9) at magic-crm-eta.vercel.app
+after-*  = local branch with navigation behavior enabled
+
+Pixel comparison (RGB max channel delta):
+375: 0 (unchanged)
+430: 0 (unchanged)
+768: 0 (unchanged)
+1440: 0 (unchanged)
+
+Conclusion: idle visual appearance is unchanged. Only scrolling/focus behavior differs during interaction.
