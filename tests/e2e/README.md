@@ -76,7 +76,7 @@ corepack pnpm test:e2e:auth
 # playwright/.clerk/{administrator,event-sales,front-desk}.json (+ aliases under .auth/)
 ```
 
-### Repeatable quote acceptance
+### Repeatable quote acceptance (Phase 12I)
 
 ```bash
 corepack pnpm test:e2e:quote              # Admin + Event Sales + Front Desk
@@ -86,7 +86,25 @@ corepack pnpm test:e2e:quote:front-desk   # restricted role
 corepack pnpm test:e2e:authenticated      # auth setup + all quote projects
 ```
 
-Session renewal: `setup-auth` recreates storage on every quote run (dependency of quote projects).
+### Employee workflow regression (Phase 12J)
+
+Requires the same provision + auth as quote tests. Uses synthetic Test Center B fixtures only
+(`phase-10g-wp-inquiry.json`, `staff-inquiry.json`). Never Production. Never `PLAYWRIGHT_STAFF_MUTATIONS=1`
+for Live Agent HOLD/confirm in this suite.
+
+```bash
+# Refresh fixtures when needed (DEV Neon only)
+corepack pnpm test:e2e:staff:fixture
+# WP fixture: tsx --tsconfig tsconfig.json scripts/phase-10g-create-synthetic-wp-inquiry.ts
+
+corepack pnpm test:e2e:employee           # Admin + Event Sales + Front Desk employee projects
+corepack pnpm test:e2e:employee:nav
+corepack pnpm test:e2e:regression         # quote + employee suites
+```
+
+Tags: `@phase-12j` · `@employee-nav` · `@employee-home` · `@employee-wp` · `@employee-la` · `@employee-responsive`
+
+Session renewal: `setup-auth` recreates storage on every quote/employee run (project dependency).
 
 ### Legacy headed bootstrap (optional)
 
