@@ -2,9 +2,10 @@
 
 **Date:** 2026-11-22  
 **Branch:** `phase-12k-staff-quote-editor-usability`  
-**PR:** https://github.com/rzounlom/magic-crm/pull/29 (pending create)  
+**PR:** https://github.com/rzounlom/magic-crm/pull/29 (**MERGED**)  
+**Merge commit:** `1b14c9a`  
 **Scope:** Presentation-only redesign of `WpStaffQuoteDraftPanel`. No pricing, permission, delivery, or booking logic changes.  
-**Recommendation:** **Merge** — presentation-only.
+**Recommendation:** **Released** — presentation-only.
 
 ---
 
@@ -82,4 +83,8 @@ Uses Phase 12I/12J auth (`pnpm test:e2e:quote`, employee WP specs).
 
 ## 7. PR / Production
 
-Gates green. Merge → Production Ready + read-only smoke (`/`, `/sign-in`, `/app`).
+| Step | Status |
+|---|---|
+| PR #29 | **MERGED** (`1b14c9a`) |
+| Vercel Production | **Ready** (`magic-pi4nu51ce…`) |
+| Read-only smoke | `/` 200, `/sign-in` 200, `/app` 307 |
