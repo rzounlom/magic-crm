@@ -1,9 +1,9 @@
 # Phase 12I — Permanent Playwright test auth + PR #27 acceptance
 
 **Date:** 2026-11-22  
-**PR:** https://github.com/rzounlom/magic-crm/pull/27  
-**Branch:** `phase-12f-employee-language-quote-clarity`  
-**Release decision:** Merge candidate after quality gates (authenticated browser acceptance **PASS**)
+**PR:** https://github.com/rzounlom/magic-crm/pull/27 (**MERGED**)  
+**Merge commit:** `cd80af7`  
+**Release decision:** **RELEASED** — authenticated browser acceptance PASS; Production Ready
 
 ---
 
@@ -148,11 +148,11 @@ App: `http://localhost:3000` · Fixture inquiry: synthetic WP on Test Center B �
 
 | Step | Status |
 |---|---|
-| Critical quote browser acceptance | **PASS** |
-| Commit test infra + report to PR #27 | Pending push/merge steps |
-| Merge to `main` | Only after gates green + no secrets in commit |
-| Vercel Production Ready | After merge |
-| Production smoke | Read-only only; no customer-data writes |
+| Critical quote browser acceptance | **PASS** (7/7) |
+| Commit test infra + report | `2989c7d` on PR branch; no secrets/auth artifacts |
+| Merge to `main` | **MERGED** `cd80af7` |
+| Vercel Production | **Ready** (deployment `magic-7ihgk9n1o…`, env Production – magic-crm) |
+| Production smoke (read-only) | `https://magic-crm-eta.vercel.app` → `/` 200, `/sign-in` 200 (signed-out), `/app` 307 auth redirect. No customer-data writes. |
 
 ---
 
@@ -169,4 +169,4 @@ App: `http://localhost:3000` · Fixture inquiry: synthetic WP on Test Center B �
 
 ## 11. Remaining blockers
 
-None for authenticated local quote acceptance. Merge still requires clean commit (no auth artifacts), green lint/build confirmation, then Production Ready + read-only smoke.
+None. Permanent Clerk ticket auth is in place; PR #27 is merged; customer Production is Ready with read-only smoke confirmed.
