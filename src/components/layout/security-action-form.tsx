@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { unstable_rethrow } from "next/navigation";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode, type Ref } from "react";
 
 import { BlockingMutation } from "@/components/ui/blocking-mutation";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -29,6 +29,8 @@ type SecurityActionFormProps = {
   onResult?: (result: SecurityActionResult) => void;
   /** Return "stay" to keep the current page instead of following redirectTo. */
   onRedirect?: (href: string) => "stay" | void;
+  /** Optional ref to the underlying `<form>` element (navigation / validation helpers). */
+  formRef?: Ref<HTMLFormElement>;
 };
 
 export function SecurityActionForm({
@@ -41,6 +43,7 @@ export function SecurityActionForm({
   blockingLabel = "Working…",
   onResult,
   onRedirect,
+  formRef,
 }: SecurityActionFormProps) {
   const router = useRouter();
   const pendingRef = useRef(false);
@@ -120,6 +123,7 @@ export function SecurityActionForm({
         Confirm dialogs unable to open without a hard reload.
       */}
       <form
+        ref={formRef}
         className={className}
         aria-busy={pending}
         onSubmit={(event) => {
