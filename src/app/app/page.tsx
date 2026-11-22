@@ -79,7 +79,7 @@ function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady })
                     count={attention.awaitingStaffReview}
                     title="Awaiting staff review"
                     detail="Ready for human follow-up"
-                    href="/app/inquiries"
+                    href="/app/inquiries?focus=review"
                   />
                 ) : null}
                 {attention.pendingConfirmation > 0 ? (
@@ -87,7 +87,7 @@ function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady })
                     count={attention.pendingConfirmation}
                     title="Pending confirmation"
                     detail="Book Now — awaiting staff confirmation"
-                    href="/app/inquiries"
+                    href="/app/inquiries?focus=pending"
                   />
                 ) : null}
                 {attention.unreadCount > 0 ? (
@@ -95,7 +95,7 @@ function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady })
                     count={attention.unreadCount}
                     title="Unread"
                     detail="New since you last checked"
-                    href="/app/inquiries"
+                    href="/app/inquiries?focus=unread"
                   />
                 ) : null}
               </div>

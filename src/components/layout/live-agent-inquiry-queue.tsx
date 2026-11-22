@@ -1,12 +1,10 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
-import {
-  CUSTOMER_SELECTED_PLAN_BANNER,
-  READY_FOR_HUMAN_REASONS,
-} from "@/lib/inquiries/ready-for-human-reason";
+import { READY_FOR_HUMAN_REASONS } from "@/lib/inquiries/ready-for-human-reason";
 import { formatEmployeeInquiryQueueLabel } from "@/lib/inquiries/inquiry-workflow-labels";
 import {
   isLiveAgentSelectedAttention,
@@ -23,6 +21,7 @@ import {
   formatHoldTimeRemaining,
   holdExpiresSoon,
 } from "@/lib/inquiries/workflow-stage";
+import { cn } from "@/lib/ui/cn";
 
 type InquiryListItem = {
   id: string;
@@ -100,62 +99,88 @@ export function LiveAgentInquiryQueue({
     });
 
   return (
-    <div className="mt-8 space-y-10">
+    <div id="inquiry-queue-top" className="inquiry-queue mt-8 space-y-8 scroll-mt-24">
       {pendingPayment.length > 0 ? (
-        <section>
-          <h2 className="text-lg font-semibold">Pending confirmation</h2>
-          <p className="mt-1 text-sm text-foreground/70">
-            Customers who clicked Book Now. These requests do not occupy the Master Schedule until confirmed.
-          </p>
-          <ul className="mt-4 space-y-3">
-            {pendingPayment.map((inquiry) => (
-              <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} priority />
-            ))}
-          </ul>
-        </section>
+        <QueueSection
+          id="pending-confirmation"
+          title="Pending confirmation"
+          description="Book Now requests waiting for staff confirmation. They do not occupy the Master Schedule yet."
+          count={pendingPayment.length}
+        >
+          {pendingPayment.map((inquiry) => (
+            <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} priority />
+          ))}
+        </QueueSection>
       ) : null}
       {selected.length > 0 || otherReady.length > 0 ? (
-        <section>
-          <h2 className="text-lg font-semibold">Ready for Live Agent</h2>
-          <p className="mt-1 text-sm text-foreground/70">
-            Customer-selected plans are grouped first. Newest inquiries appear at the top of each section.
-          </p>
-          {selected.length > 0 ? (
-            <ul className="mt-4 space-y-3">
-              {selected.map((inquiry) => (
-                <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} priority />
-              ))}
-            </ul>
-          ) : null}
-          {otherReady.length > 0 ? (
-            <ul className={selected.length > 0 ? "mt-6 space-y-3" : "mt-4 space-y-3"}>
-              {otherReady.map((inquiry) => (
-                <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} />
-              ))}
-            </ul>
-          ) : null}
-        </section>
+        <QueueSection
+          id="ready-for-live-agent"
+          title="Ready for Live Agent"
+          description="Customer-selected plans appear first. WordPress event requests need staff follow-up without a customer package selection."
+          count={selected.length + otherReady.length}
+        >
+          {selected.map((inquiry) => (
+            <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} priority />
+          ))}
+          {otherReady.map((inquiry) => (
+            <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} />
+          ))}
+        </QueueSection>
       ) : null}
       {rest.length > 0 ? (
-        <section>
-          {selected.length > 0 || otherReady.length > 0 ? <h2 className="text-lg font-semibold">Other inquiries</h2> : null}
-          <ul className={selected.length > 0 || otherReady.length > 0 ? "mt-4 space-y-3" : "space-y-3"}>
-            {rest.map((inquiry) => (
-              <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} />
-            ))}
-          </ul>
-        </section>
+        <QueueSection
+          id="other-inquiries"
+          title="Other inquiries"
+          description="Active inquiries that are not waiting on confirmation or staff review."
+          count={rest.length}
+        >
+          {rest.map((inquiry) => (
+            <InquiryRow key={inquiry.id} inquiry={inquiry} timeZone={timeZone} />
+          ))}
+        </QueueSection>
       ) : null}
     </div>
   );
 }
 
+function QueueSection({
+  id,
+  title,
+  description,
+  count,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  count: number;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="inquiry-queue-section scroll-mt-24" aria-labelledby={`${id}-heading`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id={`${id}-heading`} className="text-[length:var(--text-title-sm)] font-semibold text-foreground">
+          {title}
+        </h2>
+        <p className="text-[length:var(--text-caption)] font-medium text-muted-foreground">
+          {count} {count === 1 ? "inquiry" : "inquiries"}
+        </p>
+      </div>
+      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>
+      <ul className="mt-4 divide-y divide-border-subtle overflow-hidden rounded-[var(--radius-card)] border border-border-subtle bg-surface">
+        {children}
+      </ul>
+    </section>
+  );
+}
+
 function toQueueItem(inquiry: InquiryListItem) {
   const selected = inquiry.eventPlanRecommendations.find((plan) => plan.id === inquiry.selectedEventPlanId);
-  const earliestHoldExpiresAt = inquiry.resourceReservations
-    .map((row) => row.expiresAt)
-    .filter((value): value is Date => Boolean(value))
-    .sort((left, right) => left.getTime() - right.getTime())[0] ?? null;
+  const earliestHoldExpiresAt =
+    inquiry.resourceReservations
+      .map((row) => row.expiresAt)
+      .filter((value): value is Date => Boolean(value))
+      .sort((left, right) => left.getTime() - right.getTime())[0] ?? null;
   return {
     ...inquiry,
     selectedAvailabilityStatus: selected?.availabilityStatus ?? null,
@@ -195,80 +220,75 @@ function InquiryRow({
     ? `Assigned to ${employeeDisplayName(inquiry.assignedUser)}`
     : "Unassigned";
   const isWpIntake = inquiry.humanHandoffReason === READY_FOR_HUMAN_REASONS.PUBLIC_EVENT_REQUEST;
+  const statusLabel = formatEmployeeInquiryQueueLabel({
+    isWpIntake,
+    status: inquiry.status,
+    aiHandlingEnabled: inquiry.aiHandlingEnabled,
+    selectedEventPlanId: inquiry.selectedEventPlanId,
+    humanHandoffReason: inquiry.humanHandoffReason,
+    bookingNumber: inquiry.bookings?.[0]?.bookingNumber,
+    bookingStatus: inquiry.bookings?.[0]?.status,
+    salesStage: "salesStage" in inquiry ? String(inquiry.salesStage ?? "") : null,
+  });
   const nextHint = priority
-    ? "Open to continue booking"
+    ? "Continue booking"
     : holdCount > 0
-      ? "Review HOLD or confirm"
+      ? "Review hold"
       : "Open inquiry";
+  const displayName =
+    inquiry.customerGroupName ||
+    [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
+    inquiry.customerEmail;
+
+  const metaBits = [
+    stage ? INQUIRY_WORKFLOW_STAGE_LABELS[stage] : null,
+    holdCount > 0 ? "Active hold" : null,
+    soonest && holdExpiresSoon(soonest) ? `Expires ${formatHoldTimeRemaining(soonest)}` : null,
+    selected
+      ? `Selected: ${selected.title}${
+          selected.estimatedTotalCents
+            ? ` · ${formatMoneyFromCents(selected.estimatedTotalCents, selected.currency)}`
+            : ""
+        } · ${availabilityLabel}`
+      : null,
+  ].filter(Boolean);
 
   return (
     <li>
       <Link
         href={`/app/inquiries/${inquiry.id}`}
-        className={priority ? "record-row is-priority" : "record-row"}
+        className={cn(
+          "inquiry-queue-row block px-4 py-3.5 transition-colors hover:bg-muted/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--focus-ring)]",
+          priority && "inquiry-queue-row-priority",
+        )}
       >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-semibold text-foreground">
-              {inquiry.customerGroupName ||
-                [inquiry.customerFirstName, inquiry.customerLastName].filter(Boolean).join(" ") ||
-                inquiry.customerEmail}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {inquiry.eventType || "Event"}
               {inquiry.desiredDate || inquiry.desiredStartTime
                 ? ` · ${formatEventLocalDateTime({ date: inquiry.desiredDate, time: inquiry.desiredStartTime })}`
                 : ""}
               {inquiry.guestCount ? ` · ${inquiry.guestCount} guests` : ""}
             </p>
+            {metaBits.length > 0 ? (
+              <p className="mt-1.5 line-clamp-2 text-[length:var(--text-caption)] text-muted-foreground">
+                {metaBits.join(" · ")}
+              </p>
+            ) : null}
           </div>
-          <div className="flex flex-col items-end gap-1.5">
-            <Badge tone={priority ? "info" : "neutral"}>
-              {formatEmployeeInquiryQueueLabel({
-                isWpIntake,
-                status: inquiry.status,
-                aiHandlingEnabled: inquiry.aiHandlingEnabled,
-                selectedEventPlanId: inquiry.selectedEventPlanId,
-                humanHandoffReason: inquiry.humanHandoffReason,
-                bookingNumber: inquiry.bookings?.[0]?.bookingNumber,
-                bookingStatus: inquiry.bookings?.[0]?.status,
-                salesStage: "salesStage" in inquiry ? String(inquiry.salesStage ?? "") : null,
-              })}
-            </Badge>
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+            <Badge tone={priority ? "info" : "neutral"}>{statusLabel}</Badge>
             <Badge tone={inquiry.assignedUser ? "neutral" : "warning"}>{assignedLabel}</Badge>
+            <p className="text-[length:var(--text-caption)] font-semibold text-primary">{nextHint}</p>
+            <p className="text-[length:var(--text-caption)] text-muted-foreground">
+              {inquiry.customerSelectedAt
+                ? `Selected ${formatOrganizationTimestamp(inquiry.customerSelectedAt, timeZone)}`
+                : formatOrganizationTimestamp(inquiry.createdAt, timeZone)}
+            </p>
           </div>
         </div>
-        {priority && !isWpIntake ? (
-          <p className="mt-3 text-xs font-semibold tracking-[0.14em] text-primary uppercase">
-            {CUSTOMER_SELECTED_PLAN_BANNER}
-          </p>
-        ) : null}
-        {selected ? (
-          <p className="mt-3 text-sm text-foreground/80">
-            Selected: {selected.title}
-            {selected.estimatedTotalCents
-              ? ` · ${formatMoneyFromCents(selected.estimatedTotalCents, selected.currency)}`
-              : ""}
-            {` · ${availabilityLabel}`}
-          </p>
-        ) : null}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">
-            {stage ? INQUIRY_WORKFLOW_STAGE_LABELS[stage] : null}
-            {holdCount > 0 ? " · Active HOLD" : ""}
-            {soonest && holdExpiresSoon(soonest) ? ` · Expires ${formatHoldTimeRemaining(soonest)}` : ""}
-          </p>
-          <p className="text-xs font-semibold text-primary">{nextHint}</p>
-        </div>
-        {inquiry.customerSelectedAt ? (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Selected {formatOrganizationTimestamp(inquiry.customerSelectedAt, timeZone)}
-          </p>
-        ) : (
-          <p className="mt-2 text-xs text-muted-foreground">
-            {formatOrganizationTimestamp(inquiry.createdAt, timeZone)}
-          </p>
-        )}
       </Link>
     </li>
   );

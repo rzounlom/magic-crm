@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
+import { InquiryQueueFocus } from "@/components/layout/inquiry-queue-focus";
 import { LiveAgentInquiryQueue } from "@/components/layout/live-agent-inquiry-queue";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { buttonClassName, ButtonLink } from "@/components/ui/button";
@@ -47,7 +49,7 @@ async function loadInquiriesView(viewParam: string | undefined): Promise<Inquiri
 export default async function InquiriesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; focus?: string }>;
 }) {
   const search = await searchParams;
   const view = await loadInquiriesView(search.view);
@@ -58,27 +60,27 @@ export default async function InquiriesPage({
   const archived = view.listView === INQUIRY_LIST_VIEWS.ARCHIVED;
 
   return (
-    <section className="max-w-4xl">
+    <section className="mx-auto w-full min-w-0 max-w-4xl">
       <PageHeader
         eyebrow="Sales"
         title="Inquiries"
+        description={
+          archived
+            ? "Archived inquiries and ended confirmed events. History is kept."
+            : "Work through pending confirmation and staff-review inquiries. Confirmed events move to Archived after they end."
+        }
         actions={
           <ButtonLink
             href={view.publicInquiryHref}
             variant="secondary"
-            size="md"
+            size="sm"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Open Personal Event Planner
+            Public inquiry form
           </ButtonLink>
         }
       />
-      <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
-        {archived
-          ? "Archived inquiries and confirmed events that have already ended stay here. History is kept. Nothing is deleted, and archiving does not cancel a booking."
-          : "Ready for Live Agent is the booking workspace queue. Customer-selected plans are prioritized. A confirmed event leaves this queue after it ends and stays in Archived. This queue is not a payment tool."}
-      </p>
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Inquiry views">
         <Link
           href="/app/inquiries"
@@ -107,8 +109,22 @@ export default async function InquiriesPage({
           Archived
         </Link>
       </nav>
+      {!archived ? (
+        <Suspense fallback={null}>
+          <InquiryQueueFocus />
+        </Suspense>
+      ) : null}
       {view.inquiries.length === 0 ? (
-        <EmptyState title={archived ? "No archived inquiries." : "No inquiries yet."} />
+        <div className="mt-8">
+          <EmptyState
+            title={archived ? "No archived inquiries." : "No inquiries yet."}
+            detail={
+              archived
+                ? "Archived and completed events will appear here."
+                : "New customer inquiries will appear in Active when they need follow-up."
+            }
+          />
+        </div>
       ) : (
         <LiveAgentInquiryQueue inquiries={view.inquiries} timeZone={view.timeZone} />
       )}

@@ -232,6 +232,22 @@ label:has(:disabled) {
   box-sizing: border-box;
 }
 
+.inquiry-queue-section[data-queue-focus="true"] {
+  outline: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  outline-offset: 6px;
+  border-radius: var(--radius-card);
+}
+
+.inquiry-queue-row-priority {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inquiry-queue-section {
+    scroll-behavior: auto;
+  }
+}
+
 .employee-sidebar {
   position: sticky;
   top: 0;
