@@ -2,8 +2,9 @@
 
 **Date:** 2026-11-22  
 **Branch:** `phase-12j-employee-e2e-regression`  
-**PR:** https://github.com/rzounlom/magic-crm/pull/28 (pending create)  
-**Recommendation:** **Merge** — test infrastructure only; no business-rule changes.
+**PR:** https://github.com/rzounlom/magic-crm/pull/28 (**MERGED**)  
+**Merge commit:** `ad9a181`  
+**Recommendation:** **Released** — test infrastructure only; no business-rule changes.
 
 ---
 
@@ -118,4 +119,8 @@ Unchanged: WP pricing baseline, `finalLivePriceRevalidation: pending`, `canDeliv
 
 ## 10. PR status
 
-Gates green. Create PR → merge → confirm Production Ready (read-only smoke).
+| Step | Status |
+|---|---|
+| PR #28 | **MERGED** (`ad9a181`) |
+| Vercel Production | **Ready** (`magic-qg1edv8pd…`, alias `magic-crm-eta.vercel.app`) |
+| Read-only smoke | `/` 200, `/sign-in` 200, `/app` 307 — no customer-data writes |
