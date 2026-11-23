@@ -146,6 +146,13 @@ describe("master schedule board", () => {
     expect(resolveScheduleFocus({ focus: "holds", type: "type_bowl" })).toBe("holds");
     expect(resolveScheduleStartMinute("17:00")).toBe(17 * 60);
     expect(resolveScheduleStartMinute("bad")).toBeNull();
+    expect(resolveScheduleStartMinute("99:99")).toBeNull();
+    expect(resolveScheduleStartMinute(null)).toBeNull();
+  });
+
+  it("keeps occupancy counting semantics unchanged (copy-only summary)", () => {
+    expect(occupancyCount(["a", "b", "c"], ["a", "a", "b"])).toEqual({ occupied: 2, total: 3 });
+    expect(occupancySummary("Bowling", 2, 3)).toContain("holds + booked");
   });
 
   it("shows each exact resource for a multi-lane booking and distinguishes a hold", () => {
