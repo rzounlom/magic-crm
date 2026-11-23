@@ -1,0 +1,331 @@
+{
+  "startedAt": "2026-11-23T00:41:24.857Z",
+  "baseURL": "http://localhost:3000",
+  "journeys": {
+    "administrator": {
+      "role": "administrator",
+      "steps": [
+        {
+          "step": "home",
+          "shot": "docs/design/phase-12n-screenshots/admin-home-1440.png",
+          "hints": {
+            "flags": [],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\nResources\n\nSETTINGS\n\nHours\nTeam\nSecurity\nCatalog sync\n\nMagiccrm Test Center B\n\nMain Location\n\n9+\nMagicCRM Test Center B\nGood evening, E2E\n\nSunday, Nov 22·Magiccrm Test Center B·Main Location\n\nNeeds attention\n\nActionable work from inquiries you can access.\n\n80\nAwaiting staff review\nReady for human follow-up\n→\n2\nPending co"
+          }
+        },
+        {
+          "step": "inquiry-queue",
+          "shot": "docs/design/phase-12n-screenshots/admin-inquiries-1440.png",
+          "hints": {
+            "flags": [
+              "hold-label",
+              "queue:ready-for-la"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\nResources\n\nSETTINGS\n\nHours\nTeam\nSecurity\nCatalog sync\n\nMagiccrm Test Center B\n\nMain Location\n\n9+\nMagicCRM Test Center B\n\nSALES\n\nInquiries\n\nWork through pending confirmation and staff-review inquiries. Confirmed events move to Archived after they end.\n\nPublic inquiry form\nActive\nArchived\nPending confirmation\n\n2 inquiries\n"
+          }
+        },
+        {
+          "step": "inquiry-detail",
+          "url": "http://localhost:3000/app/inquiries/grwnitr5txbm26n7jecy4uhn",
+          "shot": "docs/design/phase-12n-screenshots/admin-inquiry-detail-1440.png",
+          "hints": {
+            "flags": [
+              "hold-label",
+              "quote-delivery"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\nResources\n\nSETTINGS\n\nHours\nTeam\nSecurity\nCatalog sync\n\nMagiccrm Test Center B\n\nMain Location\n\n9+\nMagicCRM Test Center B\nBack to inquiries\n\nStaff quote approved — delivery unavailable\n\nMagicCRM QA\n\nCorporate or Team Event · Dec 27, 2026 at 2:00 PM · 10 adults · 0 children (10 total) · 2 hours\n\nPhase10G Synthetic · (555) 5"
+          }
+        },
+        {
+          "step": "staff-quote",
+          "shot": "docs/design/phase-12n-screenshots/admin-staff-quote-1440.png",
+          "hints": {
+            "flags": [
+              "hold-label",
+              "quote-delivery"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\nResources\n\nSETTINGS\n\nHours\nTeam\nSecurity\nCatalog sync\n\nMagiccrm Test Center B\n\nMain Location\n\n9+\nMagicCRM Test Center B\nBack to inquiries\n\nStaff quote approved — delivery unavailable\n\nMagicCRM QA\n\nCorporate or Team Event · Dec 27, 2026 at 2:00 PM · 10 adults · 0 children (10 total) · 2 hours\n\nPhase10G Synthetic · (555) 5"
+          },
+          "hasUnitDollars": true,
+          "hasApprove": true,
+          "hasAvailability": true
+        },
+        {
+          "step": "bookings",
+          "shot": "docs/design/phase-12n-screenshots/admin-bookings-1440.png",
+          "hints": {
+            "flags": [
+              "hold-label",
+              "payment-neutral"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\nResources\n\nSETTINGS\n\nHours\nTeam\nSecurity\nCatalog sync\n\nMagiccrm Test Center B\n\nMain Location\n\nOPERATIONS\n\nBookings\n\nFind upcoming events by customer, date, and status. Confirmed bookings occupy the Master Schedule; pending confirmation does not. MagicCRM does not collect payment here.\n\nSearch\nSearch\nNew Booking\nPending c"
+          },
+          "hasNewBooking": true
+        },
+        {
+          "step": "schedule",
+          "shot": "docs/design/phase-12n-screenshots/admin-schedule-1440.png",
+          "hints": {
+            "flags": [
+              "hold-label"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\nResources\n\nSETTINGS\n\nHours\nTeam\nSecurity\nCatalog sync\n\nMagiccrm Test Center B\n\nMain Location\n\nOPERATIONS\n\nMaster Schedule\n\nResource occupancy for this location. HOLD blocks are temporary and distinct from confirmed Booked blocks.\n\nMonday, November 23, 2026\n\nPrevious day\nToday\nNext day\nDate\nGo\nAll resources\nBowling Lane\nL"
+          },
+          "hasLegend": true
+        },
+        {
+          "step": "settings-hours",
+          "shot": "docs/design/phase-12n-screenshots/admin-hours-1440.png",
+          "hints": {
+            "flags": [],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\nResources\n\nSETTINGS\n\nHours\nTeam\nSecurity\nCatalog sync\n\nMagiccrm Test Center B\n\nMain Location\n\nLOCATIONS\n\nOperating hours\n\nConfigure weekly open windows and holiday exceptions per location. Save as DRAFT, then verify before booking confirmation uses the schedule.\n\nMain Location\n\nUTC · 7 weekly windows · 1 exception\n\nVerif"
+          }
+        }
+      ]
+    },
+    "event_sales": {
+      "role": "event_sales",
+      "steps": [
+        {
+          "step": "home",
+          "shot": "docs/design/phase-12n-screenshots/sales-home-1440.png",
+          "hints": {
+            "flags": [],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\n\nMagiccrm Test Center B\n\nMain Location\n\n9+\nMagicCRM Test Center B\nGood evening, E2E\n\nSunday, Nov 22·Magiccrm Test Center B·Main Location\n\nNeeds attention\n\nActionable work from inquiries you can access.\n\n80\nAwaiting staff review\nReady for human follow-up\n→\n2\nPending confirmation\nBook Now — awaiting staff confirmation\n→\n10"
+          }
+        },
+        {
+          "step": "queue",
+          "shot": "docs/design/phase-12n-screenshots/sales-inquiries-1440.png",
+          "hints": {
+            "flags": [
+              "hold-label",
+              "queue:ready-for-la"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\n\nMagiccrm Test Center B\n\nMain Location\n\n9+\nMagicCRM Test Center B\n\nSALES\n\nInquiries\n\nWork through pending confirmation and staff-review inquiries. Confirmed events move to Archived after they end.\n\nPublic inquiry form\nActive\nArchived\nPending confirmation\n\n2 inquiries\n\nBook Now requests waiting for staff confirmation. The"
+          }
+        },
+        {
+          "step": "wp-quote",
+          "shot": "docs/design/phase-12n-screenshots/sales-staff-quote-1440.png",
+          "unitPriceLocked": true,
+          "hints": {
+            "flags": [
+              "hold-label",
+              "quote-delivery"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\n\nMagiccrm Test Center B\n\nMain Location\n\n9+\nMagicCRM Test Center B\nBack to inquiries\n\nStaff quote approved — delivery unavailable\n\nMagicCRM QA\n\nCorporate or Team Event · Dec 27, 2026 at 2:00 PM · 10 adults · 0 children (10 total) · 2 hours\n\nPhase10G Synthetic · (555) 555-0100 · phase10g+2b81ad0c-8dad-4b5e-ab94-88c86d01fae"
+          }
+        },
+        {
+          "step": "bookings",
+          "shot": "docs/design/phase-12n-screenshots/sales-bookings-1440.png",
+          "hasNewBooking": true
+        },
+        {
+          "step": "schedule",
+          "shot": "docs/design/phase-12n-screenshots/sales-schedule-1440.png",
+          "hasCreate": true
+        },
+        {
+          "step": "denied-resources",
+          "shot": "docs/design/phase-12n-screenshots/sales-resources-denied-1440.png",
+          "hints": {
+            "flags": [
+              "permission-panel"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nInquiries\nBookings\nSchedule\n\nTOOLS\n\nSales knowledge\n\nMagiccrm Test Center B\n\nMain Location\n\nResources\n\nYou don't have permission to perform this action.\n\nNumbered inventory and resource types must be configured by an authorized administrator. Booking readiness will stay blocked until inventory is set up for this location."
+          }
+        }
+      ]
+    },
+    "front_desk": {
+      "role": "front_desk",
+      "steps": [
+        {
+          "step": "home",
+          "shot": "docs/design/phase-12n-screenshots/desk-home-1440.png",
+          "hints": {
+            "flags": [],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nBookings\nSchedule\n\nMagiccrm Test Center B\n\nMain Location\n\nMagicCRM Test Center B\nGood evening, E2E\n\nSunday, Nov 22·Magiccrm Test Center B·Main Location\n\nHome\n\nUse the sidebar to open the tools available for your role.\n\nToday\n\nConfirmed bookings for today.\n\nView all\n\n1:00 PM\n\nR5 ConfirmFixture\n\nMAG-2026-00001 · Confirmed\n\nNext\nView schedule"
+          },
+          "hasInquiriesNav": false
+        },
+        {
+          "step": "inquiries-denied",
+          "shot": "docs/design/phase-12n-screenshots/desk-inquiries-denied-1440.png",
+          "hints": {
+            "flags": [
+              "permission-panel"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nBookings\nSchedule\n\nMagiccrm Test Center B\n\nMain Location\n\nInquiries\n\nYou don't have permission to perform this action."
+          }
+        },
+        {
+          "step": "bookings",
+          "shot": "docs/design/phase-12n-screenshots/desk-bookings-1440.png",
+          "hasNewBooking": false,
+          "hints": {
+            "flags": [
+              "hold-label",
+              "payment-neutral"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nBookings\nSchedule\n\nMagiccrm Test Center B\n\nMain Location\n\nOPERATIONS\n\nBookings\n\nFind upcoming events by customer, date, and status. Confirmed bookings occupy the Master Schedule; pending confirmation does not. MagicCRM does not collect payment here.\n\nSearch\nSearch\nPending confirmation\nUpcoming\nToday\nThis Week\nPast\n\nR5 ConfirmFixture\n\nMAG-2026-00001 · Birthday Party\n\nConfi"
+          }
+        },
+        {
+          "step": "new-booking-denied",
+          "shot": "docs/design/phase-12n-screenshots/desk-new-booking-denied-1440.png",
+          "hints": {
+            "flags": [
+              "permission-panel"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nBookings\nSchedule\n\nMagiccrm Test Center B\n\nMain Location\n\nNew Booking\n\nYou need permission to create bookings and manage inquiries."
+          }
+        },
+        {
+          "step": "schedule",
+          "shot": "docs/design/phase-12n-screenshots/desk-schedule-1440.png",
+          "hasCreate": false,
+          "hasLegend": true,
+          "hints": {
+            "flags": [
+              "hold-label"
+            ],
+            "sample": "M\nMagicCRM\n\nPRIMARY\n\nHome\nBookings\nSchedule\n\nMagiccrm Test Center B\n\nMain Location\n\nOPERATIONS\n\nMaster Schedule\n\nResource occupancy for this location. HOLD blocks are temporary and distinct from confirmed Booked blocks.\n\nMonday, November 23, 2026\n\nPrevious day\nToday\nNext day\nDate\nGo\nAll resources\nBowling Lane\nLaser Arena\nParty Room\nR7 Exclusive Suite\nHolds\nBooked\nHOLD — temporary, not confirmed\nBo"
+          }
+        }
+      ]
+    }
+  },
+  "responsive": [
+    {
+      "viewport": "375",
+      "pages": {
+        "home": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-home-375.png"
+        },
+        "inquiries": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-inquiries-375.png"
+        },
+        "bookings": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-bookings-375.png"
+        },
+        "schedule": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-schedule-375.png"
+        }
+      }
+    },
+    {
+      "viewport": "430",
+      "pages": {
+        "home": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-home-430.png"
+        },
+        "inquiries": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-inquiries-430.png"
+        },
+        "bookings": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-bookings-430.png"
+        },
+        "schedule": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-schedule-430.png"
+        }
+      }
+    },
+    {
+      "viewport": "768",
+      "pages": {
+        "home": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-home-768.png"
+        },
+        "inquiries": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-inquiries-768.png"
+        },
+        "bookings": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-bookings-768.png"
+        },
+        "schedule": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-schedule-768.png"
+        }
+      }
+    },
+    {
+      "viewport": "1024",
+      "pages": {
+        "home": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-home-1024.png"
+        },
+        "inquiries": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-inquiries-1024.png"
+        },
+        "bookings": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-bookings-1024.png"
+        },
+        "schedule": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-schedule-1024.png"
+        }
+      }
+    },
+    {
+      "viewport": "1440",
+      "pages": {
+        "home": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-home-1440.png"
+        },
+        "inquiries": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-inquiries-1440.png"
+        },
+        "bookings": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-bookings-1440.png"
+        },
+        "schedule": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-schedule-1440.png"
+        }
+      }
+    },
+    {
+      "viewport": "1920",
+      "pages": {
+        "home": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-home-1920.png"
+        },
+        "inquiries": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-inquiries-1920.png"
+        },
+        "bookings": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-bookings-1920.png"
+        },
+        "schedule": {
+          "overflow": false,
+          "shot": "docs/design/phase-12n-screenshots/responsive-schedule-1920.png"
+        }
+      }
+    }
+  ],
+  "notes": [],
+  "finishedAt": "2026-11-23T00:43:38.644Z"
+}
