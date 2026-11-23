@@ -8,7 +8,13 @@ import { cn } from "@/lib/ui/cn";
 import { formatMoneyFromCents } from "@/lib/event-planner/money";
 import { formatEventLocalDateTime } from "@/lib/inquiries/tenant-datetime";
 import { employeeDisplayName } from "@/lib/inquiries/workflow-stage";
-import { BOOKING_LIST_FILTERS, BOOKING_STATUS_LABELS, type BookingListFilter, type BookingStatus } from "@/types/booking";
+import {
+  BOOKING_LIST_FILTERS,
+  BOOKING_STATUS_LABELS,
+  BOOKING_STATUSES,
+  type BookingListFilter,
+  type BookingStatus,
+} from "@/types/booking";
 
 type BookingListRow = {
   id: string;
@@ -53,39 +59,60 @@ export function bookingResourceSummary(
   return names.join(", ");
 }
 
+export function bookingListNextAction(status: string): string {
+  if (status === BOOKING_STATUSES.PENDING_PAYMENT) {
+    return "Next: confirm from the inquiry — does not occupy the schedule yet";
+  }
+  if (status === BOOKING_STATUSES.CONFIRMED) {
+    return "Confirmed — occupies the Master Schedule";
+  }
+  if (status === BOOKING_STATUSES.CANCELLED) {
+    return "Cancelled — resources released";
+  }
+  if (status === BOOKING_STATUSES.COMPLETED) {
+    return "Completed";
+  }
+  return "Open booking for details";
+}
+
 export function BookingList({
   bookings,
   filter,
   search,
+  canCreate = false,
 }: {
   bookings: BookingListRow[];
   filter: string;
   search: string;
+  canCreate?: boolean;
 }) {
   const activeFilter = (Object.values(BOOKING_LIST_FILTERS) as string[]).includes(filter)
     ? (filter as BookingListFilter)
     : BOOKING_LIST_FILTERS.UPCOMING;
 
   return (
-    <div className="mt-8">
+    <div className="mt-8" data-bookings-list>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <form className="flex flex-wrap items-end gap-3" action="/app/bookings">
-        <label className="text-sm">
-          <span className="text-foreground/70">Search</span>
-          <input
-            name="search"
-            defaultValue={search}
-            placeholder="Booking number or customer"
-            className="mt-1 w-full min-w-[12rem] max-w-sm rounded-md border border-border bg-background px-3 py-2 sm:w-56"
-          />
-        </label>
-        <button type="submit" className={buttonClassName({ variant: "primary", size: "sm" })}>
-          Search
-        </button>
+          <label className="text-sm">
+            <span className="text-foreground/70">Search</span>
+            <input
+              name="search"
+              defaultValue={search}
+              placeholder="Booking number or customer"
+              className="mt-1 w-full min-w-[12rem] max-w-sm rounded-md border border-border bg-background px-3 py-2 sm:w-56"
+            />
+          </label>
+          <input type="hidden" name="filter" value={activeFilter} />
+          <button type="submit" className={buttonClassName({ variant: "primary", size: "sm" })}>
+            Search
+          </button>
         </form>
-        <Link href="/app/bookings/new" className={buttonClassName({ variant: "primary", size: "sm" })}>
-          New Booking
-        </Link>
+        {canCreate ? (
+          <Link href="/app/bookings/new" className={buttonClassName({ variant: "primary", size: "sm" })}>
+            New Booking
+          </Link>
+        ) : null}
       </div>
       <nav className="mt-4 flex flex-wrap gap-2" aria-label="Booking filters">
         {(Object.values(BOOKING_LIST_FILTERS) as BookingListFilter[]).map((value) => {
@@ -121,33 +148,40 @@ export function BookingList({
               booking.status in BOOKING_STATUS_LABELS
                 ? BOOKING_STATUS_LABELS[booking.status as BookingStatus]
                 : booking.status;
+            const resources = bookingResourceSummary(booking.reservations);
             return (
               <li key={booking.id}>
                 <Link
                   href={`/app/bookings/${booking.id}`}
                   className="record-row"
+                  data-booking-row
+                  data-booking-status={booking.status}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-foreground">{booking.bookingNumber}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">{name}</p>
+                      <p className="font-semibold text-foreground">{name}</p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        {booking.bookingNumber}
+                        {booking.eventType ? ` · ${booking.eventType}` : ""}
+                      </p>
                     </div>
                     <Badge tone={bookingBadgeTone(booking.status)}>{status}</Badge>
                   </div>
-                  <p className="mt-3 text-sm text-foreground/80">
+                  <p className="mt-3 text-sm text-foreground">
                     {formatEventLocalDateTime({ date: booking.eventDate, time: booking.startTime })}
                     {` · ${booking.guestCount} guests`}
-                    {booking.eventType ? ` · ${booking.eventType}` : ""}
                   </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {resources}
+                    {" · "}
                     Preview {formatMoneyFromCents(booking.totalCents, booking.currency)}
-                    {` · ${bookingResourceSummary(booking.reservations)}`}
+                    <span className="text-muted-foreground/80"> (not collected here)</span>
                   </p>
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">
                       {booking.confirmedBy
                         ? `Confirmed by ${employeeDisplayName(booking.confirmedBy)}`
-                        : "Not confirmed yet · amounts are previews, not payments collected"}
+                        : bookingListNextAction(booking.status)}
                     </p>
                     <p className="text-xs font-semibold text-primary">Open booking</p>
                   </div>

@@ -78,6 +78,7 @@ type CreateContext = {
 export function MasterScheduleBoard({
   date,
   focus,
+  highlightStartMinute = null,
   locationId,
   groups,
   reservations,
@@ -93,6 +94,7 @@ export function MasterScheduleBoard({
 }: {
   date: string;
   focus: string;
+  highlightStartMinute?: number | null;
   locationId: string | null;
   groups: Group[];
   reservations: ScheduleBoardReservation[];
@@ -112,6 +114,7 @@ export function MasterScheduleBoard({
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const [detail, setDetail] = useState<ScheduleBoardReservation | null>(null);
   const [createContext, setCreateContext] = useState<CreateContext | null>(null);
@@ -154,6 +157,18 @@ export function MasterScheduleBoard({
       dialog.close();
     }
   }, [detail]);
+
+  useEffect(() => {
+    if (highlightStartMinute == null || highlightStartMinute < startMinute) {
+      return;
+    }
+    const scroller = timelineScrollRef.current;
+    if (!scroller) {
+      return;
+    }
+    const left = ((highlightStartMinute - startMinute) / slotMinutes) * SLOT_WIDTH;
+    scroller.scrollTo({ left: Math.max(left - SLOT_WIDTH, 0), behavior: "smooth" });
+  }, [highlightStartMinute, slotMinutes, startMinute]);
 
   function closeDialog() {
     setDetail(null);
@@ -205,8 +220,8 @@ export function MasterScheduleBoard({
   }
 
   return (
-    <div className="mt-6">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="mt-6" data-master-schedule-board>
+      <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Schedule filters">
         <FilterButton pressed={focus === SCHEDULE_FOCUS_ALL} onClick={() => setFocus(SCHEDULE_FOCUS_ALL)}>
           All resources
         </FilterButton>
@@ -231,7 +246,17 @@ export function MasterScheduleBoard({
           </button>
         ) : null}
       </div>
-      <ul className="mt-4 flex flex-wrap gap-2">
+      <ul className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground" aria-label="Occupancy legend">
+        <li className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-3 w-5 rounded-sm border border-dashed border-warning bg-warning/25" aria-hidden />
+          HOLD — temporary, not confirmed
+        </li>
+        <li className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-3 w-5 rounded-sm border border-primary/60 bg-primary/15" aria-hidden />
+          Booked — confirmed occupancy
+        </li>
+      </ul>
+      <ul className="mt-3 flex flex-wrap gap-2">
         {groups.map((group) => {
           const count = occupancyCount(
             group.resources.map((resource) => resource.id),
@@ -248,7 +273,14 @@ export function MasterScheduleBoard({
         <EmptyState title="No scheduled events for this day." />
       ) : null}
 
-      <div className="public-scroll mt-4 hidden max-w-full overflow-x-auto md:block">
+      <p className="mt-3 hidden text-xs text-muted-foreground md:block">
+        Scroll horizontally to see later times →
+      </p>
+      <div
+        ref={timelineScrollRef}
+        className="public-scroll schedule-timeline-scroll mt-2 hidden max-w-full overflow-x-auto md:block"
+        data-schedule-timeline
+      >
         <div style={{ minWidth: timelineWidth + 176 }}>
           <div className="flex">
             <div className="sticky left-0 z-20 w-44 shrink-0 bg-background" />
@@ -256,8 +288,11 @@ export function MasterScheduleBoard({
               {slots.map((slot) => (
                 <span
                   key={slot}
-                  className="absolute top-1 text-[11px] text-foreground/60"
+                  className={`absolute top-1 text-[11px] ${
+                    highlightStartMinute === slot ? "font-semibold text-primary" : "text-foreground/60"
+                  }`}
                   style={{ left: ((slot - startMinute) / slotMinutes) * SLOT_WIDTH }}
+                  {...(highlightStartMinute === slot ? { "data-schedule-highlight-slot": "true" } : {})}
                 >
                   {formatEventLocalTime(minutesToClock(slot))}
                 </span>
@@ -324,10 +359,12 @@ export function MasterScheduleBoard({
                           <button
                             key={row.id}
                             type="button"
+                            data-schedule-block={hold ? "hold" : "booked"}
+                            aria-label={`${hold ? "HOLD" : "Booked"}: ${scheduleDisplayName(row.booking ?? row.inquiry)}`}
                             className={`${CONTROL} absolute inset-y-1 z-10 overflow-hidden rounded-md border px-2 text-left text-xs ${
                               hold
-                                ? "border-warning bg-warning/25 text-foreground"
-                                : "border-primary/60 bg-primary/15 text-foreground"
+                                ? "border-dashed border-warning bg-warning/25 text-foreground"
+                                : "border-solid border-primary/60 bg-primary/15 text-foreground"
                             }`}
                             style={{ left: place.left, width: Math.max(place.width - 4, 28) }}
                             onClick={() => {
@@ -335,7 +372,9 @@ export function MasterScheduleBoard({
                               setDetail(row);
                             }}
                           >
-                            <span className="block truncate font-medium">{hold ? "Hold" : "Booked"}</span>
+                            <span className="block truncate font-semibold tracking-wide">
+                              {hold ? "HOLD" : "Booked"}
+                            </span>
                             <span className="block truncate">{scheduleDisplayName(row.booking ?? row.inquiry)}</span>
                           </button>
                         );
@@ -348,33 +387,39 @@ export function MasterScheduleBoard({
         </div>
       </div>
 
-      <ul className="mt-4 space-y-2 md:hidden">
-        {visibleReservations.map((row) => {
-          const resource = groups.flatMap((group) => group.resources).find((item) => item.id === row.resourceId);
-          const hold = row.status === RESOURCE_RESERVATION_STATUSES.HOLD;
-          return (
-            <li key={row.id}>
-              <button
-                type="button"
-                className={`${CONTROL} w-full rounded-2xl border px-3 py-3 text-left text-sm shadow-sm ${
-                  hold ? "border-warning bg-warning/20" : "border-primary/40 bg-primary/10"
-                }`}
-                onClick={() => {
-                  setCreateContext(null);
-                  setDetail(row);
-                }}
-              >
-                <span className="font-medium">{hold ? "Hold" : "Booked"}</span>
-                <span className="mt-1 block">{scheduleDisplayName(row.booking ?? row.inquiry)}</span>
-                <span className="mt-1 block text-foreground/70">
-                  {formatEventLocalTime(minutesToClock(row.startMinute))}–{formatEventLocalTime(minutesToClock(row.endMinute))}
-                  {resource ? ` · ${resource.name}` : ""}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      {visibleReservations.length > 0 ? (
+        <ul className="mt-4 space-y-2 md:hidden" data-schedule-mobile-list>
+          {visibleReservations.map((row) => {
+            const resource = groups.flatMap((group) => group.resources).find((item) => item.id === row.resourceId);
+            const hold = row.status === RESOURCE_RESERVATION_STATUSES.HOLD;
+            return (
+              <li key={row.id}>
+                <button
+                  type="button"
+                  data-schedule-block={hold ? "hold" : "booked"}
+                  className={`${CONTROL} w-full rounded-2xl border px-3 py-3 text-left text-sm shadow-sm ${
+                    hold
+                      ? "border-dashed border-warning bg-warning/20"
+                      : "border-solid border-primary/40 bg-primary/10"
+                  }`}
+                  onClick={() => {
+                    setCreateContext(null);
+                    setDetail(row);
+                  }}
+                >
+                  <span className="font-semibold tracking-wide">{hold ? "HOLD" : "Booked"}</span>
+                  <span className="mt-1 block">{scheduleDisplayName(row.booking ?? row.inquiry)}</span>
+                  <span className="mt-1 block text-foreground/70">
+                    {formatEventLocalTime(minutesToClock(row.startMinute))}–
+                    {formatEventLocalTime(minutesToClock(row.endMinute))}
+                    {resource ? ` · ${resource.name}` : ""}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
 
       <dialog
         ref={dialogRef}
@@ -462,8 +507,10 @@ function ReservationDetail({
   const guestCount = reservation.booking?.guestCount ?? reservation.inquiry?.guestCount;
   const bookingHref = reservation.booking?.id ? `/app/bookings/${reservation.booking.id}` : null;
   return (
-    <div>
-      <p className="text-xs font-semibold tracking-wide text-foreground/60 uppercase">{hold ? "Hold" : "Booked"}</p>
+    <div data-schedule-detail={hold ? "hold" : "booked"}>
+      <p className="text-xs font-semibold tracking-wide text-foreground/60 uppercase">
+        {hold ? "HOLD — temporary" : "Booked — confirmed"}
+      </p>
       <h2 className="mt-1 text-lg font-semibold">{scheduleDisplayName(party)}</h2>
       <dl className="mt-4 space-y-2 text-sm">
         <div>

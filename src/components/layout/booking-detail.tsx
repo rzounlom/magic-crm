@@ -8,8 +8,10 @@ import { formatEventDuration } from "@/lib/event-planner/labels";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import { isSampleItinerarySegment } from "@/server/catalog/scheduling-behavior";
 import {
+  allocationStatusBadgeLabel,
   formatAllocatedSummary,
   formatAllocatedWindow,
+  formatAllocationOccupancyLabel,
   groupAllocatedResources,
 } from "@/lib/bookings/allocated-resources";
 import {
@@ -123,9 +125,16 @@ export function BookingDetail({
       : isPendingPaymentBooking(booking.status)
         ? "status-badge status-badge-warning"
         : "status-badge status-badge-neutral";
+  const nextAction = isCancelledBooking(booking.status)
+    ? "Cancelled. Released resources are free on the Master Schedule. Historical information is kept."
+    : isConfirmedBooking(booking.status)
+      ? "Confirmed — occupies the Master Schedule. Read-only except permission-gated cancel. MagicCRM does not collect payment here."
+      : isPendingPaymentBooking(booking.status)
+        ? "Next: confirm from the linked inquiry. Pending bookings do not occupy inventory. MagicCRM does not collect payment."
+        : "This booking cannot be edited from this page.";
 
   return (
-    <section className="w-full max-w-6xl" data-booking-detail>
+    <section className="w-full max-w-6xl" data-booking-detail data-booking-status={booking.status}>
       <Link href="/app/bookings" className="text-sm font-medium text-primary underline underline-offset-2">
         Back to bookings
       </Link>
@@ -136,25 +145,26 @@ export function BookingDetail({
             <p className="page-eyebrow">Booking</p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h1 className="page-title">{booking.bookingNumber}</h1>
-              <span className={statusClass}>{status}</span>
+              <span className={statusClass} data-booking-status-badge>
+                {status}
+              </span>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {formatEventLocalDate(booking.eventDate) ?? formatEventLocalDateTime({ date: booking.eventDate, time: booking.startTime })}
+            <p className="mt-2 text-sm text-foreground">
+              <span className="font-medium">{groupName}</span>
+              {" · "}
+              {formatEventLocalDate(booking.eventDate) ??
+                formatEventLocalDateTime({ date: booking.eventDate, time: booking.startTime })}
               {" · "}
               {formatEventLocalTime(booking.startTime)}–{formatEventLocalTime(booking.endTime)}
               {" · "}
               {booking.guestCount} guests
-              {" · "}
-              {formatMoneyFromCents(booking.totalCents, booking.currency)}
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {isCancelledBooking(booking.status)
-                ? "Cancelled. Released resources are free on the Master Schedule. Historical information is kept."
-                : isConfirmedBooking(booking.status)
-                  ? "Confirmed record — read-only except permission-gated cancel. MagicCRM does not collect payment here."
-                  : isPendingPaymentBooking(booking.status)
-                    ? "Pending booking does not occupy inventory until confirmed. MagicCRM does not collect payment."
-                    : "This booking cannot be edited from this page."}
+            <p className="mt-1 text-sm text-muted-foreground">
+              Preview total {formatMoneyFromCents(booking.totalCents, booking.currency)}
+              <span className="text-muted-foreground/80"> · not collected in MagicCRM</span>
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground" data-booking-next-action>
+              {nextAction}
             </p>
             {booking.confirmedAt ? (
               <p className="mt-1 text-xs text-muted-foreground">
@@ -340,7 +350,7 @@ export function BookingDetail({
               </div>
             </dl>
             {booking.depositRequiredCents != null && booking.depositRequiredCents > 0 ? (
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="mt-2 text-xs text-muted-foreground" data-booking-deposit>
                 {formatEstimatedDepositLine(
                   booking.depositRequiredCents,
                   readEventPlanPayload(booking.payload).depositPreviewPercent,
@@ -348,7 +358,9 @@ export function BookingDetail({
                 )}
               </p>
             ) : (
-              <p className="mt-2 text-xs text-muted-foreground">No deposit or payment has been recorded.</p>
+              <p className="mt-2 text-xs text-muted-foreground" data-booking-deposit>
+                No deposit or payment has been recorded. MagicCRM does not collect payment.
+              </p>
             )}
           </section>
 
@@ -358,23 +370,33 @@ export function BookingDetail({
               <p className="mt-4 text-sm text-muted-foreground">No finite resources are attached.</p>
             ) : (
               <ul className="mt-4 space-y-3 text-sm">
-                {groupAllocatedResources(booking.reservations).map((group) => (
-                  <li key={group.key}>
-                    <p className="font-medium">{group.resourceTypeName}</p>
-                    <p className="text-muted-foreground">{formatAllocatedWindow(group)}</p>
-                    <p className="text-muted-foreground">
-                      {group.released
-                        ? `${group.allocatedQuantity} released`
-                        : `${group.allocatedQuantity} booked`}
-                      {group.activeQuantity != null ? ` · ${formatAllocatedSummary(group)}` : ""}
-                    </p>
-                    <ul className="mt-1 list-disc pl-5">
-                      {group.names.map((name) => (
-                        <li key={name}>{name}</li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
+                {groupAllocatedResources(booking.reservations).map((group) => {
+                  const badge = allocationStatusBadgeLabel(group);
+                  const badgeClass =
+                    badge === "HOLD"
+                      ? "status-badge status-badge-warning"
+                      : badge === "Released"
+                        ? "status-badge status-badge-neutral"
+                        : "status-badge status-badge-success";
+                  return (
+                    <li key={group.key} data-resource-allocation data-allocation-status={badge}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium">{group.resourceTypeName}</p>
+                        <span className={badgeClass}>{badge}</span>
+                      </div>
+                      <p className="text-muted-foreground">{formatAllocatedWindow(group)}</p>
+                      <p className="text-muted-foreground">
+                        {formatAllocationOccupancyLabel(group)}
+                        {group.activeQuantity != null ? ` · ${formatAllocatedSummary(group)}` : ""}
+                      </p>
+                      <ul className="mt-1 list-disc pl-5">
+                        {group.names.map((name) => (
+                          <li key={name}>{name}</li>
+                        ))}
+                      </ul>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>

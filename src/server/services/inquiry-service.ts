@@ -43,7 +43,7 @@ import {
 import { calculatePrivateWpRecommendationForOrganization } from "@/server/event-planner/wp-parity/from-intake";
 import { loadWpTenantParityConfig } from "@/server/event-planner/wp-parity/load-tenant-pricing";
 import type { WpTenantParityConfig } from "@/server/event-planner/wp-parity/tenant-config";
-import { requirePermission } from "@/server/policies/require-permission";
+import { hasPermission, requirePermission } from "@/server/policies/require-permission";
 import type { RequestContext } from "@/server/request-context";
 import { recordAuditEvent, recordSecurityAudit } from "@/server/services/audit";
 import { trySendInquiryAcknowledgment } from "@/server/services/inquiry-acknowledgment-service";
@@ -125,7 +125,15 @@ export async function getCurrentTenantTimezone(
   ctx: RequestContext,
   database: InquiryDb,
 ): Promise<string> {
-  await requirePermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database);
+  // Timezone is shared operational context for inquiries, bookings, and schedule.
+  // Front Desk has events.view + calendar.view but not crm.inquiries.view.
+  const canReadTimezone =
+    (await hasPermission(ctx, PERMISSIONS.CRM_INQUIRIES_VIEW, database)) ||
+    (await hasPermission(ctx, PERMISSIONS.EVENTS_VIEW, database)) ||
+    (await hasPermission(ctx, PERMISSIONS.CALENDAR_VIEW, database));
+  if (!canReadTimezone) {
+    throw new AuthorizationError("FORBIDDEN");
+  }
   const [organization, location] = await Promise.all([
     database.organization.findFirst({
       where: { id: ctx.organizationId },

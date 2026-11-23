@@ -9,7 +9,11 @@ import { ScheduleDayNav } from "@/components/layout/schedule-day-nav";
 import { SecurityStatusPanel } from "@/components/layout/security-status-panel";
 import { db } from "@/lib/db";
 import { calendarDateInTimeZone } from "@/lib/inquiries/tenant-datetime";
-import { SCHEDULE_FOCUS_ALL } from "@/lib/resources/schedule-board";
+import {
+  resolveScheduleFocus,
+  resolveScheduleStartMinute,
+  SCHEDULE_FOCUS_ALL,
+} from "@/lib/resources/schedule-board";
 import { isAuthorizationError, isResourceError, isTenantContextError } from "@/server/errors";
 import { getRequestContext } from "@/server/get-request-context";
 import { hasPermission } from "@/server/policies/require-permission";
@@ -32,6 +36,7 @@ type View =
       kind: "ready";
       date: string;
       focus: string;
+      highlightStartMinute: number | null;
       locationId: string | null;
       board: Awaited<ReturnType<typeof getMasterScheduleBoard>>;
       pendingBookings: Awaited<ReturnType<typeof listPendingBookingsForSchedule>>;
@@ -46,7 +51,12 @@ type View =
       } | null;
     };
 
-async function loadView(search: { date?: string; focus?: string }): Promise<View> {
+async function loadView(search: {
+  date?: string;
+  focus?: string;
+  type?: string;
+  start?: string;
+}): Promise<View> {
   try {
     const ctx = await getRequestContext();
     const timeZone = await getCurrentTenantTimezone(ctx, db);
@@ -80,14 +90,16 @@ async function loadView(search: { date?: string; focus?: string }): Promise<View
           };
         })()
       : null;
+    const requestedFocus = resolveScheduleFocus(search);
     const knownFocus =
-      search.focus === "holds" ||
-      search.focus === "booked" ||
-      board.types.some((row) => row.id === search.focus);
+      requestedFocus === "holds" ||
+      requestedFocus === "booked" ||
+      board.types.some((row) => row.id === requestedFocus);
     return {
       kind: "ready",
       date,
-      focus: knownFocus && search.focus ? search.focus : SCHEDULE_FOCUS_ALL,
+      focus: knownFocus && requestedFocus ? requestedFocus : SCHEDULE_FOCUS_ALL,
+      highlightStartMinute: resolveScheduleStartMinute(search.start),
       locationId: ctx.locationId ?? null,
       board,
       pendingBookings,
@@ -108,7 +120,7 @@ async function loadView(search: { date?: string; focus?: string }): Promise<View
 export default async function MasterSchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; focus?: string; builder?: string }>;
+  searchParams: Promise<{ date?: string; focus?: string; type?: string; start?: string; builder?: string }>;
 }) {
   const search = await searchParams;
   const builderId = /^[A-Za-z0-9_-]+$/.test(search.builder ?? "") ? search.builder! : null;
@@ -130,7 +142,7 @@ export default async function MasterSchedulePage({
       <PageHeader
         eyebrow="Operations"
         title="Master Schedule"
-        description="Occupied lanes, bays, and rooms for this location. A block is a real hold or confirmed booking."
+        description="Resource occupancy for this location. HOLD blocks are temporary and distinct from confirmed Booked blocks."
       />
       <ScheduleDayNav
         date={view.date}
@@ -160,6 +172,7 @@ export default async function MasterSchedulePage({
         <MasterScheduleBoard
           date={view.date}
           focus={view.focus}
+          highlightStartMinute={view.highlightStartMinute}
           locationId={view.locationId}
           groups={groups}
           reservations={view.board.reservations.map((row) => ({
