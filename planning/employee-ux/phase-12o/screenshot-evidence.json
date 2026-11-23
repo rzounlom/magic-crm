@@ -1,0 +1,65 @@
+{
+  "startedAt": "2026-11-23T01:09:43.030Z",
+  "baseURL": "http://localhost:3000",
+  "shots": [
+    {
+      "name": "after-schedule-pending-confirmation-1440",
+      "path": "docs/design/phase-12o-screenshots/after-schedule-pending-confirmation-1440.png",
+      "hasPendingConfirmation": true,
+      "hasUnpaid": false
+    },
+    {
+      "name": "after-bookings-1440",
+      "path": "docs/design/phase-12o-screenshots/after-bookings-1440.png"
+    },
+    {
+      "name": "after-booking-detail-1440",
+      "path": "docs/design/phase-12o-screenshots/after-booking-detail-1440.png"
+    },
+    {
+      "name": "after-inquiry-contact-manual-1440",
+      "path": "docs/design/phase-12o-screenshots/after-inquiry-contact-manual-1440.png",
+      "hasManualContact": true,
+      "deliveryBannerCount": 1
+    },
+    {
+      "name": "after-staff-quote-delivery-discrepancy-1440",
+      "path": "docs/design/phase-12o-screenshots/after-staff-quote-delivery-discrepancy-1440.png",
+      "hasCanonicalDelivery": true,
+      "hasWhatDiffers": true
+    }
+  ],
+  "responsive": [
+    {
+      "viewport": "375",
+      "scheduleOverflow": false,
+      "bookingsOverflow": false
+    },
+    {
+      "viewport": "430",
+      "scheduleOverflow": false,
+      "bookingsOverflow": false
+    },
+    {
+      "viewport": "768",
+      "scheduleOverflow": false,
+      "bookingsOverflow": false
+    },
+    {
+      "viewport": "1024",
+      "scheduleOverflow": false,
+      "bookingsOverflow": false
+    },
+    {
+      "viewport": "1440",
+      "scheduleOverflow": false,
+      "bookingsOverflow": false
+    },
+    {
+      "viewport": "1920",
+      "scheduleOverflow": false,
+      "bookingsOverflow": false
+    }
+  ],
+  "finishedAt": "2026-11-23T01:10:45.357Z"
+}

@@ -376,8 +376,7 @@ export default async function InquiryDetailPage({
     : "Unavailable";
   const deliveryHint = wpDeliveryPolicy?.canDeliver
     ? "Customer email delivery is available for this quote path"
-    : wpDeliveryPolicy?.message ||
-      "Customer email delivery is currently unavailable. Internal approval does not send a quote.";
+    : "See Staff quote for the delivery restriction. Internal approval does not email the customer.";
   const quoteValue = quoteApproved
     ? "Internally approved"
     : hasStaffQuoteDraft
@@ -431,9 +430,14 @@ export default async function InquiryDetailPage({
           <div className="flex shrink-0 flex-wrap gap-2">
             <a
               href={mailto}
-              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-control)] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
+              title="Opens your email app with this customer’s address. MagicCRM does not send the message."
+              className={`inline-flex min-h-10 items-center justify-center rounded-[var(--radius-control)] px-4 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)] ${
+                wpDeliveryPolicy?.canDeliver
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border bg-surface text-foreground"
+              }`}
             >
-              Contact customer
+              Contact customer manually
             </a>
             {canManage && inquiry.aiHandlingEnabled ? (
               <SecurityActionForm
@@ -499,20 +503,14 @@ export default async function InquiryDetailPage({
         >
           <p className="font-semibold text-foreground">
             {warningCount > 0
-              ? `${warningCount} warning${warningCount === 1 ? "" : "s"} to review before you contact the customer`
+              ? `${warningCount} warning${warningCount === 1 ? "" : "s"} to review before outreach`
               : nextActionTitle}
           </p>
           <p className="mt-1 text-muted-foreground">
             {warningCount > 0
-              ? "Review Staff quote and Recommendations. You may prepare a draft and approve internally when permitted."
+              ? "Review Staff quote and Recommendations. You may prepare a draft and approve internally when permitted. Use Contact customer manually only for outside email — MagicCRM does not send quotes from here."
               : nextActionBody}
           </p>
-          {!wpDeliveryPolicy?.canDeliver ? (
-            <p className="mt-2 font-medium text-foreground">
-              Customer email delivery is currently unavailable. Approving a staff quote does not send
-              anything to the customer.
-            </p>
-          ) : null}
         </div>
       ) : null}
 

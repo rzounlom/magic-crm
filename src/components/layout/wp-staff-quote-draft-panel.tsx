@@ -1,6 +1,10 @@
 import { SecurityActionForm } from "@/components/layout/security-action-form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
-import { employeePricingSourceLabel } from "@/lib/event-planner/employee-pricing-copy";
+import {
+  CUSTOMER_QUOTE_DELIVERY_UNAVAILABLE_MESSAGE,
+  employeeCatalogDiscrepancyLabel,
+  employeePricingSourceLabel,
+} from "@/lib/event-planner/employee-pricing-copy";
 import { centsToDollarInputValue, formatMoneyFromCents } from "@/lib/event-planner/money";
 import { readEventPlanPayload } from "@/lib/event-planner/payload";
 import {
@@ -189,13 +193,18 @@ export function WpStaffQuoteDraftPanel({
               : "border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100"
           }`}
           data-wp-quote-delivery-policy={deliveryPolicy.code}
+          data-wp-quote-delivery-banner
         >
           <p className="font-semibold">
             {deliveryPolicy.canDeliver
               ? "Customer email delivery available"
-              : "Customer email delivery unavailable"}
+              : "Customer quote delivery unavailable"}
           </p>
-          <p className="mt-1 text-xs leading-relaxed opacity-95">{deliveryPolicy.message}</p>
+          <p className="mt-1 text-xs leading-relaxed opacity-95">
+            {deliveryPolicy.canDeliver
+              ? deliveryPolicy.message
+              : CUSTOMER_QUOTE_DELIVERY_UNAVAILABLE_MESSAGE}
+          </p>
         </div>
       ) : null}
 
@@ -258,16 +267,35 @@ export function WpStaffQuoteDraftPanel({
             ) : null}
 
             {provenance.catalogPriceDiscrepancies.length > 0 ? (
-              <div className="rounded-md border border-amber-500/40 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
-                <p className="font-medium">Pricing-source discrepancies (WordPress amounts used)</p>
-                <ul className="mt-1 list-disc space-y-1 pl-4">
+              <div
+                className="rounded-md border border-amber-500/40 bg-amber-50 px-3 py-2.5 text-xs text-amber-950 dark:bg-amber-950/30 dark:text-amber-100"
+                data-wp-catalog-discrepancies
+              >
+                <p className="font-semibold">Catalog amounts differ from WordPress line totals</p>
+                <p className="mt-1 opacity-95">
+                  <span className="font-medium">What differs:</span> the staff draft still uses WordPress
+                  amounts for money. MagicCRM catalog prices below are reference-only.
+                </p>
+                <ul className="mt-2 list-disc space-y-1.5 pl-4">
                   {provenance.catalogPriceDiscrepancies.map((row) => (
                     <li key={row.wpKey}>
-                      {row.wpKey} → {row.productSlug}: WP {money(row.wpCents)} vs catalog{" "}
-                      {money(row.magicCatalogCents)}
+                      <span className="font-medium">
+                        {employeeCatalogDiscrepancyLabel(row.wpKey, row.productSlug)}
+                      </span>
+                      {": "}
+                      WordPress {money(row.wpCents)} vs catalog {money(row.magicCatalogCents)}
                     </li>
                   ))}
                 </ul>
+                <p className="mt-2 opacity-95">
+                  <span className="font-medium">Why it matters:</span> this does not prove live venue
+                  pricing parity. Totals remain WordPress-based until live pricing is verified.
+                </p>
+                <p className="mt-1 opacity-95">
+                  <span className="font-medium">What to do next:</span> keep preparing the internal
+                  quote if the WordPress amounts look right for this event, or refresh the draft /
+                  escalate if a line looks wrong. Do not treat catalog amounts as a customer quote.
+                </p>
               </div>
             ) : null}
 
@@ -506,7 +534,7 @@ export function WpStaffQuoteDraftPanel({
                   description={
                     deliveryPolicy?.canDeliver
                       ? "Record approval and send the customer quote when delivery is enabled."
-                      : "Record a staff-ready quote only. Customer delivery stays blocked until live venue prices are verified."
+                      : CUSTOMER_QUOTE_DELIVERY_UNAVAILABLE_MESSAGE
                   }
                 />
                 <p id="wp-quote-stage-approve" className="sr-only">
