@@ -30,13 +30,12 @@ export function PendingBookingsPanel({
 }) {
   return (
     <section className="mt-8 rounded-2xl border border-border bg-surface px-4 py-4 shadow-sm">
-      <h2 className="text-lg font-semibold">Pending bookings</h2>
+      <h2 className="text-lg font-semibold">Pending confirmation</h2>
       <p className="mt-1 text-sm text-foreground/70">
-        These are unpaid booking requests. They are visible here for operations but do not occupy lanes,
-        bays, or rooms.
+        Booking requests awaiting staff confirmation. They do not occupy the schedule until confirmed.
       </p>
       {bookings.length === 0 ? (
-        <p className="mt-3 text-sm text-foreground/60">No pending booking requests for this day.</p>
+        <p className="mt-3 text-sm text-foreground/60">No pending confirmation bookings for this day.</p>
       ) : (
         <ul className="mt-4 space-y-3">
           {bookings.map((booking) => {

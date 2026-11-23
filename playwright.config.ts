@@ -110,7 +110,8 @@ export default defineConfig({
     {
       name: "employee-event-sales",
       dependencies: ["setup-auth"],
-      testMatch: /employee-(nav\.by-role|home-queue|wp-workflow|bookings-schedule(?:-security)?)\.spec\.ts/,
+      testMatch:
+        /employee-(nav\.by-role|home-queue|wp-workflow|bookings-schedule(?:-security)?|booking-schedule-nav)\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 900 },
@@ -120,7 +121,7 @@ export default defineConfig({
     {
       name: "employee-front-desk",
       dependencies: ["setup-auth"],
-      testMatch: /employee-(nav\.by-role|bookings-schedule(?:-security)?)\.spec\.ts/,
+      testMatch: /employee-(nav\.by-role|bookings-schedule(?:-security)?|booking-schedule-nav)\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1440, height: 900 },

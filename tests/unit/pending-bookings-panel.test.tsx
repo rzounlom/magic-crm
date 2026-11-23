@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { PendingBookingsPanel } from "@/components/layout/pending-bookings-panel";
 
 describe("pending bookings panel", () => {
-  it("lists unpaid requests without occupancy language", () => {
+  it("lists pending confirmation without payment or occupancy language", () => {
     const html = renderToStaticMarkup(
       <PendingBookingsPanel
         bookings={[
@@ -33,13 +33,14 @@ describe("pending bookings panel", () => {
       />,
     );
 
-    expect(html).toContain("Pending bookings");
+    expect(html).toContain("Pending confirmation");
+    expect(html).toContain("awaiting staff confirmation");
+    expect(html).toContain("do not occupy the schedule until confirmed");
     expect(html).toContain("Apex Robotics");
     expect(html).toContain("Recommended");
-    expect(html).toContain("Pending confirmation");
-    expect(html).toContain("do not occupy lanes");
     expect(html).toContain("/app/bookings/bk_pending");
     expect(html).toContain("/app/inquiries/inq_1");
+    expect(html).not.toContain("unpaid");
     expect(html).not.toContain("BOOKED");
     expect(html).not.toContain("Legacy Hold");
   });
