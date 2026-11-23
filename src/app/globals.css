@@ -108,6 +108,16 @@ label:has(:disabled) {
   height: 2px;
 }
 
+.schedule-timeline-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: var(--primary) color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.schedule-timeline-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
 .public-scroll::-webkit-scrollbar-track {
   background: transparent;
 }

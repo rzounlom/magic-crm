@@ -35,6 +35,7 @@ describe("booking list and detail", () => {
       <BookingList
         filter={BOOKING_LIST_FILTERS.UPCOMING}
         search=""
+        canCreate
         bookings={[
           {
             id: "bk_1",
@@ -72,6 +73,16 @@ describe("booking list and detail", () => {
     expect(html).toContain("/app/bookings/bk_1");
     expect(html).toContain("New Booking");
     expect(html).toContain("/app/bookings/new");
+    expect(html).toContain("not collected here");
+    expect(html).toContain("data-bookings-list");
+  });
+
+  it("hides New Booking without create permission", () => {
+    const html = renderToStaticMarkup(
+      <BookingList filter={BOOKING_LIST_FILTERS.UPCOMING} search="" canCreate={false} bookings={[]} />,
+    );
+    expect(html).not.toContain("New Booking");
+    expect(html).not.toContain("/app/bookings/new");
   });
 
   it("renders a read-only booking from the agent working version", () => {
@@ -153,11 +164,13 @@ describe("booking list and detail", () => {
     );
 
     expect(html).toContain("FUN-2026-00421");
+    expect(html).toContain("Apex Robotics");
     expect(html).toContain("Go-Karts");
     expect(html).toContain("Catered Slider Bar");
     expect(html).toContain("Party Room A");
     expect(html).toContain("1 booked");
-    expect(html).toContain("read-only except permission-gated cancel");
+    expect(html).toContain("Booked");
+    expect(html).toContain("occupies the Master Schedule");
     expect(html).toContain("View on Schedule");
     expect(html).toContain("data-booking-detail");
     expect(html).toContain("No deposit or payment has been recorded");

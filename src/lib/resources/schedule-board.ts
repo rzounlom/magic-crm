@@ -71,7 +71,32 @@ export function scheduleDisplayName(record: {
 
 /** Resources with at least one reservation on the selected day, not occupancy at one time. */
 export function occupancySummary(resourceTypeName: string, occupied: number, total: number): string {
-  return `${resourceTypeName}: ${occupied} of ${total} have bookings today`;
+  return `${resourceTypeName}: ${occupied} of ${total} occupied today (holds + booked)`;
+}
+
+/** Prefer explicit `focus`; accept legacy Live Agent `type` as an alias. */
+export function resolveScheduleFocus(search: {
+  focus?: string | null;
+  type?: string | null;
+}): string | null {
+  const focus = search.focus?.trim();
+  if (focus) {
+    return focus;
+  }
+  const type = search.type?.trim();
+  return type || null;
+}
+
+/** Parse `HH:MM` start hints used by booking/inquiry deep-links. */
+export function resolveScheduleStartMinute(start?: string | null): number | null {
+  if (!start || !/^\d{2}:\d{2}$/.test(start)) {
+    return null;
+  }
+  const [hours, minutes] = start.split(":").map(Number);
+  if (hours == null || minutes == null || hours > 23 || minutes > 59) {
+    return null;
+  }
+  return hours * 60 + minutes;
 }
 
 export function scheduleStartHint(resourceName: string, startTime?: string | null): string {

@@ -132,7 +132,7 @@ function EmployeeDashboard({ dashboard }: { dashboard: EmployeeDashboardReady })
               </Link>
             </div>
             {todayBookings.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">Nothing on the schedule for today.</p>
+              <p className="mt-4 text-sm text-muted-foreground">No confirmed bookings for today.</p>
             ) : (
               <ul className="mt-3 divide-y divide-border-subtle">
                 {todayBookings.map((booking) => (

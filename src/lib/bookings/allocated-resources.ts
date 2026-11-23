@@ -5,6 +5,7 @@ import {
   isReleasedBookingReservation,
 } from "@/lib/inquiries/employee-workspace-state";
 import { minutesToClock } from "@/server/resources/time-window";
+import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 
 export type AllocationReservation = {
   id: string;
@@ -35,7 +36,30 @@ export type AllocatedResourceGroup = {
   allocatedQuantity: number;
   activeQuantity: number | null;
   released: boolean;
+  /** Raw reservation status for presentation (HOLD vs BOOKED). */
+  reservationStatus: string | null;
 };
+
+/** Staff-facing allocation label — presentation only. */
+export function formatAllocationOccupancyLabel(group: AllocatedResourceGroup): string {
+  if (group.released) {
+    return `${group.allocatedQuantity} released`;
+  }
+  if (group.reservationStatus === RESOURCE_RESERVATION_STATUSES.HOLD) {
+    return `${group.allocatedQuantity} on hold`;
+  }
+  return `${group.allocatedQuantity} booked`;
+}
+
+export function allocationStatusBadgeLabel(group: AllocatedResourceGroup): "Released" | "HOLD" | "Booked" {
+  if (group.released) {
+    return "Released";
+  }
+  if (group.reservationStatus === RESOURCE_RESERVATION_STATUSES.HOLD) {
+    return "HOLD";
+  }
+  return "Booked";
+}
 
 export function formatReservationClockRange(startMinute: number, endMinute: number): string {
   return formatItineraryRange(minutesToClock(startMinute), minutesToClock(endMinute));
@@ -69,7 +93,8 @@ export function groupAllocatedResources(
   const groups = new Map<string, AllocatedResourceGroup>();
   for (const row of rows) {
     const typeName = row.resource.resourceType.name;
-    const key = `${typeName}:${row.startMinute}:${row.endMinute}:${row.releasedAt ? "released" : "active"}`;
+    const statusKey = row.releasedAt ? "released" : (row.status ?? "active");
+    const key = `${typeName}:${row.startMinute}:${row.endMinute}:${statusKey}`;
     const existing = groups.get(key);
     if (existing) {
       existing.names.push(row.resource.name);
@@ -88,6 +113,7 @@ export function groupAllocatedResources(
         byName.get(typeName) ??
         null,
       released: Boolean(row.releasedAt),
+      reservationStatus: row.status ?? null,
     });
   }
   return [...groups.values()];

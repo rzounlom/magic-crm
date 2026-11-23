@@ -4,7 +4,19 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { MasterScheduleBoard } from "@/components/layout/master-schedule-board";
-import { blockPlacement, bookingCompletionCopy, eventBuilderPath, inquiryIdFromBuilderRedirect, occupancyCount, occupancySummary, readBookingBuilderSearchHint, schedulePath, scheduleStartHint } from "@/lib/resources/schedule-board";
+import {
+  blockPlacement,
+  bookingCompletionCopy,
+  eventBuilderPath,
+  inquiryIdFromBuilderRedirect,
+  occupancyCount,
+  occupancySummary,
+  readBookingBuilderSearchHint,
+  resolveScheduleFocus,
+  resolveScheduleStartMinute,
+  schedulePath,
+  scheduleStartHint,
+} from "@/lib/resources/schedule-board";
 import { RESOURCE_RESERVATION_STATUSES } from "@/types/resource-schedule";
 
 vi.mock("next/navigation", () => ({
@@ -78,8 +90,10 @@ describe("schedule board helpers", () => {
       "Starting from Lane 3 at 5:00 PM. This does not reserve that resource. Availability is checked when the plan is generated.",
     );
     expect(hint).not.toMatch(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/);
-    expect(occupancySummary("Bowling", 2, 2)).toBe("Bowling: 2 of 2 have bookings today");
-    expect(occupancySummary("Party rooms", 1, 3)).toBe("Party rooms: 1 of 3 have bookings today");
+    expect(occupancySummary("Bowling", 2, 2)).toBe("Bowling: 2 of 2 occupied today (holds + booked)");
+    expect(occupancySummary("Party rooms", 1, 3)).toBe(
+      "Party rooms: 1 of 3 occupied today (holds + booked)",
+    );
     expect(occupancySummary("Bowling", 2, 2)).not.toMatch(/in use today|occupied right now|lanes/i);
   });
 
@@ -117,12 +131,28 @@ describe("master schedule board", () => {
       />,
     );
     expect(html).toContain("No scheduled events for this day.");
-    expect(html).toContain("Bowling: 0 of 2 have bookings today");
+    expect(html).toContain("Bowling: 0 of 2 occupied today (holds + booked)");
+    expect(html).toContain("HOLD — temporary, not confirmed");
+    expect(html).toContain("Booked — confirmed occupancy");
     expect(html).not.toMatch(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/);
     expect(html).not.toContain("Create Event");
     expect(html).not.toContain("Start an event");
     expect(html).not.toContain("data-create-event-dialog");
     expect(html).not.toContain("Continue to Event Builder");
+  });
+
+  it("resolves legacy type/start deep-link query params for presentation", () => {
+    expect(resolveScheduleFocus({ type: "type_bowl" })).toBe("type_bowl");
+    expect(resolveScheduleFocus({ focus: "holds", type: "type_bowl" })).toBe("holds");
+    expect(resolveScheduleStartMinute("17:00")).toBe(17 * 60);
+    expect(resolveScheduleStartMinute("bad")).toBeNull();
+    expect(resolveScheduleStartMinute("99:99")).toBeNull();
+    expect(resolveScheduleStartMinute(null)).toBeNull();
+  });
+
+  it("keeps occupancy counting semantics unchanged (copy-only summary)", () => {
+    expect(occupancyCount(["a", "b", "c"], ["a", "a", "b"])).toEqual({ occupied: 2, total: 3 });
+    expect(occupancySummary("Bowling", 2, 3)).toContain("holds + booked");
   });
 
   it("shows each exact resource for a multi-lane booking and distinguishes a hold", () => {
@@ -215,10 +245,12 @@ describe("master schedule board", () => {
     expect(html).toContain("Create Event");
     expect(html).toContain("Start an event at 5:00 PM on Lane 1");
     expect(html).toContain(">Booked<");
-    expect(html).toContain(">Hold<");
+    expect(html).toContain(">HOLD<");
+    expect(html).toContain('data-schedule-block="booked"');
+    expect(html).toContain('data-schedule-block="hold"');
     expect(html).toContain("Acme");
     expect(html).toContain("Bea Ng");
-    expect(html).toContain("Bowling: 2 of 2 have bookings today");
+    expect(html).toContain("Bowling: 2 of 2 occupied today (holds + booked)");
     expect(html).not.toMatch(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/);
     expect(html).not.toContain("Legacy Hold");
     expect(html).not.toContain("Continues");
