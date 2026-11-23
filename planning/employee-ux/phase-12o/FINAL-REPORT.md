@@ -144,10 +144,9 @@ Skipped tests are **not** counted as passed.
 
 | Item | Status |
 |---|---|
-| Phase 12O PR | Created from this branch (presentation + read-only tests) |
-| Merge | Proceed when gates green (this report) |
-| Vercel Production | Confirm Ready after merge |
-| Production smoke | Read-only `/app` redirect / Clerk gate only |
+| Phase 12O PR | [#32](https://github.com/rzounlom/magic-crm/pull/32) — **Merged** (`427801d`) |
+| Vercel Production | **Ready** (`magic-ped1dr0es…`, deployment for `427801d`) |
+| Production smoke (read-only) | `GET /` → **200** (Clerk signed-out); `GET /app` → **307** auth redirect — no writes |
 
 ---
 
